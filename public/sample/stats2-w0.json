@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 5,
+ "schema_revision": 6,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -2183,6 +2183,14 @@
    "labs": [
     {
      "id": "LAB-binom",
+     "url": "https://watanabe-masao.github.io/stats2-labs/binom/?p=def-tour",
+     "title": "二項分布ラボ",
+     "kind": "tour",
+     "preset": "def-tour",
+     "purpose": "1回の試行から、並び1つの確率×並びの数で式を組み立てる"
+    },
+    {
+     "id": "LAB-binom",
      "url": "https://watanabe-masao.github.io/stats2-labs/binom/?p=s1-path",
      "title": "二項分布ラボ",
      "kind": "check",
@@ -2195,6 +2203,21 @@
      "id": "FIG-U14-concept",
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U14-concept.svg",
      "caption": "二項分布 B(4, 0.25)。購入率25%の売場に4人。ちょうど1人がいちばん起きやすく、▲の平均 np＝1人。"
+    },
+    {
+     "id": "FIG-LAB-binom-def-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-binom-def-tour-1.svg",
+     "caption": "1回だけ試す：成功（🛒）の確率は p、失敗（❌）は 1−p。p＝0.3 で1回だけ試す。"
+    },
+    {
+     "id": "FIG-LAB-binom-def-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-binom-def-tour-2.svg",
+     "caption": "n 回くり返す：n 回くり返すと、成功1回の並びは n 通りに増える。"
+    },
+    {
+     "id": "FIG-LAB-binom-def-tour-3",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-binom-def-tour-3.svg",
+     "caption": "並び1つの確率：成功を2回にする。どの並びも確率は同じ pᵏ(1−p)ⁿ⁻ᵏ（独立なので掛け算）。"
     }
    ],
    "sources": [
@@ -3952,6 +3975,7 @@
     "np＝λ を一定に保つ"
    ],
    "mode": "limit",
+   "gist": "めったに起きない事をたくさんの機会で数えると、回数の上限が効かなくなる。平均 λ だけで確率が出せる。",
    "labs": [
     {
      "id": "LAB-pois",
@@ -3959,7 +3983,7 @@
      "title": "離散分布ラボ",
      "kind": "tour",
      "preset": "rel-approx-tour",
-     "purpose": "np＝3 を保って n を 10→100 にし、二項分布がポアソン分布に重なるのを段ごとに見る"
+     "purpose": "平均3を保って n を 10→1000 にし、二項分布がポアソン分布に重なるまでを段ごとに見る"
     },
     {
      "id": "LAB-pois",
@@ -3974,17 +3998,17 @@
     {
      "id": "FIG-LAB-pois-rel-approx-tour-1",
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-approx-tour-1.svg",
-     "caption": "λ を決める：二項分布で n×p＝λ を一定に保つ。λ＝3、まず n＝10・p＝0.3。"
+     "caption": "平均を保つ：平均 n×p＝3 を保つ（形の違いは「比べる」で見た）。まず n＝10・p＝0.3。"
     },
     {
      "id": "FIG-LAB-pois-rel-approx-tour-2",
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-approx-tour-2.svg",
-     "caption": "n を大きく・p を小さく：n を大きくすると p＝λ÷n は小さくなる。n×p は3のまま。"
+     "caption": "n を大きく・p を小さく：n を大きく、p＝λ÷n を小さくする。棒が点線に寄っていく。"
     },
     {
      "id": "FIG-LAB-pois-rel-approx-tour-3",
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-approx-tour-3.svg",
-     "caption": "さらに大きく：n＝100（p＝0.03）まで進めて、棒の形を見る。"
+     "caption": "分散も λ へ：n＝1000（p＝0.003）まで。(1−p) が1に近づき、分散も λ に近づく。"
     }
    ]
   },
@@ -4004,6 +4028,7 @@
     "整数の棒を曲線で近似するので、境目を0.5ずらす（連続修正）"
    ],
    "mode": "approximation",
+   "gist": "回数が多いと、成功の数はなめらかな山の形になる。平均と標準偏差だけで、範囲の確率が出せる。",
    "labs": [
     {
      "id": "LAB-binom",
@@ -4024,6 +4049,37 @@
    "description": "二項分布は回数に上限 n があり、分散 np(1−p) は平均 np より小さい。ポアソン分布は上限がなく、分散と平均が同じ λ。",
    "units": [
     "stats2:U15"
+   ],
+   "gist": "回数に上限がある数え方（二項）は、上限のない数え方（ポアソン）より散らばりが小さい。平均が同じでも外れ方が違う。",
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-contrast-tour",
+     "title": "離散分布ラボ",
+     "kind": "tour",
+     "preset": "rel-contrast-tour",
+     "purpose": "平均は同じ3のまま、回数の上限と分散の違いを段ごとに見る"
+    },
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-contrast",
+     "title": "離散分布ラボ",
+     "kind": "check",
+     "preset": "rel-contrast",
+     "purpose": "n・p を自分で動かし、二項とポアソンの棒の切れ方と広がりを比べる"
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-pois-rel-contrast-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-contrast-tour-1.svg",
+     "caption": "平均は同じ：二項 B(10, 0.3) とポアソン λ＝3。平均はどちらも3で、山の位置もほぼ同じ。"
+    },
+    {
+     "id": "FIG-LAB-pois-rel-contrast-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-contrast-tour-2.svg",
+     "caption": "上限の違い：回数を 5回 に減らす（p＝0.6）。二項は5より大きくならない。ポアソンに上限はない。"
+    }
    ]
   },
   {
@@ -4135,7 +4191,8 @@
    "description": "分散は1つの変数のずれの2乗の期待値。2つの変数のずれの積に広げると共分散になる（Cov(X, X)＝V(X)）。",
    "units": [
     "stats2:U13"
-   ]
+   ],
+   "gist": "分散は「1つの量が平均からどれだけずれるか」。共分散は「2つの量が一緒にずれるか」。同じものどうしの共分散が分散。"
   },
   {
    "id": "stats2:REL-indep-cov",
@@ -4151,6 +4208,7 @@
     "X と Y が独立",
     "期待値が有限"
    ],
+   "gist": "お互いに影響しない2つの量は、一緒にずれる傾向がないので共分散は0。ただし共分散が0でも、影響し合っていることはある。",
    "labs": [
     {
      "id": "LAB-expect",
@@ -4183,7 +4241,8 @@
    "description": "二項分布は回数 n を決めて成功の数を数える。幾何分布は成功を1回と決めて、そこまでの回数を数える。何を固定し、何を数えるかが逆。",
    "units": [
     "stats2:U15"
-   ]
+   ],
+   "gist": "二項は「回数を決めて、当たりの数を数える」。幾何は「当たり1回を決めて、そこまでの回数を数える」。決める物と数える物が逆。"
   },
   {
    "id": "stats2:REL-hyper-binom",
@@ -4200,6 +4259,7 @@
     "当たりの割合 M/N を一定に保つ"
    ],
    "mode": "limit",
+   "gist": "箱がとても大きければ、取り出して戻さなくても中身の割合はほとんど変わらない。戻しても戻さなくても同じとみなせる。",
    "labs": [
     {
      "id": "LAB-pois",
@@ -4220,7 +4280,8 @@
    "description": "二項分布は戻して取り出す（各回が独立で確率が一定）。超幾何分布は戻さずに取り出す（取るたびに確率が変わる）。分散は超幾何の方が二項分布の (N−n)/(N−1) 倍になる（小さくなる）。",
    "units": [
     "stats2:U15"
-   ]
+   ],
+   "gist": "戻さずに取り出すと、取るたびに残りの割合が変わり、結果のぶれが小さくなる。小さな箱から多く取るほど差が大きい。"
   },
   {
    "id": "stats2:REL-poisson-expo",
@@ -4237,6 +4298,7 @@
     "出来事が一定の割合 λ で起きる",
     "重ならない時間の件数が互いに独立"
    ],
+   "gist": "同じ出来事を「一定時間に何件来るか」で見るとポアソン、「次の1件まで何分待つか」で見ると指数分布。見方が違うだけ。",
    "labs": [
     {
      "id": "LAB-pois",
@@ -4317,7 +4379,8 @@
    "description": "幾何分布は「1回目の成功」まで待つ。待つ成功を r 回に広げると負の二項分布（r＝1 が幾何分布）。",
    "units": [
     "stats2:U15"
-   ]
+   ],
+   "gist": "幾何は「最初の当たりまで」待つ。負の二項は「r 回目の当たりまで」待つ。r＝1 にすると幾何に戻る。"
   }
  ],
  "derivations": [

@@ -30,7 +30,7 @@ export type Concept = {
   units: string[]; problems: string[]; labs?: LabRef[]; counterexample_labs?: LabRef[]; figures?: FigRef[];
 };
 export type Relation = {
-  id: string; version: number; from: string; to: string; type: string; description: string;
+  id: string; version: number; from: string; to: string; type: string; description: string; gist?: string;
   conditions?: string[]; mode?: "exact" | "approximation" | "limit"; premise?: "learning" | "mathematical";
   derivation?: string; units: string[]; labs?: LabRef[]; figures?: FigRef[];
 };
