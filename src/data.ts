@@ -164,3 +164,59 @@ export async function load(src?: string | null): Promise<{ net: Network; errors:
   const { net, errors } = merge(got.filter((g) => g.data !== null));
   return { net, errors: [...got.flatMap((g) => ("error" in g && g.error ? [g.error] : [])), ...errors] };
 }
+
+/** 周辺図の配置。選んだ概念を中心に、直接つながる概念を関係の向き・種類で並べる（Cytoscape の preset に渡す位置）。
+ *  上：選んだ概念の前提側（たどる種類で、相手 → 選んだ概念）と、選んだ概念を結論にする導出
+ *  下：選んだ概念から先（たどる種類で、選んだ概念 → 相手）と、選んだ概念が前提の導出
+ *  左右：たどらない種類（変換・対比・応用）でつながる概念
+ *  導出の点の、選んだ概念以外の前提・結論は、もう1段外に置く。 */
+export type Placed = { x: number; y: number };
+export const AROUND = { colW: 128, rowH: 110, wrapH: 70, sideX: 176, sideH: 56, perRow: 3, perSide: 3 };
+
+export function neighborhood(net: Network, id: string): Map<string, Placed> {
+  const tier = new Map<string, number>();     // -2・-1・+1・+2：上下の段。0：左右
+  const put = (n: string, t: number) => {
+    if (n === id) return;
+    const old = tier.get(n);
+    if (old === undefined || (old === 0 && t !== 0) || Math.abs(t) < Math.abs(old)) tier.set(n, t);
+  };
+  for (const r of net.relations) {
+    if (r.from !== id && r.to !== id) continue;
+    const other = r.from === id ? r.to : r.from;
+    if (KINDS[r.type]?.trace) put(other, r.to === id ? -1 : 1);
+    else put(other, 0);
+  }
+  for (const d of net.derivations) {
+    if (d.conclusion === id) {
+      put(d.id, -1);
+      for (const p of d.premises) put(p, -2);
+    } else if (d.premises.includes(id)) {
+      put(d.id, 1);
+      put(d.conclusion, 2);
+    }
+  }
+  const pos = new Map<string, Placed>([[id, { x: 0, y: 0 }]]);
+  const { colW, rowH, wrapH, sideX, sideH, perRow, perSide } = AROUND;
+  // 左右は中心の高さの帯（上下の段から 50px 以上離す）に、片側 perSide まで。あふれたら上下の段の後ろへ
+  const sideAll = [...tier].filter(([, v]) => v === 0).map(([k]) => k).sort();
+  const side = sideAll.slice(0, perSide * 2);
+  for (const n of sideAll.slice(perSide * 2)) tier.set(n, 1);
+  side.forEach((n, i) => {
+    const left = i % 2 === 0, k = Math.floor(i / 2), m = Math.ceil(side.length / 2);
+    pos.set(n, { x: left ? -sideX : sideX, y: (k - (m - 1) / 2) * sideH });
+  });
+  // 上下の段：内側（±1）から外側（±2）へ。多ければ折り返して外へ伸ばす
+  for (const dir of [-1, 1]) {
+    let y = dir * rowH;
+    for (const t of [dir, dir * 2]) {
+      const ns = [...tier].filter(([, v]) => v === t).map(([k]) => k).sort();
+      for (let r = 0; r * perRow < ns.length; r++) {
+        const row = ns.slice(r * perRow, (r + 1) * perRow);
+        row.forEach((n, c) => pos.set(n, { x: (c - (row.length - 1) / 2) * colW, y }));
+        y += dir * wrapH;
+      }
+      if (ns.length) y += dir * (rowH - wrapH);
+    }
+  }
+  return pos;
+}

@@ -51,3 +51,21 @@ th:first-child, td:first-child { white-space: nowrap; }
 .labs { margin: 8px 0; }
 .lab { margin: 6px 0; }
 .lab iframe { display: block; width: 100%; height: 360px; border: 1px solid var(--line); border-radius: 10px; margin: 6px 0 2px; background: var(--card); }
+/* 周辺図と全体図の切り替え */
+.views { display: flex; gap: 6px; margin-top: 10px; }
+.views button { flex: 1; }
+/* つながり一覧（線を押しにくいときの代わり） */
+.edges { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px 12px; margin: 10px 0; }
+.edges summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: 14px; }
+.edges ul { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-direction: column; gap: 6px; }
+button.chip { width: 100%; text-align: left; font-size: 14px; }
+/* 線の説明パネル（下から開く）。閉じても選んだ概念はそのまま */
+.panel { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 50vh; overflow-y: auto;
+  background: var(--card); border-top: 2px solid var(--accent); border-radius: 14px 14px 0 0; box-shadow: 0 -6px 24px rgba(0,0,0,.18);
+  padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); animation: rise .22s ease-out; }
+.panel-head { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; }
+.panel-head b { font-size: 15px; padding-top: 10px; }
+.panel-head button { flex: none; }
+@media (min-width: 760px) { .panel { left: calc(50% - 380px); right: calc(50% - 380px); } }
+@keyframes rise { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .panel { animation: none; } }
