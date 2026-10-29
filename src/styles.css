@@ -48,3 +48,6 @@ footer { margin-top: 20px; }
 .embed-card { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-top: 1px solid var(--line); background: var(--card); font-size: 13px; }
 .embed-card .mute { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 th:first-child, td:first-child { white-space: nowrap; }
+.labs { margin: 8px 0; }
+.lab { margin: 6px 0; }
+.lab iframe { display: block; width: 100%; height: 360px; border: 1px solid var(--line); border-radius: 10px; margin: 6px 0 2px; background: var(--card); }
