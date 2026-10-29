@@ -57,7 +57,7 @@ export default function App() {
     const full = `${location.pathname}?${new URLSearchParams({ ...(sel ? { c: sel } : {}), ...(SRC ? { src: SRC } : {}) }).toString()}`;
     return (
       <main className="app embed">
-        <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} only={only} onSelect={setSel} />
+        <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} only={only} onSelect={setSel} fill />
         <div className="embed-card" data-testid="embed-card">
           <b>{concept ? concept.name : "知識ネットワーク"}</b>
           <span className="mute">{concept?.definition ?? "概念を押すと説明が出る"}</span>
@@ -80,11 +80,12 @@ export default function App() {
       <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} onSelect={setSel} />
       <details className="legend">
         <summary>関係の種類（押すと表示を切り替える）</summary>
+        <p className="mute">矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。</p>
         <ul>{Object.entries(KINDS).map(([t, k]) => (
           <li key={t}>
             <label>
               <input type="checkbox" checked={!hidden.has(t)} onChange={() => { const h = new Set(hidden); if (h.has(t)) h.delete(t); else h.add(t); setHidden(h); }} />
-              <span className="swatch" style={{ background: `var(${TYPE_COLOR[t]})` }} /> <b>{t}</b>　{k.reading}
+              <span className="swatch" style={{ background: `var(${TYPE_COLOR[t]})` }} /> <b>{t}</b>　{k.reading.replace("□", "A").replace("■", "B")}
             </label>
             <div className="mute">{k.definition}</div>
           </li>))}

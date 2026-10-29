@@ -26,6 +26,8 @@ describe("型（schema/kn-schema-v1.json）", () => {
   });
   it("関係の種類は8つで、どれにも読み方とたどるかどうかがある", () => {
     expect(Object.keys(KINDS)).toHaveLength(8);
+    expect(KINDS["変換"].trace).toBe(false);
+    expect(Object.entries(KINDS).filter(([, k]) => k.trace).map(([t]) => t).sort()).toEqual(["一般化", "前提", "導出", "特殊化", "統合"].sort());
     for (const k of Object.values(KINDS)) {
       expect(k.reading).toMatch(/□/);
       expect(typeof k.trace).toBe("boolean");
@@ -52,7 +54,8 @@ describe("ネットワーク", () => {
     expect(t.order).toContain("stats2:TERM-rv");          // 期待値の前提の前提
     const n = trace(net, "stats2:TERM-normal");
     expect(n.order).not.toContain("stats2:TERM-std");     // 標準化→正規分布は「応用」なのでたどらない
-    expect(trace(net, "stats2:TERM-poisson").order).toContain("stats2:TERM-binom");   // 変換（極限）はたどる
+    expect(trace(net, "stats2:TERM-normal").order).not.toContain("stats2:TERM-binom");  // 変換（近似）はたどらない：正規分布に二項分布は要らない
+    expect(trace(net, "stats2:TERM-poisson").order).not.toContain("stats2:TERM-binom"); // 変換（極限）もたどらない。学ぶ順に要るなら「前提」で書く
   });
   it("導出の前提もたどる", () => {
     expect(trace(net, "stats2:TERM-binom").steps.some((s) => s.via.includes("DER-binom-moments"))).toBe(true);
@@ -62,7 +65,7 @@ describe("ネットワーク", () => {
     const c = compare(net, ["stats2:TERM-binom", "stats2:TERM-poisson"]);
     expect(c.rows[0].label).toBe("定義");
     expect(c.between.some((r) => r.type === "対比")).toBe(true);
-    expect(c.common).toContain("stats2:TERM-indep");
+    expect(compare(net, ["stats2:TERM-binom", "stats2:TERM-std"]).common).toContain("stats2:TERM-expect");
   });
   it("指されているが説明のない概念は stub、どこにもない概念は missing", () => {
     expect(net.concepts.get("stats2:TERM-clt")?.status).toBe("stub");
