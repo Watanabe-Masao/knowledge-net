@@ -25,6 +25,7 @@ export default function Panel({ net, edgeId, onClose, onSelect }: Props) {
         <button onClick={onClose} aria-label="説明を閉じる">閉じる</button>
       </div>
       {found.rel ? <>
+        {found.rel.gist && <p className="gist" data-testid="gist">💡 <b>つまり</b>　{found.rel.gist}</p>}
         <p>{found.rel.description}</p>
         {found.rel.conditions?.length ? <p className="mute">条件：{found.rel.conditions.join("／")}</p> : null}
         <Figures figures={found.rel.figures} context={`panel-${found.rel.id}`} />

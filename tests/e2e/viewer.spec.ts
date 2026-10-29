@@ -1,6 +1,11 @@
 // 画面のテスト（見本のデータ public/sample/stats2.json で）。スマホ幅・ライト／ダーク・Notion の埋め込み（360×320）。
 import { expect, test, type Page } from "@playwright/test";
 
+// 教材の公開サイトの図・ラボは外に取りに行かない（テストの速さと安定のため。中身は教材側のテストで確かめる）
+test.beforeEach(async ({ page }) => {
+  await page.route(/stats2-labs\//, (r) => r.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>' }));
+});
+
 const SRC = "src=sample/stats2.json";
 const noErrors = (page: Page) => { const errs: string[] = []; page.on("pageerror", (e) => errs.push(e.message)); return errs; };
 
@@ -208,7 +213,7 @@ test("枠の大きさが後から決まっても図が枠に収まり、⤢ で�
     return b.x1 >= 0 && b.y1 >= 0 && b.x2 <= cy.width() && b.y2 <= cy.height();
   });
   await expect.poll(inside).toBe(true);
-  await page.evaluate(() => (window as any).kn.panBy({ x: 0, y: -400 }));
+  await page.evaluate(() => { (window as any).kn.panBy({ x: 0, y: -400 }); });   // 戻り値（cy 全体）を返さない（返すと書き出しに約17秒かかる）
   expect(await inside()).toBe(false);
   await page.getByRole("button", { name: "図を枠に収める" }).click();
   await expect.poll(inside).toBe(true);
@@ -253,4 +258,17 @@ test("ラボで解説を先、ラボで確かめるを後に並べる。段ご�
   await expect(row.locator("img")).toHaveCount(0);
   await row.getByRole("button", { name: "🖼 図で見る（3枚）" }).click();
   await expect(row.locator("img")).toHaveCount(1);
+});
+
+test("つながりは「💡 つまり」を説明より先に出す（対比・変換）", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
+  await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 と ポアソン分布 を比べる/ }).click();
+  const panel = page.getByTestId("edge-panel");
+  const gist = panel.getByTestId("gist");
+  await expect(gist).toContainText("散らばりが小さい");
+  const [g, d] = await Promise.all([gist.boundingBox(), panel.getByText(/二項分布は回数に上限 n があり/).boundingBox()]);
+  expect(g!.y).toBeLessThan(d!.y);
+  await expect(panel.getByTestId(/^labs-panel-/).getByRole("button").first()).toHaveText("▶ ラボで解説");
+  await expect(panel.getByTestId(/^figures-panel-/)).toContainText("1／2");
 });

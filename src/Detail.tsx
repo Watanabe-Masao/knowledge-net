@@ -73,6 +73,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
           return (
             <li key={r.id}>
               <button className="link" onClick={() => onSelect(other)}>{sentence(net, r)}</button>
+              {r.gist && <div className="gist">💡 <b>つまり</b>　{r.gist}</div>}
               <div className="mute">{r.description}{r.conditions?.length ? `　条件：${r.conditions.join("／")}` : ""}</div>
               <Figures figures={r.figures} context={`relation-${r.id}`} folded />
               <LabLaunch labs={r.labs} context={`relation-${r.id}`} />

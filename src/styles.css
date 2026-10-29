@@ -82,3 +82,4 @@ button.fit { position: absolute; top: 8px; right: 8px; min-height: 44px; min-wid
 .fig-steps span { font-weight: 700; color: var(--mute, #888); min-width: 3em; text-align: center; }
 .fig-steps button, .fig-open { min-height: 44px; }
 .lab-purpose { font-size: 13px; margin: 2px 0 0; }
+.gist { margin: 4px 0 6px; padding: 6px 10px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 0 8px 8px 0; font-size: 14px; }
