@@ -94,12 +94,12 @@ test("読めないデータは知らせる", async ({ page }) => {
 test("概念と関係からラボを開く（共通の起動）", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-std`);
   const d = page.getByTestId("detail");
-  await d.getByRole("button", { name: /ラボで確かめる：標準化/ }).click();
+  await d.getByTestId("labs-concept").getByRole("button", { name: "🧪 ラボで確かめる" }).click();
   await expect(d.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
   await expect(d.getByRole("link", { name: "大きく開く ↗" })).toHaveAttribute("href", /zscore\/\?p=s1-z$/);
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   const rel = page.getByTestId("labs-relation-stats2:REL-binom-poisson");
-  await rel.getByRole("button", { name: /二項とポアソン/ }).click();
+  await rel.getByRole("button", { name: "🧪 ラボで確かめる" }).click();
   await expect(rel.locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
@@ -231,4 +231,26 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
   await expect(figs.locator("img")).toHaveAttribute("src", /\/fig\/FIG-U14-concept\.svg$/);
   await expect(figs.getByRole("link", { name: /図を大きく見る/ })).toHaveAttribute("target", "_blank");
   await expect(figs.locator("figcaption")).toContainText("B(4, 0.25)");
+});
+
+test("ラボで解説を先、ラボで確かめるを後に並べる。段ごとの図は1枚ずつ前へ／次へで見る", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
+  await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
+  const panel = page.getByTestId("edge-panel");
+  const btns = panel.getByTestId(/^labs-panel-/).getByRole("button");
+  await expect(btns.nth(0)).toHaveText("▶ ラボで解説");
+  await expect(btns.nth(1)).toHaveText("🧪 ラボで確かめる");
+  const figs = panel.getByTestId(/^figures-panel-/);
+  await expect(figs.locator("img")).toHaveCount(1);
+  await expect(figs).toContainText("1／3");
+  await expect(figs.locator("img")).toHaveAttribute("src", /tour-1\.svg$/);
+  await figs.getByRole("button", { name: "次の図" }).click();
+  await expect(figs).toContainText("2／3");
+  await expect(figs.locator("img")).toHaveAttribute("src", /tour-2\.svg$/);
+  // 概念の詳細のつながりの一覧では、図は閉じておく
+  const row = page.getByTestId("figures-relation-stats2:REL-binom-poisson");
+  await expect(row.locator("img")).toHaveCount(0);
+  await row.getByRole("button", { name: "🖼 図で見る（3枚）" }).click();
+  await expect(row.locator("img")).toHaveCount(1);
 });
