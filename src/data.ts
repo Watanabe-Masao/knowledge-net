@@ -150,12 +150,12 @@ export async function load(src?: string | null): Promise<{ net: Network; errors:
   let list: { id: string; data: string }[];
   if (src) list = [{ id: src, data: src }];
   else {
-    const reg = await (await fetch("courses.json")).json();
+    const reg = await (await fetch("courses.json", { cache: "no-cache" })).json();
     list = reg.courses;
   }
   const got = await Promise.all(list.map(async (c) => {
     try {
-      const r = await fetch(c.data);
+      const r = await fetch(c.data, { cache: "no-cache" });   // 教材を更新したらすぐ見えるように（GitHub Pages は10分ほど覚えている）
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return { id: c.id, data: await r.json() };
     } catch (e) {
