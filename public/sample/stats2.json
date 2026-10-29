@@ -729,6 +729,13 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "figures": [
+    {
+     "id": "FIG-U14-concept",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U14-concept.svg",
+     "caption": "二項分布 B(4, 0.25)。購入率25%の売場に4人。ちょうど1人がいちばん起きやすく、▲の平均 np＝1人。"
+    }
    ]
   },
   {
@@ -995,5 +1002,5 @@
    ]
   }
  ],
- "schema_revision": 3
+ "schema_revision": 4
 }

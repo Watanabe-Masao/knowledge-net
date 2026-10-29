@@ -1,5 +1,6 @@
 // 線（関係・導出）の説明パネル。画面の下から開く。閉じても選んだ概念はそのまま。
 import LabLaunch from "./Lab";
+import Figures from "./Figure";
 import { name, sentence } from "./Detail";
 import { type Network } from "./data";
 
@@ -26,6 +27,7 @@ export default function Panel({ net, edgeId, onClose, onSelect }: Props) {
       {found.rel ? <>
         <p>{found.rel.description}</p>
         {found.rel.conditions?.length ? <p className="mute">条件：{found.rel.conditions.join("／")}</p> : null}
+        <Figures figures={found.rel.figures} context={`panel-${found.rel.id}`} />
         <LabLaunch labs={found.rel.labs} context={`panel-${found.rel.id}`} />
         <div className="actions">
           {[found.rel.from, found.rel.to].map((c) => <button key={c} onClick={() => onSelect(c)}>{name(net, c)} へ</button>)}

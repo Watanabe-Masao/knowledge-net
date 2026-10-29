@@ -103,6 +103,16 @@ describe("数理ラボの参照と型の改訂", () => {
     delete c.labs[0].url;
     expect(schemaErrors(d).length).toBeGreaterThan(0);
   });
+  it("概念・関係の figures は型に合い、url がない・id が FIG- でないと止める（改訂4）", () => {
+    const d = sample();
+    const c = d.concepts.find((x: { figures?: unknown }) => x.figures);
+    expect(c.figures[0].id).toBe("FIG-U14-concept");
+    delete c.figures[0].url;
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+    const e = sample();
+    e.relations[0].figures = [{ id: "U14", url: "https://example.com/a.svg" }];
+    expect(schemaErrors(e).length).toBeGreaterThan(0);
+  });
   it("画面より新しい改訂のデータは知らせる（表示はする）", async () => {
     const { REVISION } = await import("../../src/data");
     const d = sample();

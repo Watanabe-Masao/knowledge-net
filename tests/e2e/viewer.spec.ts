@@ -223,3 +223,12 @@ test("周辺図では中心につながらない線を薄くし、説明を開�
   await page.getByTestId("edge-list").getByRole("button", { name: /独立 は 二項分布 の前提/ }).click();
   await expect(page.locator("main.app")).toHaveClass(/has-panel/);
 });
+
+test("概念の図：詳細に出て、押すと図を別の画面で大きく見る", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
+  const figs = page.getByTestId("figures-concept");
+  await expect(figs.locator("img")).toHaveAttribute("src", /\/fig\/FIG-U14-concept\.svg$/);
+  await expect(figs.getByRole("link", { name: /図を大きく見る/ })).toHaveAttribute("target", "_blank");
+  await expect(figs.locator("figcaption")).toContainText("B(4, 0.25)");
+});
