@@ -302,18 +302,59 @@
      "symbols": [
       {
        "symbol": "Z",
-       "meaning": "標準化した値（平均から標準偏差いくつ分か）"
+       "meaning": "標準化した値（平均から標準偏差いくつ分か）",
+       "key": "Z",
+       "kind": "rv"
+      },
+      {
+       "symbol": "X",
+       "meaning": "元の値",
+       "key": "X",
+       "kind": "rv"
       },
       {
        "symbol": "μ",
-       "meaning": "平均"
+       "meaning": "平均",
+       "key": "mu",
+       "kind": "param",
+       "concept": "stats2:TERM-expect"
       },
       {
        "symbol": "σ",
        "meaning": "標準偏差",
-       "range": "0より大きい"
+       "range": "0より大きい",
+       "key": "sigma",
+       "kind": "param",
+       "concept": "stats2:TERM-var"
       }
-     ]
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "sym": "Z"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "op": "sub",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "mu"
+           }
+          ]
+         },
+         {
+          "sym": "sigma"
+         }
+        ]
+       }
+      ]
+     }
     },
     {
      "tex": "E(Z)=0,\\quad V(Z)=1"
@@ -400,7 +441,16 @@
    "misconceptions": [
     {
      "misconception": "左右対称で山が1つなら正規分布",
-     "correction": "左右対称な山1つの分布はほかにもある（裾の重い分布など）。形の手掛かりと、正規分布であることは別"
+     "correction": "左右対称な山1つの分布はほかにもある（裾の重い分布など）。形の手掛かりと、正規分布であることは別",
+     "labs": [
+      {
+       "id": "LAB-cont",
+       "preset": "s3-free",
+       "purpose": "名前を隠した分布の裾を比べる",
+       "title": "連続分布ラボ",
+       "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s3-free"
+      }
+     ]
     },
     {
      "misconception": "データはふつう正規分布になる",
@@ -945,5 +995,5 @@
    ]
   }
  ],
- "schema_revision": 2
+ "schema_revision": 3
 }

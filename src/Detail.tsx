@@ -59,10 +59,10 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         {c.conditions.data?.length ? <><h4>データに当てはめるとき</h4><ul>{c.conditions.data.map((x) => <li key={x}>{x}</li>)}</ul></> : null}
       </>}
       {c.example && <><h3>具体例</h3><p>{c.example}</p></>}
-      {c.counterexample && <><h3>反例</h3><p>{c.counterexample}</p></>}
+      {c.counterexample && <><h3>反例</h3><p>{c.counterexample}</p><LabLaunch labs={c.counterexample_labs} context="counterexample" /></>}
       {c.misconceptions?.length ? <>
         <h3>よくある誤解</h3>
-        <ul>{c.misconceptions.map((m) => <li key={m.misconception}><b>✕ {m.misconception}</b><br />→ {m.correction}</li>)}</ul>
+        <ul>{c.misconceptions.map((m, i) => <li key={m.misconception}><b>✕ {m.misconception}</b><br />→ {m.correction}<LabLaunch labs={m.labs} context={`misconception-${i}`} /></li>)}</ul>
       </> : null}
       {relations.length ? <>
         <h3>つながり</h3>
