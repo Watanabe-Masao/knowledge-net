@@ -197,3 +197,29 @@ test("全体に切り替えても選んだ概念を引き継ぎ、「戻る」�
   await page.goBack();
   await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
 });
+
+test("枠の大きさが後から決まっても図が枠に収まり、⤢ で収め直せる", async ({ page }) => {
+  await page.setViewportSize({ width: 200, height: 800 });   // 開いた直後は枠が狭い（iPhone の Notion から開いたとき）
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
+  await page.setViewportSize({ width: 390, height: 800 });
+  const inside = () => page.evaluate(() => {
+    const cy = (window as any).kn; const b = cy.nodes().renderedBoundingBox({ includeLabels: true });
+    return b.x1 >= 0 && b.y1 >= 0 && b.x2 <= cy.width() && b.y2 <= cy.height();
+  });
+  await expect.poll(inside).toBe(true);
+  await page.evaluate(() => (window as any).kn.panBy({ x: 0, y: -400 }));
+  expect(await inside()).toBe(false);
+  await page.getByRole("button", { name: "図を枠に収める" }).click();
+  await expect.poll(inside).toBe(true);
+});
+
+test("周辺図では中心につながらない線を薄くし、説明を開くと下に余白", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
+  const faint = await page.evaluate(() => (window as any).kn.edges(".faint").map((e: any) => e.id()));
+  expect(faint).toContain("stats2:REL-indep-geom");
+  expect(faint).not.toContain("stats2:REL-indep-binom");
+  await page.getByTestId("edge-list").getByRole("button", { name: /独立 は 二項分布 の前提/ }).click();
+  await expect(page.locator("main.app")).toHaveClass(/has-panel/);
+});

@@ -83,7 +83,7 @@ export default function App() {
 
   const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
   return (
-    <main className="app">
+    <main className={`app${edgeSel ? " has-panel" : ""}`}>
       <header className="top">
         <h1>知識ネットワーク</h1>
         <p className="mute">{net.courses.map((c) => c.title).join("・")}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}・関係 {net.relations.length}・導出 {net.derivations.length}</p>
