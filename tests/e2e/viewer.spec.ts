@@ -35,6 +35,9 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await page.getByRole("button", { name: "前提をさかのぼる" }).click();
   const tr = page.getByTestId("trace");
   for (const n of ["期待値", "分散", "確率変数"]) await expect(tr.getByRole("button", { name: n })).toBeVisible();
+  // 強調した点の枠が潰れない（線の太さの指定が点に付かない）
+  const w = await page.evaluate(() => (window as any).kn.getElementById("stats2:TERM-expect").width());
+  expect(w).toBeGreaterThan(20);
   await expect(tr.getByRole("button", { name: "正規分布" })).toHaveCount(0);   // 応用はたどらない
 });
 
@@ -44,7 +47,22 @@ test("比べる：二項分布とポアソン分布", async ({ page }) => {
   await expect(cmp.getByRole("heading", { name: "定義" })).toBeVisible();
   await expect(cmp.getByRole("heading", { name: "この組の関係" })).toBeVisible();
   await expect(cmp.getByText(/二項分布 と ポアソン分布 を比べる/)).toBeVisible();   // 対比は読み方の文で出る
+  await expect(cmp.getByRole("heading", { name: "共通の前提" })).toHaveCount(0);   // 変換はたどらないので、共通の前提はない
+});
+
+test("比べる：二項分布と標準化の共通の前提", async ({ page }) => {
+  await page.goto(`./?${SRC}&cmp=stats2:TERM-binom,stats2:TERM-std`);
+  const cmp = page.getByTestId("compare");
   await expect(cmp.getByRole("heading", { name: "共通の前提" })).toBeVisible();
+  await expect(cmp.getByText(/期待値/).first()).toBeVisible();
+});
+
+test("線の名前は選んだ概念の線だけに出る", async ({ page }) => {
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
+  await page.waitForFunction(() => (window as any).kn && (window as any).kn.edges(".named").length > 0);
+  const n = await page.evaluate(() => { const cy = (window as any).kn; return [cy.edges(".named").length, cy.edges().length]; });
+  expect(n[0]).toBeGreaterThan(0);
+  expect(n[0]).toBeLessThan(n[1]);
 });
 
 test("つながりから別の概念へ移る・教材へのリンク", async ({ page }) => {
