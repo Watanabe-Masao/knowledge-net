@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 4,
+ "schema_revision": 5,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -457,6 +457,7 @@
      "id": "LAB-expect",
      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-var",
      "title": "期待値ラボ",
+     "kind": "check",
      "preset": "s1-var",
      "purpose": "ずれの2乗の期待値として分散を組み立てる"
     }
@@ -564,6 +565,7 @@
      "id": "LAB-z",
      "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-sigma",
      "title": "標準化ラボ",
+     "kind": "check",
      "preset": "s1-sigma",
      "purpose": "標準偏差が広がると、同じ値の z得点がどう変わるかを見る"
     }
@@ -752,6 +754,7 @@
      "id": "LAB-z",
      "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-z",
      "title": "標準化ラボ",
+     "kind": "check",
      "preset": "s1-z",
      "purpose": "単位や散らばりの違うものを z得点でそろえて比べる"
     }
@@ -960,8 +963,16 @@
      "id": "LAB-cont",
      "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s1-norm",
      "title": "連続分布ラボ",
+     "kind": "check",
      "preset": "s1-norm",
      "purpose": "平均と標準偏差から、区間の確率を面積で読む"
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-U16-concept",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U16-concept.svg",
+     "caption": "平均100・標準偏差10 の正規分布（例題A）。90〜110 に約68%、80〜120 の外側に合わせて約5%。確率は高さではなく面積。"
     }
    ],
    "sources": [
@@ -1181,8 +1192,16 @@
      "id": "LAB-expect",
      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
      "title": "期待値ラボ",
+     "kind": "check",
      "preset": "s1-dist",
      "purpose": "期待値が分布の重心になることを、予想してから確かめる"
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-U13-concept",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U13-concept.svg",
+     "caption": "1人が買う個数 X の確率分布（例題A）。▲が期待値1.1（分布の重心）、薄い帯が期待値±標準偏差（0.4〜1.8）。"
     }
    ],
    "sources": [
@@ -1310,6 +1329,7 @@
      "id": "LAB-expect",
      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s5-free",
      "title": "期待値ラボ",
+     "kind": "check",
      "preset": "s5-free",
      "purpose": "P(両方)＝P(X)P(Y) のときに共分散が0になるのを見る"
     }
@@ -1461,6 +1481,7 @@
      "id": "LAB-expect",
      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
      "title": "期待値ラボ",
+     "kind": "check",
      "preset": "s1-dist",
      "purpose": "値と確率の一覧を動かして、確率変数が「値の出方の規則」を持つことを見る"
     }
@@ -1553,8 +1574,16 @@
      "id": "LAB-expect",
      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
      "title": "期待値ラボ",
+     "kind": "check",
      "preset": "s1-dist",
      "purpose": "値と確率の一覧を変えると、期待値（重心）がどう動くかを見る"
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-U13-concept",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U13-concept.svg",
+     "caption": "1人が買う個数 X の確率分布（例題A）。▲が期待値1.1（分布の重心）、薄い帯が期待値±標準偏差（0.4〜1.8）。"
     }
    ],
    "sources": [
@@ -1840,6 +1869,7 @@
      "id": "LAB-expect",
      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s5-free",
      "title": "期待値ラボ",
+     "kind": "check",
      "preset": "s5-free",
      "purpose": "同時分布で共分散を0にすると独立になる場合を確かめる"
     }
@@ -2155,15 +2185,9 @@
      "id": "LAB-binom",
      "url": "https://watanabe-masao.github.io/stats2-labs/binom/?p=s1-path",
      "title": "二項分布ラボ",
+     "kind": "check",
      "preset": "s1-path",
      "purpose": "並び方の数×1つの並びの確率を、予想してから確かめる"
-    }
-   ],
-   "sources": [
-    {
-     "title": "公式2級範囲表",
-     "locator": "確率モデルの導入（確率変数・確率分布）",
-     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ],
    "figures": [
@@ -2171,6 +2195,13 @@
      "id": "FIG-U14-concept",
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U14-concept.svg",
      "caption": "二項分布 B(4, 0.25)。購入率25%の売場に4人。ちょうど1人がいちばん起きやすく、▲の平均 np＝1人。"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ]
   },
@@ -2392,8 +2423,16 @@
      "id": "LAB-pois",
      "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s1-pois",
      "title": "離散分布ラボ",
+     "kind": "check",
      "preset": "s1-pois",
      "purpose": "平均件数 λ から、k 件の確率を読む"
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-U15-concept",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U15-concept.svg",
+     "caption": "ポアソン分布（λ＝2）。1時間に平均2件。1件と2件がいちばん高く、右に裾が伸びる。▲の平均と分散はどちらも2。"
     }
    ],
    "sources": [
@@ -2652,6 +2691,7 @@
      "id": "LAB-pois",
      "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free",
      "title": "離散分布ラボ",
+     "kind": "check",
      "preset": "s3-free",
      "purpose": "「成功するまで」のモードで、初めて成功する回の確率と平均を見る"
     }
@@ -2832,6 +2872,7 @@
      "id": "LAB-pois",
      "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free",
      "title": "離散分布ラボ",
+     "kind": "check",
      "preset": "s3-free",
      "purpose": "「成功するまで」のモードで r を増やし、r＝1 の幾何分布から形が変わるのを見る"
     }
@@ -3076,6 +3117,7 @@
      "id": "LAB-pois",
      "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-hyper",
      "title": "離散分布ラボ",
+     "kind": "check",
      "preset": "rel-hyper",
      "purpose": "戻さず取り出す確率を、戻す場合（二項分布）と比べる"
     }
@@ -3400,6 +3442,7 @@
      "id": "LAB-cont",
      "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s5-free",
      "title": "連続分布ラボ",
+     "kind": "check",
      "preset": "s5-free",
      "purpose": "すでに待った時間を動かしても、その先の確率が変わらないのを見る"
     }
@@ -3579,6 +3622,7 @@
      "id": "LAB-cont",
      "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s1-dens",
      "title": "連続分布ラボ",
+     "kind": "check",
      "preset": "s1-dens",
      "purpose": "密度の高さは1を超えても、面積は1のままなのを見る"
     }
@@ -3831,6 +3875,7 @@
      "id": "LAB-cont",
      "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s3-free",
      "title": "連続分布ラボ",
+     "kind": "check",
      "preset": "s3-free",
      "purpose": "「一様分布」のモードで、確率が区間の長さに比例するのを見る"
     }
@@ -3910,10 +3955,36 @@
    "labs": [
     {
      "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-approx-tour",
+     "title": "離散分布ラボ",
+     "kind": "tour",
+     "preset": "rel-approx-tour",
+     "purpose": "np＝3 を保って n を 10→100 にし、二項分布がポアソン分布に重なるのを段ごとに見る"
+    },
+    {
+     "id": "LAB-pois",
      "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-approx",
      "title": "離散分布ラボ",
+     "kind": "check",
      "preset": "rel-approx",
      "purpose": "np を保って n を大きくすると、二項分布がポアソン分布に重なる"
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-pois-rel-approx-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-approx-tour-1.svg",
+     "caption": "λ を決める：二項分布で n×p＝λ を一定に保つ。λ＝3、まず n＝10・p＝0.3。"
+    },
+    {
+     "id": "FIG-LAB-pois-rel-approx-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-approx-tour-2.svg",
+     "caption": "n を大きく・p を小さく：n を大きくすると p＝λ÷n は小さくなる。n×p は3のまま。"
+    },
+    {
+     "id": "FIG-LAB-pois-rel-approx-tour-3",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-approx-tour-3.svg",
+     "caption": "さらに大きく：n＝100（p＝0.03）まで進めて、棒の形を見る。"
     }
    ]
   },
@@ -3938,6 +4009,7 @@
      "id": "LAB-binom",
      "url": "https://watanabe-masao.github.io/stats2-labs/binom/?p=s5-norm",
      "title": "二項分布ラボ",
+     "kind": "check",
      "preset": "s5-norm",
      "purpose": "n を大きくすると、棒が正規分布の曲線に重なる（p が小さいと崩れる）"
     }
@@ -3996,6 +4068,7 @@
      "id": "LAB-z",
      "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s4-normal",
      "title": "標準化ラボ",
+     "kind": "check",
      "preset": "s4-normal",
      "purpose": "標準化すると、どの正規分布も同じ表で読める"
     }
@@ -4083,6 +4156,7 @@
      "id": "LAB-expect",
      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s5-free",
      "title": "期待値ラボ",
+     "kind": "check",
      "preset": "s5-free",
      "purpose": "独立なら共分散が0。0でも独立とは限らないことも確かめる"
     }
@@ -4131,6 +4205,7 @@
      "id": "LAB-pois",
      "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-hyper",
      "title": "離散分布ラボ",
+     "kind": "check",
      "preset": "rel-hyper",
      "purpose": "集団を大きくすると、戻さない確率が戻す確率に近づく"
     }
@@ -4167,6 +4242,7 @@
      "id": "LAB-pois",
      "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s5-free",
      "title": "離散分布ラボ",
+     "kind": "check",
      "preset": "s5-free",
      "purpose": "0件の確率を時間を延ばして見ると、待ち時間の確率になる"
     }

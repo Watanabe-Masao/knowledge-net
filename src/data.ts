@@ -17,7 +17,7 @@ export type FormulaNode =
   | { op: "eq" | "add" | "sub" | "mul" | "div" | "pow" | "neg" | "sqrt" | "abs" | "sum" | "prod" | "int" | "fn";
       args: FormulaNode[]; name?: string; var?: string; lower?: FormulaNode; upper?: FormulaNode };
 /** 数理ラボへの参照（概念・関係で共通）。url は教材の build が作る。 */
-export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string };
+export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string; kind?: "tour" | "check" };
 export type FigRef = { id: string; url: string; caption?: string };
 export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode };
 export type Concept = {

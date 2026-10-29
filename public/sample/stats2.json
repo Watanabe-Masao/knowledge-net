@@ -389,7 +389,8 @@
      "preset": "s1-z",
      "purpose": "値を平均から標準偏差いくつ分かに直す",
      "title": "標準化",
-     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-z"
+     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-z",
+     "kind": "check"
     }
    ]
   },
@@ -868,7 +869,8 @@
      "preset": "s3-free",
      "purpose": "np を保って n を大きくし、ポアソン分布に近づくのを見る",
      "title": "二項とポアソン",
-     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free"
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free",
+     "kind": "check"
     }
    ]
   },
@@ -1002,5 +1004,5 @@
    ]
   }
  ],
- "schema_revision": 4
+ "schema_revision": 5
 }
