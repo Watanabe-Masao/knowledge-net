@@ -1,0 +1,50 @@
+/* 見た目は stats2-labs のラボと同じ書き方（色は変数、ダークモード対応） */
+:root {
+  --bg: #f6f6f3; --card: #ffffff; --ink: #1f2328; --mute: #646a73; --line: #d8dbe0; --accent: #c2410c;
+  --k-pre: #6b7280; --k-der: #2563eb; --k-gen: #15803d; --k-conv: #c2410c; --k-con: #7c3aed; --k-int: #0f766e; --k-app: #a16207;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a; --card: #1e2125; --ink: #e8eaed; --mute: #9aa0a6; --line: #3a3f45; --accent: #fb923c;
+    --k-pre: #9ca3af; --k-der: #60a5fa; --k-gen: #4ade80; --k-conv: #fb923c; --k-con: #a78bfa; --k-int: #2dd4bf; --k-app: #facc15;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 system-ui, -apple-system, "Hiragino Sans", sans-serif; }
+.app { max-width: 760px; margin: 0 auto; padding: 12px 16px 32px; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 19px; margin: 0; }
+h3 { font-size: 15px; margin: 18px 0 4px; }
+h4 { font-size: 14px; margin: 10px 0 2px; }
+p { margin: 4px 0; }
+.mute { color: var(--mute); font-size: 13px; }
+.error { color: var(--accent); font-weight: 600; }
+input[type="search"] { width: 100%; font-size: 16px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); margin-top: 8px; }
+.hits { list-style: none; padding: 0; margin: 4px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+button { font: inherit; font-size: 14px; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+button.link { min-height: 0; padding: 2px 0; border: none; background: none; color: var(--accent); text-align: left; }
+.graph { height: 56vh; min-height: 300px; margin: 10px 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; touch-action: none; }
+.legend, .detail, .trace, .compare, .hint { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; margin: 10px 0; }
+.legend summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.legend ul { list-style: none; padding: 0; margin: 0; }
+.legend li { padding: 6px 0; border-top: 1px solid var(--line); }
+.swatch { display: inline-block; width: 18px; height: 4px; vertical-align: middle; border-radius: 2px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.formula { overflow-x: auto; }
+.tex { overflow-x: auto; overflow-y: hidden; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { border-top: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
+ul, ol { padding-left: 1.3em; margin: 4px 0; }
+.links li { margin: 6px 0; }
+.compare .row { border-top: 1px solid var(--line); padding-top: 4px; }
+a { color: var(--accent); }
+footer { margin-top: 20px; }
+/* 埋め込み（Notion、高さ約320px）：図をいっぱいに、下に短い説明と「大きく開く」 */
+.embed { padding: 0; max-width: none; height: 100vh; display: flex; flex-direction: column; }
+.embed .graph { flex: 1; height: auto; min-height: 0; margin: 0; border-radius: 0; border: none; }
+.embed-card { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-top: 1px solid var(--line); background: var(--card); font-size: 13px; }
+.embed-card .mute { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+th:first-child, td:first-child { white-space: nowrap; }
