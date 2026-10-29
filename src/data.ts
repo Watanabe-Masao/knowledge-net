@@ -18,6 +18,7 @@ export type FormulaNode =
       args: FormulaNode[]; name?: string; var?: string; lower?: FormulaNode; upper?: FormulaNode };
 /** 数理ラボへの参照（概念・関係で共通）。url は教材の build が作る。 */
 export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string };
+export type FigRef = { id: string; url: string; caption?: string };
 export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode };
 export type Concept = {
   id: string; name: string; en?: string; status: "filled" | "stub"; version: number;
@@ -26,12 +27,12 @@ export type Concept = {
   example?: string; counterexample?: string;
   misconceptions?: { misconception: string; correction: string; labs?: LabRef[] }[];
   sources?: { title: string; locator?: string; url?: string }[];
-  units: string[]; problems: string[]; labs?: LabRef[]; counterexample_labs?: LabRef[];
+  units: string[]; problems: string[]; labs?: LabRef[]; counterexample_labs?: LabRef[]; figures?: FigRef[];
 };
 export type Relation = {
   id: string; version: number; from: string; to: string; type: string; description: string;
   conditions?: string[]; mode?: "exact" | "approximation" | "limit"; premise?: "learning" | "mathematical";
-  derivation?: string; units: string[]; labs?: LabRef[];
+  derivation?: string; units: string[]; labs?: LabRef[]; figures?: FigRef[];
 };
 export type Derivation = {
   id: string; version: number; premises: string[]; conclusion: string; statement: string;

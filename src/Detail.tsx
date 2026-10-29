@@ -1,6 +1,7 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import katex from "katex";
 import LabLaunch from "./Lab";
+import Figures from "./Figure";
 import { KINDS, MODES, PREMISES, around, type Concept, type Network, type Relation } from "./data";
 
 function Tex({ tex }: { tex: string }) {
@@ -41,6 +42,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         </div>
       </header>
       {c.definition && <><h3>定義</h3><p>{c.definition}</p></>}
+      <Figures figures={c.figures} context="concept" />
       <LabLaunch labs={c.labs} context="concept" />
       {c.principle && <><h3>原理</h3><p>{c.principle}</p></>}
       {c.formulas?.map((f, i) => (
@@ -72,6 +74,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
             <li key={r.id}>
               <button className="link" onClick={() => onSelect(other)}>{sentence(net, r)}</button>
               <div className="mute">{r.description}{r.conditions?.length ? `　条件：${r.conditions.join("／")}` : ""}</div>
+              <Figures figures={r.figures} context={`relation-${r.id}`} />
               <LabLaunch labs={r.labs} context={`relation-${r.id}`} />
             </li>);
         })}</ul>
