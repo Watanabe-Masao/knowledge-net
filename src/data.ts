@@ -5,6 +5,8 @@ import schema from "../schema/kn-schema-v1.json";
 import kinds from "./generated/relation-types.json";
 
 export type Symbol = { symbol: string; meaning: string; range?: string };
+/** 数理ラボへの参照（概念・関係で共通）。url は教材の build が作る。 */
+export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string };
 export type Formula = { tex: string; label?: string; symbols?: Symbol[] };
 export type Concept = {
   id: string; name: string; en?: string; status: "filled" | "stub"; version: number;
@@ -13,12 +15,12 @@ export type Concept = {
   example?: string; counterexample?: string;
   misconceptions?: { misconception: string; correction: string }[];
   sources?: { title: string; locator?: string; url?: string }[];
-  units: string[]; problems: string[];
+  units: string[]; problems: string[]; labs?: LabRef[];
 };
 export type Relation = {
   id: string; version: number; from: string; to: string; type: string; description: string;
   conditions?: string[]; mode?: "exact" | "approximation" | "limit"; premise?: "learning" | "mathematical";
-  derivation?: string; units: string[];
+  derivation?: string; units: string[]; labs?: LabRef[];
 };
 export type Derivation = {
   id: string; version: number; premises: string[]; conclusion: string; statement: string;
@@ -26,7 +28,7 @@ export type Derivation = {
 };
 export type Unit = { id: string; number: string; title: string; url?: string };
 export type CourseData = {
-  schema: "kn-schema"; version: 1;
+  schema: "kn-schema"; version: 1; schema_revision?: number;
   course: { id: string; title: string; units: Unit[] };
   concepts: Concept[]; relations: Relation[]; derivations: Derivation[];
 };
@@ -35,7 +37,10 @@ export const KINDS = kinds.types as unknown as Record<string, Kind>;
 export const MODES = kinds.modes as Record<string, string>;
 export const PREMISES = kinds.premises as Record<string, string>;
 
-const ajv = new Ajv2020({ allErrors: true, validateFormats: false });
+/** この画面が知っている型の改訂番号（schema/kn-schema-v1.json の x-revision）。 */
+export const REVISION = (schema as { "x-revision"?: number })["x-revision"] ?? 1;
+
+const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false });
 const validateCourse = ajv.compile(schema);
 
 /** 型に合わなければ、どこが合わないかの一覧を返す（空なら合っている）。 */
@@ -66,6 +71,8 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
       continue;
     }
     const d = data as CourseData;
+    if ((d.schema_revision ?? 1) > REVISION)
+      errors.push(`${id}：データの型の改訂（${d.schema_revision}）がこの画面（${REVISION}）より新しい。画面の更新を待つ（表示はできる範囲で行う）`);
     net.courses.push({ id: d.course.id, title: d.course.title });
     for (const u of d.course.units) net.units.set(u.id, u);
     for (const c of d.concepts) net.concepts.set(c.id, c);

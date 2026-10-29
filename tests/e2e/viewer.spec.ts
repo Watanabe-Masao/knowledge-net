@@ -90,3 +90,16 @@ test("読めないデータは知らせる", async ({ page }) => {
   await page.goto("./?src=sample/none.json");
   await expect(page.getByRole("alert").or(page.locator(".error"))).toContainText("データを読めない");
 });
+
+test("概念と関係からラボを開く（共通の起動）", async ({ page }) => {
+  await page.goto(`./?${SRC}&c=stats2:TERM-std`);
+  const d = page.getByTestId("detail");
+  await d.getByRole("button", { name: /ラボで確かめる：標準化/ }).click();
+  await expect(d.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
+  await expect(d.getByRole("link", { name: "大きく開く ↗" })).toHaveAttribute("href", /zscore\/\?p=s1-z$/);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
+  const rel = page.getByTestId("labs-relation-stats2:REL-binom-poisson");
+  await rel.getByRole("button", { name: /二項とポアソン/ }).click();
+  await expect(rel.locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
+});

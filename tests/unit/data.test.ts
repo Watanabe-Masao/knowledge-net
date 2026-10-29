@@ -74,3 +74,21 @@ describe("ネットワーク", () => {
     expect(merge([{ id: "stats2", data: d }]).net.missing.has("math:CON-ratio")).toBe(true);
   });
 });
+
+describe("数理ラボの参照と型の改訂", () => {
+  it("概念・関係の labs は型に合い、url がないと止める", () => {
+    const d = sample();
+    expect(schemaErrors(d)).toEqual([]);
+    const c = d.concepts.find((x: { labs?: unknown }) => x.labs);
+    delete c.labs[0].url;
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+  });
+  it("画面より新しい改訂のデータは知らせる（表示はする）", async () => {
+    const { REVISION } = await import("../../src/data");
+    const d = sample();
+    d.schema_revision = REVISION + 1;
+    const r = merge([{ id: "stats2", data: d }]);
+    expect(r.errors[0]).toMatch(/改訂/);
+    expect(r.net.concepts.size).toBeGreaterThan(0);
+  });
+});

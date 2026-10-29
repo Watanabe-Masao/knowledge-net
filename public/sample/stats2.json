@@ -341,6 +341,15 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "labs": [
+    {
+     "id": "LAB-z",
+     "preset": "s1-z",
+     "purpose": "値を平均から標準偏差いくつ分かに直す",
+     "title": "標準化",
+     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-z"
+    }
    ]
   },
   {
@@ -795,7 +804,16 @@
     "p が小さい",
     "np＝λ を一定に保つ"
    ],
-   "mode": "limit"
+   "mode": "limit",
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "preset": "s3-free",
+     "purpose": "np を保って n を大きくし、ポアソン分布に近づくのを見る",
+     "title": "二項とポアソン",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free"
+    }
+   ]
   },
   {
    "id": "stats2:REL-binom-normal",
@@ -926,5 +944,6 @@
     "stats2:U16"
    ]
   }
- ]
+ ],
+ "schema_revision": 2
 }
