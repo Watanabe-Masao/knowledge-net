@@ -1,0 +1,4287 @@
+{
+ "schema": "kn-schema",
+ "version": 1,
+ "schema_revision": 3,
+ "course": {
+  "id": "stats2",
+  "title": "統計検定2級",
+  "units": [
+   {
+    "id": "stats2:U01",
+    "number": "01",
+    "title": "割合・分数・式の変形",
+    "url": "https://app.notion.com/p/407b7cd539a181eab4e2e2b432162d65"
+   },
+   {
+    "id": "stats2:U02",
+    "number": "02",
+    "title": "関数・総和記号・階乗",
+    "url": "https://app.notion.com/p/407b7cd539a1811d9a89e46b452e6354"
+   },
+   {
+    "id": "stats2:U03",
+    "number": "03",
+    "title": "母集団と標本・母数と統計量",
+    "url": "https://app.notion.com/p/406b7cd539a18162b230fddc4cad9937"
+   },
+   {
+    "id": "stats2:U04",
+    "number": "04",
+    "title": "データの種類・測定尺度",
+    "url": "https://app.notion.com/p/406b7cd539a181ad89c5ebb1427a5ec5"
+   },
+   {
+    "id": "stats2:U05",
+    "number": "05",
+    "title": "度数分布・ヒストグラム・箱ひげ図",
+    "url": "https://app.notion.com/p/406b7cd539a181c6b10ceb390917d414"
+   },
+   {
+    "id": "stats2:U05T",
+    "number": "05-T",
+    "title": "時系列：変化・平均・繰返しを読む",
+    "url": "https://app.notion.com/p/406b7cd539a181f38500f08086ad379a"
+   },
+   {
+    "id": "stats2:U06",
+    "number": "06",
+    "title": "平均・中央値・最頻値・分位点",
+    "url": "https://app.notion.com/p/406b7cd539a181c39098d12d714d6480"
+   },
+   {
+    "id": "stats2:U07",
+    "number": "07",
+    "title": "分散・標準偏差・変動係数",
+    "url": "https://app.notion.com/p/406b7cd539a181d5aa31ef447de733e6"
+   },
+   {
+    "id": "stats2:U08",
+    "number": "08",
+    "title": "標準化・外れ値・歪度",
+    "url": "https://app.notion.com/p/407b7cd539a1819d8995c67174c803df"
+   },
+   {
+    "id": "stats2:U09",
+    "number": "09",
+    "title": "場合の数・順列・組合せ",
+    "url": "https://app.notion.com/p/406b7cd539a18111807cf1b85390f332"
+   },
+   {
+    "id": "stats2:U10",
+    "number": "10",
+    "title": "事象・確率の公理・加法則",
+    "url": "https://app.notion.com/p/407b7cd539a181d1a367f2fa210da98f"
+   },
+   {
+    "id": "stats2:U11",
+    "number": "11",
+    "title": "条件付き確率・独立・乗法則",
+    "url": "https://app.notion.com/p/407b7cd539a181288041cc74bcd625b5"
+   },
+   {
+    "id": "stats2:U12",
+    "number": "12",
+    "title": "全確率・ベイズの定理",
+    "url": "https://app.notion.com/p/407b7cd539a1813998ebdc86e6e71f03"
+   },
+   {
+    "id": "stats2:U13",
+    "number": "13",
+    "title": "確率変数・期待値・分散",
+    "url": "https://app.notion.com/p/407b7cd539a181f8bc27f67163370eb9"
+   },
+   {
+    "id": "stats2:U14",
+    "number": "14",
+    "title": "二項分布・ベルヌーイ分布",
+    "url": "https://app.notion.com/p/407b7cd539a1818f921ffa133256cbeb"
+   },
+   {
+    "id": "stats2:U15",
+    "number": "15",
+    "title": "ポアソン分布・離散分布の判断",
+    "url": "https://app.notion.com/p/407b7cd539a181788528f3ea6d48e0ac"
+   },
+   {
+    "id": "stats2:U16",
+    "number": "16",
+    "title": "連続分布・正規分布・標準化",
+    "url": "https://app.notion.com/p/407b7cd539a1810e8fa8d4c57ef9964a"
+   },
+   {
+    "id": "stats2:U17",
+    "number": "17",
+    "title": "母集団・標本・無作為抽出",
+    "url": "https://app.notion.com/p/407b7cd539a1817698d5e755ba7128cb"
+   },
+   {
+    "id": "stats2:U18",
+    "number": "18",
+    "title": "標本平均・標本分散の性質",
+    "url": "https://app.notion.com/p/407b7cd539a181faa20fc9a216f902b5"
+   },
+   {
+    "id": "stats2:U19",
+    "number": "19",
+    "title": "大数の法則・中心極限定理",
+    "url": "https://app.notion.com/p/407b7cd539a181e5ac2ade3402506e0e"
+   },
+   {
+    "id": "stats2:U20",
+    "number": "20",
+    "title": "標準誤差・t分布・カイ二乗分布・F分布",
+    "url": "https://app.notion.com/p/407b7cd539a1811c8b0fcd00ed6a62aa"
+   },
+   {
+    "id": "stats2:U21",
+    "number": "21",
+    "title": "点推定・不偏性・一致性",
+    "url": "https://app.notion.com/p/407b7cd539a18106b24add07e5c597cd"
+   },
+   {
+    "id": "stats2:U22",
+    "number": "22",
+    "title": "平均・割合の信頼区間",
+    "url": "https://app.notion.com/p/407b7cd539a181dc8a86f05216658645"
+   },
+   {
+    "id": "stats2:U23",
+    "number": "23",
+    "title": "分散・2群の推定",
+    "url": "https://app.notion.com/p/407b7cd539a1813888e2da7bd36a139c"
+   },
+   {
+    "id": "stats2:U24",
+    "number": "24",
+    "title": "仮説検定の考え方",
+    "url": "https://app.notion.com/p/407b7cd539a18160b785dc5ab8ea7f96"
+   },
+   {
+    "id": "stats2:U25",
+    "number": "25",
+    "title": "平均の t 検定",
+    "url": "https://app.notion.com/p/407b7cd539a181318485e2b4be5fa996"
+   },
+   {
+    "id": "stats2:U26",
+    "number": "26",
+    "title": "割合・分散の検定",
+    "url": "https://app.notion.com/p/407b7cd539a18167a276d90fd6725857"
+   },
+   {
+    "id": "stats2:U27",
+    "number": "27",
+    "title": "適合度・独立性のカイ二乗検定",
+    "url": "https://app.notion.com/p/407b7cd539a1814892fbc1cc03b5d535"
+   },
+   {
+    "id": "stats2:U28",
+    "number": "28",
+    "title": "共分散・相関係数と散布図",
+    "url": "https://app.notion.com/p/407b7cd539a181f489f4f8acca957300"
+   },
+   {
+    "id": "stats2:U29",
+    "number": "29",
+    "title": "単回帰・最小二乗・残差",
+    "url": "https://app.notion.com/p/407b7cd539a181d0a56dd2a7f54875b0"
+   },
+   {
+    "id": "stats2:U30",
+    "number": "30",
+    "title": "重回帰・係数の検定・決定係数",
+    "url": "https://app.notion.com/p/407b7cd539a181548861e8308deda690"
+   },
+   {
+    "id": "stats2:U31",
+    "number": "31",
+    "title": "標本調査・調査誤差・偏り",
+    "url": "https://app.notion.com/p/407b7cd539a181a88ab6c893703ac6ff"
+   },
+   {
+    "id": "stats2:U32",
+    "number": "32",
+    "title": "実験計画・分散分析",
+    "url": "https://app.notion.com/p/407b7cd539a1813db83be3c966e4afb2"
+   }
+  ]
+ },
+ "concepts": [
+  {
+   "id": "stats2:TERM-var",
+   "name": "分散",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U07",
+    "stats2:U13",
+    "stats2:U14",
+    "stats2:U18"
+   ],
+   "problems": [
+    "stats2:Q-U13-001",
+    "stats2:Q-U13-002",
+    "stats2:Q-U13-003",
+    "stats2:Q-U13-004",
+    "stats2:Q-U13-010",
+    "stats2:Q-U13-011",
+    "stats2:Q-U13-012",
+    "stats2:Q-U13-021",
+    "stats2:Q-U13-023",
+    "stats2:Q-U13-030",
+    "stats2:Q-U13-032",
+    "stats2:Q-U14-012",
+    "stats2:Q-U14-022",
+    "stats2:Q-U16-040"
+   ],
+   "en": "variance",
+   "definition": "確率変数が期待値からどれだけ散らばるかを、ずれの2乗の期待値で表した量。",
+   "principle": "(X−μ)² の期待値。2乗するので向きが消え、大きなずれほど重く効く。単位は元の単位の2乗になる。",
+   "formulas": [
+    {
+     "tex": "V(X)=E\\big[(X-\\mu)^2\\big]=E(X^2)-\\{E(X)\\}^2",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "μ",
+       "meaning": "X の期待値 E(X)",
+       "key": "mu",
+       "concept": "stats2:TERM-expect",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "pow",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "X"
+             },
+             {
+              "sym": "mu"
+             }
+            ]
+           },
+           {
+            "num": 2
+           }
+          ]
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "sub",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "op": "pow",
+            "args": [
+             {
+              "sym": "X"
+             },
+             {
+              "num": 2
+             }
+            ]
+           }
+          ],
+          "name": "E"
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "X"
+             }
+            ],
+            "name": "E"
+           },
+           {
+            "num": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "V(aX+b)=a^2V(X)",
+     "label": "1次式の分散",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "a",
+       "meaning": "掛ける定数（2乗で効く）",
+       "key": "a",
+       "kind": "const"
+      },
+      {
+       "symbol": "b",
+       "meaning": "足す定数（散らばりは変えない）",
+       "key": "b",
+       "kind": "const"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "add",
+          "args": [
+           {
+            "op": "mul",
+            "args": [
+             {
+              "sym": "a"
+             },
+             {
+              "sym": "X"
+             }
+            ]
+           },
+           {
+            "sym": "b"
+           }
+          ]
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "op": "pow",
+          "args": [
+           {
+            "sym": "a"
+           },
+           {
+            "num": 2
+           }
+          ]
+         },
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "X"
+           }
+          ],
+          "name": "V"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "期待値と、2乗の期待値が有限"
+    ],
+    "data": [
+     "外れ値が1つあると大きく変わる（2乗で効く）ので、分布の形も一緒に見る"
+    ]
+   },
+   "example": "さいころの目の分散は 91÷6−3.5²＝35/12≒2.92。",
+   "counterexample": "X＋Y の分散は、独立（または共分散が0）でなければ V(X)＋V(Y) にならない。",
+   "misconceptions": [
+    {
+     "misconception": "分散は「平均からのずれの平均」",
+     "correction": "ずれをそのまま平均すると0になる。2乗してから平均する"
+    },
+    {
+     "misconception": "分散と標準偏差は同じ単位",
+     "correction": "分散は元の単位の2乗。元の単位で言うなら平方根の標準偏差"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-var",
+     "title": "期待値ラボ",
+     "preset": "s1-var",
+     "purpose": "ずれの2乗の期待値として分散を組み立てる"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-sd",
+   "name": "標準偏差",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U07",
+    "stats2:U08",
+    "stats2:U13"
+   ],
+   "problems": [
+    "stats2:Q-U13-002",
+    "stats2:Q-U13-005",
+    "stats2:Q-U13-011",
+    "stats2:Q-U13-020",
+    "stats2:Q-U13-021",
+    "stats2:Q-U13-030",
+    "stats2:Q-U13-031",
+    "stats2:Q-U13-032",
+    "stats2:Q-U14-011",
+    "stats2:Q-U16-022",
+    "stats2:Q-U16-040"
+   ],
+   "en": "standard deviation",
+   "definition": "分散の正の平方根。散らばりを元の単位で表す。",
+   "principle": "分散は単位が2乗になるので、平方根をとって元の単位に戻す。期待値（平均）からの典型的なずれの大きさの目安。",
+   "formulas": [
+    {
+     "tex": "\\sigma=\\sqrt{V(X)}",
+     "symbols": [
+      {
+       "symbol": "σ",
+       "meaning": "標準偏差",
+       "range": "0以上",
+       "key": "sigma",
+       "kind": "param"
+      },
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "sym": "sigma"
+       },
+       {
+        "op": "sqrt",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "X"
+           }
+          ],
+          "name": "V"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "分散が有限"
+    ],
+    "data": [
+     "外れ値に強く引っ張られる（2乗が効く）。山が2つあるときや裾が長いときは、分布の形と一緒に見る"
+    ]
+   },
+   "example": "さいころの目の標準偏差は √(35/12)≒1.71。",
+   "counterexample": "標準偏差が同じでも、分布の形が違えば平均±1σ に入る割合は違う（正規分布で約68.3%、一様分布で約57.7%）。",
+   "misconceptions": [
+    {
+     "misconception": "標準偏差は「平均からのずれの平均」",
+     "correction": "ずれの2乗の平均の平方根。ずれの大きさ（絶対値）の平均と同じか、それより大きくなる"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-z",
+     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-sigma",
+     "title": "標準化ラボ",
+     "preset": "s1-sigma",
+     "purpose": "標準偏差が広がると、同じ値の z得点がどう変わるかを見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-std",
+   "name": "標準化",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U08",
+    "stats2:U16"
+   ],
+   "problems": [
+    "stats2:Q-U14-040",
+    "stats2:Q-U16-001",
+    "stats2:Q-U16-003",
+    "stats2:Q-U16-010",
+    "stats2:Q-U16-011",
+    "stats2:Q-U16-021",
+    "stats2:Q-U16-022",
+    "stats2:Q-U16-023",
+    "stats2:Q-U16-030",
+    "stats2:Q-U16-031"
+   ],
+   "en": "standardization",
+   "definition": "値から平均を引き、標準偏差で割って、平均0・標準偏差1 の尺度に直すこと。",
+   "principle": "1次の変換なので分布の形は変わらない。単位や大きさの違う値を「平均から標準偏差いくつ分か」で比べられる。正規分布なら標準正規分布 N(0, 1) になり、1つの表で確率が読める。",
+   "formulas": [
+    {
+     "tex": "Z=\\dfrac{X-\\mu}{\\sigma}",
+     "symbols": [
+      {
+       "symbol": "Z",
+       "meaning": "標準化した値（平均から標準偏差いくつ分か）",
+       "key": "Z",
+       "kind": "rv"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "μ",
+       "meaning": "X の期待値 E(X)",
+       "key": "mu",
+       "concept": "stats2:TERM-expect",
+       "kind": "param"
+      },
+      {
+       "symbol": "σ",
+       "meaning": "X の標準偏差",
+       "range": "0より大きい",
+       "key": "sigma",
+       "concept": "stats2:TERM-sd",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "sym": "Z"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "op": "sub",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "mu"
+           }
+          ]
+         },
+         {
+          "sym": "sigma"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(Z)=0",
+     "label": "標準化した値の期待値",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "Z",
+       "meaning": "標準化した値（平均から標準偏差いくつ分か）",
+       "key": "Z",
+       "kind": "rv"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "Z"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "num": 0
+       }
+      ]
+     }
+    },
+    {
+     "tex": "V(Z)=1",
+     "label": "標準化した値の分散",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "Z",
+       "meaning": "標準化した値（平均から標準偏差いくつ分か）",
+       "key": "Z",
+       "kind": "rv"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "Z"
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "num": 1
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "標準偏差が0でない"
+    ],
+    "data": [
+     "平均と標準偏差を、比べたい集団から出しているか（別の集団の値で割らない）"
+    ]
+   },
+   "example": "平均60点・標準偏差10点のテストで、80点は z＝2。",
+   "counterexample": "標準化しても分布の形は変わらない。右に裾の長いデータを標準化しても、正規分布にはならない。",
+   "misconceptions": [
+    {
+     "misconception": "標準化すると正規分布になる",
+     "correction": "位置と広がりをそろえるだけで、形は元のまま"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-z",
+     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-z",
+     "title": "標準化ラボ",
+     "preset": "s1-z",
+     "purpose": "単位や散らばりの違うものを z得点でそろえて比べる"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-normal",
+   "name": "正規分布",
+   "status": "filled",
+   "version": 2,
+   "units": [
+    "stats2:U08",
+    "stats2:U16",
+    "stats2:U19"
+   ],
+   "problems": [
+    "stats2:Q-U14-040",
+    "stats2:Q-U16-001",
+    "stats2:Q-U16-003",
+    "stats2:Q-U16-010",
+    "stats2:Q-U16-011",
+    "stats2:Q-U16-020",
+    "stats2:Q-U16-021",
+    "stats2:Q-U16-022",
+    "stats2:Q-U16-030",
+    "stats2:Q-U16-031"
+   ],
+   "en": "normal distribution",
+   "definition": "確率密度が f(x) の式で表される連続分布 N(μ, σ²)。平均 μ を中心に左右対称な釣鐘の形になる。",
+   "principle": "小さな独立の要因がたくさん足し合わさると、この形に近づく（中心極限定理）。μ と σ の2つで形が決まり、μ±σ に約68%、μ±2σ に約95% が入る。",
+   "formulas": [
+    {
+     "tex": "f(x)=\\dfrac{1}{\\sqrt{2\\pi}\\,\\sigma}\\exp\\!\\Big(-\\dfrac{(x-\\mu)^2}{2\\sigma^2}\\Big)",
+     "symbols": [
+      {
+       "symbol": "f(x)",
+       "meaning": "確率密度（高さ。面積が確率）",
+       "key": "f",
+       "concept": "stats2:TERM-pdf"
+      },
+      {
+       "symbol": "x",
+       "meaning": "値",
+       "key": "x",
+       "kind": "value"
+      },
+      {
+       "symbol": "μ",
+       "meaning": "平均（山の中心）",
+       "key": "mu",
+       "concept": "stats2:TERM-expect",
+       "kind": "param"
+      },
+      {
+       "symbol": "σ",
+       "meaning": "標準偏差（山の広がり）",
+       "range": "0より大きい",
+       "key": "sigma",
+       "concept": "stats2:TERM-sd",
+       "kind": "param"
+      },
+      {
+       "symbol": "π",
+       "meaning": "円周率",
+       "key": "pi",
+       "kind": "const"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "x"
+         }
+        ],
+        "name": "f"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "op": "div",
+          "args": [
+           {
+            "num": 1
+           },
+           {
+            "op": "mul",
+            "args": [
+             {
+              "op": "sqrt",
+              "args": [
+               {
+                "op": "mul",
+                "args": [
+                 {
+                  "num": 2
+                 },
+                 {
+                  "sym": "pi"
+                 }
+                ]
+               }
+              ]
+             },
+             {
+              "sym": "sigma"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "op": "fn",
+          "args": [
+           {
+            "op": "neg",
+            "args": [
+             {
+              "op": "div",
+              "args": [
+               {
+                "op": "pow",
+                "args": [
+                 {
+                  "op": "sub",
+                  "args": [
+                   {
+                    "sym": "x"
+                   },
+                   {
+                    "sym": "mu"
+                   }
+                  ]
+                 },
+                 {
+                  "num": 2
+                 }
+                ]
+               },
+               {
+                "op": "mul",
+                "args": [
+                 {
+                  "num": 2
+                 },
+                 {
+                  "op": "pow",
+                  "args": [
+                   {
+                    "sym": "sigma"
+                   },
+                   {
+                    "num": 2
+                   }
+                  ]
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ],
+          "name": "exp"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "確率密度が f(x) の式で表される（μ と σ で決まる）"
+    ],
+    "data": [
+     "ヒストグラムが左右対称で山が1つなのは手掛かりにすぎず、それだけでは正規分布と言えない（裾の重さなども見る）",
+     "正規分布を前提にする方法は、ずれがあると結論が揺れる"
+    ]
+   },
+   "example": "二項分布 B(100, 0.5) は、平均50・標準偏差5 の正規分布で近似できる。",
+   "counterexample": "売上や所得のように右に裾が長いデータでは、平均±2σ の中の割合は95%前後でも（対数正規分布で約96.3%）、外に出る分はほぼ右側だけ（左 0%・右 約3.7%）。平均±1σ の中は約91%で、正規分布の約68.3%と大きく違う。",
+   "misconceptions": [
+    {
+     "misconception": "左右対称で山が1つなら正規分布",
+     "correction": "左右対称な山1つの分布はほかにもある（裾の重い分布など）。形の手掛かりと、正規分布であることは別"
+    },
+    {
+     "misconception": "データはふつう正規分布になる",
+     "correction": "正規分布に近づくのは、独立な要因が足し合わさるときなど。売上・所得など右に裾の長いデータは多い"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-cont",
+     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s1-norm",
+     "title": "連続分布ラボ",
+     "preset": "s1-norm",
+     "purpose": "平均と標準偏差から、区間の確率を面積で読む"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-expect",
+   "name": "期待値",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U06",
+    "stats2:U13",
+    "stats2:U14",
+    "stats2:U15"
+   ],
+   "problems": [
+    "stats2:Q-U13-001",
+    "stats2:Q-U13-002",
+    "stats2:Q-U13-003",
+    "stats2:Q-U13-005",
+    "stats2:Q-U13-010",
+    "stats2:Q-U13-011",
+    "stats2:Q-U13-012",
+    "stats2:Q-U13-020",
+    "stats2:Q-U13-021",
+    "stats2:Q-U13-023",
+    "stats2:Q-U13-030",
+    "stats2:Q-U13-031",
+    "stats2:Q-U14-012",
+    "stats2:Q-U14-032"
+   ],
+   "en": "expected value",
+   "definition": "確率変数がとる値を、その確率で重み付けした平均。",
+   "principle": "値×確率の和。同じ試行を何度もくり返したときの平均の行き着く先になる（大数の法則）。和の期待値は期待値の和（線形性）。",
+   "formulas": [
+    {
+     "tex": "E(X)=\\sum_x x\\,p(x)",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "x",
+       "meaning": "X がとりうる値",
+       "key": "x",
+       "kind": "index"
+      },
+      {
+       "symbol": "p(x)",
+       "meaning": "X が x になる確率（重み）",
+       "range": "0以上1以下・合計1",
+       "key": "p",
+       "concept": "stats2:TERM-dist"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "sum",
+        "args": [
+         {
+          "op": "mul",
+          "args": [
+           {
+            "sym": "x"
+           },
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "x"
+             }
+            ],
+            "name": "p"
+           }
+          ]
+         }
+        ],
+        "var": "x"
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(aX+b)=aE(X)+b",
+     "label": "線形性",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "a",
+       "meaning": "掛ける定数（単位の換算）",
+       "key": "a",
+       "kind": "const"
+      },
+      {
+       "symbol": "b",
+       "meaning": "足す定数（一律の上乗せ）",
+       "key": "b",
+       "kind": "const"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "add",
+          "args": [
+           {
+            "op": "mul",
+            "args": [
+             {
+              "sym": "a"
+             },
+             {
+              "sym": "X"
+             }
+            ]
+           },
+           {
+            "sym": "b"
+           }
+          ]
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "add",
+        "args": [
+         {
+          "op": "mul",
+          "args": [
+           {
+            "sym": "a"
+           },
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "X"
+             }
+            ],
+            "name": "E"
+           }
+          ]
+         },
+         {
+          "sym": "b"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "和（連続なら積分）が有限の値になる"
+    ],
+    "data": [
+     "くり返しの平均として読むには、同じ条件の試行がくり返せること"
+    ]
+   },
+   "example": "さいころの目の期待値は (1＋2＋…＋6)÷6＝3.5。",
+   "counterexample": "期待値 3.5 の目は実際には出ない。期待値は「よく出る値」（最頻値）でも「真ん中の値」（中央値）でもない。",
+   "misconceptions": [
+    {
+     "misconception": "期待値は実際に出る値",
+     "correction": "何度もくり返したときの平均の行き着く先で、1回の結果としては出ないこともある"
+    },
+    {
+     "misconception": "期待値がいちばん出やすい値",
+     "correction": "いちばん出やすい値は最頻値。右に裾が長い分布では、期待値は最頻値より大きくなる"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
+     "title": "期待値ラボ",
+     "preset": "s1-dist",
+     "purpose": "期待値が分布の重心になることを、予想してから確かめる"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-indep",
+   "name": "独立",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U10",
+    "stats2:U11",
+    "stats2:U13",
+    "stats2:U14"
+   ],
+   "problems": [
+    "stats2:Q-U13-021",
+    "stats2:Q-U13-022",
+    "stats2:Q-U13-023",
+    "stats2:Q-U13-030",
+    "stats2:Q-U13-040",
+    "stats2:Q-U14-001",
+    "stats2:Q-U14-005",
+    "stats2:Q-U14-012",
+    "stats2:Q-U14-020",
+    "stats2:Q-U14-023",
+    "stats2:Q-U15-005",
+    "stats2:Q-U15-021"
+   ],
+   "en": "independence",
+   "definition": "一方が起きたかどうかで、もう一方の起こりやすさが変わらないこと。",
+   "principle": "P(A∩B)＝P(A)P(B)。確率変数なら同時の確率が積に分かれる。独立なら共分散は0になり、和の分散は分散の和になる。",
+   "formulas": [
+    {
+     "tex": "P(A\\cap B)=P(A)\\,P(B)",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "A",
+       "meaning": "事象",
+       "key": "A",
+       "kind": "value"
+      },
+      {
+       "symbol": "B",
+       "meaning": "事象",
+       "key": "B",
+       "kind": "value"
+      },
+      {
+       "symbol": "A∩B",
+       "meaning": "A と B が両方起きる",
+       "key": "AB",
+       "kind": "value"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "AB"
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "A"
+           }
+          ],
+          "name": "P"
+         },
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "B"
+           }
+          ],
+          "name": "P"
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "確率が決まった2つの事象（または確率変数）について言う"
+    ],
+    "data": [
+     "データで「独立」と言うには、仕組み（別々のさいころ・別々の客）から言えるか、検定などで確かめる。相関が0でも独立とは限らない"
+    ]
+   },
+   "example": "さいころを2回投げると、1回目と2回目の目は独立。両方6になる確率は 1/6×1/6＝1/36。",
+   "counterexample": "排反（同時に起きない）は独立ではない。P(A) と P(B) が0でなければ、排反なら P(A∩B)＝0 で P(A)P(B) と等しくない。",
+   "misconceptions": [
+    {
+     "misconception": "排反なら独立",
+     "correction": "排反は「同時に起きない」。一方が起きたらもう一方は起きないので、むしろ強く関係している"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s5-free",
+     "title": "期待値ラボ",
+     "preset": "s5-free",
+     "purpose": "P(両方)＝P(X)P(Y) のときに共分散が0になるのを見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-rv",
+   "name": "確率変数",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U13",
+    "stats2:U14"
+   ],
+   "problems": [],
+   "en": "random variable",
+   "definition": "試行の結果に応じて値が決まり、どの値が出るかが確率で表される量。",
+   "principle": "起こりうる値と、その確率の組（確率分布）で性質が決まる。1つの記録された値ではなく、記録する前の「値の出方」を扱う。",
+   "formulas": [
+    {
+     "tex": "P(X=x)=p(x)",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "x",
+       "meaning": "X がとる値",
+       "key": "x",
+       "kind": "value"
+      },
+      {
+       "symbol": "p(x)",
+       "meaning": "X が x になる確率",
+       "range": "0以上1以下",
+       "key": "p",
+       "concept": "stats2:TERM-dist"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "eq",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "x"
+           }
+          ]
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "x"
+         }
+        ],
+        "name": "p"
+       }
+      ]
+     }
+    },
+    {
+     "tex": "\\sum_x p(x)=1",
+     "label": "確率の合計",
+     "symbols": [
+      {
+       "symbol": "p(x)",
+       "meaning": "X が x になる確率",
+       "key": "p",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "x",
+       "meaning": "X がとる値",
+       "key": "x",
+       "kind": "index"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "sum",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "x"
+           }
+          ],
+          "name": "p"
+         }
+        ],
+        "var": "x"
+       },
+       {
+        "num": 1
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "起こりうる値の範囲が決まっている",
+     "各値の確率が0以上で、合計が1"
+    ],
+    "data": [
+     "「記録する前の値の出方」として扱えるか（同じ仕組みでくり返し起きるか）を確かめる"
+    ]
+   },
+   "example": "さいころの目 X は、1〜6 の値をそれぞれ確率 1/6 でとる。",
+   "counterexample": "「今日の売上 120万円」という1つの記録は確率変数ではなく、実現した1つの値。",
+   "misconceptions": [
+    {
+     "misconception": "確率変数は「でたらめな数」のこと",
+     "correction": "値の出方に決まった確率（分布）がある量。でたらめさの中に規則がある"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
+     "title": "期待値ラボ",
+     "preset": "s1-dist",
+     "purpose": "値と確率の一覧を動かして、確率変数が「値の出方の規則」を持つことを見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-dist",
+   "name": "確率分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U13"
+   ],
+   "problems": [
+    "stats2:Q-U13-012",
+    "stats2:Q-U13-020"
+   ],
+   "en": "probability distribution",
+   "definition": "確率変数がとる値と、それぞれの値をとる確率（連続なら確率密度）の対応。",
+   "principle": "起こりうる値を全部挙げ、確率を割り振ったもの。確率は0以上で、合計（連続なら面積）が1。期待値や分散は、分布を1つの数に要約したもの。",
+   "formulas": [
+    {
+     "tex": "\\sum_x p(x)=1",
+     "label": "確率の合計は1",
+     "symbols": [
+      {
+       "symbol": "p(x)",
+       "meaning": "X が x になる確率",
+       "range": "0以上1以下",
+       "key": "p"
+      },
+      {
+       "symbol": "x",
+       "meaning": "X がとる値",
+       "key": "x",
+       "kind": "index"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "sum",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "x"
+           }
+          ],
+          "name": "p"
+         }
+        ],
+        "var": "x"
+       },
+       {
+        "num": 1
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "どの値の確率も0以上",
+     "全部の値の確率の合計が1（連続なら密度の面積が1）"
+    ],
+    "data": [
+     "データの相対度数の一覧は、分布の推定値。データが少ないと形が揺れる"
+    ]
+   },
+   "example": "1人が買う個数が 0個 0.2・1個 0.5・2個 0.3 なら、合計が1なので確率分布になっている。",
+   "counterexample": "0個 0.2・1個 0.5・2個 0.4 は合計が 1.1 になるので、確率分布ではない。",
+   "misconceptions": [
+    {
+     "misconception": "確率分布はグラフの形のこと",
+     "correction": "中身は「値と確率の一覧」。棒グラフでも表でも、一覧が同じなら同じ分布"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
+     "title": "期待値ラボ",
+     "preset": "s1-dist",
+     "purpose": "値と確率の一覧を変えると、期待値（重心）がどう動くかを見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-cov",
+   "name": "共分散",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U13",
+    "stats2:U28"
+   ],
+   "problems": [
+    "stats2:Q-U13-004",
+    "stats2:Q-U13-022",
+    "stats2:Q-U13-023",
+    "stats2:Q-U13-032",
+    "stats2:Q-U13-040"
+   ],
+   "en": "covariance",
+   "definition": "2つの確率変数が、それぞれの期待値から同じ向きにずれるか逆向きにずれるかを、ずれの積の期待値で表した量。",
+   "principle": "(X−μ_X)(Y−μ_Y) の期待値。同じ向きのずれが多いと正、逆向きが多いと負。和の分散に 2Cov として効く。",
+   "formulas": [
+    {
+     "tex": "\\mathrm{Cov}(X,Y)=E\\big[(X-\\mu_X)(Y-\\mu_Y)\\big]=E(XY)-E(X)E(Y)",
+     "symbols": [
+      {
+       "symbol": "Cov(X, Y)",
+       "meaning": "X と Y の共分散",
+       "key": "Cov"
+      },
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "Y",
+       "meaning": "確率変数",
+       "key": "Y",
+       "kind": "rv"
+      },
+      {
+       "symbol": "μ_X",
+       "meaning": "X の期待値",
+       "key": "muX",
+       "concept": "stats2:TERM-expect",
+       "kind": "param"
+      },
+      {
+       "symbol": "μ_Y",
+       "meaning": "Y の期待値",
+       "key": "muY",
+       "concept": "stats2:TERM-expect",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         },
+         {
+          "sym": "Y"
+         }
+        ],
+        "name": "Cov"
+       },
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "mul",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "X"
+             },
+             {
+              "sym": "muX"
+             }
+            ]
+           },
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "Y"
+             },
+             {
+              "sym": "muY"
+             }
+            ]
+           }
+          ]
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "sub",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "op": "mul",
+            "args": [
+             {
+              "sym": "X"
+             },
+             {
+              "sym": "Y"
+             }
+            ]
+           }
+          ],
+          "name": "E"
+         },
+         {
+          "op": "mul",
+          "args": [
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "X"
+             }
+            ],
+            "name": "E"
+           },
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "Y"
+             }
+            ],
+            "name": "E"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "V(X+Y)=V(X)+V(Y)+2\\,\\mathrm{Cov}(X,Y)",
+     "label": "和の分散",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "Cov( )",
+       "meaning": "共分散（ずれの積の期待値）",
+       "key": "Cov",
+       "concept": "stats2:TERM-cov"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "Y",
+       "meaning": "確率変数",
+       "key": "Y",
+       "kind": "rv"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "add",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "Y"
+           }
+          ]
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "op": "add",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "X"
+           }
+          ],
+          "name": "V"
+         },
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "Y"
+           }
+          ],
+          "name": "V"
+         },
+         {
+          "op": "mul",
+          "args": [
+           {
+            "num": 2
+           },
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "X"
+             },
+             {
+              "sym": "Y"
+             }
+            ],
+            "name": "Cov"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "X・Y の分散が有限"
+    ],
+    "data": [
+     "単位で値が変わる（円を千円にすると1000分の1）。関係の強さを比べるなら相関係数にする",
+     "直線的な関係しか測らない"
+    ]
+   },
+   "example": "X が 0・1 を確率 1/2 ずつとり Y＝X のとき、Cov(X, Y)＝V(X)＝1/2−(1/2)²＝1/4。",
+   "counterexample": "X が −1・0・1 を確率 1/3 ずつとり Y＝X² のとき、Y は X で決まるのに Cov(X, Y)＝0（無相関でも独立ではない）。",
+   "misconceptions": [
+    {
+     "misconception": "共分散が0なら関係がない（独立）",
+     "correction": "0なのは直線的な関係がないだけ。Y＝X² のように強い関係があっても0になる"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s5-free",
+     "title": "期待値ラボ",
+     "preset": "s5-free",
+     "purpose": "同時分布で共分散を0にすると独立になる場合を確かめる"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-binom",
+   "name": "二項分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U14",
+    "stats2:U15",
+    "stats2:U19"
+   ],
+   "problems": [
+    "stats2:Q-U14-001",
+    "stats2:Q-U14-002",
+    "stats2:Q-U14-003",
+    "stats2:Q-U14-004",
+    "stats2:Q-U14-005",
+    "stats2:Q-U14-010",
+    "stats2:Q-U14-011",
+    "stats2:Q-U14-012",
+    "stats2:Q-U14-020",
+    "stats2:Q-U14-021",
+    "stats2:Q-U14-022",
+    "stats2:Q-U14-023",
+    "stats2:Q-U14-030",
+    "stats2:Q-U14-031",
+    "stats2:Q-U14-032",
+    "stats2:Q-U15-012",
+    "stats2:Q-U15-020"
+   ],
+   "en": "binomial distribution",
+   "definition": "成功確率 p の独立な試行を n 回くり返したときの、成功した回数の分布 B(n, p)。",
+   "principle": "「どの k 回が成功か」の組合せ ₙCₖ と、その1通りの確率 pᵏ(1−p)ⁿ⁻ᵏ の積。成功回数は n 個の「成功1・失敗0」の和なので、期待値と分散が和から求まる。",
+   "formulas": [
+    {
+     "tex": "P(X=k)={}_nC_k\\,p^k(1-p)^{n-k}",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "n",
+       "meaning": "試行の回数",
+       "range": "1以上の整数",
+       "key": "n",
+       "kind": "param"
+      },
+      {
+       "symbol": "k",
+       "meaning": "成功の回数",
+       "range": "0以上 n 以下の整数",
+       "key": "k",
+       "kind": "value"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "range": "0以上1以下",
+       "key": "p",
+       "kind": "param"
+      },
+      {
+       "symbol": "ₙCₖ",
+       "meaning": "n 回から成功の k 回を選ぶ組合せの数",
+       "key": "comb",
+       "concept": "stats2:TERM-comb"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "eq",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "n"
+           },
+           {
+            "sym": "k"
+           }
+          ],
+          "name": "comb"
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "sym": "p"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "num": 1
+             },
+             {
+              "sym": "p"
+             }
+            ]
+           },
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "n"
+             },
+             {
+              "sym": "k"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(X)=np",
+     "label": "期待値",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "n",
+       "meaning": "試行の回数",
+       "range": "1以上の整数",
+       "key": "n",
+       "kind": "param"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "range": "0以上1以下",
+       "key": "p",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "sym": "n"
+         },
+         {
+          "sym": "p"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "V(X)=np(1-p)",
+     "label": "分散",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "n",
+       "meaning": "試行の回数",
+       "range": "1以上の整数",
+       "key": "n",
+       "kind": "param"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "range": "0以上1以下",
+       "key": "p",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "sym": "n"
+         },
+         {
+          "sym": "p"
+         },
+         {
+          "op": "sub",
+          "args": [
+           {
+            "num": 1
+           },
+           {
+            "sym": "p"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "回数 n が決まっている",
+     "結果が成功・失敗の2つ",
+     "各回の成功確率 p が同じ",
+     "各回が独立"
+    ],
+    "data": [
+     "客ごとの購入のように、互いに影響しない（口コミや連れ立ちがない）か、p が客や時間でほぼ同じかを確かめる"
+    ]
+   },
+   "example": "来店客10人がそれぞれ確率 0.3 で買う（互いに独立）なら、買う人数は B(10, 0.3)。期待値は3人、分散は2.1。",
+   "counterexample": "箱から戻さずに取り出すと、各回の確率が変わり独立でもないので二項分布ではない（超幾何分布）。",
+   "misconceptions": [
+    {
+     "misconception": "ちょうど期待値 np 回になる確率が高い",
+     "correction": "np 回はいちばん起きやすい付近だが、その確率自体は小さいことが多い（n が大きいほど小さい）"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-binom",
+     "url": "https://watanabe-masao.github.io/stats2-labs/binom/?p=s1-path",
+     "title": "二項分布ラボ",
+     "preset": "s1-path",
+     "purpose": "並び方の数×1つの並びの確率を、予想してから確かめる"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-poisson",
+   "name": "ポアソン分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U15"
+   ],
+   "problems": [
+    "stats2:Q-U15-001",
+    "stats2:Q-U15-002",
+    "stats2:Q-U15-003",
+    "stats2:Q-U15-004",
+    "stats2:Q-U15-005",
+    "stats2:Q-U15-010",
+    "stats2:Q-U15-012",
+    "stats2:Q-U15-020",
+    "stats2:Q-U15-023",
+    "stats2:Q-U15-030",
+    "stats2:Q-U15-032",
+    "stats2:Q-U16-012"
+   ],
+   "en": "Poisson distribution",
+   "definition": "一定の時間や範囲で、まれな出来事が平均 λ 回起きるときの、起きた回数の分布。",
+   "principle": "二項分布で n を大きく、p を小さくし、np＝λ を保ったときに行き着く形。期待値と分散がどちらも λ になる。",
+   "formulas": [
+    {
+     "tex": "P(X=k)=\\dfrac{e^{-\\lambda}\\lambda^k}{k!}",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "λ",
+       "meaning": "一定の範囲あたりの平均件数",
+       "range": "0より大きい",
+       "key": "lambda",
+       "kind": "param"
+      },
+      {
+       "symbol": "k",
+       "meaning": "起きた件数",
+       "range": "0以上の整数",
+       "key": "k",
+       "kind": "value"
+      },
+      {
+       "symbol": "e",
+       "meaning": "自然対数の底（約2.718）",
+       "key": "e",
+       "kind": "const"
+      },
+      {
+       "symbol": "k!",
+       "meaning": "k の階乗",
+       "key": "fact",
+       "concept": "stats2:TERM-fact"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "eq",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "op": "mul",
+          "args": [
+           {
+            "op": "pow",
+            "args": [
+             {
+              "sym": "e"
+             },
+             {
+              "op": "neg",
+              "args": [
+               {
+                "sym": "lambda"
+               }
+              ]
+             }
+            ]
+           },
+           {
+            "op": "pow",
+            "args": [
+             {
+              "sym": "lambda"
+             },
+             {
+              "sym": "k"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "k"
+           }
+          ],
+          "name": "fact"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(X)=V(X)=\\lambda",
+     "label": "期待値と分散",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "λ",
+       "meaning": "一定の範囲あたりの平均件数",
+       "range": "0より大きい",
+       "key": "lambda",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "sym": "lambda"
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "出来事が互いに独立に起きる",
+     "同時に2つは起きない",
+     "起きる平均の割合が一定"
+    ],
+    "data": [
+     "時間帯や曜日で割合が変わらないか、分散が平均とほぼ同じかを確かめる（分散が大きければ当てはまっていない）"
+    ]
+   },
+   "example": "1時間に平均2件の問い合わせがあるとき、ある1時間に1件もない確率は e⁻²≒0.135。",
+   "counterexample": "昼に集中する来店のように時間帯で割合が変わるなら、1日をまとめて1つのポアソン分布にしてはいけない。",
+   "misconceptions": [
+    {
+     "misconception": "まれな出来事なら何でもポアソン分布",
+     "correction": "起きる割合が一定で、互いに独立に起きることが要る。連鎖して起きる出来事（クレームが続くなど）は当てはまらない"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s1-pois",
+     "title": "離散分布ラボ",
+     "preset": "s1-pois",
+     "purpose": "平均件数 λ から、k 件の確率を読む"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-geom",
+   "name": "幾何分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U15"
+   ],
+   "problems": [
+    "stats2:Q-U15-011",
+    "stats2:Q-U15-020"
+   ],
+   "en": "geometric distribution",
+   "definition": "成功確率 p の独立な試行を、初めて成功するまで繰り返したときの試行回数の分布。",
+   "principle": "k−1 回続けて失敗してから成功する確率なので (1−p)^(k−1)p。毎回の確率が同じで独立なので、それまでの失敗は次の確率を変えない（無記憶性）。",
+   "formulas": [
+    {
+     "tex": "P(X=k)=(1-p)^{k-1}p\\quad(k=1,2,\\dots)",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "k",
+       "meaning": "初めて成功した回（成功した回も数える）",
+       "range": "1以上の整数",
+       "key": "k",
+       "kind": "value"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "range": "0より大きく1以下",
+       "key": "p",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "eq",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "op": "pow",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "num": 1
+             },
+             {
+              "sym": "p"
+             }
+            ]
+           },
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "k"
+             },
+             {
+              "num": 1
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "sym": "p"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(X)=\\frac{1}{p}",
+     "label": "期待値",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "range": "0より大きく1以下",
+       "key": "p",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "num": 1
+         },
+         {
+          "sym": "p"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "V(X)=\\frac{1-p}{p^2}",
+     "label": "分散",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "range": "0より大きく1以下",
+       "key": "p",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "op": "sub",
+          "args": [
+           {
+            "num": 1
+           },
+           {
+            "sym": "p"
+           }
+          ]
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "sym": "p"
+           },
+           {
+            "num": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "各回が独立",
+     "成功確率 p が毎回同じ"
+    ],
+    "data": [
+     "回を重ねるほど成功しやすくなる（慣れ・学習）や、しにくくなる場面には当てはまらない",
+     "「失敗の回数」で数える流儀もある（期待値は (1−p)/p）。問題文の数え方を確かめる"
+    ]
+   },
+   "example": "さいころで初めて6が出るまでの回数の期待値は 1÷(1/6)＝6回。",
+   "counterexample": "期待値が6回でも、いちばん起きやすいのは1回目（確率 1/6）。6回目に初めて出る確率は (5/6)⁵×(1/6)≒0.067 と小さい。",
+   "misconceptions": [
+    {
+     "misconception": "5回続けて外れたので、次は当たりやすい",
+     "correction": "各回は独立なので、次の当たる確率は p のまま（無記憶性）"
+    },
+    {
+     "misconception": "幾何分布の期待値はいつも 1/p",
+     "correction": "失敗の回数で数えると (1−p)/p。何を数えるかで式が変わる"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free",
+     "title": "離散分布ラボ",
+     "preset": "s3-free",
+     "purpose": "「成功するまで」のモードで、初めて成功する回の確率と平均を見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-negbinom",
+   "name": "負の二項分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U15"
+   ],
+   "problems": [
+    "stats2:Q-U15-021"
+   ],
+   "en": "negative binomial distribution",
+   "definition": "成功確率 p の独立な試行を、r 回目の成功が起きるまで繰り返したときの試行回数の分布。",
+   "principle": "k 回目に r 回目の成功が起きるのは、それまでの k−1 回にちょうど r−1 回成功し、k 回目に成功するとき。並び方の数 ₖ₋₁C_{r−1} を掛ける。r＝1 なら幾何分布。",
+   "formulas": [
+    {
+     "tex": "P(X=k)={}_{k-1}C_{r-1}\\,p^r(1-p)^{k-r}\\quad(k=r,r+1,\\dots)",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "k",
+       "meaning": "r 回目の成功が起きた回（成功した回も数える）",
+       "key": "k",
+       "kind": "value",
+       "range": "r 以上の整数"
+      },
+      {
+       "symbol": "r",
+       "meaning": "待つ成功の回数",
+       "key": "r",
+       "kind": "param",
+       "range": "1以上の整数"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "key": "p",
+       "kind": "param",
+       "range": "0より大きく1以下"
+      },
+      {
+       "symbol": "ₖ₋₁C_{r−1}",
+       "meaning": "前の k−1 回から成功の r−1 回を選ぶ組合せの数",
+       "key": "comb",
+       "concept": "stats2:TERM-comb"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "eq",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "k"
+             },
+             {
+              "num": 1
+             }
+            ]
+           },
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "r"
+             },
+             {
+              "num": 1
+             }
+            ]
+           }
+          ],
+          "name": "comb"
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "sym": "p"
+           },
+           {
+            "sym": "r"
+           }
+          ]
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "num": 1
+             },
+             {
+              "sym": "p"
+             }
+            ]
+           },
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "k"
+             },
+             {
+              "sym": "r"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "各回が独立",
+     "成功確率 p が毎回同じ"
+    ],
+    "data": [
+     "「r 回成功するまで」を数える場面（3件成約するまでの訪問回数など）。回数を決めて成功の数を数えるなら二項分布"
+    ]
+   },
+   "example": "成功率0.5で、2回目の成功がちょうど3回目の試行で起きる確率は ₂C₁×0.5²×0.5＝0.25。",
+   "counterexample": "回数 n を先に決めて成功の数を数えるなら二項分布。何を固定し、何を数えるかが逆になる。",
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free",
+     "title": "離散分布ラボ",
+     "preset": "s3-free",
+     "purpose": "「成功するまで」のモードで r を増やし、r＝1 の幾何分布から形が変わるのを見る"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-hyper",
+   "name": "超幾何分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U15"
+   ],
+   "problems": [
+    "stats2:Q-U15-022",
+    "stats2:Q-U15-031"
+   ],
+   "en": "hypergeometric distribution",
+   "definition": "N 個のうち当たりが M 個ある集団から、n 個を戻さずに取り出したときの、当たりの個数の分布。",
+   "principle": "取り出し方の組合せの数の比。戻さないので、1個取るたびに残りの当たりの割合が変わる（各回は独立ではない）。",
+   "formulas": [
+    {
+     "tex": "P(X=k)=\\frac{\\binom{M}{k}\\binom{N-M}{n-k}}{\\binom{N}{n}}",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "N",
+       "meaning": "集団の個数",
+       "key": "N",
+       "kind": "param"
+      },
+      {
+       "symbol": "M",
+       "meaning": "集団の中の当たりの個数",
+       "key": "M",
+       "kind": "param"
+      },
+      {
+       "symbol": "n",
+       "meaning": "取り出す個数",
+       "key": "n",
+       "kind": "param"
+      },
+      {
+       "symbol": "k",
+       "meaning": "取り出した中の当たりの個数",
+       "key": "k",
+       "kind": "value"
+      },
+      {
+       "symbol": "C( , )",
+       "meaning": "組合せの数",
+       "key": "comb",
+       "concept": "stats2:TERM-comb"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "eq",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "op": "mul",
+          "args": [
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "M"
+             },
+             {
+              "sym": "k"
+             }
+            ],
+            "name": "comb"
+           },
+           {
+            "op": "fn",
+            "args": [
+             {
+              "op": "sub",
+              "args": [
+               {
+                "sym": "N"
+               },
+               {
+                "sym": "M"
+               }
+              ]
+             },
+             {
+              "op": "sub",
+              "args": [
+               {
+                "sym": "n"
+               },
+               {
+                "sym": "k"
+               }
+              ]
+             }
+            ],
+            "name": "comb"
+           }
+          ]
+         },
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "N"
+           },
+           {
+            "sym": "n"
+           }
+          ],
+          "name": "comb"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(X)=n\\frac{M}{N}",
+     "label": "期待値",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "n",
+       "meaning": "取り出す個数",
+       "key": "n",
+       "kind": "param"
+      },
+      {
+       "symbol": "M",
+       "meaning": "集団の中の当たりの個数",
+       "key": "M",
+       "kind": "param"
+      },
+      {
+       "symbol": "N",
+       "meaning": "集団の個数",
+       "key": "N",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "sym": "n"
+         },
+         {
+          "op": "div",
+          "args": [
+           {
+            "sym": "M"
+           },
+           {
+            "sym": "N"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "戻さずに取り出す",
+     "どの n 個の組も同じ確率で選ばれる"
+    ],
+    "data": [
+     "集団 N が取り出す数 n に比べて十分大きいと、二項分布 B(n, M/N) とほとんど同じになる"
+    ]
+   },
+   "example": "10個中3個が不良の箱から2個取り出して、2個とも不良の確率は C(3,2)÷C(10,2)＝3/45＝1/15。",
+   "counterexample": "戻して取り出すと二項分布 B(2, 0.3) になり、2個とも不良の確率は 0.09。戻さないとき（1/15≒0.067）と違う。",
+   "misconceptions": [
+    {
+     "misconception": "抜き取り検査はいつでも二項分布",
+     "correction": "戻さないので本当は超幾何分布。集団が大きいときだけ二項分布で近似できる"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-hyper",
+     "title": "離散分布ラボ",
+     "preset": "rel-hyper",
+     "purpose": "戻さず取り出す確率を、戻す場合（二項分布）と比べる"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-expo",
+   "name": "指数分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U16"
+   ],
+   "problems": [
+    "stats2:Q-U15-040",
+    "stats2:Q-U16-005",
+    "stats2:Q-U16-012",
+    "stats2:Q-U16-020",
+    "stats2:Q-U16-023",
+    "stats2:Q-U16-032"
+   ],
+   "en": "exponential distribution",
+   "definition": "一定の割合 λ で独立に起きる出来事の、次に起きるまでの待ち時間の分布。",
+   "principle": "密度 λe^(−λx)。待つほど密度が下がる、右に裾の長い形。すでに待った時間は残りの待ち時間を変えない（無記憶性）。ポアソン分布で数える出来事の間隔にあたる。",
+   "formulas": [
+    {
+     "tex": "f(x)=\\lambda e^{-\\lambda x}\\quad(x\\ge 0)",
+     "symbols": [
+      {
+       "symbol": "f(x)",
+       "meaning": "確率密度（高さ。面積が確率）",
+       "key": "f",
+       "concept": "stats2:TERM-pdf"
+      },
+      {
+       "symbol": "λ",
+       "meaning": "単位時間あたりに起きる平均の回数",
+       "range": "0より大きい",
+       "key": "lambda",
+       "kind": "param"
+      },
+      {
+       "symbol": "x",
+       "meaning": "待ち時間",
+       "range": "0以上",
+       "key": "x",
+       "kind": "value"
+      },
+      {
+       "symbol": "e",
+       "meaning": "自然対数の底（約2.718）",
+       "key": "e",
+       "kind": "const"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "x"
+         }
+        ],
+        "name": "f"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "sym": "lambda"
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "sym": "e"
+           },
+           {
+            "op": "neg",
+            "args": [
+             {
+              "op": "mul",
+              "args": [
+               {
+                "sym": "lambda"
+               },
+               {
+                "sym": "x"
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "P(X>x)=e^{-\\lambda x}",
+     "label": "待ち時間が x を超える確率",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "λ",
+       "meaning": "単位時間あたりに起きる平均の回数",
+       "range": "0より大きい",
+       "key": "lambda",
+       "kind": "param"
+      },
+      {
+       "symbol": "x",
+       "meaning": "待ち時間",
+       "range": "0以上",
+       "key": "x",
+       "kind": "value"
+      },
+      {
+       "symbol": "e",
+       "meaning": "自然対数の底（約2.718）",
+       "key": "e",
+       "kind": "const"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "x"
+           }
+          ],
+          "name": "gt"
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "pow",
+        "args": [
+         {
+          "sym": "e"
+         },
+         {
+          "op": "neg",
+          "args": [
+           {
+            "op": "mul",
+            "args": [
+             {
+              "sym": "lambda"
+             },
+             {
+              "sym": "x"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(X)=\\frac{1}{\\lambda}",
+     "label": "期待値",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "λ",
+       "meaning": "単位時間あたりに起きる平均の回数",
+       "range": "0より大きい",
+       "key": "lambda",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "num": 1
+         },
+         {
+          "sym": "lambda"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "V(X)=\\frac{1}{\\lambda^2}",
+     "label": "分散",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "λ",
+       "meaning": "単位時間あたりに起きる平均の回数",
+       "range": "0より大きい",
+       "key": "lambda",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "num": 1
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "sym": "lambda"
+           },
+           {
+            "num": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "λ＞0",
+     "出来事が一定の割合で独立に起きる"
+    ],
+    "data": [
+     "時間帯で起きる割合が変わる（昼と夕方で客の来方が違う）と当てはまらない。時間帯を分けて見る"
+    ]
+   },
+   "example": "1時間に平均4人来る（λ＝4/時）とき、次の客までの平均の待ち時間は 1/4 時間＝15分。",
+   "counterexample": "10分待っても、そこから先の待ち時間の分布は待ち始めと同じ。「そろそろ来るはず」は成り立たない。",
+   "misconceptions": [
+    {
+     "misconception": "平均15分なら、15分あたりで来ることが多い",
+     "correction": "密度は0分がいちばん高く、待つほど下がる。平均より早く来る確率は 1−e^(−1)≒63%"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-cont",
+     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s5-free",
+     "title": "連続分布ラボ",
+     "preset": "s5-free",
+     "purpose": "すでに待った時間を動かしても、その先の確率が変わらないのを見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-pdf",
+   "name": "確率密度関数",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U16"
+   ],
+   "problems": [
+    "stats2:Q-U16-004",
+    "stats2:Q-U16-020",
+    "stats2:Q-U16-023"
+   ],
+   "en": "probability density function",
+   "definition": "連続な確率変数で、区間に入る確率を、その区間の下の面積で表す関数。",
+   "principle": "連続では1点の確率は0で、確率は面積（積分）で決まる。高さ f(x) は「その付近の出やすさの密度」。",
+   "formulas": [
+    {
+     "tex": "P(a\\le X\\le b)=\\int_a^b f(x)\\,dx",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "f(x)",
+       "meaning": "確率密度（高さ）",
+       "range": "0以上（1を超えてもよい）",
+       "key": "f"
+      },
+      {
+       "symbol": "x",
+       "meaning": "積分で動かす値",
+       "key": "x",
+       "kind": "index"
+      },
+      {
+       "symbol": "a",
+       "meaning": "区間の左端",
+       "key": "a",
+       "kind": "value"
+      },
+      {
+       "symbol": "b",
+       "meaning": "区間の右端",
+       "key": "b",
+       "kind": "value"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "a"
+           },
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "b"
+           }
+          ],
+          "name": "between"
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "int",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "x"
+           }
+          ],
+          "name": "f"
+         }
+        ],
+        "var": "x",
+        "lower": {
+         "sym": "a"
+        },
+        "upper": {
+         "sym": "b"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "tex": "\\int_{-\\infty}^{\\infty} f(x)\\,dx=1",
+     "label": "全体の面積は1",
+     "symbols": [
+      {
+       "symbol": "f(x)",
+       "meaning": "確率密度（高さ）",
+       "key": "f"
+      },
+      {
+       "symbol": "x",
+       "meaning": "積分で動かす値",
+       "key": "x",
+       "kind": "index"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "int",
+        "args": [
+         {
+          "op": "fn",
+          "args": [
+           {
+            "sym": "x"
+           }
+          ],
+          "name": "f"
+         }
+        ],
+        "var": "x"
+       },
+       {
+        "num": 1
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "f(x) が0以上",
+     "全体の面積が1"
+    ],
+    "data": [
+     "ヒストグラムを「相対度数÷階級の幅」で描くと、密度の推定になる"
+    ]
+   },
+   "example": "0〜10分に一様に来るバスで、3〜5分の間に来る確率は 2÷10＝0.2。",
+   "counterexample": "0〜0.5 の一様分布の密度の高さは 2 で、1を超える。密度は確率ではないので1を超えてよい。",
+   "misconceptions": [
+    {
+     "misconception": "f(x) は X が x になる確率",
+     "correction": "連続では1点の確率は0。f(x) は面積を作る高さで、確率は区間の面積"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-cont",
+     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s1-dens",
+     "title": "連続分布ラボ",
+     "preset": "s1-dens",
+     "purpose": "密度の高さは1を超えても、面積は1のままなのを見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-uniform",
+   "name": "一様分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U16"
+   ],
+   "problems": [
+    "stats2:Q-U16-002",
+    "stats2:Q-U16-004",
+    "stats2:Q-U16-020",
+    "stats2:Q-U16-023",
+    "stats2:Q-U16-040"
+   ],
+   "en": "uniform distribution",
+   "definition": "区間 [a, b] のどこにも同じ密度で値をとる連続分布。",
+   "principle": "密度は 1/(b−a) で一定なので、確率は区間の長さに比例する。",
+   "formulas": [
+    {
+     "tex": "f(x)=\\frac{1}{b-a}\\quad(a\\le x\\le b)",
+     "symbols": [
+      {
+       "symbol": "f(x)",
+       "meaning": "確率密度（高さ。面積が確率）",
+       "key": "f",
+       "concept": "stats2:TERM-pdf"
+      },
+      {
+       "symbol": "x",
+       "meaning": "値",
+       "key": "x",
+       "kind": "value"
+      },
+      {
+       "symbol": "a",
+       "meaning": "値のとりうる範囲の左端",
+       "key": "a",
+       "kind": "param"
+      },
+      {
+       "symbol": "b",
+       "meaning": "値のとりうる範囲の右端",
+       "range": "a より大きい",
+       "key": "b",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "x"
+         }
+        ],
+        "name": "f"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "num": 1
+         },
+         {
+          "op": "sub",
+          "args": [
+           {
+            "sym": "b"
+           },
+           {
+            "sym": "a"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "E(X)=\\frac{a+b}{2}",
+     "label": "期待値",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "a",
+       "meaning": "値のとりうる範囲の左端",
+       "key": "a",
+       "kind": "param"
+      },
+      {
+       "symbol": "b",
+       "meaning": "値のとりうる範囲の右端",
+       "range": "a より大きい",
+       "key": "b",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "op": "add",
+          "args": [
+           {
+            "sym": "a"
+           },
+           {
+            "sym": "b"
+           }
+          ]
+         },
+         {
+          "num": 2
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tex": "V(X)=\\frac{(b-a)^2}{12}",
+     "label": "分散",
+     "symbols": [
+      {
+       "symbol": "V( )",
+       "meaning": "分散（ずれの2乗の期待値）",
+       "key": "V",
+       "concept": "stats2:TERM-var"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "a",
+       "meaning": "値のとりうる範囲の左端",
+       "key": "a",
+       "kind": "param"
+      },
+      {
+       "symbol": "b",
+       "meaning": "値のとりうる範囲の右端",
+       "range": "a より大きい",
+       "key": "b",
+       "kind": "param"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "sym": "X"
+         }
+        ],
+        "name": "V"
+       },
+       {
+        "op": "div",
+        "args": [
+         {
+          "op": "pow",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "sym": "b"
+             },
+             {
+              "sym": "a"
+             }
+            ]
+           },
+           {
+            "num": 2
+           }
+          ]
+         },
+         {
+          "num": 12
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "conditions": {
+    "math": [
+     "a＜b",
+     "区間の外の密度は0"
+    ],
+    "data": [
+     "「どこも同じ出やすさ」は仮定。ヒストグラムが平らかで確かめる"
+    ]
+   },
+   "example": "0〜10分の一様分布の期待値は5分、分散は 100/12≒8.33。",
+   "counterexample": "平均±1σ に入る割合は 1/√3≒57.7% で、正規分布の約68.3%と違う。標準偏差が同じでも、形が違えば割合は違う。",
+   "misconceptions": [
+    {
+     "misconception": "一様分布なら、どの値も同じ確率で出る",
+     "correction": "連続なので1点の確率は0。同じなのは「同じ長さの区間に入る確率」"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-cont",
+     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s3-free",
+     "title": "連続分布ラボ",
+     "preset": "s3-free",
+     "purpose": "「一様分布」のモードで、確率が区間の長さに比例するのを見る"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-clt",
+   "name": "中心極限定理",
+   "status": "stub",
+   "version": 1,
+   "units": [
+    "stats2:U19"
+   ],
+   "problems": [],
+   "en": "central limit theorem"
+  }
+ ],
+ "relations": [
+  {
+   "id": "stats2:REL-rv-expect",
+   "version": 1,
+   "from": "stats2:TERM-rv",
+   "to": "stats2:TERM-expect",
+   "type": "前提",
+   "description": "期待値は、確率変数のとる値とその確率から作る。",
+   "units": [
+    "stats2:U13"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-expect-var",
+   "version": 1,
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-var",
+   "type": "前提",
+   "description": "分散は「期待値からのずれ」の2乗の期待値。期待値がなければ測る基準がない。",
+   "units": [
+    "stats2:U13"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-indep-binom",
+   "version": 1,
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-binom",
+   "type": "前提",
+   "description": "各回が独立なので、1通りの確率が掛け算 pᵏ(1−p)ⁿ⁻ᵏ で求まる。",
+   "units": [
+    "stats2:U14"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-binom-poisson",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-poisson",
+   "type": "変換",
+   "description": "二項分布で n を大きく、p を小さくして np＝λ を保つと、ポアソン分布に近づく。",
+   "units": [
+    "stats2:U15"
+   ],
+   "conditions": [
+    "n が大きい",
+    "p が小さい",
+    "np＝λ を一定に保つ"
+   ],
+   "mode": "limit",
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-approx",
+     "title": "離散分布ラボ",
+     "preset": "rel-approx",
+     "purpose": "np を保って n を大きくすると、二項分布がポアソン分布に重なる"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-binom-normal",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-normal",
+   "type": "変換",
+   "description": "n が大きいと、二項分布は平均 np・分散 np(1−p) の正規分布で近似できる（正規近似）。",
+   "units": [
+    "stats2:U14",
+    "stats2:U16"
+   ],
+   "conditions": [
+    "np と n(1−p) がどちらも十分大きい（目安は5以上）",
+    "整数の棒を曲線で近似するので、境目を0.5ずらす（連続修正）"
+   ],
+   "mode": "approximation",
+   "labs": [
+    {
+     "id": "LAB-binom",
+     "url": "https://watanabe-masao.github.io/stats2-labs/binom/?p=s5-norm",
+     "title": "二項分布ラボ",
+     "preset": "s5-norm",
+     "purpose": "n を大きくすると、棒が正規分布の曲線に重なる（p が小さいと崩れる）"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-binom-poisson-contrast",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-poisson",
+   "type": "対比",
+   "description": "二項分布は回数に上限 n があり、分散 np(1−p) は平均 np より小さい。ポアソン分布は上限がなく、分散と平均が同じ λ。",
+   "units": [
+    "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:REL-var-std",
+   "version": 1,
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-std",
+   "type": "前提",
+   "description": "標準化では、分散の平方根（標準偏差）で割る。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-expect-std",
+   "version": 1,
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-std",
+   "type": "前提",
+   "description": "標準化では、まず期待値（平均）を引く。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-std-normal",
+   "version": 1,
+   "from": "stats2:TERM-std",
+   "to": "stats2:TERM-normal",
+   "type": "応用",
+   "description": "正規分布に従う値を標準化すると標準正規分布 N(0, 1) になり、1つの表で確率が読める。",
+   "units": [
+    "stats2:U16"
+   ],
+   "conditions": [
+    "X が正規分布に従う"
+   ],
+   "labs": [
+    {
+     "id": "LAB-z",
+     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s4-normal",
+     "title": "標準化ラボ",
+     "preset": "s4-normal",
+     "purpose": "標準化すると、どの正規分布も同じ表で読める"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-clt-normal",
+   "version": 1,
+   "from": "stats2:TERM-clt",
+   "to": "stats2:TERM-normal",
+   "type": "応用",
+   "description": "独立な要因の和や平均は、元の分布によらず正規分布に近づく。正規分布がよく使われる理由。",
+   "units": [
+    "stats2:U19"
+   ],
+   "conditions": [
+    "足し合わせる量が独立",
+    "分散が有限",
+    "個数が十分多い"
+   ]
+  },
+  {
+   "id": "stats2:REL-rv-dist",
+   "version": 1,
+   "from": "stats2:TERM-rv",
+   "to": "stats2:TERM-dist",
+   "type": "前提",
+   "description": "確率分布は、確率変数がとる値とその確率の対応。確率変数がなければ分布は作れない。",
+   "units": [
+    "stats2:U13"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-dist-expect",
+   "version": 1,
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-expect",
+   "type": "前提",
+   "description": "期待値は、確率分布の「値×確率」を全部足して作る。分布を1つの数に要約したもの。",
+   "units": [
+    "stats2:U13"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-var-sd",
+   "version": 1,
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-sd",
+   "type": "前提",
+   "description": "標準偏差は分散の正の平方根。2乗した単位を元の単位に戻す。",
+   "units": [
+    "stats2:U13"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-var-cov",
+   "version": 1,
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-cov",
+   "type": "一般化",
+   "description": "分散は1つの変数のずれの2乗の期待値。2つの変数のずれの積に広げると共分散になる（Cov(X, X)＝V(X)）。",
+   "units": [
+    "stats2:U13"
+   ]
+  },
+  {
+   "id": "stats2:REL-indep-cov",
+   "version": 1,
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-cov",
+   "type": "導出",
+   "description": "独立なら E(XY)＝E(X)E(Y) なので、共分散は0になる。逆（共分散0なら独立）は成り立たない。",
+   "units": [
+    "stats2:U13"
+   ],
+   "conditions": [
+    "X と Y が独立",
+    "期待値が有限"
+   ],
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s5-free",
+     "title": "期待値ラボ",
+     "preset": "s5-free",
+     "purpose": "独立なら共分散が0。0でも独立とは限らないことも確かめる"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-indep-geom",
+   "version": 1,
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-geom",
+   "type": "前提",
+   "description": "各回が独立なので、失敗が続いてから成功する確率が掛け算 (1−p)^(k−1)p で求まる。",
+   "units": [
+    "stats2:U15"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-binom-geom-contrast",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-geom",
+   "type": "対比",
+   "description": "二項分布は回数 n を決めて成功の数を数える。幾何分布は成功を1回と決めて、そこまでの回数を数える。何を固定し、何を数えるかが逆。",
+   "units": [
+    "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:REL-hyper-binom",
+   "version": 1,
+   "from": "stats2:TERM-hyper",
+   "to": "stats2:TERM-binom",
+   "type": "変換",
+   "description": "集団 N を大きくして当たりの割合 M/N を保つと、超幾何分布は二項分布 B(n, M/N) に近づく（戻すか戻さないかの違いが消える）。",
+   "units": [
+    "stats2:U15"
+   ],
+   "conditions": [
+    "N が取り出す数 n に比べて十分大きい",
+    "当たりの割合 M/N を一定に保つ"
+   ],
+   "mode": "limit",
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-hyper",
+     "title": "離散分布ラボ",
+     "preset": "rel-hyper",
+     "purpose": "集団を大きくすると、戻さない確率が戻す確率に近づく"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-binom-hyper-contrast",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-hyper",
+   "type": "対比",
+   "description": "二項分布は戻して取り出す（各回が独立で確率が一定）。超幾何分布は戻さずに取り出す（取るたびに確率が変わる）。分散は超幾何の方が二項分布の (N−n)/(N−1) 倍になる（小さくなる）。",
+   "units": [
+    "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:REL-poisson-expo",
+   "version": 1,
+   "from": "stats2:TERM-poisson",
+   "to": "stats2:TERM-expo",
+   "type": "導出",
+   "description": "一定の割合 λ で独立に起きる出来事では、一定時間の件数がポアソン分布、次に起きるまでの待ち時間が指数分布になる。",
+   "units": [
+    "stats2:U15",
+    "stats2:U16"
+   ],
+   "conditions": [
+    "出来事が一定の割合 λ で起きる",
+    "重ならない時間の件数が互いに独立"
+   ],
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s5-free",
+     "title": "離散分布ラボ",
+     "preset": "s5-free",
+     "purpose": "0件の確率を時間を延ばして見ると、待ち時間の確率になる"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-dist-pdf",
+   "version": 1,
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-pdf",
+   "type": "前提",
+   "description": "連続な確率変数の分布は、値ごとの確率では書けない（1点の確率が0）ので、確率密度関数の面積で表す。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-pdf-normal",
+   "version": 1,
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-normal",
+   "type": "前提",
+   "description": "正規分布は確率密度関数 f(x) で定義され、確率は曲線の下の面積で読む。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-pdf-uniform",
+   "version": 1,
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-uniform",
+   "type": "前提",
+   "description": "一様分布は、密度が一定の確率密度関数 1/(b−a) で定義される。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-pdf-expo",
+   "version": 1,
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-expo",
+   "type": "前提",
+   "description": "指数分布は、確率密度関数 λe^(−λx) で定義される。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-sd-std",
+   "version": 1,
+   "from": "stats2:TERM-sd",
+   "to": "stats2:TERM-std",
+   "type": "前提",
+   "description": "標準化では、平均を引いたあと標準偏差で割り、単位のない「標準偏差いくつ分」にする。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-geom-negbinom",
+   "version": 1,
+   "from": "stats2:TERM-geom",
+   "to": "stats2:TERM-negbinom",
+   "type": "一般化",
+   "description": "幾何分布は「1回目の成功」まで待つ。待つ成功を r 回に広げると負の二項分布（r＝1 が幾何分布）。",
+   "units": [
+    "stats2:U15"
+   ]
+  }
+ ],
+ "derivations": [
+  {
+   "id": "stats2:DER-binom-moments",
+   "version": 1,
+   "premises": [
+    "stats2:TERM-expect",
+    "stats2:TERM-var",
+    "stats2:TERM-indep"
+   ],
+   "conclusion": "stats2:TERM-binom",
+   "statement": "二項分布 B(n, p) の期待値は np、分散は np(1−p)。",
+   "steps": [
+    "成功回数 X を、各回の成功を1・失敗を0とする n 個の量の和 X₁＋…＋Xₙ と見る。",
+    "各 Xᵢ は0か1しかとらないので、E(Xᵢ)＝p、E(Xᵢ²)＝p、V(Xᵢ)＝p−p²＝p(1−p)。",
+    "期待値は和に分けられる（線形性）ので、E(X)＝np。",
+    "各回が独立なので分散も和に分けられ、V(X)＝np(1−p)。"
+   ],
+   "conditions": [
+    "各回の成功確率が同じ",
+    "分散を和に分けるには各回が独立であること（期待値を和に分けるのに独立は要らない）"
+   ],
+   "units": [
+    "stats2:U14"
+   ]
+  },
+  {
+   "id": "stats2:DER-std-moments",
+   "version": 1,
+   "premises": [
+    "stats2:TERM-expect",
+    "stats2:TERM-var"
+   ],
+   "conclusion": "stats2:TERM-std",
+   "statement": "標準化した Z＝(X−μ)÷σ は、期待値0・分散1 になる。",
+   "steps": [
+    "Z＝(1/σ)X−μ/σ は X の1次式 aX＋b（a＝1/σ、b＝−μ/σ）。",
+    "E(aX＋b)＝aE(X)＋b なので、E(Z)＝μ/σ−μ/σ＝0。",
+    "V(aX＋b)＝a²V(X) なので、V(Z)＝σ²/σ²＝1。"
+   ],
+   "conditions": [
+    "σ が0でない"
+   ],
+   "units": [
+    "stats2:U16"
+   ]
+  }
+ ]
+}

@@ -1,25 +1,42 @@
-// 画面全体。状態は URL に持つ（?c=選んだ概念&cmp=比べる概念&trace=1&embed=1&src=データ）。
-// Notion の埋め込み（高さ約320px）では embed=1：選んだ概念のまわりだけと、短い説明と「大きく開く ↗」。
-import { useEffect, useMemo, useState } from "react";
+// 画面全体。状態は URL に持つ（?c=選んだ概念&view=around|all&cmp=比べる概念&trace=1&embed=1&src=データ）。
+// 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
+// c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
+// Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
+import { useEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
-import { KINDS, MODES, around, compare, load, trace, type Network } from "./data";
+import Panel from "./Panel";
+import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
 const SRC = params.get("src");
 
+type View = "around" | "all";
+const readView = (p: URLSearchParams): View => (p.get("view") === "all" ? "all" : p.get("view") === "around" || p.get("c") ? "around" : "all");
+
 function useUrlState() {
-  const [sel, setSel] = useState<string | null>(params.get("c"));
+  const [sel, setSelRaw] = useState<string | null>(params.get("c"));
+  const [view, setView] = useState<View>(readView(params));
   const [cmp, setCmp] = useState<string[]>((params.get("cmp") ?? "").split(",").filter(Boolean));
   const [tracing, setTracing] = useState(params.get("trace") === "1");
+  const push = useRef(false);
+  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); };
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
-    set("c", sel); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null);
-    history.replaceState(null, "", `${location.pathname}?${p.toString()}`.replace(/\?$/, ""));
-  }, [sel, cmp, tracing]);
-  return { sel, setSel, cmp, setCmp, tracing, setTracing };
+    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null);
+    const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
+    if (url === `${location.pathname}${location.search}`) return;
+    if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
+    push.current = false;
+  }, [sel, view, cmp, tracing]);
+  useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
+    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); };
+    addEventListener("popstate", back);
+    return () => removeEventListener("popstate", back);
+  }, []);
+  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing };
 }
 
 export default function App() {
@@ -27,7 +44,9 @@ export default function App() {
   const [errors, setErrors] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, cmp, setCmp, tracing, setTracing } = useUrlState();
+  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing } = useUrlState();
+  const [edgeSel, setEdgeSel] = useState<string | null>(null);
+  useEffect(() => setEdgeSel(null), [sel]);   // 別の概念へ進んだら、線の説明は閉じる
 
   useEffect(() => { load(SRC).then((r) => { setNet(r.net); setErrors(r.errors); }); }, []);
 
@@ -42,12 +61,7 @@ export default function App() {
     }
     return ids;
   }, [tr, sel, net]);
-  const only = useMemo(() => {
-    if (!EMBED || !net || !sel) return undefined;
-    const a = around(net, sel);
-    return new Set([sel, ...a.relations.flatMap((r) => [r.from, r.to]), ...a.derivations.flatMap((d) => [...d.premises, d.conclusion])]);
-  }, [net, sel]);
-
+  const positions = useMemo(() => (net && sel && (view === "around" || EMBED) && net.concepts.has(sel) ? neighborhood(net, sel) : undefined), [net, sel, view]);
   if (!net) return <main className="app"><p className="mute">読み込み中…</p>{errors.map((e) => <p key={e} className="error">{e}</p>)}</main>;
   const concept = sel ? net.concepts.get(sel) : undefined;
   const hits = query ? [...net.concepts.values()].filter((c) => (c.name + (c.en ?? "")).toLowerCase().includes(query.toLowerCase())).slice(0, 8) : [];
@@ -57,7 +71,7 @@ export default function App() {
     const full = `${location.pathname}?${new URLSearchParams({ ...(sel ? { c: sel } : {}), ...(SRC ? { src: SRC } : {}) }).toString()}`;
     return (
       <main className="app embed">
-        <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} only={only} onSelect={setSel} fill />
+        <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} onSelect={setSel} fill />
         <div className="embed-card" data-testid="embed-card">
           <b>{concept ? concept.name : "知識ネットワーク"}</b>
           <span className="mute">{concept?.definition ?? "概念を押すと説明が出る"}</span>
@@ -77,7 +91,24 @@ export default function App() {
         {hits.length ? <ul className="hits">{hits.map((c) => <li key={c.id}><button onClick={() => { setSel(c.id); setQuery(""); }}>{c.name}</button></li>)}</ul> : null}
       </header>
       {errors.map((e) => <p key={e} className="error" role="alert">{e}</p>)}
-      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} onSelect={setSel} />
+      {sel ? (
+        <div className="views" role="group" aria-label="表示">
+          <button aria-pressed={view === "around"} onClick={() => setView("around")}>まわり</button>
+          <button aria-pressed={view === "all"} onClick={() => setView("all")}>全体</button>
+        </div>
+      ) : null}
+      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions}
+        onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} />
+      {concept ? (() => {
+        const a = around(net, concept.id);
+        const items = [...a.relations.map((r) => ({ id: r.id, text: sentence(net, r) })), ...a.derivations.map((d) => ({ id: d.id, text: `導出：${d.statement}` }))];
+        return items.length ? (
+          <details className="edges" data-testid="edge-list" open={view === "around"}>
+            <summary>つながり一覧（{items.length}）　線を押すのと同じ</summary>
+            <ul>{items.map((it) => <li key={it.id}><button className="chip" aria-pressed={edgeSel === it.id} onClick={() => setEdgeSel(it.id)}>{it.text}</button></li>)}</ul>
+          </details>
+        ) : null;
+      })() : null}
       <details className="legend">
         <summary>関係の種類（押すと表示を切り替える）</summary>
         <p className="mute">矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。</p>
@@ -116,6 +147,7 @@ export default function App() {
           <button onClick={() => setCmp([])}>比べるを空にする</button>
         </section>
       ) : null}
+      {edgeSel ? <Panel net={net} edgeId={edgeSel} onClose={() => setEdgeSel(null)} onSelect={(id) => setSel(id)} /> : null}
       <footer className="mute">データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</footer>
     </main>
   );

@@ -1,8 +1,10 @@
-// 概念と関係のネットワーク（Cytoscape）。点を押すと選ぶ。拡大・移動はピンチ・ドラッグで。
+// 概念と関係のネットワーク（Cytoscape）。点を押すと選ぶ。線を押すと関係を選ぶ。拡大・移動はピンチ・ドラッグで。
+// 全体図：段に分けて並べる（dagre）。周辺図：positions（data.ts の neighborhood）の位置に置く。
+// 周辺図で別の概念へ進むときは並べ直さず、残る点は新しい位置へ動き、新しい点は進んだ先の点から出てくる。
 import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { useEffect, useRef } from "react";
-import { type Network } from "./data";
+import { type Network, type Placed } from "./data";
 
 cytoscape.use(dagre);
 
@@ -15,8 +17,10 @@ type Props = {
   selected: string | null;
   highlight: Set<string>;        // さかのぼった前提など、強調する点と線の id
   hidden: Set<string>;           // 表示しない関係の種類
-  only?: Set<string>;            // これだけを表示する（埋め込みで、選んだ概念のまわりだけ）
+  positions?: Map<string, Placed>; // 周辺図：この点だけを、この位置に置く
   onSelect: (id: string | null) => void;
+  onEdge?: (id: string) => void; // 線を押した（関係の id か、導出の線の id）
+  edgeSel?: string | null;       // 説明を開いている線
   fill?: boolean;                // 埋め込み：枠いっぱい（高さを自動で決めない）
 };
 
@@ -24,47 +28,56 @@ function css(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888";
 }
 
-function elements(net: Network, hidden: Set<string>, only?: Set<string>): ElementDefinition[] {
-  const keep = (id: string) => !only || only.has(id);
+const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** 表示する点と線。keep を渡すと、その点だけ（周辺図）。 */
+export function elements(net: Network, hidden: Set<string>, keep?: Set<string>): ElementDefinition[] {
+  const has = (id: string) => !keep || keep.has(id);
   const els: ElementDefinition[] = [];
   for (const c of net.concepts.values())
-    if (keep(c.id)) els.push({ data: { id: c.id, label: c.name, kind: c.status } });
-  for (const id of net.missing) if (keep(id)) els.push({ data: { id, label: id, kind: "missing" } });
+    if (has(c.id)) els.push({ data: { id: c.id, label: c.name, kind: c.status } });
+  for (const id of net.missing) if (has(id)) els.push({ data: { id, label: id, kind: "missing" } });
   for (const r of net.relations)
-    if (!hidden.has(r.type) && keep(r.from) && keep(r.to))
+    if (!hidden.has(r.type) && has(r.from) && has(r.to))
       els.push({ data: { id: r.id, source: r.from, target: r.to, type: r.type, mode: r.mode ?? "", label: r.type } });
   for (const d of net.derivations) {
-    if (hidden.has("導出") || !keep(d.conclusion)) continue;
+    if (hidden.has("導出") || (keep && !keep.has(d.id))) continue;
     els.push({ data: { id: d.id, label: "導出", kind: "derivation" } });
-    for (const p of d.premises) if (keep(p)) els.push({ data: { id: `${d.id}>${p}`, source: p, target: d.id, type: "導出", label: "" } });
-    els.push({ data: { id: `${d.id}>>`, source: d.id, target: d.conclusion, type: "導出", label: "" } });
+    for (const p of d.premises) if (has(p)) els.push({ data: { id: `${d.id}>${p}`, source: p, target: d.id, type: "導出", label: "" } });
+    if (has(d.conclusion)) els.push({ data: { id: `${d.id}>>`, source: d.id, target: d.conclusion, type: "導出", label: "" } });
   }
   return els;
 }
 
-export default function Graph({ net, selected, highlight, hidden, only, onSelect, fill }: Props) {
+export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const cy = useRef<Core | null>(null);
   const select = useRef(onSelect);
   select.current = onSelect;
+  const edge = useRef(onEdge);
+  edge.current = onEdge;
+  const around = !!positions;
 
+  // 作り直すのは、データ・表示する種類・全体図と周辺図の切り替えのときだけ
   useEffect(() => {
     if (!box.current) return;
     const ink = css("--ink"), mute = css("--mute"), bg = css("--card"), accent = css("--accent");
+    const keep = positions ? new Set(positions.keys()) : undefined;
     const c = cytoscape({
       container: box.current,
-      elements: elements(net, hidden, only),
-      minZoom: 0.3, maxZoom: 3, wheelSensitivity: 0.3,
+      elements: elements(net, hidden, keep).map((e) => (positions && !e.data.source ? { ...e, position: { ...(positions.get(e.data.id!) ?? { x: 0, y: 0 }) } } : e)),
+      minZoom: 0.3, maxZoom: around ? 1.2 : 3, wheelSensitivity: 0.3,   // 周辺図は点が少ないときに大きくなりすぎないように
       style: [
-        { selector: "node", style: { label: "data(label)", "font-size": 13, color: ink, "text-valign": "center", "text-halign": "center",
-          "text-wrap": "wrap", "text-max-width": "90px", "background-color": bg, "border-width": 2, "border-color": ink,
+        { selector: "node", style: { label: "data(label)", "font-size": around ? 15 : 13, color: ink, "text-valign": "center", "text-halign": "center",
+          "text-wrap": "wrap", "text-max-width": around ? "110px" : "96px", "background-color": bg, "border-width": 2, "border-color": ink,
           shape: "round-rectangle", width: "label", height: "label", padding: "8px" } },
         { selector: 'node[kind = "stub"]', style: { "border-style": "dashed", "border-color": mute, color: mute } },
         { selector: 'node[kind = "missing"]', style: { "border-style": "dotted", "border-color": mute, color: mute, "font-size": 10 } },
         { selector: 'node[kind = "derivation"]', style: { shape: "diamond", width: 34, height: 34, padding: "0px", "font-size": 9, "border-color": css("--k-der") } },
-        { selector: "edge", style: { width: 2, "curve-style": "bezier", "target-arrow-shape": "triangle", "arrow-scale": 0.9,
-          label: "", "font-size": 11, color: mute, "text-background-color": bg, "text-background-opacity": 1, "text-background-padding": "2px" } },
-        { selector: "edge.named", style: { label: "data(label)" } },   // 線の名前は、選んだ概念につながる線だけに出す（重ならないように）
+        { selector: "edge", style: { width: around ? 3 : 2, "curve-style": "bezier", "target-arrow-shape": "triangle", "arrow-scale": 0.9,
+          "font-size": 11, color: mute, "control-point-step-size": 28,
+        } },
+        { selector: "edge.named, edge.picked", style: { label: "data(label)", "text-background-color": bg, "text-background-opacity": 1, "text-background-padding": "2px" } },   // 線の名前は、選んだ概念につながる線だけに出す（重ならないように）
         ...Object.entries(TYPE_COLOR).map(([t, v]) => ({ selector: `edge[type = "${t}"]`, style: { "line-color": css(v), "target-arrow-color": css(v) } })),
         { selector: 'edge[type = "対比"]', style: { "target-arrow-shape": "none", "line-style": "dashed" } },
         { selector: 'edge[mode = "approximation"]', style: { "line-style": "dashed" } },
@@ -72,46 +85,79 @@ export default function Graph({ net, selected, highlight, hidden, only, onSelect
         { selector: ".dim", style: { opacity: 0.18 } },
         { selector: "node.hl", style: { "border-color": accent, "border-width": 3 } },
         { selector: "edge.hl", style: { "line-color": accent, "target-arrow-color": accent, width: 3 } },   // width は線の太さ（点に付けると枠の幅になる）
-        { selector: ":selected", style: { "background-color": accent, color: bg, "border-color": accent } },
+        { selector: "edge.picked", style: { width: 6, "line-color": accent, "target-arrow-color": accent, color: accent, "font-weight": "bold" } },
+        { selector: "node:selected", style: { "background-color": accent, color: bg, "border-color": accent, "border-width": 3 } },
       ],
-      // 段に分けて並べる（dagre）。線が別の点の上を通りにくく、矢印の向きが上から下にそろう
-      layout: { name: "dagre", rankDir: "TB", nodeSep: 24, rankSep: 56, edgeSep: 8, padding: 16 } as cytoscape.LayoutOptions,
+      layout: positions
+        ? { name: "preset", padding: 20 } as cytoscape.LayoutOptions
+        // 段に分けて並べる（dagre）。線が別の点の上を通りにくく、矢印の向きが上から下にそろう
+        : { name: "dagre", rankDir: "TB", nodeSep: 24, rankSep: 56, edgeSep: 8, padding: 16 } as cytoscape.LayoutOptions,
     });
     if (!fill && box.current) {   // 点の数と並びに合わせて図の高さを決める（余白を残しすぎない）
       const bb = c.elements().boundingBox({});
       const scale = Math.min((box.current.clientWidth - 32) / Math.max(bb.w, 1), 1.1);
-      const h = Math.max(220, Math.min(bb.h * scale + 40, window.innerHeight * 0.6));
+      const h = Math.max(around ? 300 : 220, Math.min(bb.h * scale + 40, window.innerHeight * 0.6));
       box.current.style.height = `${Math.round(h)}px`;
       c.resize();
     }
-    c.on("tap", "node", (e) => { if (e.target.data("kind") !== "derivation") select.current(e.target.id()); });
+    c.on("tap", "node", (e) => { if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
+    c.on("tap", "edge", (e) => edge.current?.(e.target.id()));
     c.on("tap", (e) => { if (e.target === c) select.current(null); });
-    c.fit(undefined, 16);   // 最初は全体が見えるように
+    c.fit(undefined, 20);   // 最初は全体が見えるように
+    // 周辺図（位置を指定して並べたとき）は、最初に線が描かれないことがある（Cytoscape 3.34）。線の見た目を一度変えて戻し、描き直させる
+    const redraw = () => c.edges().style("arrow-scale", 0.91).removeStyle("arrow-scale");
+    redraw();
+    requestAnimationFrame(redraw);
+    c.on("layoutstop", redraw);
     cy.current = c;
     (window as unknown as { kn?: Core }).kn = c;   // テストから点を押すため
     return () => c.destroy();
-  }, [net, hidden, only, fill]);
+    // positions の変化は下の effect で動かす（作り直さない）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [net, hidden, fill, around]);
+
+  // 周辺図で中心が変わったとき：消える点を外し、新しい点を進んだ先の点の位置から出し、全体を新しい位置へ動かす
+  useEffect(() => {
+    const c = cy.current;
+    if (!c || !positions) return;
+    const keep = new Set(positions.keys());
+    const want = elements(net, hidden, keep);
+    const wantIds = new Set(want.map((e) => e.data.id!));
+    const from = (selected && c.getElementById(selected).nonempty()) ? c.getElementById(selected).position() : { x: 0, y: 0 };
+    const gone = c.elements().filter((e) => !wantIds.has(e.id()));
+    const add = want.filter((e) => c.getElementById(e.data.id!).empty())
+      .map((e) => (e.data.source ? e : { ...e, position: { ...from } }));
+    if (gone.nonempty()) gone.remove();
+    if (add.length) c.add(add);
+    const moved = c.nodes().toArray().some((n) => { const q = positions.get(n.id()), p = n.position(); return !q || Math.abs(q.x - p.x) > 0.5 || Math.abs(q.y - p.y) > 0.5; });
+    if (!moved) return;   // 作ったばかりで、もう正しい位置にある
+    const l = c.layout({ name: "preset", positions: (n: cytoscape.NodeSingular) => positions.get(n.id()) ?? { x: 0, y: 0 },
+      animate: !reduced(), animationDuration: 320, fit: true, padding: 20 } as cytoscape.LayoutOptions);
+    l.run();
+  }, [positions, net, hidden, selected]);
 
   useEffect(() => {
     const c = cy.current;
     if (!c) return;
     c.batch(() => {
-      c.elements().unselect().removeClass("dim hl named");
+      c.elements().unselect().removeClass("dim hl named picked");
       if (highlight.size) {
         c.elements().forEach((e) => { if (highlight.has(e.id())) e.addClass("hl"); else e.addClass("dim"); });
       }
       if (selected) {
         const n = c.getElementById(selected);
         n.select().removeClass("dim");
-        if (!fill) n.connectedEdges().addClass("named");   // 埋め込みは小さいので線の名前は出さない
+        // 全体図だけ、選んだ概念の線に名前を出す。周辺図は線がすべて選んだ概念につながるので、名前は押した線だけ（重ならないように）
+        if (!fill && !positions) n.connectedEdges().addClass("named");
       }
+      if (edgeSel) c.getElementById(edgeSel).addClass("picked");
     });
-    if (selected) {   // 選んだ点が画面の外にあるときだけ、見える所へ動かす（全体の見え方を崩さない）
+    if (selected && !positions) {   // 全体図：選んだ点が画面の外にあるときだけ、見える所へ動かす（全体の見え方を崩さない）
       const n = c.getElementById(selected);
       const b = n.nonempty() ? n.renderedBoundingBox({}) : null;
-      if (b && (b.x1 < 0 || b.y1 < 0 || b.x2 > c.width() || b.y2 > c.height())) c.animate({ center: { eles: n } }, { duration: 200 });
+      if (b && (b.x1 < 0 || b.y1 < 0 || b.x2 > c.width() || b.y2 > c.height())) c.animate({ center: { eles: n } }, { duration: reduced() ? 0 : 200 });
     }
-  }, [selected, highlight, fill]);
+  }, [selected, highlight, fill, edgeSel, positions]);
 
-  return <div ref={box} className="graph" data-testid="graph" aria-label="概念と関係のネットワーク" />;
+  return <div ref={box} className={`graph${around ? " around" : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />;
 }
