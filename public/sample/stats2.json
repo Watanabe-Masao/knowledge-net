@@ -1,0 +1,930 @@
+{
+ "schema": "kn-schema",
+ "version": 1,
+ "course": {
+  "id": "stats2",
+  "title": "統計検定2級",
+  "units": [
+   {
+    "id": "stats2:U01",
+    "number": "01",
+    "title": "割合・分数・式の変形",
+    "url": "https://app.notion.com/p/407b7cd539a181eab4e2e2b432162d65"
+   },
+   {
+    "id": "stats2:U02",
+    "number": "02",
+    "title": "関数・総和記号・階乗",
+    "url": "https://app.notion.com/p/407b7cd539a1811d9a89e46b452e6354"
+   },
+   {
+    "id": "stats2:U03",
+    "number": "03",
+    "title": "母集団と標本・母数と統計量",
+    "url": "https://app.notion.com/p/406b7cd539a18162b230fddc4cad9937"
+   },
+   {
+    "id": "stats2:U04",
+    "number": "04",
+    "title": "データの種類・測定尺度",
+    "url": "https://app.notion.com/p/406b7cd539a181ad89c5ebb1427a5ec5"
+   },
+   {
+    "id": "stats2:U05",
+    "number": "05",
+    "title": "度数分布・ヒストグラム・箱ひげ図",
+    "url": "https://app.notion.com/p/406b7cd539a181c6b10ceb390917d414"
+   },
+   {
+    "id": "stats2:U05T",
+    "number": "05-T",
+    "title": "時系列：変化・平均・繰返しを読む",
+    "url": "https://app.notion.com/p/406b7cd539a181f38500f08086ad379a"
+   },
+   {
+    "id": "stats2:U06",
+    "number": "06",
+    "title": "平均・中央値・最頻値・分位点",
+    "url": "https://app.notion.com/p/406b7cd539a181c39098d12d714d6480"
+   },
+   {
+    "id": "stats2:U07",
+    "number": "07",
+    "title": "分散・標準偏差・変動係数",
+    "url": "https://app.notion.com/p/406b7cd539a181d5aa31ef447de733e6"
+   },
+   {
+    "id": "stats2:U08",
+    "number": "08",
+    "title": "標準化・外れ値・歪度",
+    "url": "https://app.notion.com/p/407b7cd539a1819d8995c67174c803df"
+   },
+   {
+    "id": "stats2:U09",
+    "number": "09",
+    "title": "場合の数・順列・組合せ",
+    "url": "https://app.notion.com/p/406b7cd539a18111807cf1b85390f332"
+   },
+   {
+    "id": "stats2:U10",
+    "number": "10",
+    "title": "事象・確率の公理・加法則",
+    "url": "https://app.notion.com/p/407b7cd539a181d1a367f2fa210da98f"
+   },
+   {
+    "id": "stats2:U11",
+    "number": "11",
+    "title": "条件付き確率・独立・乗法則",
+    "url": "https://app.notion.com/p/407b7cd539a181288041cc74bcd625b5"
+   },
+   {
+    "id": "stats2:U12",
+    "number": "12",
+    "title": "全確率・ベイズの定理",
+    "url": "https://app.notion.com/p/407b7cd539a1813998ebdc86e6e71f03"
+   },
+   {
+    "id": "stats2:U13",
+    "number": "13",
+    "title": "確率変数・期待値・分散",
+    "url": "https://app.notion.com/p/407b7cd539a181f8bc27f67163370eb9"
+   },
+   {
+    "id": "stats2:U14",
+    "number": "14",
+    "title": "二項分布・ベルヌーイ分布",
+    "url": "https://app.notion.com/p/407b7cd539a1818f921ffa133256cbeb"
+   },
+   {
+    "id": "stats2:U15",
+    "number": "15",
+    "title": "ポアソン分布・離散分布の判断",
+    "url": "https://app.notion.com/p/407b7cd539a181788528f3ea6d48e0ac"
+   },
+   {
+    "id": "stats2:U16",
+    "number": "16",
+    "title": "連続分布・正規分布・標準化",
+    "url": "https://app.notion.com/p/407b7cd539a1810e8fa8d4c57ef9964a"
+   },
+   {
+    "id": "stats2:U17",
+    "number": "17",
+    "title": "母集団・標本・無作為抽出",
+    "url": "https://app.notion.com/p/407b7cd539a1817698d5e755ba7128cb"
+   },
+   {
+    "id": "stats2:U18",
+    "number": "18",
+    "title": "標本平均・標本分散の性質",
+    "url": "https://app.notion.com/p/407b7cd539a181faa20fc9a216f902b5"
+   },
+   {
+    "id": "stats2:U19",
+    "number": "19",
+    "title": "大数の法則・中心極限定理",
+    "url": "https://app.notion.com/p/407b7cd539a181e5ac2ade3402506e0e"
+   },
+   {
+    "id": "stats2:U20",
+    "number": "20",
+    "title": "標準誤差・t分布・カイ二乗分布・F分布",
+    "url": "https://app.notion.com/p/407b7cd539a1811c8b0fcd00ed6a62aa"
+   },
+   {
+    "id": "stats2:U21",
+    "number": "21",
+    "title": "点推定・不偏性・一致性",
+    "url": "https://app.notion.com/p/407b7cd539a18106b24add07e5c597cd"
+   },
+   {
+    "id": "stats2:U22",
+    "number": "22",
+    "title": "平均・割合の信頼区間",
+    "url": "https://app.notion.com/p/407b7cd539a181dc8a86f05216658645"
+   },
+   {
+    "id": "stats2:U23",
+    "number": "23",
+    "title": "分散・2群の推定",
+    "url": "https://app.notion.com/p/407b7cd539a1813888e2da7bd36a139c"
+   },
+   {
+    "id": "stats2:U24",
+    "number": "24",
+    "title": "仮説検定の考え方",
+    "url": "https://app.notion.com/p/407b7cd539a18160b785dc5ab8ea7f96"
+   },
+   {
+    "id": "stats2:U25",
+    "number": "25",
+    "title": "平均の t 検定",
+    "url": "https://app.notion.com/p/407b7cd539a181318485e2b4be5fa996"
+   },
+   {
+    "id": "stats2:U26",
+    "number": "26",
+    "title": "割合・分散の検定",
+    "url": "https://app.notion.com/p/407b7cd539a18167a276d90fd6725857"
+   },
+   {
+    "id": "stats2:U27",
+    "number": "27",
+    "title": "適合度・独立性のカイ二乗検定",
+    "url": "https://app.notion.com/p/407b7cd539a1814892fbc1cc03b5d535"
+   },
+   {
+    "id": "stats2:U28",
+    "number": "28",
+    "title": "共分散・相関係数と散布図",
+    "url": "https://app.notion.com/p/407b7cd539a181f489f4f8acca957300"
+   },
+   {
+    "id": "stats2:U29",
+    "number": "29",
+    "title": "単回帰・最小二乗・残差",
+    "url": "https://app.notion.com/p/407b7cd539a181d0a56dd2a7f54875b0"
+   },
+   {
+    "id": "stats2:U30",
+    "number": "30",
+    "title": "重回帰・係数の検定・決定係数",
+    "url": "https://app.notion.com/p/407b7cd539a181548861e8308deda690"
+   },
+   {
+    "id": "stats2:U31",
+    "number": "31",
+    "title": "標本調査・調査誤差・偏り",
+    "url": "https://app.notion.com/p/407b7cd539a181a88ab6c893703ac6ff"
+   },
+   {
+    "id": "stats2:U32",
+    "number": "32",
+    "title": "実験計画・分散分析",
+    "url": "https://app.notion.com/p/407b7cd539a1813db83be3c966e4afb2"
+   }
+  ]
+ },
+ "concepts": [
+  {
+   "id": "stats2:TERM-var",
+   "name": "分散",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U07",
+    "stats2:U13",
+    "stats2:U14",
+    "stats2:U18"
+   ],
+   "problems": [],
+   "en": "variance",
+   "definition": "確率変数が期待値からどれだけ散らばるかを、ずれの2乗の期待値で表した量。",
+   "principle": "(X−μ)² の期待値。2乗するので向きが消え、大きなずれほど重く効く。単位は元の単位の2乗になる。",
+   "formulas": [
+    {
+     "tex": "V(X)=E\\big[(X-\\mu)^2\\big]=E(X^2)-\\{E(X)\\}^2",
+     "symbols": [
+      {
+       "symbol": "V(X)",
+       "meaning": "X の分散",
+       "range": "0以上"
+      },
+      {
+       "symbol": "μ",
+       "meaning": "X の期待値 E(X)"
+      },
+      {
+       "symbol": "(X−μ)²",
+       "meaning": "期待値からのずれの2乗"
+      }
+     ]
+    },
+    {
+     "tex": "V(aX+b)=a^2V(X)",
+     "label": "1次式の分散",
+     "symbols": [
+      {
+       "symbol": "a",
+       "meaning": "掛ける定数（2乗で効く）"
+      },
+      {
+       "symbol": "b",
+       "meaning": "足す定数（散らばりは変えない）"
+      }
+     ]
+    }
+   ],
+   "conditions": {
+    "math": [
+     "期待値と、2乗の期待値が有限"
+    ],
+    "data": [
+     "外れ値が1つあると大きく変わる（2乗で効く）ので、分布の形も一緒に見る"
+    ]
+   },
+   "example": "さいころの目の分散は 91÷6−3.5²＝35/12≒2.92。",
+   "counterexample": "X＋Y の分散は、独立（または共分散が0）でなければ V(X)＋V(Y) にならない。",
+   "misconceptions": [
+    {
+     "misconception": "分散は「平均からのずれの平均」",
+     "correction": "ずれをそのまま平均すると0になる。2乗してから平均する"
+    },
+    {
+     "misconception": "分散と標準偏差は同じ単位",
+     "correction": "分散は元の単位の2乗。元の単位で言うなら平方根の標準偏差"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-std",
+   "name": "標準化",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U08",
+    "stats2:U16"
+   ],
+   "problems": [],
+   "en": "standardization",
+   "definition": "値から平均を引き、標準偏差で割って、平均0・標準偏差1 の尺度に直すこと。",
+   "principle": "1次の変換なので分布の形は変わらない。単位や大きさの違う値を「平均から標準偏差いくつ分か」で比べられる。正規分布なら標準正規分布 N(0, 1) になり、1つの表で確率が読める。",
+   "formulas": [
+    {
+     "tex": "Z=\\dfrac{X-\\mu}{\\sigma}",
+     "symbols": [
+      {
+       "symbol": "Z",
+       "meaning": "標準化した値（平均から標準偏差いくつ分か）"
+      },
+      {
+       "symbol": "μ",
+       "meaning": "平均"
+      },
+      {
+       "symbol": "σ",
+       "meaning": "標準偏差",
+       "range": "0より大きい"
+      }
+     ]
+    },
+    {
+     "tex": "E(Z)=0,\\quad V(Z)=1"
+    }
+   ],
+   "conditions": {
+    "math": [
+     "標準偏差が0でない"
+    ],
+    "data": [
+     "平均と標準偏差を、比べたい集団から出しているか（別の集団の値で割らない）"
+    ]
+   },
+   "example": "平均60点・標準偏差10点のテストで、80点は z＝2。",
+   "counterexample": "標準化しても分布の形は変わらない。右に裾の長いデータを標準化しても、正規分布にはならない。",
+   "misconceptions": [
+    {
+     "misconception": "標準化すると正規分布になる",
+     "correction": "位置と広がりをそろえるだけで、形は元のまま"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-normal",
+   "name": "正規分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U08",
+    "stats2:U16",
+    "stats2:U19"
+   ],
+   "problems": [],
+   "en": "normal distribution",
+   "definition": "確率密度が f(x) の式で表される連続分布 N(μ, σ²)。平均 μ を中心に左右対称な釣鐘の形になる。",
+   "principle": "小さな独立の要因がたくさん足し合わさると、この形に近づく（中心極限定理）。μ と σ の2つで形が決まり、μ±σ に約68%、μ±2σ に約95% が入る。",
+   "formulas": [
+    {
+     "tex": "f(x)=\\dfrac{1}{\\sqrt{2\\pi}\\,\\sigma}\\exp\\!\\Big(-\\dfrac{(x-\\mu)^2}{2\\sigma^2}\\Big)",
+     "symbols": [
+      {
+       "symbol": "μ",
+       "meaning": "平均（山の中心）"
+      },
+      {
+       "symbol": "σ",
+       "meaning": "標準偏差（山の広がり）",
+       "range": "0より大きい"
+      },
+      {
+       "symbol": "f(x)",
+       "meaning": "確率密度（高さ。面積が確率）"
+      }
+     ]
+    }
+   ],
+   "conditions": {
+    "math": [
+     "確率密度が f(x) の式で表される（μ と σ で決まる）"
+    ],
+    "data": [
+     "ヒストグラムが左右対称で山が1つなのは手掛かりにすぎず、それだけでは正規分布と言えない（裾の重さなども見る）",
+     "正規分布を前提にする方法は、ずれがあると結論が揺れる"
+    ]
+   },
+   "example": "二項分布 B(100, 0.5) は、平均50・標準偏差5 の正規分布で近似できる。",
+   "counterexample": "売上や所得のように右に裾が長いデータでは、平均±2σ に95%が入るとは限らない。",
+   "misconceptions": [
+    {
+     "misconception": "左右対称で山が1つなら正規分布",
+     "correction": "左右対称な山1つの分布はほかにもある（裾の重い分布など）。形の手掛かりと、正規分布であることは別"
+    },
+    {
+     "misconception": "データはふつう正規分布になる",
+     "correction": "正規分布に近づくのは、独立な要因が足し合わさるときなど。売上・所得など右に裾の長いデータは多い"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-expect",
+   "name": "期待値",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U06",
+    "stats2:U13",
+    "stats2:U14",
+    "stats2:U15"
+   ],
+   "problems": [],
+   "en": "expected value",
+   "definition": "確率変数がとる値を、その確率で重み付けした平均。",
+   "principle": "値×確率の和。同じ試行を何度もくり返したときの平均の行き着く先になる（大数の法則）。和の期待値は期待値の和（線形性）。",
+   "formulas": [
+    {
+     "tex": "E(X)=\\sum_x x\\,p(x)",
+     "symbols": [
+      {
+       "symbol": "E(X)",
+       "meaning": "X の期待値（平均の行き着く先）"
+      },
+      {
+       "symbol": "x",
+       "meaning": "X がとりうる値"
+      },
+      {
+       "symbol": "p(x)",
+       "meaning": "X が x になる確率（重み）",
+       "range": "0以上1以下・合計1"
+      }
+     ]
+    },
+    {
+     "tex": "E(aX+b)=aE(X)+b",
+     "label": "線形性",
+     "symbols": [
+      {
+       "symbol": "a, b",
+       "meaning": "定数（単位の換算や、一律の上乗せ）"
+      }
+     ]
+    }
+   ],
+   "conditions": {
+    "math": [
+     "和（連続なら積分）が有限の値になる"
+    ],
+    "data": [
+     "くり返しの平均として読むには、同じ条件の試行がくり返せること"
+    ]
+   },
+   "example": "さいころの目の期待値は (1＋2＋…＋6)÷6＝3.5。",
+   "counterexample": "期待値 3.5 の目は実際には出ない。期待値は「よく出る値」（最頻値）でも「真ん中の値」（中央値）でもない。",
+   "misconceptions": [
+    {
+     "misconception": "期待値は実際に出る値",
+     "correction": "何度もくり返したときの平均の行き着く先で、1回の結果としては出ないこともある"
+    },
+    {
+     "misconception": "期待値がいちばん出やすい値",
+     "correction": "いちばん出やすい値は最頻値。右に裾が長い分布では、期待値は最頻値より大きくなる"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-indep",
+   "name": "独立",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U10",
+    "stats2:U11",
+    "stats2:U13",
+    "stats2:U14"
+   ],
+   "problems": [],
+   "en": "independence",
+   "definition": "一方が起きたかどうかで、もう一方の起こりやすさが変わらないこと。",
+   "principle": "P(A∩B)＝P(A)P(B)。確率変数なら同時の確率が積に分かれる。独立なら共分散は0になり、和の分散は分散の和になる。",
+   "formulas": [
+    {
+     "tex": "P(A\\cap B)=P(A)\\,P(B)",
+     "symbols": [
+      {
+       "symbol": "A, B",
+       "meaning": "2つの事象"
+      },
+      {
+       "symbol": "P(A∩B)",
+       "meaning": "A と B が両方起きる確率"
+      }
+     ]
+    }
+   ],
+   "conditions": {
+    "math": [
+     "確率が決まった2つの事象（または確率変数）について言う"
+    ],
+    "data": [
+     "データで「独立」と言うには、仕組み（別々のさいころ・別々の客）から言えるか、検定などで確かめる。相関が0でも独立とは限らない"
+    ]
+   },
+   "example": "さいころを2回投げると、1回目と2回目の目は独立。両方6になる確率は 1/6×1/6＝1/36。",
+   "counterexample": "排反（同時に起きない）は独立ではない。P(A) と P(B) が0でなければ、排反なら P(A∩B)＝0 で P(A)P(B) と等しくない。",
+   "misconceptions": [
+    {
+     "misconception": "排反なら独立",
+     "correction": "排反は「同時に起きない」。一方が起きたらもう一方は起きないので、むしろ強く関係している"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-rv",
+   "name": "確率変数",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U13",
+    "stats2:U14"
+   ],
+   "problems": [],
+   "en": "random variable",
+   "definition": "試行の結果に応じて値が決まり、どの値が出るかが確率で表される量。",
+   "principle": "起こりうる値と、その確率の組（確率分布）で性質が決まる。1つの記録された値ではなく、記録する前の「値の出方」を扱う。",
+   "formulas": [
+    {
+     "tex": "P(X=x)=p(x),\\quad \\sum_x p(x)=1",
+     "symbols": [
+      {
+       "symbol": "X",
+       "meaning": "確率変数（値の出方を表すもの）"
+      },
+      {
+       "symbol": "x",
+       "meaning": "X がとりうる1つの値"
+      },
+      {
+       "symbol": "p(x)",
+       "meaning": "X が x になる確率",
+       "range": "0以上1以下"
+      }
+     ]
+    }
+   ],
+   "conditions": {
+    "math": [
+     "起こりうる値の範囲が決まっている",
+     "各値の確率が0以上で、合計が1"
+    ],
+    "data": [
+     "「記録する前の値の出方」として扱えるか（同じ仕組みでくり返し起きるか）を確かめる"
+    ]
+   },
+   "example": "さいころの目 X は、1〜6 の値をそれぞれ確率 1/6 でとる。",
+   "counterexample": "「今日の売上 120万円」という1つの記録は確率変数ではなく、実現した1つの値。",
+   "misconceptions": [
+    {
+     "misconception": "確率変数は「でたらめな数」のこと",
+     "correction": "値の出方に決まった確率（分布）がある量。でたらめさの中に規則がある"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-binom",
+   "name": "二項分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U14",
+    "stats2:U15",
+    "stats2:U19"
+   ],
+   "problems": [],
+   "en": "binomial distribution",
+   "definition": "成功確率 p の独立な試行を n 回くり返したときの、成功した回数の分布 B(n, p)。",
+   "principle": "「どの k 回が成功か」の組合せ ₙCₖ と、その1通りの確率 pᵏ(1−p)ⁿ⁻ᵏ の積。成功回数は n 個の「成功1・失敗0」の和なので、期待値と分散が和から求まる。",
+   "formulas": [
+    {
+     "tex": "P(X=k)={}_nC_k\\,p^k(1-p)^{n-k}",
+     "symbols": [
+      {
+       "symbol": "n",
+       "meaning": "試行の回数",
+       "range": "1以上の整数"
+      },
+      {
+       "symbol": "k",
+       "meaning": "成功した回数",
+       "range": "0以上 n 以下の整数"
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回あたりの成功確率",
+       "range": "0以上1以下"
+      },
+      {
+       "symbol": "ₙCₖ",
+       "meaning": "n 回のうちどの k 回が成功かの選び方の数"
+      }
+     ]
+    },
+    {
+     "tex": "E(X)=np,\\quad V(X)=np(1-p)",
+     "label": "期待値と分散",
+     "symbols": [
+      {
+       "symbol": "np",
+       "meaning": "成功回数の期待値"
+      },
+      {
+       "symbol": "np(1−p)",
+       "meaning": "成功回数の分散"
+      }
+     ]
+    }
+   ],
+   "conditions": {
+    "math": [
+     "回数 n が決まっている",
+     "結果が成功・失敗の2つ",
+     "各回の成功確率 p が同じ",
+     "各回が独立"
+    ],
+    "data": [
+     "客ごとの購入のように、互いに影響しない（口コミや連れ立ちがない）か、p が客や時間でほぼ同じかを確かめる"
+    ]
+   },
+   "example": "来店客10人がそれぞれ確率 0.3 で買う（互いに独立）なら、買う人数は B(10, 0.3)。期待値は3人、分散は2.1。",
+   "counterexample": "箱から戻さずに取り出すと、各回の確率が変わり独立でもないので二項分布ではない（超幾何分布）。",
+   "misconceptions": [
+    {
+     "misconception": "ちょうど期待値 np 回になる確率が高い",
+     "correction": "np 回はいちばん起きやすい付近だが、その確率自体は小さいことが多い（n が大きいほど小さい）"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-poisson",
+   "name": "ポアソン分布",
+   "status": "filled",
+   "version": 1,
+   "units": [
+    "stats2:U15"
+   ],
+   "problems": [],
+   "en": "Poisson distribution",
+   "definition": "一定の時間や範囲で、まれな出来事が平均 λ 回起きるときの、起きた回数の分布。",
+   "principle": "二項分布で n を大きく、p を小さくし、np＝λ を保ったときに行き着く形。期待値と分散がどちらも λ になる。",
+   "formulas": [
+    {
+     "tex": "P(X=k)=\\dfrac{e^{-\\lambda}\\lambda^k}{k!}",
+     "symbols": [
+      {
+       "symbol": "λ",
+       "meaning": "決めた時間・範囲で起きる平均の回数",
+       "range": "0より大きい"
+      },
+      {
+       "symbol": "k",
+       "meaning": "起きた回数",
+       "range": "0以上の整数（上限なし）"
+      }
+     ]
+    },
+    {
+     "tex": "E(X)=V(X)=\\lambda",
+     "label": "期待値と分散"
+    }
+   ],
+   "conditions": {
+    "math": [
+     "出来事が互いに独立に起きる",
+     "同時に2つは起きない",
+     "起きる平均の割合が一定"
+    ],
+    "data": [
+     "時間帯や曜日で割合が変わらないか、分散が平均とほぼ同じかを確かめる（分散が大きければ当てはまっていない）"
+    ]
+   },
+   "example": "1時間に平均2件の問い合わせがあるとき、ある1時間に1件もない確率は e⁻²≒0.135。",
+   "counterexample": "昼に集中する来店のように時間帯で割合が変わるなら、1日をまとめて1つのポアソン分布にしてはいけない。",
+   "misconceptions": [
+    {
+     "misconception": "まれな出来事なら何でもポアソン分布",
+     "correction": "起きる割合が一定で、互いに独立に起きることが要る。連鎖して起きる出来事（クレームが続くなど）は当てはまらない"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "確率モデルの導入（確率変数・確率分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ]
+  },
+  {
+   "id": "stats2:TERM-clt",
+   "name": "中心極限定理",
+   "status": "stub",
+   "version": 1,
+   "units": [
+    "stats2:U19"
+   ],
+   "problems": [],
+   "en": "central limit theorem"
+  }
+ ],
+ "relations": [
+  {
+   "id": "stats2:REL-rv-expect",
+   "version": 1,
+   "from": "stats2:TERM-rv",
+   "to": "stats2:TERM-expect",
+   "type": "前提",
+   "description": "期待値は、確率変数のとる値とその確率から作る。",
+   "units": [
+    "stats2:U13"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-expect-var",
+   "version": 1,
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-var",
+   "type": "前提",
+   "description": "分散は「期待値からのずれ」の2乗の期待値。期待値がなければ測る基準がない。",
+   "units": [
+    "stats2:U13"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-indep-binom",
+   "version": 1,
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-binom",
+   "type": "前提",
+   "description": "各回が独立なので、1通りの確率が掛け算 pᵏ(1−p)ⁿ⁻ᵏ で求まる。",
+   "units": [
+    "stats2:U14"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-binom-poisson",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-poisson",
+   "type": "変換",
+   "description": "二項分布で n を大きく、p を小さくして np＝λ を保つと、ポアソン分布に近づく。",
+   "units": [
+    "stats2:U15"
+   ],
+   "conditions": [
+    "n が大きい",
+    "p が小さい",
+    "np＝λ を一定に保つ"
+   ],
+   "mode": "limit"
+  },
+  {
+   "id": "stats2:REL-binom-normal",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-normal",
+   "type": "変換",
+   "description": "n が大きいと、二項分布は平均 np・分散 np(1−p) の正規分布で近似できる（正規近似）。",
+   "units": [
+    "stats2:U14",
+    "stats2:U16"
+   ],
+   "conditions": [
+    "np と n(1−p) がどちらも十分大きい（目安は5以上）",
+    "整数の棒を曲線で近似するので、境目を0.5ずらす（連続修正）"
+   ],
+   "mode": "approximation"
+  },
+  {
+   "id": "stats2:REL-binom-poisson-contrast",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-poisson",
+   "type": "対比",
+   "description": "二項分布は回数に上限 n があり、分散 np(1−p) は平均 np より小さい。ポアソン分布は上限がなく、分散と平均が同じ λ。",
+   "units": [
+    "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:REL-var-std",
+   "version": 1,
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-std",
+   "type": "前提",
+   "description": "標準化では、分散の平方根（標準偏差）で割る。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-expect-std",
+   "version": 1,
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-std",
+   "type": "前提",
+   "description": "標準化では、まず期待値（平均）を引く。",
+   "units": [
+    "stats2:U16"
+   ],
+   "premise": "mathematical"
+  },
+  {
+   "id": "stats2:REL-std-normal",
+   "version": 1,
+   "from": "stats2:TERM-std",
+   "to": "stats2:TERM-normal",
+   "type": "応用",
+   "description": "正規分布に従う値を標準化すると標準正規分布 N(0, 1) になり、1つの表で確率が読める。",
+   "units": [
+    "stats2:U16"
+   ],
+   "conditions": [
+    "X が正規分布に従う"
+   ]
+  },
+  {
+   "id": "stats2:REL-clt-normal",
+   "version": 1,
+   "from": "stats2:TERM-clt",
+   "to": "stats2:TERM-normal",
+   "type": "応用",
+   "description": "独立な要因の和や平均は、元の分布によらず正規分布に近づく。正規分布がよく使われる理由。",
+   "units": [
+    "stats2:U19"
+   ],
+   "conditions": [
+    "足し合わせる量が独立",
+    "分散が有限",
+    "個数が十分多い"
+   ]
+  }
+ ],
+ "derivations": [
+  {
+   "id": "stats2:DER-binom-moments",
+   "version": 1,
+   "premises": [
+    "stats2:TERM-expect",
+    "stats2:TERM-var",
+    "stats2:TERM-indep"
+   ],
+   "conclusion": "stats2:TERM-binom",
+   "statement": "二項分布 B(n, p) の期待値は np、分散は np(1−p)。",
+   "steps": [
+    "成功回数 X を、各回の成功を1・失敗を0とする n 個の量の和 X₁＋…＋Xₙ と見る。",
+    "各 Xᵢ は0か1しかとらないので、E(Xᵢ)＝p、E(Xᵢ²)＝p、V(Xᵢ)＝p−p²＝p(1−p)。",
+    "期待値は和に分けられる（線形性）ので、E(X)＝np。",
+    "各回が独立なので分散も和に分けられ、V(X)＝np(1−p)。"
+   ],
+   "conditions": [
+    "各回の成功確率が同じ",
+    "分散を和に分けるには各回が独立であること（期待値を和に分けるのに独立は要らない）"
+   ],
+   "units": [
+    "stats2:U14"
+   ]
+  },
+  {
+   "id": "stats2:DER-std-moments",
+   "version": 1,
+   "premises": [
+    "stats2:TERM-expect",
+    "stats2:TERM-var"
+   ],
+   "conclusion": "stats2:TERM-std",
+   "statement": "標準化した Z＝(X−μ)÷σ は、期待値0・分散1 になる。",
+   "steps": [
+    "Z＝(1/σ)X−μ/σ は X の1次式 aX＋b（a＝1/σ、b＝−μ/σ）。",
+    "E(aX＋b)＝aE(X)＋b なので、E(Z)＝μ/σ−μ/σ＝0。",
+    "V(aX＋b)＝a²V(X) なので、V(Z)＝σ²/σ²＝1。"
+   ],
+   "conditions": [
+    "σ が0でない"
+   ],
+   "units": [
+    "stats2:U16"
+   ]
+  }
+ ]
+}

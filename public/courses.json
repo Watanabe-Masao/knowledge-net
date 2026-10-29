@@ -1,0 +1,6 @@
+{
+  "note": "知識ネットワークにつなぐ教材の一覧。教材は kn-schema の JSON を公開し、ここに1行足す。",
+  "courses": [
+    {"id": "stats2", "title": "統計検定2級", "data": "https://watanabe-masao.github.io/stats2-labs/net/stats2.json"}
+  ]
+}
