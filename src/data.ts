@@ -4,18 +4,29 @@ import Ajv2020 from "ajv/dist/2020";
 import schema from "../schema/kn-schema-v1.json";
 import kinds from "./generated/relation-types.json";
 
-export type Symbol = { symbol: string; meaning: string; range?: string };
+export type Symbol = {
+  symbol: string; meaning: string; range?: string;
+  /** 木の葉から指す名前 */ key?: string;
+  /** この記号が表す概念（教材名:ID）。木をたどってその概念の式へ開く */ concept?: string;
+  kind?: "value" | "data" | "rv" | "param" | "index" | "const";
+};
+/** 式の分解の木（schema の formulaNode）。計算・展開・表示は math-lab の部品が受け持つ。 */
+export type FormulaNode =
+  | { sym: string }
+  | { num: number }
+  | { op: "eq" | "add" | "sub" | "mul" | "div" | "pow" | "neg" | "sqrt" | "abs" | "sum" | "prod" | "int" | "fn";
+      args: FormulaNode[]; name?: string; var?: string; lower?: FormulaNode; upper?: FormulaNode };
 /** 数理ラボへの参照（概念・関係で共通）。url は教材の build が作る。 */
 export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string };
-export type Formula = { tex: string; label?: string; symbols?: Symbol[] };
+export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode };
 export type Concept = {
   id: string; name: string; en?: string; status: "filled" | "stub"; version: number;
   definition?: string; principle?: string; formulas?: Formula[];
   conditions?: { math: string[]; data?: string[] };
   example?: string; counterexample?: string;
-  misconceptions?: { misconception: string; correction: string }[];
+  misconceptions?: { misconception: string; correction: string; labs?: LabRef[] }[];
   sources?: { title: string; locator?: string; url?: string }[];
-  units: string[]; problems: string[]; labs?: LabRef[];
+  units: string[]; problems: string[]; labs?: LabRef[]; counterexample_labs?: LabRef[];
 };
 export type Relation = {
   id: string; version: number; from: string; to: string; type: string; description: string;

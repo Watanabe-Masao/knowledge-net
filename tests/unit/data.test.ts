@@ -24,6 +24,26 @@ describe("型（schema/kn-schema-v1.json）", () => {
     d.concepts[1].id = "TERM-binom";
     expect(schemaErrors(d).length).toBeGreaterThanOrEqual(2);
   });
+  it("式の分解の木（改訂3）：見本は合い、知らない演算・葉のない節・記号の種類の誤りを止める", () => {
+    const d = sample();
+    const std = d.concepts.find((c: { id: string }) => c.id === "stats2:TERM-std");
+    expect(std.formulas[0].tree.op).toBe("eq");
+    expect(schemaErrors(d)).toEqual([]);
+    std.formulas[0].tree.args[1].op = "割る";
+    std.formulas[0].tree.args[0] = { sym: "" };
+    std.formulas[0].symbols[0].kind = "なに";
+    std.formulas[0].symbols[2].concept = "TERM-expect";   // 教材名のない概念
+    expect(schemaErrors(d).length).toBeGreaterThanOrEqual(4);
+  });
+  it("誤解と反例にもラボの参照を書ける（改訂3）", () => {
+    const d = sample();
+    const normal = d.concepts.find((c: { id: string }) => c.id === "stats2:TERM-normal");
+    expect(normal.misconceptions[0].labs[0].id).toBe("LAB-cont");
+    normal.counterexample_labs = [{ id: "LAB-cont", url: "https://example.com/x" }];
+    expect(schemaErrors(d)).toEqual([]);
+    normal.counterexample_labs = [{ id: "cont" }];
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+  });
   it("関係の種類は8つで、どれにも読み方とたどるかどうかがある", () => {
     expect(Object.keys(KINDS)).toHaveLength(8);
     expect(KINDS["変換"].trace).toBe(false);
