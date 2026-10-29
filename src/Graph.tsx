@@ -83,6 +83,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         { selector: 'edge[mode = "approximation"]', style: { "line-style": "dashed" } },
         { selector: 'edge[mode = "limit"]', style: { "line-style": "dotted" } },
         { selector: ".dim", style: { opacity: 0.18 } },
+        { selector: "edge.faint", style: { opacity: 0.3, width: 1.5 } },
         { selector: "node.hl", style: { "border-color": accent, "border-width": 3 } },
         { selector: "edge.hl", style: { "line-color": accent, "target-arrow-color": accent, width: 3 } },   // width は線の太さ（点に付けると枠の幅になる）
         { selector: "edge.picked", style: { width: 6, "line-color": accent, "target-arrow-color": accent, color: accent, "font-weight": "bold" } },
@@ -103,6 +104,14 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     c.on("tap", "node", (e) => { if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
     c.on("tap", "edge", (e) => edge.current?.(e.target.id()));
     c.on("tap", (e) => { if (e.target === c) select.current(null); });
+    // 図を指で動かすまでは、枠の大きさや文字の幅が後から決まっても全体を枠に収め直す
+    // （iPhone の Notion から開くと、作った時点では枠の大きさが決まっていないことがある）
+    let touched = false;
+    c.on("tapstart", () => { touched = true; });
+    const refit = () => { if (!touched && box.current) { c.resize(); c.fit(undefined, 20); } };
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(refit) : null;
+    ro?.observe(box.current);
+    document.fonts?.ready.then(refit);
     c.fit(undefined, 20);   // 最初は全体が見えるように
     // 周辺図（位置を指定して並べたとき）は、最初に線が描かれないことがある（Cytoscape 3.34）。線の見た目を一度変えて戻し、描き直させる
     const redraw = () => c.edges().style("arrow-scale", 0.91).removeStyle("arrow-scale");
@@ -111,7 +120,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     c.on("layoutstop", redraw);
     cy.current = c;
     (window as unknown as { kn?: Core }).kn = c;   // テストから点を押すため
-    return () => c.destroy();
+    return () => { ro?.disconnect(); c.destroy(); };
     // positions の変化は下の effect で動かす（作り直さない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [net, hidden, fill, around]);
@@ -140,9 +149,13 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     const c = cy.current;
     if (!c) return;
     c.batch(() => {
-      c.elements().unselect().removeClass("dim hl named picked");
+      c.elements().unselect().removeClass("dim hl named picked faint");
       if (highlight.size) {
         c.elements().forEach((e) => { if (highlight.has(e.id())) e.addClass("hl"); else e.addClass("dim"); });
+      }
+      if (selected && positions) {   // 周辺図：中心につながらない線（まわりどうし）は薄く。導出の点につながる線はそのまま
+        c.edges().filter((e) => e.source().id() !== selected && e.target().id() !== selected
+          && e.source().data("kind") !== "derivation" && e.target().data("kind") !== "derivation").addClass("faint");
       }
       if (selected) {
         const n = c.getElementById(selected);
@@ -159,5 +172,11 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     }
   }, [selected, highlight, fill, edgeSel, positions]);
 
-  return <div ref={box} className={`graph${around ? " around" : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />;
+  return (
+    <div className="graph-wrap">
+      <div ref={box} className={`graph${around ? " around" : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
+      <button className="fit" aria-label="図を枠に収める" title="図を枠に収める"
+        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: 20 } }, { duration: reduced() ? 0 : 200 })}>⤢</button>
+    </div>
+  );
 }

@@ -69,3 +69,8 @@ button.chip { width: 100%; text-align: left; font-size: 14px; }
 @media (min-width: 760px) { .panel { left: calc(50% - 380px); right: calc(50% - 380px); } }
 @keyframes rise { from { transform: translateY(100%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .panel { animation: none; } }
+/* 図を枠に収めるボタン（図の右上） */
+.graph-wrap { position: relative; }
+button.fit { position: absolute; top: 8px; right: 8px; min-height: 44px; min-width: 44px; padding: 0; font-size: 20px; line-height: 1; opacity: .9; }
+/* 説明パネルを開いている間は、下の内容がパネルに隠れないよう余白を足す */
+.app.has-panel { padding-bottom: 55vh; }
