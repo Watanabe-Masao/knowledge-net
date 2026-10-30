@@ -35,8 +35,10 @@ for (const scheme of ["light", "dark"] as const) {
 
 test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await page.goto(`./?${SRC}`);
-  await page.getByLabel("概念を探す").fill("標準化");
-  await page.getByRole("button", { name: "標準化" }).click();
+  await page.getByLabel("概念を探す").fill("標準");   // 打つたびに候補が絞られる（動的なドロップダウン）
+  await expect(page.getByRole("listbox", { name: "候補" })).toBeVisible();
+  await page.getByRole("option", { name: /標準化/ }).click();
+  await expect(page.getByRole("listbox", { name: "候補" })).toHaveCount(0);
   await page.getByRole("button", { name: "前提をさかのぼる" }).click();
   const tr = page.getByTestId("trace");
   for (const n of ["期待値", "分散", "確率変数"]) await expect(tr.getByRole("button", { name: n })).toBeVisible();
@@ -104,13 +106,20 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   const d = page.getByTestId("detail");
   await d.getByTestId("media-concept").getByRole("radio", { name: /触る/ }).click();
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
-  await expect(d.getByTestId("labs-concept").getByRole("link", { name: "大きく開く ↗" })).toHaveAttribute("href", /zscore\/\?p=s1-z$/);
+  await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /host=kn/);   // ラボの中の「大きく開く ↗」は親に知らせる
+  // 大きく開く：新しいタブではなく同じ画面の全面に出し、✕ で元の画面に戻る
+  await d.getByTestId("labs-concept").getByRole("button", { name: "大きく開く" }).click();
+  const full = page.getByTestId("fullview");
+  await expect(full.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z$/);
+  await full.getByRole("button", { name: "閉じて戻る" }).click();
+  await expect(full).toHaveCount(0);
+  await expect(d.getByTestId("labs-concept")).toBeVisible();
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
-  await tab(page, /つながり/);
   await tab(page, /つながり/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
-  await media.getByRole("radio", { name: /触る/ }).click();
+  // 上で「触る」を選んだので、覚えた形（触る）で開いている
+  await expect(media.getByRole("radio", { name: /触る/ })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByTestId("labs-panel-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
@@ -246,7 +255,13 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
   await page.getByTestId("media-concept").getByRole("radio", { name: /図/ }).click();   // 作業台のある概念では図は閉じておく
   const figs = page.getByTestId("figures-concept");
   await expect(figs.locator("img")).toHaveAttribute("src", /\/fig\/FIG-U14-concept\.svg$/);
-  await expect(figs.getByRole("link", { name: /図を大きく見る/ })).toHaveAttribute("target", "_blank");
+  // 図を押すと、その場で拡大して大きく見る（別の画面に出さない）。押すと縮んで戻る
+  await figs.getByRole("button", { name: /図を大きく見る/ }).click();
+  const box = page.getByTestId("lightbox");
+  await expect(box.locator("img")).toHaveAttribute("src", /\/fig\/FIG-U14-concept\.svg$/);
+  await expect(box.getByRole("link", { name: "別の画面で開く ↗" })).toHaveAttribute("target", "_blank");
+  await box.getByRole("button", { name: "閉じる" }).click();
+  await expect(box).toHaveCount(0);
   await expect(figs.locator("figcaption")).toContainText("B(4, 0.25)");
 });
 
@@ -504,3 +519,47 @@ test("作業台で実験する：100回・1回・条件を変えると記録を�
   await w.getByTestId("ws-slider-k").fill("4");
   await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
 });
+
+// 式を分解する（#110）：ₙCₖ → n!/(k!(n−k)!) → 階乗を ∏ に。値は変わらず、計算の段も分解した式で進む
+test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分解しても値は変わらない", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const w = page.getByTestId("workspace");
+  await w.locator('[data-part="0"]').first().click();
+  await w.getByTestId("ws-break-comb").click();
+  await expect(w.getByTestId("ws-part-value")).toHaveText("120");   // かたまりは選んだまま、値は ₁₀C₃ と同じ
+  await expect(w.getByTestId("ws-formula").locator(".katex")).toContainText("n!");
+  await expect(w.getByTestId("ws-calc").locator(".katex")).toContainText("10!");
+  await w.getByTestId("ws-break-fact").first().click();
+  await expect(w.getByTestId("ws-part-value")).toHaveText("120");
+  await expect(w.getByTestId("ws-result")).toContainText("26.68%");
+  await w.getByTestId("ws-close-comb").click();   // たたむと元の ₙCₖ に戻る
+  await expect(w.getByTestId("ws-formula").locator(".katex")).not.toContainText("n!");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+// モーダルで足りるものはモーダルに（#42）：線の見方は下から開く面、隠すと数を出す
+test("線の見方は下から開く面で、種類を隠せる", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.getByRole("button", { name: /^線の見方/ }).click();
+  const k = page.getByTestId("kinds");
+  await k.getByRole("checkbox").first().uncheck();
+  await k.getByRole("button", { name: "説明を閉じる" }).click();
+  await expect(k).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /線の見方・1 種類を隠す/ })).toBeVisible();
+});
+
+// 比べる（#42）：「ほかの概念と比べる」→ つながりのある概念から相手を選ぶ → そのまま比べる面が開く
+test("ほかの概念と比べる：相手を選ぶとすぐ比べられる", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.getByRole("button", { name: "ほかの概念と比べる" }).click();
+  const pick = page.getByTestId("pick");
+  await expect(pick).toContainText("二項分布 を変換すると ポアソン分布");   // どうつながるかの文つき
+  await pick.getByRole("button", { name: /ポアソン分布/ }).first().click();
+  const cmp = page.getByTestId("compare");
+  await expect(cmp.getByRole("heading", { name: "この組の関係" })).toBeVisible();
+  await cmp.getByRole("button", { name: "比べるのをやめる" }).click();
+  await expect(cmp).toHaveCount(0);
+  expect(page.url()).not.toContain("cmp=");
+});
+

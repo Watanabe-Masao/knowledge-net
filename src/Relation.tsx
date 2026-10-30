@@ -3,7 +3,7 @@
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
 // 手触り：切り替えと前後の図は change() で、変わる所（この欄）だけを短くつなぐ。
 import { useRef, useState } from "react";
-import { Badge, Badges as BadgeRow, Button, Segmented, change } from "@math-lab/ui";
+import { Badge, Badges as BadgeRow, Button, Lightbox, Segmented, change } from "@math-lab/ui";
 import s from "./Relation.module.css";
 import { KINDS, MODES, PREMISES, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
@@ -36,6 +36,9 @@ export function Badges({ net, r }: { net: Network; r: Relation }) {
   );
 }
 
+/** ラボを同じ画面の全面で開く（App が受けて FullView を出す。ラボの中の「大きく開く」も同じ。新しいタブには出さない） */
+export const openLab = (url: string, title?: string) => window.dispatchEvent(new CustomEvent("kn:open-lab", { detail: { url, title } }));
+
 type MediaKey = "fig" | "tour" | "check";
 const LABEL: Record<MediaKey, string> = { fig: "🖼 図", tour: "▶ 解説", check: "🧪 触る" };
 const KEY = "kn.media";
@@ -54,6 +57,7 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
   const [value, setValue] = useState<MediaKey | "">(first);
   const [fi, setFi] = useState(0);
   const [ci, setCi] = useState(0);
+  const [zoom, setZoom] = useState<DOMRect | null>(null);   // 図を押した位置（そこから広げる）
   const box = useRef<HTMLDivElement>(null);
   if (!have.length) return null;
   const choose = (v: string) => { change(box.current, () => setValue(v as MediaKey | "")); if (v) remember(v as MediaKey); };
@@ -69,7 +73,11 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
       {value === "fig" && f && (
         <div className={s.media} data-testid={`figures-${context}`}>
           <figure className={s.figure}>
-            <a href={f.url} target="_blank" rel="noreferrer" aria-label={`図を大きく見る：${f.caption ?? f.id}`}><img src={f.url} alt={f.caption ?? f.id} loading="lazy" /></a>
+            <button type="button" className={s.zoom} aria-label={`図を大きく見る：${f.caption ?? f.id}`} onClick={(e) => setZoom(e.currentTarget.querySelector("img")!.getBoundingClientRect())}>
+              <img src={f.url} alt={f.caption ?? f.id} loading="lazy" />
+            </button>
+            {figures!.map((x) => x.url !== f.url && <link key={x.url} rel="preload" as="image" href={x.url} />)}   {/* 次の図をすぐ出せるように */}
+            {zoom && <Lightbox src={f.url} alt={f.caption ?? f.id} caption={f.caption} href={f.url} from={zoom} onClose={() => setZoom(null)} />}
             {f.caption && <figcaption className={s.caption}>{f.caption}</figcaption>}
           </figure>
           <div className={s.steps}>
@@ -85,12 +93,12 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
       {lab && (
         <div className={`${s.media} ${s.lab}`} data-testid={`labs-${context}`}>
           {lab.purpose && <p className={s.purpose}>{lab.purpose}</p>}
-          <iframe key={lab.url} src={`${lab.url}${lab.url.includes("?") ? "&" : "?"}embed=1`} title={lab.title ?? lab.id} loading="lazy" />
+          <iframe key={lab.url} src={`${lab.url}${lab.url.includes("?") ? "&" : "?"}embed=1&host=kn`} title={lab.title ?? lab.id} loading="lazy" />
           <div className={s.row}>
             {value === "check" && checks.length > 1 && checks.map((c, i) => i !== ci && (
               <Button key={c.url} variant="quiet" onClick={() => setCi(i)}>ほかの版</Button>
             ))}
-            <a className={s.more} href={lab.url} target="_blank" rel="noreferrer">大きく開く ↗</a>
+            <Button variant="quiet" className={s.more} onClick={() => openLab(lab.url, lab.title ?? lab.id)}>大きく開く</Button>
             <Button variant="quiet" className={s.close} onClick={() => choose("")}>閉じる</Button>
           </div>
         </div>
