@@ -1,0 +1,17 @@
+.app { max-width: 760px; margin: 0 auto; padding: var(--sp-3) var(--sp-4) 32px; }
+.withSheet { padding-bottom: 55vh; }   /* 線の説明を開いている間は、下の内容が隠れないよう余白を足す */
+.top { display: flex; flex-direction: column; gap: var(--sp-1); }
+.hits { list-style: none; padding: 0; margin: var(--sp-1) 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.views { margin-top: var(--sp-3); }
+.edges { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.chip { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.kinds { list-style: none; padding: 0; margin: 0; }
+.kinds li { padding: var(--sp-2) 0; border-top: 1px solid var(--line); }
+.kinds label { display: flex; align-items: center; gap: var(--sp-2); min-height: 32px; }
+.swatch { display: inline-block; width: 18px; height: 4px; border-radius: 2px; flex: none; }
+.compareRow { border-top: 1px solid var(--line); padding-top: var(--sp-1); }
+.footer { margin-top: var(--sp-5); }
+/* 埋め込み（Notion、高さ約320px）：図をいっぱいに、下に短い説明と「大きく開く」 */
+.embed { padding: 0; max-width: none; height: 100vh; display: flex; flex-direction: column; }
+.embedCard { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-top: 1px solid var(--line); background: var(--surface); font-size: 13px; }
+.clamp { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin: 0; }

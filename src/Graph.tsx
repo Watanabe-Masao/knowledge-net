@@ -5,6 +5,8 @@ import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { useEffect, useRef } from "react";
 import { type Network, type Placed } from "./data";
+import { Button } from "./ui";
+import s from "./Graph.module.css";
 
 cytoscape.use(dagre);
 
@@ -25,7 +27,7 @@ type Props = {
 };
 
 function css(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888";
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "gray";   // 変数が読めないときだけ（色の値は tokens.css）
 }
 
 const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -173,10 +175,10 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   }, [selected, highlight, fill, edgeSel, positions]);
 
   return (
-    <div className="graph-wrap">
-      <div ref={box} className={`graph${around ? " around" : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
-      <button className="fit" aria-label="図を枠に収める" title="図を枠に収める"
-        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: 20 } }, { duration: reduced() ? 0 : 200 })}>⤢</button>
+    <div className={fill ? `${s.wrap} ${s.wrapFill}` : s.wrap}>
+      <div ref={box} className={`${s.graph}${fill ? ` ${s.fill}` : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
+      {!fill && <Button icon className={s.fit} aria-label="図を枠に収める" title="図を枠に収める"
+        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: 20 } }, { duration: reduced() ? 0 : 200 })}>⤢</Button>}
     </div>
   );
 }

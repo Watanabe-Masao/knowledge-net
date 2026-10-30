@@ -16,7 +16,7 @@ for (const scheme of ["light", "dark"] as const) {
     await page.setViewportSize({ width: 380, height: 800 });
     await page.goto(`./?${SRC}`);
     await expect(page.getByRole("heading", { name: "知識ネットワーク" })).toBeVisible();
-    await expect(page.locator(".graph canvas").first()).toBeVisible();
+    await expect(page.getByTestId("graph").locator("canvas").first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
     // 点を押す（Cytoscape の点の画面上の位置を使う）
     const pos = await page.evaluate(() => {
@@ -227,7 +227,7 @@ test("周辺図では中心につながらない線を薄くし、説明を開�
   expect(faint).toContain("stats2:REL-indep-geom");
   expect(faint).not.toContain("stats2:REL-indep-binom");
   await page.getByTestId("edge-list").getByRole("button", { name: /独立 は 二項分布 の前提/ }).click();
-  await expect(page.locator("main.app")).toHaveClass(/has-panel/);
+  await expect(page.locator("main")).toHaveClass(/has-panel/);
 });
 
 test("概念の図：詳細に出て、押すと図を別の画面で大きく見る", async ({ page }) => {

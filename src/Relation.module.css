@@ -2,30 +2,17 @@
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); padding: var(--sp-3); }
 .card + .card { margin-top: var(--sp-2); }
 .head { display: flex; flex-direction: column; gap: var(--sp-1); }
-.badges { display: flex; gap: 6px; flex-wrap: wrap; }
-.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; line-height: 1;
-  padding: 4px 7px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--ink-2); background: var(--surface-2); }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .title { font-size: var(--fs-head); font-weight: 600; line-height: 1.45; color: var(--ink); }
-button.title { all: unset; font-size: var(--fs-head); font-weight: 600; line-height: 1.45; color: var(--ink); cursor: pointer; min-height: 32px; }
-button.title:hover, button.title:focus-visible { color: var(--accent); }
+.title.title { min-height: 32px; }   /* 押せる見出し（Button の link）も同じ文字の段 */
 .gist { margin: var(--sp-2) 0 0; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-s); background: var(--accent-soft);
   border-left: 3px solid var(--accent); font-size: var(--fs-body); line-height: 1.6; color: var(--ink); }
 .gist b { margin-right: 6px; }
 .desc { margin: var(--sp-2) 0 0; font-size: var(--fs-small); line-height: 1.6; color: var(--ink-2); }
 .conds { margin: var(--sp-1) 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 6px; }
-.conds li { font-size: 11.5px; color: var(--ink-3); border: 1px dashed var(--line-strong); border-radius: var(--r-s); padding: 2px 6px; }
-.divider { height: 1px; background: var(--line); margin: var(--sp-3) calc(-1 * var(--sp-3)) 0; }
-/* 図／解説／触る の切り替え */
-.switch { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; margin-top: var(--sp-3);
-  padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-m); }
-.item { all: unset; box-sizing: border-box; min-height: 40px; display: flex; align-items: center; justify-content: center; gap: 4px;
-  font-size: 13.5px; font-weight: 600; color: var(--ink-2); border-radius: 8px; cursor: pointer; }
-.item[data-state="on"] { background: var(--raised); color: var(--ink); box-shadow: 0 0 0 1px var(--line-strong); }
-.item:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.conds li { font-size: var(--fs-tag); color: var(--ink-3); border: 1px dashed var(--line-strong); border-radius: var(--r-s); padding: 2px 6px; }
 .media { margin-top: var(--sp-2); }
 .figure { margin: 0; }
-.figure img { display: block; width: 100%; max-height: 240px; object-fit: contain; background: #fff; border: 1px solid var(--line); border-radius: var(--r-s); }
+.figure img { display: block; width: 100%; max-height: 240px; object-fit: contain; background: var(--figure-bg); border: 1px solid var(--line); border-radius: var(--r-s); }
 .caption { margin-top: var(--sp-1); font-size: var(--fs-small); color: var(--ink-2); line-height: 1.55; }
 .steps { display: grid; grid-template-columns: 1fr auto 1fr; gap: var(--sp-2); align-items: center; margin-top: var(--sp-2); }
 .count { font-size: 13px; font-weight: 700; color: var(--ink-3); min-width: 3em; text-align: center; }
@@ -34,3 +21,4 @@ button.title:hover, button.title:focus-visible { color: var(--accent); }
 .row { display: flex; gap: var(--sp-2); flex-wrap: wrap; align-items: center; margin-top: var(--sp-2); }
 .more { font-size: 13px; color: var(--accent); text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
 .close { margin-left: auto; }
+.switch { margin-top: var(--sp-3); }

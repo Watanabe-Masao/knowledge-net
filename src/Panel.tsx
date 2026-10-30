@@ -1,5 +1,6 @@
 // 線（関係・導出）の説明パネル。画面の下から開く。閉じても選んだ概念はそのまま。
 import RelationCard from "./Relation";
+import { Button, Label, Muted, Row, Sheet } from "./ui";
 import { name } from "./Detail";
 import { type Network } from "./data";
 
@@ -18,23 +19,18 @@ export default function Panel({ net, edgeId, onClose, onSelect }: Props) {
   const found = resolveEdge(net, edgeId);
   if (!found) return null;
   return (
-    <aside className="panel" role="dialog" aria-label="関係の説明" data-testid="edge-panel">
-      <div className="panel-head">
-        <span className="panel-kicker">{found.rel ? "つながり" : "導出"}</span>
-        <button className="quiet" onClick={onClose} aria-label="説明を閉じる">閉じる</button>
-      </div>
+    <Sheet label="関係の説明" data-testid="edge-panel"
+      head={<><Label>{found.rel ? "つながり" : "導出"}</Label><Button variant="quiet" onClick={onClose} aria-label="説明を閉じる">閉じる</Button></>}>
       {found.rel ? <>
         <RelationCard net={net} r={found.rel} context={`panel-${found.rel.id}`} open as="plain" />
-        <div className="actions">
-          {[found.rel.from, found.rel.to].map((c) => <button key={c} onClick={() => onSelect(c)}>{name(net, c)} へ</button>)}
-        </div>
+        <Row>{[found.rel.from, found.rel.to].map((c) => <Button key={c} onClick={() => onSelect(c)}>{name(net, c)} へ</Button>)}</Row>
       </> : <>
-        <b className="panel-title">{found.der!.statement}</b>
-        <p className="mute">前提：{found.der!.premises.map((p) => name(net, p)).join("・")}</p>
-        <ol>{found.der!.steps.map((s) => <li key={s}>{s}</li>)}</ol>
-        <p className="mute">条件：{found.der!.conditions.join("／")}</p>
-        <div className="actions"><button onClick={() => onSelect(found.der!.conclusion)}>{name(net, found.der!.conclusion)} へ</button></div>
+        <h4>{found.der!.statement}</h4>
+        <Muted>前提：{found.der!.premises.map((p) => name(net, p)).join("・")}</Muted>
+        <ol>{found.der!.steps.map((x) => <li key={x}>{x}</li>)}</ol>
+        <Muted>条件：{found.der!.conditions.join("／")}</Muted>
+        <Row><Button onClick={() => onSelect(found.der!.conclusion)}>{name(net, found.der!.conclusion)} へ</Button></Row>
       </>}
-    </aside>
+    </Sheet>
   );
 }

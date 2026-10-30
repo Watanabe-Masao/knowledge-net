@@ -14,3 +14,9 @@ npm ci
 npm run dev      # 手元で表示（public/sample/stats2.json を ?src=sample/stats2.json で）
 npm run check    # 単体テスト → build → 画面のテスト
 ```
+
+## デザインの決まり（デザインエンジン）
+
+- 見た目の値（色・文字の大きさ・余白・角丸・線・動き）は `src/ui/tokens.css` にだけ書く。ライトとダークは同じ段で作る。
+- 画面の部品は `src/ui/`（Button・Card・Disclosure・Sheet・Segmented・Badge・Field・Muted など）。画面（`src/*.tsx`）はこの部品と CSS Modules だけで作る。
+- `npm run design`（`npm run check` の最初）が、tokens.css の外の色の値と、画面のグローバルな `className="…"` を止める。

@@ -2,7 +2,7 @@
 // 関係の文は括弧を重ねず、種類と変換の仕方は札（badge）にする。「💡 つまり」は説明・図・ラボより先に出す。
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
 import { useState } from "react";
-import * as ToggleGroup from "@radix-ui/react-toggle-group";
+import { Badge, Badges as BadgeRow, Button, Segmented } from "./ui";
 import s from "./Relation.module.css";
 import { KINDS, MODES, PREMISES, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
@@ -22,16 +22,16 @@ export function relationParts(net: Network, r: Relation) {
   const text = (k?.reading ?? `□ → ■（${r.type}）`).replace("□", nameOf(net, r.from)).replace("■", nameOf(net, r.to));
   const tag = r.mode ? short(MODES[r.mode]) : r.premise ? short(PREMISES[r.premise]) : "";
   const tagTitle = r.mode ? MODES[r.mode] : r.premise ? PREMISES[r.premise] : "";
-  return { text, kind: r.type, tag, tagTitle, color: `var(${KIND_VAR[r.type] ?? "--ink-3"})` };
+  return { text, kind: r.type, tag, tagTitle };
 }
 
 export function Badges({ net, r }: { net: Network; r: Relation }) {
   const p = relationParts(net, r);
   return (
-    <span className={s.badges}>
-      <span className={s.badge} style={{ color: p.color }}><span className={s.dot} />{p.kind}</span>
-      {p.tag && <span className={s.badge} title={p.tagTitle}>{p.tag}</span>}
-    </span>
+    <BadgeRow>
+      <Badge color={KIND_VAR[r.type] ?? "--ink-3"}>{p.kind}</Badge>
+      {p.tag && <Badge title={p.tagTitle}>{p.tag}</Badge>}
+    </BadgeRow>
   );
 }
 
@@ -59,9 +59,10 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
   const lab = value === "tour" ? tours[0] : value === "check" ? checks[Math.min(ci, checks.length - 1)] : undefined;
   return (
     <div data-testid={`media-${context}`}>
-      <ToggleGroup.Root type="single" value={value} onValueChange={choose} className={s.switch} aria-label="図・解説・触る">
-        {have.map((k) => <ToggleGroup.Item key={k} value={k} className={s.item}>{LABEL[k]}{k === "fig" && figures!.length > 1 ? ` ${figures!.length}` : ""}</ToggleGroup.Item>)}
-      </ToggleGroup.Root>
+      <div className={s.switch}>
+        <Segmented value={value} onChange={choose} label="図・解説・触る"
+          items={have.map((k) => ({ value: k, label: `${LABEL[k]}${k === "fig" && figures!.length > 1 ? ` ${figures!.length}` : ""}` }))} />
+      </div>
       {value === "fig" && f && (
         <div className={s.media} data-testid={`figures-${context}`}>
           <figure className={s.figure}>
@@ -70,12 +71,12 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
           </figure>
           <div className={s.steps}>
             {figures!.length > 1 ? <>
-              <button onClick={() => setFi(fi - 1)} disabled={fi === 0} aria-label="前の図">◀ 前へ</button>
+              <Button onClick={() => setFi(fi - 1)} disabled={fi === 0} aria-label="前の図">◀ 前へ</Button>
               <span className={s.count} aria-live="polite">{fi + 1}／{figures!.length}</span>
-              <button onClick={() => setFi(fi + 1)} disabled={fi >= figures!.length - 1} aria-label="次の図">次へ ▶</button>
+              <Button onClick={() => setFi(fi + 1)} disabled={fi >= figures!.length - 1} aria-label="次の図">次へ ▶</Button>
             </> : <span />}
           </div>
-          <div className={s.row}><button className={`${s.close} quiet`} onClick={() => choose("")}>閉じる</button></div>
+          <div className={s.row}><Button variant="quiet" className={s.close} onClick={() => choose("")}>閉じる</Button></div>
         </div>
       )}
       {lab && (
@@ -84,10 +85,10 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
           <iframe key={lab.url} src={`${lab.url}${lab.url.includes("?") ? "&" : "?"}embed=1`} title={lab.title ?? lab.id} loading="lazy" />
           <div className={s.row}>
             {value === "check" && checks.length > 1 && checks.map((c, i) => i !== ci && (
-              <button key={c.url} className="quiet" onClick={() => setCi(i)}>ほかの版</button>
+              <Button key={c.url} variant="quiet" onClick={() => setCi(i)}>ほかの版</Button>
             ))}
             <a className={s.more} href={lab.url} target="_blank" rel="noreferrer">大きく開く ↗</a>
-            <button className={`${s.close} quiet`} onClick={() => choose("")}>閉じる</button>
+            <Button variant="quiet" className={s.close} onClick={() => choose("")}>閉じる</Button>
           </div>
         </div>
       )}
@@ -104,7 +105,7 @@ export default function RelationCard({ net, r, onTitle, context, open = false, a
     <article className={as === "card" ? s.card : undefined} data-testid={`rel-${r.id}`}>
       <div className={s.head}>
         <Badges net={net} r={r} />
-        {onTitle ? <button className={s.title} onClick={onTitle}>{p.text}</button> : <b className={s.title}>{p.text}</b>}
+        {onTitle ? <Button variant="link" className={s.title} onClick={onTitle}>{p.text}</Button> : <b className={s.title}>{p.text}</b>}
       </div>
       {r.gist && <p className={s.gist} data-testid="gist"><b>💡 つまり</b>{r.gist}</p>}
       <p className={s.desc}>{r.description}</p>
