@@ -355,6 +355,7 @@ test("式の記号を押すと意味が出て、値を入れると1段ずつ計�
   await page.setViewportSize({ width: 380, height: 800 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   const d = page.getByTestId("detail");
+  await d.getByTestId("details").locator("summary").click();   // 作業台のある概念では、式は「原理・式・条件・例・反例」の中
   const f = d.getByTestId("formula").nth(1);   // E(X)＝np
   await f.getByTestId("sym-p").click();
   await expect(f.getByTestId("sym-card")).toContainText("成功");
@@ -399,6 +400,7 @@ test("式の記号を定義の式で開き、閉じると戻る", async ({ page 
 // 式の正しさ（#109）：定義域の外は計算せず知らせる（k ≦ n も）、V(aX+b) は中の μ を E(X) にしてから開く、μ は μ＝E(X) で開く
 test("定義域の外の値は計算せず、理由を知らせる（k ≦ n・0 ≦ p ≦ 1）", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.getByTestId("detail").getByTestId("details").locator("summary").click();
   const f = page.getByTestId("detail").getByTestId("formula").first();   // P(X＝k)
   await f.getByRole("button", { name: "値を入れて計算する" }).click();
   await f.getByRole("spinbutton", { name: /^n/ }).fill("5");
@@ -425,4 +427,25 @@ test("V(aX+b) を開くと中の μ は E(aX+b) になり、μ は μ＝E(X) で
   await z.getByTestId("sym-mu").click();
   await z.getByTestId("open-def").first().click();
   await expect(z.locator(".katex").first()).toContainText("X−E(X)");
+});
+
+// 式の作業台（#110）：かたまりを押す → 帯に意味と値、スライダー → 分布と結果、棒を押す → k、n を下げると k も下がる
+test("式の作業台：かたまり・スライダー・分布が1つの操作で連動する", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const w = page.getByTestId("workspace");
+  await expect(w.getByTestId("ws-result")).toContainText("P(X=3)");   // n＝10・p＝0.3 の期待値 3 の近く
+  await expect(w.getByTestId("ws-result")).toContainText("0.2668");
+  await w.locator('[data-part="0"]').first().click();
+  await expect(w.getByTestId("ws-strip")).toContainText("並び方の数");
+  await expect(w.getByTestId("ws-part-value")).toHaveText("120");   // ₁₀C₃
+  await w.getByTestId("ws-bar-5").click();
+  await expect(w.getByTestId("ws-result")).toContainText("P(X=5)");
+  await expect(w.getByTestId("ws-part-value")).toHaveText("252");   // ₁₀C₅
+  await w.getByTestId("ws-slider-n").fill("4");   // n を 4 に下げると k（5）は 4 に下がる
+  await expect(w.getByTestId("ws-result")).toContainText("P(X=4)");
+  await expect(w.getByTestId("ws-bar-5")).toHaveCount(0);
+  await w.getByTestId("ws-strip").getByRole("button", { name: "k" }).click();   // かたまりの中の記号へ
+  await expect(w.getByTestId("ws-strip")).toContainText("0以上 n 以下の整数");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });

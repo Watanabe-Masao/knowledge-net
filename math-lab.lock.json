@@ -1,10 +1,11 @@
 {
- "ref": "82ca393565c887dbb24a9e21c401affaef5228f8",
+ "ref": "b7bade2a0643e5cd4977adf66096938753baae3b",
  "files": [
   "packages/engine/src/formula/domain.ts",
   "packages/engine/src/formula/evaluate.ts",
   "packages/engine/src/formula/index.ts",
   "packages/engine/src/formula/open.ts",
+  "packages/engine/src/formula/parts.ts",
   "packages/engine/src/formula/scope.ts",
   "packages/engine/src/formula/tex.ts",
   "packages/engine/src/formula/types.ts",
@@ -21,6 +22,8 @@
   "packages/ui/src/Segmented.tsx",
   "packages/ui/src/Sheet.module.css",
   "packages/ui/src/Sheet.tsx",
+  "packages/ui/src/Workspace.module.css",
+  "packages/ui/src/Workspace.tsx",
   "packages/ui/src/base.css",
   "packages/ui/src/css.d.ts",
   "packages/ui/src/index.ts",

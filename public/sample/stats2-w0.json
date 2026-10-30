@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 7,
+ "schema_revision": 8,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -2106,7 +2106,33 @@
         ]
        }
       ]
-     }
+     },
+     "parts": [
+      {
+       "path": [
+        1,
+        0
+       ],
+       "name": "並び方の数",
+       "meaning": "n 回のうち、どの k 回が成功かの選び方の数。どの並びも確率は同じなので、この数だけ足し合わせる"
+      },
+      {
+       "path": [
+        1,
+        1
+       ],
+       "name": "成功が k 回の確率",
+       "meaning": "1回の成功確率 p を、成功の回数 k だけ掛け合わせる（各回は独立）"
+      },
+      {
+       "path": [
+        1,
+        2
+       ],
+       "name": "失敗が n−k 回の確率",
+       "meaning": "1回の失敗確率 1−p を、失敗の回数 n−k だけ掛け合わせる"
+      }
+     ]
     },
     {
      "tex": "E(X)=np",
@@ -2269,6 +2295,15 @@
      "correction": "np 回はいちばん起きやすい付近だが、その確率自体は小さいことが多い（n が大きいほど小さい）"
     }
    ],
+   "workspace": {
+    "formula": 0,
+    "vary": [
+     "n",
+     "p"
+    ],
+    "over": "k",
+    "mean": 1
+   },
    "labs": [
     {
      "id": "LAB-binom",
