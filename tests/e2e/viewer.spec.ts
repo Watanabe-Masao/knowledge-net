@@ -448,6 +448,12 @@ test("式の作業台：かたまり・スライダー・分布が1つの操作�
   await expect(w.getByTestId("ws-bar-5")).toHaveCount(0);
   await w.getByTestId("ws-strip").getByRole("button", { name: "k" }).click();   // かたまりの中の記号へ
   await expect(w.getByTestId("ws-strip")).toContainText("0以上 n 以下の整数");
+  // 記号を選んでも、かたまりの段（値）と「この中の記号」は残る。別の記号へそのまま切り替えられる（#110）
+  await expect(w.getByTestId("ws-part-value")).toBeVisible();
+  await expect(w.getByTestId("ws-strip").getByRole("button", { name: "k" })).toHaveAttribute("aria-pressed", "true");
+  await w.getByTestId("ws-strip").getByRole("button", { name: "n" }).click();
+  await expect(w.getByTestId("ws-sym")).toContainText("試行の回数");
+  await expect(w.getByTestId("ws-part-value")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
