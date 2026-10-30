@@ -21,10 +21,11 @@ export type FormulaNode =
 /** 数理ラボへの参照（概念・関係で共通）。url は教材の build が作る。 */
 export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string; kind?: "tour" | "check" };
 export type FigRef = { id: string; url: string; caption?: string };
-export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode };
+export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode; parts?: { path: number[]; name: string; meaning: string }[] };
 export type Concept = {
   id: string; name: string; en?: string; status: "filled" | "stub"; version: number;
   definition?: string; principle?: string; formulas?: Formula[];
+  /** 式の作業台（#110） */ workspace?: { formula: number; vary: string[]; over: string; mean?: number };
   conditions?: { math: string[]; data?: string[] };
   example?: string; counterexample?: string;
   misconceptions?: { misconception: string; correction: string; labs?: LabRef[] }[];
