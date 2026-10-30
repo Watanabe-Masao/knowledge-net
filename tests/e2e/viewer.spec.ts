@@ -395,3 +395,34 @@ test("式の記号を定義の式で開き、閉じると戻る", async ({ page 
   await expect(f.getByTestId("close-V")).toHaveCount(0);   // σ の中で開いた V も消える
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
 });
+
+// 式の正しさ（#109）：定義域の外は計算せず知らせる（k ≦ n も）、V(aX+b) は中の μ を E(X) にしてから開く、μ は μ＝E(X) で開く
+test("定義域の外の値は計算せず、理由を知らせる（k ≦ n・0 ≦ p ≦ 1）", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const f = page.getByTestId("detail").getByTestId("formula").first();   // P(X＝k)
+  await f.getByRole("button", { name: "値を入れて計算する" }).click();
+  await f.getByRole("spinbutton", { name: /^n/ }).fill("5");
+  await f.getByRole("spinbutton", { name: /^k/ }).fill("10");
+  await f.getByRole("spinbutton", { name: /^p/ }).fill("7");
+  const out = f.getByTestId("outside");
+  await expect(out).toContainText("k は 0以上 n 以下の整数（今 10、n＝5）");
+  await expect(out).toContainText("p は 0以上1以下（今 7）");
+  await expect(f.getByTestId("expansion")).toHaveCount(0);
+  await f.getByRole("spinbutton", { name: /^k/ }).fill("2");
+  await f.getByRole("spinbutton", { name: /^p/ }).fill("0.3");
+  await expect(out).toHaveCount(0);
+  await expect(f.getByTestId("expansion")).toBeVisible();
+});
+
+test("V(aX+b) を開くと中の μ は E(aX+b) になり、μ は μ＝E(X) で開ける", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-var`);
+  const lin = page.getByTestId("detail").getByTestId("formula").nth(1);   // V(aX+b)＝a²V(X)
+  await lin.getByTestId("sym-V").click();
+  await lin.getByTestId("open-def").first().click();
+  await expect(lin.locator(".katex").first()).toContainText("E((aX+b−E(aX+b))");
+  await page.goto(`./?${W0}&c=stats2:TERM-std`);
+  const z = page.getByTestId("detail").getByTestId("formula").first();
+  await z.getByTestId("sym-mu").click();
+  await z.getByTestId("open-def").first().click();
+  await expect(z.locator(".katex").first()).toContainText("X−E(X)");
+});
