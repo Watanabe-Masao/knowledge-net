@@ -622,3 +622,49 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   expect(errs).toEqual([]);
 });
 
+
+// 値の表の実験室（#119）：平均（▲）の行き先を予想 → 1つずつ引く → 期待値は表の中の値でないこともある → Σ x p(x) を項に開く → 反例（和が有限でない表）
+test("値の表の実験室：平均の行き先を予想し、引いて照らし、式を項に開き、反例を実験する", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-expect`);
+  await page.getByTestId("open-stats2:EXP-expect-table").click();
+  const x = page.getByTestId("experiment");
+  await expect(x).toContainText("表を変えると");
+  await expect(x.getByTestId("exp-marker")).toHaveCount(1);   // ▲＝今の表の期待値
+  await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();
+  // 向きと値は連動する：値を今の平均に戻すと「動かない」、右へ動かすと「右へ動く」
+  const slider = x.getByRole("slider", { name: "予想する平均" });
+  await x.getByRole("radio", { name: "右へ動く" }).click();
+  await expect(slider).not.toHaveValue("3.5");
+  await slider.fill("3.5");
+  await expect(x.getByRole("radio", { name: "動かない" })).toHaveAttribute("aria-checked", "true");
+  await slider.fill("4.5");
+  await expect(x.getByRole("radio", { name: "右へ動く" })).toHaveAttribute("aria-checked", "true");
+  await x.getByRole("button", { name: "この予想で引いてみる" }).click();
+  await x.getByTestId("exp-run-1").click();
+  await expect(x.getByTestId("exp-draws").locator("span")).toHaveCount(1);
+  await x.getByTestId("exp-run-100").click();
+  await expect(x.getByTestId("exp-sets")).toHaveText("101 回");
+  await x.getByRole("button", { name: "観察する →" }).click();
+  // 6 の面を3倍：期待値 (1+2+3+4+5+6×3)÷8＝4.125。表の中の値としては出ない
+  await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict")).toContainText("3.5 → 4.13");
+  await expect(x.getByTestId("exp-verdict")).toContainText("一度も出ない");
+  await expect(x.getByTestId("exp-replay")).toBeVisible();
+  await x.getByRole("button", { name: /理由を考える/ }).click();
+  const ex = x.getByTestId("exp-expand");
+  await expect(ex).toContainText("∑");   // 始めは Σ_x x p(x)
+  await x.getByRole("button", { name: "次の段" }).click();
+  await expect(ex).toContainText("6×p(6)");
+  for (let i = 0; i < 6; i++) { const nx = x.getByRole("button", { name: "次の段" }); if (await nx.isDisabled()) break; await nx.click(); }
+  await expect(ex).toContainText("4.125");   // 最後は表から求めた期待値
+  await x.getByRole("button", { name: "別の条件で試す" }).click();
+  await x.getByTestId("exp-bnd-doubling").click();
+  await x.getByRole("radio", { name: "揺れ続ける" }).click();
+  await x.getByTestId("exp-cx-run-100").click();
+  await expect(x.getByTestId("exp-cx-verdict")).toContainText("予想どおり", { timeout: 15000 });
+  await expect(x.getByTestId("exp-cx-verdict")).toContainText("期待値 41");   // どの項も 2^k×(1/2)^k＝1。40 項＋最後の 2
+  await expect(x).toContainText("崩した条件：和（連続なら積分）が有限の値になる");
+  expect(errs).toEqual([]);
+});

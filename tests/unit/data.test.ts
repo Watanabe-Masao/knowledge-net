@@ -113,6 +113,23 @@ describe("数理ラボの参照と型の改訂", () => {
     e.relations[0].figures = [{ id: "U14", url: "https://example.com/a.svg" }];
     expect(schemaErrors(e).length).toBeGreaterThan(0);
   });
+  it("実験室の値の表（改訂10）：見本は合い、値の表の形に二項分布の項目・二項分布に値の表の項目を混ぜると止める", () => {
+    const w0 = () => JSON.parse(readFileSync("public/sample/stats2-w0.json", "utf8"));
+    const d = w0();
+    expect(schemaErrors(d)).toEqual([]);
+    const t = d.experiments.find((x: { model: string }) => x.model === "table");
+    expect(t.themes[0].values.length).toBeGreaterThan(1);
+    t.vary = { n: { min: 1, max: 2, step: 1 } };
+    delete t.themes[0].compare;
+    expect(schemaErrors(d).length).toBeGreaterThanOrEqual(2);
+    const e = w0();
+    const b = e.experiments.find((x: { model: string }) => x.model === "binom");
+    b.themes[0].values = [1, 2];
+    expect(schemaErrors(e).length).toBeGreaterThan(0);
+    const f = w0();
+    f.experiments.find((x: { model: string }) => x.model === "table").model = "poisson";
+    expect(schemaErrors(f).length).toBeGreaterThan(0);
+  });
   it("画面より新しい改訂のデータは知らせる（表示はする）", async () => {
     const { REVISION } = await import("../../src/data");
     const d = sample();

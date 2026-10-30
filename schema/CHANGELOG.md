@@ -15,3 +15,4 @@
 | 7 | 2026-10-30 | 式の記号に任意の `of`（どの確率変数の記号か）と `domain`（定義域：min・max は数か同じ式の記号の key〔k ≦ n〕・minOpen・maxOpen・integer・nonzero）（stats2-course #109）。任意 |
 | 8 | 2026-10-30 | 式に任意の `parts`（意味のかたまり：path・name・meaning）、概念に任意の `workspace`（式の作業台：formula・vary・over・mean）（stats2-course #110）。任意 |
 | 9 | 2026-10-31 | 任意の `experiments`（実験室：問い・つなぐ概念と線・モデル・条件の範囲・前の条件と変える条件・理由・テーマ・反例の実験〔counterexamples：崩す条件と起き方。urn・streak・mix〕・次の問い・ポイント。予想の答えは書かない）（stats2-course #102）。任意 |
+| 10 | 2026-10-31 | 実験室に値の表の形（`model: table`。stats2-course #119）：テーマは値・呼び名・前の重み・変えた重み・変えたことの文、反例は崩す条件と値・重みの表。`model` で二項分布（binom）と分かれる（if／then）。二項分布の形は変わらない。任意 |
