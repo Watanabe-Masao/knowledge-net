@@ -232,8 +232,8 @@ test("枠の大きさが後から決まっても図が枠に収まり、⤢ で�
   });
   await expect.poll(inside).toBe(true);
   await settle(page);   // 枠の大きさに合わせて収め直す動きが終わってから動かす（途中だと収め直しに戻されて、GitHub でまれに落ちた）
-  await page.evaluate(() => { (window as any).kn.panBy({ x: 0, y: -400 }); });   // 戻り値（cy 全体）を返さない（返すと書き出しに約17秒かかる）
-  await expect.poll(inside).toBe(false);
+  // 図をずらして枠の外へ出す。遅れて収め直しが走ると戻されるので、外に出たと確かめられるまでずらし直す（GitHub でまれに落ちた）
+  await expect.poll(async () => { await page.evaluate(() => { (window as any).kn.panBy({ x: 0, y: -400 }); }); return inside(); }).toBe(false);   // panBy の戻り値（cy 全体）は返さない（書き出しに約17秒かかる）
   await page.getByRole("button", { name: "図を枠に収める" }).click();
   await expect.poll(inside).toBe(true);
 });
