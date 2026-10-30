@@ -375,3 +375,23 @@ test("式の記号を押すと意味が出て、値を入れると1段ずつ計�
   await expect(page.getByTestId("detail").getByRole("heading", { name: "分散", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
 });
+
+// 記号を開く・閉じる（#72）：Z＝(X−μ)/σ の σ を開く → √V(X)、V を開く → √E((X−μ)²)、σ を閉じると戻る
+test("式の記号を定義の式で開き、閉じると戻る", async ({ page }) => {
+  await page.setViewportSize({ width: 380, height: 800 });
+  await page.goto(`./?${W0}&c=stats2:TERM-std`);
+  const f = page.getByTestId("detail").getByTestId("formula").first();
+  const tex = f.locator(".katex").first();
+  await f.getByTestId("sym-sigma").click();
+  await f.getByTestId("open-def").first().click();
+  await expect(tex.locator(".sqrt")).toHaveCount(1);   // KaTeX の根号は絵なので、根号の要素で確かめる
+  await expect(tex).toContainText("V(X)");
+  await expect(f.locator('[data-open="sigma"]').first()).toBeVisible();
+  await f.getByTestId("sym-V").click();
+  await f.getByTestId("open-def").first().click();   // 形1：E((X−μ)²)
+  await expect(tex).toContainText("E((X−μ)");
+  await f.getByTestId("close-sigma").click();
+  await expect(tex.locator(".sqrt")).toHaveCount(0);
+  await expect(f.getByTestId("close-V")).toHaveCount(0);   // σ の中で開いた V も消える
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
+});

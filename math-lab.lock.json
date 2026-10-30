@@ -1,8 +1,9 @@
 {
- "ref": "a62daf1086a0d42796d16c5eb17cc1756d4051c0",
+ "ref": "e93d5b7c413491cceedebdc93a273e38126e5ce6",
  "files": [
   "packages/engine/src/formula/evaluate.ts",
   "packages/engine/src/formula/index.ts",
+  "packages/engine/src/formula/open.ts",
   "packages/engine/src/formula/tex.ts",
   "packages/engine/src/formula/types.ts",
   "packages/engine/src/formula/validate.ts",
