@@ -7,7 +7,7 @@ import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import { Badges, relationParts } from "./Relation";
-import { Button, Card, Disclosure, ErrorText, Field, Muted, Split } from "./ui";
+import { Button, Card, Disclosure, ErrorText, Field, Muted, Split } from "@math-lab/ui";
 import st from "./App.module.css";
 import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 

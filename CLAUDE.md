@@ -15,6 +15,8 @@
 7. **スマホ前提**。380px で横にはみ出さない。押す場所は 44px 以上。表は3列まで。Notion の埋め込み（360×320）に収める。
 8. **作業はブランチ**で行い、PR で GitHub のチェック（`npm run check`）が通ってからマージする。作業は stats2-course の issue（最終ゴール #55、画面は #42）で管理する。
 
+9. **部品と手触りの値は math-lab**（#107）。ここの `vendor/math-lab` は写しで直接直さない。math-lab で直して `node scripts/sync-math-lab.mjs --from ../math-lab` で取り込む（`npm run sync` がずれを止める）。
+
 ## 確かめる
 
-`npm run check`（vitest の単体テスト → build → Playwright の画面のテスト）。画面を変えたら、スマホ幅と埋め込みのスクリーンショットも見る。
+`npm run check`（math-lab の写し → デザインの決まり → vitest の単体テスト → build → Playwright の画面のテスト）。画面を変えたら、スマホ幅と埋め込みのスクリーンショットも見る。

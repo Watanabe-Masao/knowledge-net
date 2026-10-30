@@ -5,7 +5,7 @@ import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { useEffect, useRef } from "react";
 import { type Network, type Placed } from "./data";
-import { Button } from "./ui";
+import { Button } from "@math-lab/ui";
 import s from "./Graph.module.css";
 
 cytoscape.use(dagre);

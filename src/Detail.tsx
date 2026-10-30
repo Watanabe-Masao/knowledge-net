@@ -1,7 +1,7 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import katex from "katex";
 import RelationCard, { Media } from "./Relation";
-import { Button, Card, Muted, Row, Stack } from "./ui";
+import { Button, Card, Muted, Row, Stack } from "@math-lab/ui";
 import st from "./Detail.module.css";
 import { KINDS, MODES, PREMISES, around, type Concept, type Network, type Relation } from "./data";
 

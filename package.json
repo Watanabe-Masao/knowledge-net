@@ -9,8 +9,9 @@
     "build": "npm run gen && tsc --noEmit && vite build",
     "test": "npm run gen && vitest run",
     "e2e": "playwright test",
-    "check": "npm run design && npm run test && npm run build && npm run e2e",
-    "design": "node scripts/check-design.mjs"
+    "check": "npm run sync && npm run design && npm run test && npm run build && npm run e2e",
+    "design": "node scripts/check-design.mjs",
+    "sync": "node scripts/sync-math-lab.mjs"
   },
   "dependencies": {
     "@radix-ui/react-toggle-group": "1.2.1",

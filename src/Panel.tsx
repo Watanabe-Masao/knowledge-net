@@ -1,6 +1,6 @@
 // 線（関係・導出）の説明パネル。画面の下から開く。閉じても選んだ概念はそのまま。
 import RelationCard from "./Relation";
-import { Button, Muted, Row, Sheet } from "./ui";
+import { Button, Muted, Row, Sheet } from "@math-lab/ui";
 import { name } from "./Detail";
 import { type Network } from "./data";
 
