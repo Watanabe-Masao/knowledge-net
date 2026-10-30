@@ -1,5 +1,5 @@
 {
- "ref": "945c0d1bf29425405630d5cb8727ee244fe43fcf",
+ "ref": "55576df9dc89ccf9773f475367f41978ccaba923",
  "files": [
   "packages/engine/src/experiment.ts",
   "packages/engine/src/formula/domain.ts",
@@ -18,6 +18,7 @@
   "packages/ui/src/Button.tsx",
   "packages/ui/src/Experiment.module.css",
   "packages/ui/src/Experiment.tsx",
+  "packages/ui/src/ExperimentTable.tsx",
   "packages/ui/src/Formula.module.css",
   "packages/ui/src/Formula.tsx",
   "packages/ui/src/FullView.module.css",
@@ -35,6 +36,7 @@
   "packages/ui/src/base.css",
   "packages/ui/src/css.d.ts",
   "packages/ui/src/index.ts",
+  "packages/ui/src/labParts.tsx",
   "packages/ui/src/motion.ts",
   "packages/ui/src/tokens.css",
   "packages/ui/tokens.json"
