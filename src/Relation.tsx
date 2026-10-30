@@ -3,7 +3,7 @@
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
 // 手触り：切り替えと前後の図は change() で、変わる所（この欄）だけを短くつなぐ。
 import { useRef, useState } from "react";
-import { Badge, Badges as BadgeRow, Button, Segmented, change } from "./ui";
+import { Badge, Badges as BadgeRow, Button, Segmented, change } from "@math-lab/ui";
 import s from "./Relation.module.css";
 import { KINDS, MODES, PREMISES, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
