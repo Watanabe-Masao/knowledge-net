@@ -1,14 +1,15 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import katex from "katex";
-import LabLaunch from "./Lab";
 import RelationCard, { Media } from "./Relation";
+import { Button, Card, Muted, Row, Stack } from "./ui";
+import st from "./Detail.module.css";
 import { KINDS, MODES, PREMISES, around, type Concept, type Network, type Relation } from "./data";
 
 function Tex({ tex }: { tex: string }) {
   let html: string;
   try { html = katex.renderToString(tex, { displayMode: true, throwOnError: false, output: "html" }); }
   catch { html = tex; }
-  return <div className="tex" dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div className={st.tex} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 export function name(net: Network, id: string): string {
@@ -32,20 +33,20 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
   return (
-    <section className="detail" data-testid="detail">
-      <header>
+    <Card data-testid="detail">
+      <header className={st.head}>
         <h2>{c.name}</h2>
-        <p className="mute">{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.status === "stub" ? "・まだ説明がない" : ""}</p>
-        <div className="actions">
-          <button onClick={onTrace} aria-pressed={tracing}>{tracing ? "前提の表示をやめる" : "前提をさかのぼる"}</button>
-          <button onClick={onCompare} aria-pressed={inCompare}>{inCompare ? "比べるから外す" : "比べるに入れる"}</button>
-        </div>
+        <Muted>{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
+        <Row>
+          <Button onClick={onTrace} pressed={tracing}>{tracing ? "前提の表示をやめる" : "前提をさかのぼる"}</Button>
+          <Button onClick={onCompare} pressed={inCompare}>{inCompare ? "比べるから外す" : "比べるに入れる"}</Button>
+        </Row>
       </header>
       {c.definition && <><h3>定義</h3><p>{c.definition}</p></>}
       <Media figures={c.figures} labs={c.labs} context="concept" open />
       {c.principle && <><h3>原理</h3><p>{c.principle}</p></>}
       {c.formulas?.map((f, i) => (
-        <div key={i} className="formula">
+        <div key={i} className={st.formula}>
           {f.label && <h4>{f.label}</h4>}
           <Tex tex={f.tex} />
           {f.symbols?.length ? (
@@ -60,23 +61,24 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         {c.conditions.data?.length ? <><h4>データに当てはめるとき</h4><ul>{c.conditions.data.map((x) => <li key={x}>{x}</li>)}</ul></> : null}
       </>}
       {c.example && <><h3>具体例</h3><p>{c.example}</p></>}
-      {c.counterexample && <><h3>反例</h3><p>{c.counterexample}</p><LabLaunch labs={c.counterexample_labs} context="counterexample" /></>}
+      {c.counterexample && <><h3>反例</h3><p>{c.counterexample}</p><Media labs={c.counterexample_labs} context="counterexample" /></>}
       {c.misconceptions?.length ? <>
         <h3>よくある誤解</h3>
-        <ul>{c.misconceptions.map((m, i) => <li key={m.misconception}><b>✕ {m.misconception}</b><br />→ {m.correction}<LabLaunch labs={m.labs} context={`misconception-${i}`} /></li>)}</ul>
+        <ul className={st.misconceptions}>{c.misconceptions.map((m, i) => (
+          <li key={m.misconception}><Card as="div" tone="inset"><span className={st.wrong}>✕ {m.misconception}</span><p>→ {m.correction}</p><Media labs={m.labs} context={`misconception-${i}`} /></Card></li>))}</ul>
       </> : null}
       {relations.length ? <>
         <h3>つながり</h3>
-        <div className="relations">{relations.map((r) => (
+        <Stack className={st.relations}>{relations.map((r) => (
           <RelationCard key={r.id} net={net} r={r} context={`relation-${r.id}`} onTitle={() => onSelect(r.from === c.id ? r.to : r.from)} />
-        ))}</div>
+        ))}</Stack>
       </> : null}
       {derivations.map((d) => (
-        <div key={d.id} className="derivation">
+        <div key={d.id} className={st.derivation}>
           <h3>導出：{d.statement}</h3>
-          <p className="mute">前提：{d.premises.map((p) => name(net, p)).join("・")}</p>
+          <Muted>前提：{d.premises.map((p) => name(net, p)).join("・")}</Muted>
           <ol>{d.steps.map((s) => <li key={s}>{s}</li>)}</ol>
-          <p className="mute">条件：{d.conditions.join("／")}</p>
+          <Muted>条件：{d.conditions.join("／")}</Muted>
         </div>
       ))}
       {units.length ? <>
@@ -84,7 +86,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         <ul>{units.map((u) => <li key={u!.id}>{u!.url ? <a href={u!.url} target="_blank" rel="noreferrer">{u!.number}｜{u!.title} ↗</a> : `${u!.number}｜${u!.title}`}</li>)}</ul>
       </> : null}
       {c.problems.length ? <><h3>確かめる問題</h3><p>{c.problems.join("・")}</p></> : null}
-      {c.sources?.length ? <p className="mute">出典：{c.sources.map((s) => (s.url ? <a key={s.title} href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title))}{c.sources[0].locator ? `（${c.sources[0].locator}）` : ""}</p> : null}
-    </section>
+      {c.sources?.length ? <Muted>出典：{c.sources.map((s) => (s.url ? <a key={s.title} href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title))}{c.sources[0].locator ? `（${c.sources[0].locator}）` : ""}</Muted> : null}
+    </Card>
   );
 }
