@@ -122,3 +122,8 @@
 .mark text { font-size: 10px; font-weight: 700; fill: var(--accent); }
 .mark { animation: enter var(--dur) var(--ease); }
 .choice button:disabled { opacity: .35; cursor: default; }
+/* あなたの予想の山（強い色の実線）。前の条件は点線、理論は点 */
+.guess { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; transition: d var(--dur) var(--ease); }
+.kGuess { width: 14px; height: 0; border-top: 2px solid var(--accent); }
+.shape { display: block; margin-top: 4px; font-size: 13px; color: var(--ink-2); }
+.shape b { color: var(--ink); }

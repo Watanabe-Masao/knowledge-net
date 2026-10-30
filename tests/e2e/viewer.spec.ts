@@ -590,6 +590,8 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await expect(x.getByTestId("exp-sets")).toHaveText("101 セット");
   await x.getByRole("button", { name: "観察する →" }).click();
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-guess")).toHaveCount(1);   // あなたの予想の山を理論と重ねる
+  await expect(x.getByTestId("exp-verdict")).toContainText("細く高く");   // 予想は前の形のまま。p＝0.8 の山は細い
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.locator(".katex").first()).toContainText("10×0.8");
   await x.getByRole("button", { name: "別の条件で試す" }).click();

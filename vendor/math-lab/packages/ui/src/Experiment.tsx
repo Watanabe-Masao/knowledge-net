@@ -56,10 +56,10 @@ const peak = (f: number[]) => f.reduce((b, v, i) => (v > f[b]! ? i : b), 0);
 const dirOf = (a: Cond, b: Cond) => { const d = mean(b) - mean(a); return Math.abs(d) < 0.25 ? 1 : d > 0 ? 2 : 0; };
 
 /** 棒（実験の割合）・点（理論）・点線（前の条件）を重ねる図。高さは前の値から動く */
-function Bars({ freq, theory, ghost, hi, mark, height = 150, label }: { freq?: number[]; theory?: number[]; ghost?: number[]; hi?: number; mark?: number; height?: number; label: string }) {
+function Bars({ freq, theory, ghost, guess, hi, mark, height = 150, label }: { freq?: number[]; theory?: number[]; ghost?: number[]; guess?: number[]; hi?: number; mark?: number; height?: number; label: string }) {
   const base = freq ?? theory ?? [];
   const n = base.length - 1, W = 340, B = height - 20, R = 30;
-  const raw = Math.max(1e-9, ...(freq ?? []), ...(theory ?? []), ...(ghost ?? []));
+  const raw = Math.max(1e-9, ...(freq ?? []), ...(theory ?? []), ...(ghost ?? []), ...(guess ?? []));
   const tick = [0.05, 0.1, 0.2, 0.25, 0.5, 1].find((t) => raw / t <= 4) ?? 1;
   const top = Math.ceil(raw / tick - 1e-9) * tick;
   const [topT] = useTween([top]);
@@ -73,6 +73,7 @@ function Bars({ freq, theory, ghost, hi, mark, height = 150, label }: { freq?: n
         <g key={t}><line x1={0} x2={W - R + 4} y1={y(t)} y2={y(t)} className={s.grid} /><text x={W} y={y(t) + 3.5} textAnchor="end" className={s.tick}>{pct(t)}</text></g>
       ))}
       {ghost && <path d={ghost.map((v, k) => `${k ? "L" : "M"}${x(k)},${y(v)}`).join("")} className={s.ghost} />}
+      {guess && <path d={guess.slice(0, n + 1).map((v, k) => `${k ? "L" : "M"}${x(k)},${y(v)}`).join("")} className={s.guess} data-testid="exp-guess" />}
       {bars.map((v, k) => (v > 0 && B - y(v) > 0.3) && (
         <rect key={k} x={x(k) - bw * 0.32} y={y(v)} width={bw * 0.64} height={B - y(v)} rx={Math.min(3, bw * 0.15)} className={k === hi ? s.barHi : freq ? s.bar : s.barTheory} />
       ))}
@@ -133,6 +134,13 @@ export function Experiment({ def, reasonFormula, mainFormula, seed: seed0, onCon
     return { dir: i, peak: pk };
   });
   const choosePeak = (k: number) => setPred({ dir: dirOfPeak(k), peak: k });
+  // あなたの予想の山：前の山の形のまま、頂点を予想の位置へずらす（形は変わらないと仮定した予想）。観察で理論と重ね、形の変化に気づく
+  const guess = useMemo(() => {
+    const f = modelPmf({ kind: "binom", ...round.start }), d = pred.peak - base;
+    const g = Array.from({ length: round.next.n + 1 }, (_, k) => f[k - d] ?? 0), t = g.reduce((a, b) => a + b, 0) || 1;
+    return g.map((v) => v / t);
+  }, [round, pred.peak, base]);
+  const spread = (f: number[]) => { const m = f.reduce((a, v, k) => a + k * v, 0); return f.reduce((a, v, k) => a + (k - m) ** 2 * v, 0); };
   const k = rec.last ? rec.last.reduce((a, b) => a + b, 0) : undefined;
 
   // 反例を実験する：同じ n・p で、成り立つ条件を1つ崩した起き方にして、二項の理論と比べる
@@ -182,7 +190,8 @@ export function Experiment({ def, reasonFormula, mainFormula, seed: seed0, onCon
     body = <>
       <section className={s.card}>
         <p className={s.h}>{`p＝${pct(round.start.p)}・n＝${round.start.n} のときの山`}<span>前の条件</span></p>
-        <Bars theory={theoryStart} hi={base} mark={pred.dir !== undefined ? pred.peak : undefined} height={130} label="前の条件の理論の分布と予想の頂点" />
+        <Bars theory={theoryStart} hi={base} guess={pred.dir !== undefined ? guess : undefined} mark={pred.dir !== undefined ? pred.peak : undefined} height={130} label="前の条件の理論の分布と予想の山" />
+        {pred.dir !== undefined && <div className={s.legend}><span><i className={s.kBar} />前の条件</span><span><i className={s.kGuess} />あなたの予想の山</span></div>}
       </section>
       <section className={s.card}>
         <p className={s.h}>{`${round.next.p !== round.start.p ? `p＝${pct(round.next.p)}` : `n＝${round.next.n}`} にすると、山は…`}</p>
@@ -232,10 +241,15 @@ export function Experiment({ def, reasonFormula, mainFormula, seed: seed0, onCon
     body = <>
       <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
         <b>{ok ? "✓ 予想どおり" : "✗ 予想と違った"}</b>　山は{DIRS[actual]}（いちばん高いのは k＝{pk}。予想は k＝{pred.peak}）
+        {(() => {   // 形の違い：予想は前の形のままずらした山。理論の散らばりと比べる
+          const r = spread(theoryNow) / Math.max(1e-9, spread(guess));
+          return r < 0.85 ? <span className={s.shape}>形にも注目：山は予想より<b>細く高く</b>なった（散らばり {r2(spread(theoryNow))}、前は {r2(spread(guess))}）</span>
+            : r > 1.15 ? <span className={s.shape}>形にも注目：山は予想より<b>広く低く</b>なった（散らばり {r2(spread(theoryNow))}、前は {r2(spread(guess))}）</span> : null;
+        })()}
       </div>
       <section className={s.card}>
-        <div className={s.legend}><span><i className={s.kBar} />実験 {rec.sets} セット</span><span><i className={s.kDot} />理論</span><span><i className={s.kGhost} />前の条件</span></div>
-        <Bars freq={sum.freq} theory={theoryNow} ghost={theoryStart.slice(0, cond.n + 1)} hi={pk} mark={pred.peak} height={170} label="実験と理論と前の条件と予想の頂点" />
+        <div className={s.legend}><span><i className={s.kBar} />実験 {rec.sets} セット</span><span><i className={s.kDot} />理論</span><span><i className={s.kGhost} />前の条件</span><span><i className={s.kGuess} />あなたの予想</span></div>
+        <Bars freq={sum.freq} theory={theoryNow} ghost={theoryStart.slice(0, cond.n + 1)} guess={guess} hi={pk} height={170} label="実験と理論と前の条件とあなたの予想" />
       </section>
       <div className={s.tiles}>
         <div>平均（実験）<b>{r2(sum.mean)}</b><i>前の条件では {r2(mean(round.start))}</i></div>
