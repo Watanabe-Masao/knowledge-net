@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
+import { Badges, relationParts } from "./Relation";
 import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 
 const params = new URLSearchParams(location.search);
@@ -101,11 +102,11 @@ export default function App() {
         onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} />
       {concept ? (() => {
         const a = around(net, concept.id);
-        const items = [...a.relations.map((r) => ({ id: r.id, text: sentence(net, r) })), ...a.derivations.map((d) => ({ id: d.id, text: `導出：${d.statement}` }))];
+        const items = [...a.relations.map((r) => ({ id: r.id, text: relationParts(net, r).text, rel: r })), ...a.derivations.map((d) => ({ id: d.id, text: `導出：${d.statement}`, rel: undefined }))];
         return items.length ? (
           <details className="edges" data-testid="edge-list" open={view === "around"}>
             <summary>つながり一覧（{items.length}）　線を押すのと同じ</summary>
-            <ul>{items.map((it) => <li key={it.id}><button className="chip" aria-pressed={edgeSel === it.id} onClick={() => setEdgeSel(it.id)}>{it.text}</button></li>)}</ul>
+            <ul>{items.map((it) => <li key={it.id}><button className="chip" aria-pressed={edgeSel === it.id} onClick={() => setEdgeSel(it.id)}>{it.rel && <Badges net={net} r={it.rel} />}<span>{it.text}</span></button></li>)}</ul>
           </details>
         ) : null;
       })() : null}

@@ -1,7 +1,7 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import katex from "katex";
 import LabLaunch from "./Lab";
-import Figures from "./Figure";
+import RelationCard, { Media } from "./Relation";
 import { KINDS, MODES, PREMISES, around, type Concept, type Network, type Relation } from "./data";
 
 function Tex({ tex }: { tex: string }) {
@@ -42,8 +42,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         </div>
       </header>
       {c.definition && <><h3>定義</h3><p>{c.definition}</p></>}
-      <Figures figures={c.figures} context="concept" />
-      <LabLaunch labs={c.labs} context="concept" />
+      <Media figures={c.figures} labs={c.labs} context="concept" open />
       {c.principle && <><h3>原理</h3><p>{c.principle}</p></>}
       {c.formulas?.map((f, i) => (
         <div key={i} className="formula">
@@ -68,17 +67,9 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
       </> : null}
       {relations.length ? <>
         <h3>つながり</h3>
-        <ul className="links">{relations.map((r) => {
-          const other = r.from === c.id ? r.to : r.from;
-          return (
-            <li key={r.id}>
-              <button className="link" onClick={() => onSelect(other)}>{sentence(net, r)}</button>
-              {r.gist && <div className="gist">💡 <b>つまり</b>　{r.gist}</div>}
-              <div className="mute">{r.description}{r.conditions?.length ? `　条件：${r.conditions.join("／")}` : ""}</div>
-              <Figures figures={r.figures} context={`relation-${r.id}`} folded />
-              <LabLaunch labs={r.labs} context={`relation-${r.id}`} />
-            </li>);
-        })}</ul>
+        <div className="relations">{relations.map((r) => (
+          <RelationCard key={r.id} net={net} r={r} context={`relation-${r.id}`} onTitle={() => onSelect(r.from === c.id ? r.to : r.from)} />
+        ))}</div>
       </> : null}
       {derivations.map((d) => (
         <div key={d.id} className="derivation">
