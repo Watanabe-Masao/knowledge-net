@@ -40,9 +40,10 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
       {c.formulas?.length ? <>
         <h3>式</h3>
         {c.formulas.map((f, i) => (
-          <Formula key={i} formula={{ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) }} editable onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)} />
+          <Formula key={i} formula={{ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) }} editable onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)}
+            definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map((g) => ({ ...g, symbols: g.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) }))} />
         ))}
-        <Muted>記号を押すと意味が出る。値を入れると1段ずつ計算できる。</Muted>
+        <Muted>記号を押すと意味が出る。「開く」でその記号の定義の式に置き換わる。値を入れると1段ずつ計算できる。</Muted>
       </> : null}
       {c.conditions && <>
         <h3>成り立つ条件</h3>
