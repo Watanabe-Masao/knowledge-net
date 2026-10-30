@@ -10,7 +10,7 @@ import {
   applyOpens, createRandom, definitionsFor, describeDomain, distribution, emptyRecord, evaluate, expand, formatNum, frequencies, fnsIn, lhsOf, nodeAt, runTrials, openSymbol, rhsOf, sliderRange, substitute, symbolsIn, toTex,
   type Definition, type Formula as EngineFormula, type FormulaNode, type FormulaPart, type FormulaSymbol,
 } from "@math-lab/engine";
-import { flash, haptic, reduced } from "./motion";
+import { flash, haptic, reduced, useTween } from "./motion";
 import type { FormulaData } from "./Formula";
 import s from "./Workspace.module.css";
 
@@ -44,6 +44,13 @@ const toEngine = (fs: FormulaData[]): EngineFormula[] => fs.filter((x) => !!x.tr
 const FALLBACK = { min: 0, max: 30, step: 0.01 };
 
 type Sel = { part?: number; sym?: string } | null;
+
+/** 変わった数を前の値から動かして見せる（整数の値は途中も整数で） */
+function Tween({ v, show, ...rest }: { v: number | undefined; show: (x: number | undefined) => string } & React.HTMLAttributes<HTMLSpanElement>) {
+  const [x] = useTween([v ?? Number.NaN]);
+  const shown = v === undefined ? undefined : Number.isInteger(v) ? Math.round(x!) : x;
+  return <span {...rest}>{show(shown)}</span>;
+}
 
 export function Workspace({ formula: original, mean, vary, over, initial, seed: seed0, definitions, onConcept, conceptName }: Props) {
   const baseSymbols = original.symbols ?? [];
@@ -132,6 +139,12 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
     return () => ro.disconnect();
   }, [html]);
 
+  // 選んだかたまりの囲みは1つだけ置き、かたまりを替えると前の場所から滑って移る（分解すると大きさが変わる）。選びをやめると消える
+  const lastBox = useRef<(typeof boxes)[number] | null>(null);
+  const found = boxes.find((b) => b.i === sel?.part);
+  if (found) lastBox.current = found;
+  const selBox = found ?? lastBox.current;
+
   // ---- その場で展開する動き（FLIP。手本：FormulaNode 計算ツリー） ----
   // 開く・閉じる前に記号の位置を覚え、描き直したあと、残った記号は前の位置から滑らせ、新しく出た所は開いた記号の位置から広げる
   const before = useRef<{ rects: Map<string, DOMRect>; origin?: DOMRect; key?: string } | null>(null);
@@ -187,13 +200,30 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
   const [rec, setRec] = useState(emptyRecord);
   const [lastDraw, setLastDraw] = useState<number | null>(null);
   const cond = JSON.stringify(vary.map((k) => values[k]));
-  useEffect(() => { setRec(emptyRecord()); setLastDraw(null); }, [cond]);
+  useEffect(() => { stop(); setRec(emptyRecord()); setLastDraw(null); }, [cond]);   // eslint-disable-line react-hooks/exhaustive-deps
+  // 100回は10回ずつ続けて引き、点が棒に近づいていくのを見せる（同じ種なら一度に引いたのと同じ結果）。1回は玉が落ちる
+  const stream = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stop = () => { if (stream.current) { clearInterval(stream.current); stream.current = null; } };
+  useEffect(() => stop, []);
   const run = (count: number) => {
-    haptic();
-    const r = runTrials(rng.current, dist, count, rec);
-    setRec(r); setLastDraw(count === 1 ? r.values[r.values.length - 1]! : null);
-  };
-  const clearRec = () => { const s2 = Date.now() % 100000; setSeed(s2); rng.current = createRandom(s2); setRec(emptyRecord()); setLastDraw(null); };
+    haptic(); stop();
+    if (count === 1 || reduced()) {
+      const r = runTrials(rng.current, dist, count, rec);
+      setRec(r); setLastDraw(count === 1 ? r.values[r.values.length - 1]! : null);
+      return;
+    }
+    let cur = rec, done = 0;
+    const per = Math.max(1, Math.ceil(count / 10)), d0 = dist;
+    setLastDraw(null);
+    const tick = () => {
+      const m = Math.min(per, count - done);
+      cur = runTrials(rng.current, d0, m, cur); done += m; setRec(cur);
+      if (done >= count) stop();
+    };
+    tick();
+    stream.current = setInterval(tick, 45);
+  };;
+  const clearRec = () => { stop(); const s2 = Date.now() % 100000; setSeed(s2); rng.current = createRandom(s2); setRec(emptyRecord()); setLastDraw(null); };
   const freq = frequencies(rec);
 
   // 計算過程：右辺に今の値を入れて1段ずつ（252 × 0.5⁵ × 0.5⁵ ＝ 0.2461）。最初は「値を入れた式」の段
@@ -238,7 +268,7 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
         {p && node && (
           <div className={s.ctx} key={`p${sel.part}`}>
             <span className={s.ctxTex} dangerouslySetInnerHTML={{ __html: render(toTex(node, { symbols }), false) }} />
-            <span className={s.ctxVal} data-testid="ws-part-value">{fmt(evaluate(node, env))}</span>
+            <Tween className={s.ctxVal} data-testid="ws-part-value" v={evaluate(node, env)} show={(x) => fmt(x)} />
             <b className={s.ctxName}>{p.name}</b>
             {!selSym && <p className={s.ctxText}>{p.meaning}</p>}
             {breakable.length > 0 && (
@@ -288,7 +318,10 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
   const rawMax = Math.max(1e-9, ...dist.map((d) => d.y ?? 0), empMax);
   const tick = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1].find((t) => rawMax / t <= 4) ?? 1;
   const yMax = Math.max(tick, Math.ceil(rawMax / tick - 1e-9) * tick);
-  const yPos = (v: number) => BASE - (v / yMax) * (BASE - TOP);
+  // 形・目盛りが変わるときは前の形から動かす（n・p を動かすと山が滑って変わる）
+  const [yMaxT] = useTween([yMax]);
+  const ys = useTween(dist.map((d) => d.y ?? 0));
+  const yPos = (v: number) => BASE - (v / yMaxT!) * (BASE - TOP);
   const bw = (W - LEFT - RIGHT) / Math.max(1, dist.length);
   const xPos = (x: number) => LEFT + (x - range.min + 0.5) * bw;
   const barW = Math.max(2, bw - Math.max(3, bw * 0.38));
@@ -308,7 +341,8 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
         <button type="button" className={s.reset} onClick={reset} data-testid="ws-reset">初期値に戻す</button></div>
       <div ref={wrap} className={s.stageWrap}>
         <div className={s.boxes} aria-hidden="true">
-          {boxes.map((b) => <span key={b.i} className={sel?.part === b.i ? `${s.box} ${s.boxOn}` : s.box} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
+          {boxes.map((b) => <span key={b.i} className={s.box} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
+          {selBox && <span className={s.boxSel} data-on={sel?.part !== undefined || undefined} style={{ left: selBox.x, top: selBox.y, width: selBox.w, height: selBox.h }} />}
         </div>
         <div ref={stage} className={s.stage} onClick={onStage} dangerouslySetInnerHTML={{ __html: html }} data-testid="ws-formula" />
       </div>
@@ -321,7 +355,7 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
       )}
       <div className={s.result} data-testid="ws-result">
         <span className={s.resultLhs} dangerouslySetInnerHTML={{ __html: lhs ? render(toTex(substitute(lhs, { values: { [over]: values[over]! } }), { symbols }), false) : "" }} />
-        <span className={s.resultVal}>{isProb && result !== undefined ? `${(result * 100).toFixed(2)}%` : fmt(result)}</span>
+        <Tween className={s.resultVal} v={result} show={(x) => (isProb && x !== undefined ? `${(x * 100).toFixed(2)}%` : fmt(x))} />
         {isProb && <small className={s.resultSub}>{fmt(result, 5)}</small>}
       </div>
       {steps.length > 1 && (
@@ -367,8 +401,8 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
               <text x={W - 2} y={yPos(t) + 3.5} className={s.yTick} textAnchor="end">{pct(t)}</text>
             </g>
           ))}
-          {dist.map((d) => {
-            const on = d.x === cur, y = yPos(d.y ?? 0);
+          {dist.map((d, i) => {
+            const on = d.x === cur, y = yPos(ys[i] ?? 0);
             return (
               <g key={d.x} className={s.barG} onClick={() => chooseX(d.x)} data-testid={`ws-bar-${d.x}`} aria-label={`${symText}＝${d.x}：${fmt(d.y)}`}>
                 <rect x={xPos(d.x) - bw / 2} y={0} width={bw} height={H} className={s.hit} />
@@ -381,11 +415,12 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
             <line x1={xPos(meanValue)} x2={xPos(meanValue)} y1={TOP - 6} y2={BASE} className={s.mean} />
           )}
           {rec.values.length > 0 && dist.map((d) => (
-            <circle key={`e${d.x}`} cx={xPos(d.x)} cy={yPos(freq.get(d.x) ?? 0)} r={d.x === lastDraw ? 4 : 3}
-              className={d.x === lastDraw ? `${s.emp} ${s.empJust}` : s.emp} data-testid={`ws-emp-${d.x}`} />
+            <circle key={d.x === lastDraw ? `e${d.x}-${rec.values.length}` : `e${d.x}`} cx={xPos(d.x)} cy={yPos(freq.get(d.x) ?? 0)} r={d.x === lastDraw ? 4 : 3}
+              className={d.x === lastDraw ? `${s.emp} ${s.empJust}` : s.emp} data-testid={`ws-emp-${d.x}`}
+              style={d.x === lastDraw ? ({ "--drop": `${TOP - 14 - yPos(freq.get(d.x) ?? 0)}px` } as React.CSSProperties) : undefined} />
           ))}
-          {dist.filter((d) => d.x === cur).map((d) => (
-            <text key="v" x={Math.min(W - RIGHT - 14, Math.max(LEFT + 14, xPos(d.x)))} y={Math.min(yPos(d.y ?? 0), rec.values.length ? yPos(freq.get(d.x) ?? 0) : BASE) - 8} className={s.valLabel} textAnchor="middle">{pct(d.y ?? 0)}</text>
+          {dist.map((d, i) => [d, ys[i] ?? 0] as const).filter(([d]) => d.x === cur).map(([d, yv]) => (
+            <text key="v" x={Math.min(W - RIGHT - 14, Math.max(LEFT + 14, xPos(d.x)))} y={Math.min(yPos(yv), rec.values.length ? yPos(freq.get(d.x) ?? 0) : BASE) - 8} className={s.valLabel} textAnchor="middle">{pct(d.y ?? 0)}</text>
           ))}
           {dist.map((d) => {
             const on = d.x === cur;
