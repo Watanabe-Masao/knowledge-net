@@ -465,3 +465,24 @@ test("作業台：計算過程を1段ずつ見て、k を動かし、初期値�
   await w.getByTestId("ws-reset").click();
   await expect(w.getByTestId("ws-result")).toContainText("P(X=3)");
 });
+
+// 実験（#102・#110）：100回で実験の割合が棒に重なり、平均と理論が並ぶ。1回で今回の値。条件を変えたら記録を分ける
+test("作業台で実験する：100回・1回・条件を変えると記録を分ける", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const w = page.getByTestId("workspace");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
+  await w.getByTestId("ws-run-100").click();
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("理論 3");
+  await expect(w.locator('[data-testid^="ws-emp-"]')).toHaveCount(11);   // k＝0〜10 に実験の割合
+  await w.getByTestId("ws-run-1").click();
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 101 回");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("今回 k＝");
+  await w.getByTestId("ws-slider-p").fill("0.5");   // 条件を変えると記録を分ける
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
+  await w.getByTestId("ws-slider-k").fill("6");     // k を変えても記録は残る（条件ではない）
+  await w.getByTestId("ws-run-100").click();
+  await w.getByTestId("ws-slider-k").fill("4");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
+});
