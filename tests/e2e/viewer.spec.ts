@@ -315,3 +315,37 @@ test("押した瞬間に少し沈み、動きを減らす設定では動かな�
   await media.getByRole("radio", { name: /触る/ }).click();   // 切り替えはすぐ変わる（View Transitions を使わない）
   await expect(page.getByTestId("labs-relation-stats2:REL-binom-poisson")).toBeVisible();
 });
+
+test("説明のシートは指で動かせる：上へ引くと全体、下へ払うと閉じる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
+  await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
+  const panel = page.getByTestId("edge-panel");
+  await expect(panel).toHaveAttribute("data-detent", "half");
+  const still = () => page.waitForFunction(() => !document.querySelector("[data-testid=edge-panel]")?.getAnimations().length);
+  await still();
+  const grab = panel.getByRole("button", { name: "全体に広げる" });
+  const b = (await grab.boundingBox())!;
+  const drag = async (dy: number) => {
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2 + (dy * i) / 8);
+    await page.mouse.up();
+  };
+  await drag(-300);
+  await expect(panel).toHaveAttribute("data-detent", "full");
+  await expect(page.getByTestId("sheet-scrim")).toHaveCSS("opacity", "1");
+  await page.getByTestId("sheet-scrim").click({ position: { x: 20, y: 10 } });   // 暗い所を押すと半分に戻る
+  await expect(panel).toHaveAttribute("data-detent", "half");
+  await panel.getByRole("button", { name: "全体に広げる" }).click();   // つまみを押すと広がる
+  await expect(panel).toHaveAttribute("data-detent", "full");
+  await panel.getByRole("button", { name: "半分にする" }).click();
+  await still();
+  const b2 = (await panel.getByRole("button", { name: "全体に広げる" }).boundingBox())!;
+  await page.mouse.move(b2.x + 30, b2.y + 9); await page.mouse.down();
+  for (let i = 1; i <= 8; i++) await page.mouse.move(b2.x + 30, b2.y + 9 + 50 * i);
+  await page.mouse.up();
+  await expect(panel).toHaveCount(0);
+  await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
+});

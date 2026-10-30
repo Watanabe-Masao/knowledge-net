@@ -29,9 +29,4 @@ export function Disclosure({ summary, children, open, ...rest }: { summary: Reac
   return <details className={s.disclosure} open={open} {...rest}><summary>{summary}</summary><div className={s.body}>{children}</div></details>;
 }
 
-/** 下から開く面（線の説明など） */
-export function Sheet({ label, head, children, ...rest }: { label: string; head: ReactNode; children: ReactNode } & HTMLAttributes<HTMLElement>) {
-  return <aside className={s.sheet} role="dialog" aria-label={label} {...rest}><div className={s.sheetHead}>{head}</div>{children}</aside>;
-}
-
 export const Field = (p: InputHTMLAttributes<HTMLInputElement>) => <input className={s.field} {...p} />;

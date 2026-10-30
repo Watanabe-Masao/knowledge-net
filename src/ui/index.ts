@@ -2,6 +2,7 @@
 import "../generated/tokens.css";
 import "./base.css";
 export { Button } from "./Button";
-export { Card, Stack, Row, Split, Muted, Label, ErrorText, Badge, Badges, Disclosure, Sheet, Field } from "./Layout";
+export { Card, Stack, Row, Split, Muted, Label, ErrorText, Badge, Badges, Disclosure, Field } from "./Layout";
 export { Segmented } from "./Segmented";
+export { Sheet } from "./Sheet";
 export { change, flash, haptic, reduced } from "./motion";
