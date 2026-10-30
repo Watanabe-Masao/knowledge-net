@@ -9,11 +9,15 @@
 .reset:focus-visible { outline: 2px solid var(--accent); }
 
 /* 式：押せるかたまりは細い下線だけ。選んだかたまりは淡い地、選んだ記号は強い色（かたまりの外の同じ記号は少し淡く） */
-.stage { overflow-x: auto; overflow-y: hidden; padding: 6px 0; font-size: 1.04em; }
+.stageWrap { position: relative; overflow-x: auto; overflow-y: hidden; padding: 8px 0; }
+.stage { position: relative; font-size: 1.04em; width: max-content; min-width: 100%; }   /* 広い式は横に送れる（中央寄せで左が切れないように） */
 .stage :global(.katex-display) { margin: 0; }
-.stage [data-part] { cursor: pointer; border-radius: 6px; padding: 1px 2px; box-shadow: inset 0 -1.5px 0 var(--line-strong);
-  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
-.stage [data-part][data-on] { background: var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent); }
+.stage [data-part] { cursor: pointer; margin: 0 3px; }   /* かたまりの間を少し空けて、囲みが重ならないように */
+/* かたまりの囲み（実際の字の範囲を測って置く）。式の後ろに敷き、下の線は字の下に離して引く */
+.boxes { position: absolute; inset: 0; pointer-events: none; }
+.box { position: absolute; border-radius: 6px; box-shadow: inset 0 -1.5px 0 var(--line-strong);
+  transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), left var(--dur) var(--ease), top var(--dur) var(--ease), width var(--dur) var(--ease), height var(--dur) var(--ease); }
+.boxOn { background: var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent); }
 .stage [data-sym] { cursor: pointer; transition: color var(--dur) var(--ease); }
 .stage [data-sym][data-on] { color: var(--accent); opacity: .6; }
 .stage [data-sym][data-here] { opacity: 1; }

@@ -103,6 +103,35 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
       el.toggleAttribute("data-here", on && (sel?.part === undefined || el.closest(`[data-part="${sel.part}"]`) !== null));
     });
   }, [html, sel]);
+  // ---- かたまりの囲み：KaTeX の要素の箱は分数の分母などを含まないので、描いた字（葉の要素）の実際の位置を合わせた範囲で囲む。
+  // 式が変わる・幅が変わる・字が読み込まれるたびに測り直す（線が式に重ならないように） ----
+  const wrap = useRef<HTMLDivElement>(null);
+  const [boxes, setBoxes] = useState<{ i: number; x: number; y: number; w: number; h: number }[]>([]);
+  useLayoutEffect(() => {
+    const root = stage.current, outer = wrap.current; if (!root || !outer) return;
+    const measure = () => {
+      const o = outer.getBoundingClientRect();
+      const out: typeof boxes = [];
+      root.querySelectorAll<HTMLElement>("[data-part]").forEach((el) => {
+        let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+        el.querySelectorAll<HTMLElement | SVGElement>("*").forEach((c) => {
+          const leaf = c.children.length === 0 || c.tagName.toLowerCase() === "svg";
+          if (!leaf || c.closest("svg") !== c && c.closest("svg")) return;
+          const cls = typeof c.className === "string" ? c.className : "";
+          if (/\b(strut|vlist-s|pstrut|nulldelimiter|mspace)\b/.test(cls)) return;
+          const q = c.getBoundingClientRect(); if (q.width < 0.5 || q.height < 0.5) return;
+          l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom);
+        });
+        if (l < r) out.push({ i: Number(el.dataset.part), x: l - o.left + outer.scrollLeft - 2, y: t - o.top - 2, w: r - l + 4, h: b - t + 5 });
+      });
+      setBoxes(out);
+    };
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(outer);
+    document.fonts?.ready.then(measure).catch(() => undefined);
+    return () => ro.disconnect();
+  }, [html]);
+
   // ---- その場で展開する動き（FLIP。手本：FormulaNode 計算ツリー） ----
   // 開く・閉じる前に記号の位置を覚え、描き直したあと、残った記号は前の位置から滑らせ、新しく出た所は開いた記号の位置から広げる
   const before = useRef<{ rects: Map<string, DOMRect>; origin?: DOMRect; key?: string } | null>(null);
@@ -277,7 +306,12 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
     <section className={s.ws} data-testid="workspace" aria-label="式の作業台">
       <div className={s.head}><b>{original.label ?? "式を動かす"}</b>
         <button type="button" className={s.reset} onClick={reset} data-testid="ws-reset">初期値に戻す</button></div>
-      <div ref={stage} className={s.stage} onClick={onStage} dangerouslySetInnerHTML={{ __html: html }} data-testid="ws-formula" />
+      <div ref={wrap} className={s.stageWrap}>
+        <div className={s.boxes} aria-hidden="true">
+          {boxes.map((b) => <span key={b.i} className={sel?.part === b.i ? `${s.box} ${s.boxOn}` : s.box} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
+        </div>
+        <div ref={stage} className={s.stage} onClick={onStage} dangerouslySetInnerHTML={{ __html: html }} data-testid="ws-formula" />
+      </div>
       {strip()}
       {openKeys.length > 0 && (
         <div className={s.tools}>
