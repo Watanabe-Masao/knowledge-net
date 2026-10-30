@@ -284,3 +284,68 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
   await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
   await expect(panel.getByText("対比", { exact: false }).first()).toBeVisible();   // 種類は札で出す（括弧を重ねない）
 });
+
+// 手触り（#42）：選んだ印が選んだ項目に重なる・押すと沈む・動きを減らす設定では止まる
+test("切り替えの印は選んだ項目の上に滑って重なる", async ({ page }) => {
+  await page.setViewportSize({ width: 380, height: 800 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const media = page.getByTestId("media-relation-stats2:REL-binom-poisson");
+  const mark = media.getByTestId("segmented-mark");
+  for (const name of [/触る/, /解説/, /図/]) {
+    const item = media.getByRole("radio", { name });
+    await item.click();
+    await expect(async () => {
+      const [a, b] = [await mark.boundingBox(), await item.boundingBox()];
+      expect(Math.abs(a!.x - b!.x)).toBeLessThan(1);
+      expect(Math.abs(a!.width - b!.width)).toBeLessThan(1);
+    }).toPass({ timeout: 2000 });
+  }
+  await media.getByRole("radio", { name: /図/ }).click();   // もう一度押すと閉じ、印も消える
+  await expect(mark).toHaveCSS("opacity", "0");
+  await expect(page.getByTestId("figures-relation-stats2:REL-binom-poisson")).toHaveCount(0);
+});
+
+test("押した瞬間に少し沈み、動きを減らす設定では動かない", async ({ page }) => {
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
+  const btn = page.getByRole("button", { name: "前提をさかのぼる" });
+  await expect(btn).toHaveCSS("transition-duration", /0\.09s/);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(btn).toHaveCSS("transition-duration", /^0s/);
+  const media = page.getByTestId("media-relation-stats2:REL-binom-poisson");
+  await media.getByRole("radio", { name: /触る/ }).click();   // 切り替えはすぐ変わる（View Transitions を使わない）
+  await expect(page.getByTestId("labs-relation-stats2:REL-binom-poisson")).toBeVisible();
+});
+
+test("説明のシートは指で動かせる：上へ引くと全体、下へ払うと閉じる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
+  await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
+  const panel = page.getByTestId("edge-panel");
+  await expect(panel).toHaveAttribute("data-detent", "half");
+  const still = () => page.waitForFunction(() => !document.querySelector("[data-testid=edge-panel]")?.getAnimations().length);
+  await still();
+  const grab = panel.getByRole("button", { name: "全体に広げる" });
+  const b = (await grab.boundingBox())!;
+  const drag = async (dy: number) => {
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2 + (dy * i) / 8);
+    await page.mouse.up();
+  };
+  await drag(-300);
+  await expect(panel).toHaveAttribute("data-detent", "full");
+  await expect(page.getByTestId("sheet-scrim")).toHaveCSS("opacity", "1");
+  await page.getByTestId("sheet-scrim").click({ position: { x: 20, y: 10 } });   // 暗い所を押すと半分に戻る
+  await expect(panel).toHaveAttribute("data-detent", "half");
+  await panel.getByRole("button", { name: "全体に広げる" }).click();   // つまみを押すと広がる
+  await expect(panel).toHaveAttribute("data-detent", "full");
+  await panel.getByRole("button", { name: "半分にする" }).click();
+  await still();
+  const b2 = (await panel.getByRole("button", { name: "全体に広げる" }).boundingBox())!;
+  await page.mouse.move(b2.x + 30, b2.y + 9); await page.mouse.down();
+  for (let i = 1; i <= 8; i++) await page.mouse.move(b2.x + 30, b2.y + 9 + 50 * i);
+  await page.mouse.up();
+  await expect(panel).toHaveCount(0);
+  await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
+});

@@ -17,11 +17,8 @@
 .disclosure > summary::after { content: "＋"; margin-left: auto; color: var(--ink-3); }
 .disclosure[open] > summary::after { content: "−"; }
 .disclosure > .body { padding-bottom: var(--sp-3); }
-.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 50vh; overflow-y: auto;
-  background: var(--raised); border-top: 1px solid var(--line-strong); border-radius: var(--r-l) var(--r-l) 0 0; box-shadow: var(--shadow-raised);
-  padding: var(--sp-3) var(--sp-4) calc(14px + env(safe-area-inset-bottom)); animation: rise var(--dur) var(--ease); }
-.sheetHead { display: flex; gap: var(--sp-2); align-items: center; justify-content: space-between; }
-@media (min-width: 760px) { .sheet { left: calc(50% - 380px); right: calc(50% - 380px); } }
-@keyframes rise { from { transform: translateY(100%); } to { transform: none; } }
+.disclosure[open] > .body { animation: reveal var(--dur) var(--ease); }   /* 開いた中身がすっと出る */
+.disclosure > summary { transition: transform var(--dur-press) var(--ease); }
+.disclosure > summary:active { transform: scale(var(--press-scale)); }
 .field { width: 100%; font-size: 16px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-m); background: var(--surface); color: var(--ink); margin-top: var(--sp-2); }
 .field:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }

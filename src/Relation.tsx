@@ -1,8 +1,9 @@
 // 関係のカードと「図／解説／触る」の切り替え（#42・#95）。
 // 関係の文は括弧を重ねず、種類と変換の仕方は札（badge）にする。「💡 つまり」は説明・図・ラボより先に出す。
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
-import { useState } from "react";
-import { Badge, Badges as BadgeRow, Button, Segmented } from "./ui";
+// 手触り：切り替えと前後の図は change() で、変わる所（この欄）だけを短くつなぐ。
+import { useRef, useState } from "react";
+import { Badge, Badges as BadgeRow, Button, Segmented, change } from "./ui";
 import s from "./Relation.module.css";
 import { KINDS, MODES, PREMISES, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
@@ -53,12 +54,14 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
   const [value, setValue] = useState<MediaKey | "">(first);
   const [fi, setFi] = useState(0);
   const [ci, setCi] = useState(0);
+  const box = useRef<HTMLDivElement>(null);
   if (!have.length) return null;
-  const choose = (v: string) => { setValue(v as MediaKey | ""); if (v) remember(v as MediaKey); };
+  const choose = (v: string) => { change(box.current, () => setValue(v as MediaKey | "")); if (v) remember(v as MediaKey); };
+  const step = (i: number) => change(box.current, () => setFi(i));
   const f = figures?.[Math.min(fi, (figures?.length ?? 1) - 1)];
   const lab = value === "tour" ? tours[0] : value === "check" ? checks[Math.min(ci, checks.length - 1)] : undefined;
   return (
-    <div data-testid={`media-${context}`}>
+    <div ref={box} data-testid={`media-${context}`}>
       <div className={s.switch}>
         <Segmented value={value} onChange={choose} label="図・解説・触る"
           items={have.map((k) => ({ value: k, label: `${LABEL[k]}${k === "fig" && figures!.length > 1 ? ` ${figures!.length}` : ""}` }))} />
@@ -71,9 +74,9 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
           </figure>
           <div className={s.steps}>
             {figures!.length > 1 ? <>
-              <Button onClick={() => setFi(fi - 1)} disabled={fi === 0} aria-label="前の図">◀ 前へ</Button>
+              <Button onClick={() => step(fi - 1)} disabled={fi === 0} aria-label="前の図">◀ 前へ</Button>
               <span className={s.count} aria-live="polite">{fi + 1}／{figures!.length}</span>
-              <Button onClick={() => setFi(fi + 1)} disabled={fi >= figures!.length - 1} aria-label="次の図">次へ ▶</Button>
+              <Button onClick={() => step(fi + 1)} disabled={fi >= figures!.length - 1} aria-label="次の図">次へ ▶</Button>
             </> : <span />}
           </div>
           <div className={s.row}><Button variant="quiet" className={s.close} onClick={() => choose("")}>閉じる</Button></div>
