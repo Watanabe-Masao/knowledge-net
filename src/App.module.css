@@ -16,3 +16,15 @@
 .embedCard { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border-top: 1px solid var(--line); background: var(--surface); font-size: 13px; }
 .clamp { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin: 0; }
 .tools { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: flex-end; margin: var(--sp-1) 0; }
+/* 図の中の小さな切り替え（まわり／全体）。選んだ側に白い面が乗る */
+.mode { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--r-pill); background: var(--surface-2); box-shadow: 0 0 0 1px var(--line); }
+.mode button { all: unset; min-height: 30px; padding: 0 12px; border-radius: var(--r-pill); font-size: 12.5px; color: var(--ink-2); cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur-press) var(--ease); }
+.mode button[aria-pressed="true"] { background: var(--raised); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px var(--scrim); }
+.mode button:active { transform: scale(var(--press-scale)); }
+.mode button:focus-visible, .chipBtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chipBtn { all: unset; min-height: 30px; padding: 0 12px; display: inline-flex; align-items: center; border-radius: var(--r-pill); font-size: 12.5px; color: var(--ink-2); cursor: pointer;
+  background: var(--surface-2); box-shadow: 0 0 0 1px var(--line); transition: transform var(--dur-press) var(--ease); }
+.chipBtn:active { transform: scale(var(--press-scale)); }
+.mode button, .chipBtn { position: relative; }
+.mode button::before, .chipBtn::before { content: ""; position: absolute; inset: -7px -2px; }   /* 見た目は小さく、押せる所は 44px */

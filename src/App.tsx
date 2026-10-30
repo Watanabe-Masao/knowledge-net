@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
-import { Button, Card, ErrorText, Field, FullView, Muted, Sheet, Split } from "@math-lab/ui";
+import Search from "./Search";
+import { Button, Card, ErrorText, FullView, Muted, Sheet } from "@math-lab/ui";
 import st from "./App.module.css";
 import { KINDS, MODES, compare, load, neighborhood, trace, type Network } from "./data";
 
@@ -44,7 +45,6 @@ function useUrlState() {
 export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing } = useUrlState();
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
@@ -84,7 +84,6 @@ export default function App() {
   const positions = useMemo(() => (net && sel && (view === "around" || EMBED) && net.concepts.has(sel) ? neighborhood(net, sel) : undefined), [net, sel, view]);
   if (!net) return <main className={st.app}><Muted>読み込み中…</Muted>{errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}</main>;
   const concept = sel ? net.concepts.get(sel) : undefined;
-  const hits = query ? [...net.concepts.values()].filter((c) => (c.name + (c.en ?? "")).toLowerCase().includes(query.toLowerCase())).slice(0, 8) : [];
   const toggleCmp = (id: string) => setCmp(cmp.includes(id) ? cmp.filter((x) => x !== id) : [...cmp, id].slice(-3));
 
   if (EMBED) {
@@ -107,22 +106,21 @@ export default function App() {
       <header className={st.top}>
         <h1>知識ネットワーク</h1>
         <Muted>{net.courses.map((c) => c.title).join("・")}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}・関係 {net.relations.length}・導出 {net.derivations.length}</Muted>
-        <Field type="search" placeholder="概念を探す（名前・英語名）" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="概念を探す" />
-        {hits.length ? <ul className={st.hits}>{hits.map((c) => <li key={c.id}><Button onClick={() => { setSel(c.id); setQuery(""); }}>{c.name}</Button></li>)}</ul> : null}
+        <Search concepts={[...net.concepts.values()]} onPick={setSel} />
       </header>
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
-      {sel ? (
-        <Split className={st.views} role="group" aria-label="表示">
-          <Button pressed={view === "around"} onClick={() => setView("around")}>まわり</Button>
-          <Button pressed={view === "all"} onClick={() => setView("all")}>全体</Button>
-        </Split>
-      ) : null}
-      <div className={st.tools}>
-        <Button variant="quiet" onClick={() => setModal("kinds")}>線の見方{hidden.size ? `（${hidden.size} 種類を隠している）` : ""}</Button>
-        {cmp.length ? <Button variant="quiet" onClick={() => setModal("compare")}>比べる（{cmp.length}）</Button> : null}
-      </div>
       <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions}
-        onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} />
+        onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel}
+        topLeft={sel ? (
+          <div className={st.mode} role="group" aria-label="表示">
+            <button type="button" aria-pressed={view === "around"} onClick={() => setView("around")}>まわり</button>
+            <button type="button" aria-pressed={view === "all"} onClick={() => setView("all")}>全体</button>
+          </div>
+        ) : null}
+        bottomLeft={<>
+          <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `・${hidden.size} 種類を隠す` : ""}</button>
+          {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
+        </>} />
       {concept ? <Detail net={net} concept={concept} tracing={tracing} inCompare={cmp.includes(concept.id)}
         onTrace={() => { setTracing(!tracing); setModal(tracing ? null : "trace"); }} onCompare={() => toggleCmp(concept.id)} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}

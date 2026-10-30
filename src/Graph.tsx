@@ -24,6 +24,8 @@ type Props = {
   onEdge?: (id: string) => void; // 線を押した（関係の id か、導出の線の id）
   edgeSel?: string | null;       // 説明を開いている線
   fill?: boolean;                // 埋め込み：枠いっぱい（高さを自動で決めない）
+  /** 図の中に重ねる小さな操作（左上：まわり／全体、左下：線の見方など） */
+  topLeft?: React.ReactNode; bottomLeft?: React.ReactNode;
 };
 
 function css(name: string): string {
@@ -51,7 +53,7 @@ export function elements(net: Network, hidden: Set<string>, keep?: Set<string>):
   return els;
 }
 
-export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill }: Props) {
+export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const cy = useRef<Core | null>(null);
   const select = useRef(onSelect);
@@ -177,6 +179,8 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   return (
     <div className={fill ? `${s.wrap} ${s.wrapFill}` : s.wrap}>
       <div ref={box} className={`${s.graph}${fill ? ` ${s.fill}` : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
+      {!fill && topLeft && <div className={s.topLeft}>{topLeft}</div>}
+      {!fill && bottomLeft && <div className={s.bottomLeft}>{bottomLeft}</div>}
       {!fill && <Button icon className={s.fit} aria-label="図を枠に収める" title="図を枠に収める"
         onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: 20 } }, { duration: reduced() ? 0 : 200 })}>⤢</Button>}
     </div>

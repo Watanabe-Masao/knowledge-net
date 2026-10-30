@@ -35,8 +35,10 @@ for (const scheme of ["light", "dark"] as const) {
 
 test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await page.goto(`./?${SRC}`);
-  await page.getByLabel("概念を探す").fill("標準化");
-  await page.getByRole("button", { name: "標準化" }).click();
+  await page.getByLabel("概念を探す").fill("標準");   // 打つたびに候補が絞られる（動的なドロップダウン）
+  await expect(page.getByRole("listbox", { name: "候補" })).toBeVisible();
+  await page.getByRole("option", { name: /標準化/ }).click();
+  await expect(page.getByRole("listbox", { name: "候補" })).toHaveCount(0);
   await page.getByRole("button", { name: "前提をさかのぼる" }).click();
   const tr = page.getByTestId("trace");
   for (const n of ["期待値", "分散", "確率変数"]) await expect(tr.getByRole("button", { name: n })).toBeVisible();
@@ -544,6 +546,6 @@ test("線の見方は下から開く面で、種類を隠せる", async ({ page 
   await k.getByRole("checkbox").first().uncheck();
   await k.getByRole("button", { name: "説明を閉じる" }).click();
   await expect(k).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /線の見方（1 種類を隠している）/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /線の見方・1 種類を隠す/ })).toBeVisible();
 });
 
