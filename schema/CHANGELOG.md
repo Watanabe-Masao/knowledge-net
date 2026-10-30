@@ -12,3 +12,4 @@
 | 4 | 2026-10-29 | 概念・関係に任意の `figures`（図への参照：id・url・caption。url は教材の build が作る）（stats2-course #88）。任意 |
 | 5 | 2026-10-30 | ラボへの参照（labs）に任意の `kind`（tour：ラボで解説／check：ラボで確かめる）（stats2-course #90）。任意 |
 | 6 | 2026-10-30 | 関係に任意の `gist`（つまり：日常の言葉で1〜2文）（stats2-course #95）。任意 |
+| 7 | 2026-10-30 | 式の記号に任意の `of`（どの確率変数の記号か）と `domain`（定義域：min・max・minOpen・maxOpen・integer・nonzero）（stats2-course #109）。任意 |
