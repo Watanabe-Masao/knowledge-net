@@ -29,8 +29,6 @@ type Props = {
   initial?: Record<string, number>;
   /** 実験の種（なければ時刻から。画面に出し、同じ種なら同じ結果） */
   seed?: number;
-  /** 実験（1回・100回）を出す（既定 true。実験室の中に置くときは false） */
-  experiment?: boolean;
   definitions?: (conceptId: string) => FormulaData[];
   onConcept?: (id: string) => void;
   conceptName?: (id: string) => string;
@@ -54,7 +52,7 @@ function Tween({ v, show, ...rest }: { v: number | undefined; show: (x: number |
   return <span {...rest}>{show(shown)}</span>;
 }
 
-export function Workspace({ formula: original, mean, vary, over, initial, seed: seed0, definitions, onConcept, conceptName, experiment = true }: Props) {
+export function Workspace({ formula: original, mean, vary, over, initial, seed: seed0, definitions, onConcept, conceptName }: Props) {
   const baseSymbols = original.symbols ?? [];
   const symOf = (k: string, list = baseSymbols) => list.find((x) => x.key === k);
 
@@ -438,7 +436,7 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
           })}
         </svg>
       </figure>
-      {experiment && <div className={s.exp} data-testid="ws-exp">
+      <div className={s.exp} data-testid="ws-exp">
         <div className={s.expRow}>
           <b>実験する</b>
           <div className={s.expBtns} role="group" aria-label="実験の回数">
@@ -455,7 +453,7 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
           <span>種 {seed}</span>
           <button type="button" className={s.clear} onClick={clearRec} disabled={!rec.values.length}>記録を消す</button>
         </div>
-      </div>}
+      </div>
     </section>
   );
 }
