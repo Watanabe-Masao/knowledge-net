@@ -284,3 +284,34 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
   await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
   await expect(panel.getByText("対比", { exact: false }).first()).toBeVisible();   // 種類は札で出す（括弧を重ねない）
 });
+
+// 手触り（#42）：選んだ印が選んだ項目に重なる・押すと沈む・動きを減らす設定では止まる
+test("切り替えの印は選んだ項目の上に滑って重なる", async ({ page }) => {
+  await page.setViewportSize({ width: 380, height: 800 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const media = page.getByTestId("media-relation-stats2:REL-binom-poisson");
+  const mark = media.getByTestId("segmented-mark");
+  for (const name of [/触る/, /解説/, /図/]) {
+    const item = media.getByRole("radio", { name });
+    await item.click();
+    await expect(async () => {
+      const [a, b] = [await mark.boundingBox(), await item.boundingBox()];
+      expect(Math.abs(a!.x - b!.x)).toBeLessThan(1);
+      expect(Math.abs(a!.width - b!.width)).toBeLessThan(1);
+    }).toPass({ timeout: 2000 });
+  }
+  await media.getByRole("radio", { name: /図/ }).click();   // もう一度押すと閉じ、印も消える
+  await expect(mark).toHaveCSS("opacity", "0");
+  await expect(page.getByTestId("figures-relation-stats2:REL-binom-poisson")).toHaveCount(0);
+});
+
+test("押した瞬間に少し沈み、動きを減らす設定では動かない", async ({ page }) => {
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
+  const btn = page.getByRole("button", { name: "前提をさかのぼる" });
+  await expect(btn).toHaveCSS("transition-duration", /0\.09s/);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(btn).toHaveCSS("transition-duration", /^0s/);
+  const media = page.getByTestId("media-relation-stats2:REL-binom-poisson");
+  await media.getByRole("radio", { name: /触る/ }).click();   // 切り替えはすぐ変わる（View Transitions を使わない）
+  await expect(page.getByTestId("labs-relation-stats2:REL-binom-poisson")).toBeVisible();
+});
