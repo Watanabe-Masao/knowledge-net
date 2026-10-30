@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Badges, Media, relationParts } from "./Relation";
 import { Button, Card, Disclosure, Formula, Muted, Row, Segmented, Workspace } from "@math-lab/ui";
 import st from "./Detail.module.css";
-import { KINDS, MODES, PREMISES, around, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
+import { KINDS, MODES, PREMISES, around, experimentsFor, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
 
 /** 画面の型（key が任意）から部品の型へ（key のない記号は木から指せないので落とす） */
 const keyed = (f: NetFormula) => ({ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) });
@@ -25,11 +25,14 @@ type Props = {
   onTrace: () => void; onCompare: () => void; onSelect: (id: string) => void;
   /** つながりの行を押す（線を押したのと同じ。下からシートが開く） */
   onEdge: (id: string) => void; edgeSel?: string | null;
+  /** 実験室を開く */
+  onExperiment?: (id: string) => void;
 };
 
 type Tab = "main" | "rel" | "more";
 
-export default function Detail({ net, concept: c, tracing, inCompare, onTrace, onCompare, onSelect, onEdge, edgeSel }: Props) {
+export default function Detail({ net, concept: c, tracing, inCompare, onTrace, onCompare, onSelect, onEdge, edgeSel, onExperiment }: Props) {
+  const exps = experimentsFor(net, c.id);
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
   // 縦に長くならないよう、定義の下を「動かす（または説明）｜つながり｜くわしく」に分けて1つだけ出す
@@ -78,6 +81,13 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
           ]} />
       </div>
       {tab === "main" && <div className={st.pane} data-testid="tab-main">
+        {exps.map((x) => (
+          <button key={x.id} type="button" className={st.expCard} onClick={() => onExperiment?.(x.id)} data-testid={`open-${x.id}`}>
+            <span className={st.expIcon} aria-hidden="true">🧪</span>
+            <span><b>実験室で試す</b><span>{x.question}</span></span>
+            <span className={st.expGo} aria-hidden="true">›</span>
+          </button>
+        ))}
         {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
           <Workspace formula={keyed(c.formulas[c.workspace.formula]!)} mean={c.workspace.mean !== undefined ? keyed(c.formulas[c.workspace.mean]!) : undefined}
             vary={c.workspace.vary} over={c.workspace.over} definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}

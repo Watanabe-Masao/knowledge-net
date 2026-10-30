@@ -23,3 +23,12 @@
 .pane [data-testid="workspace"] { border: none; box-shadow: none; background: transparent; padding: 0; }
 .problems { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0; }
 .problems span { font-size: var(--fs-small); color: var(--ink-2); background: var(--surface-2); border-radius: var(--r-s); padding: 1px 6px; }
+/* 実験室への入口：作業台より先に。予想して実験する体験へ */
+.expCard { all: unset; box-sizing: border-box; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-l); cursor: pointer;
+  background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent-line); transition: transform var(--dur-press) var(--ease); }
+.expCard:active { transform: scale(var(--press-scale)); }
+.expCard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.expCard b { display: block; color: var(--accent); font-size: var(--fs-head); }
+.expCard span span { font-size: var(--fs-small); color: var(--ink-2); line-height: 1.5; }
+.expIcon { font-size: 26px; }
+.expGo { font-size: 24px; color: var(--accent); }

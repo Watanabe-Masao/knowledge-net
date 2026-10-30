@@ -1,4 +1,4 @@
-// 画面全体。状態は URL に持つ（?c=選んだ概念&view=around|all&cmp=比べる概念&trace=1&embed=1&src=データ）。
+// 画面全体。状態は URL に持つ（?c=選んだ概念&view=around|all&cmp=比べる概念&trace=1&x=実験室&embed=1&src=データ）。
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
@@ -7,7 +7,7 @@ import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import Search from "./Search";
-import { Button, Card, ErrorText, FullView, Muted, Sheet } from "@math-lab/ui";
+import { Button, Card, ErrorText, Experiment, FullView, Muted, Sheet } from "@math-lab/ui";
 import st from "./App.module.css";
 import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
@@ -24,30 +24,32 @@ function useUrlState() {
   const [view, setView] = useState<View>(readView(params));
   const [cmp, setCmp] = useState<string[]>((params.get("cmp") ?? "").split(",").filter(Boolean));
   const [tracing, setTracing] = useState(params.get("trace") === "1");
+  const [exp, setExpRaw] = useState<string | null>(params.get("x"));
   const push = useRef(false);
-  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); };
+  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); };
+  const setExp = (id: string | null) => { push.current = true; setExpRaw(id); };
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
-    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null);
+    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp);
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, tracing]);
+  }, [sel, view, cmp, tracing, exp]);
   useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
-    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); };
+    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
-  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing };
+  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp };
 }
 
 export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing } = useUrlState();
+  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp } = useUrlState();
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
   const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
@@ -100,6 +102,18 @@ export default function App() {
     );
   }
 
+  // 実験室（?x=）：同じサイトの1ページ。戻ると概念のページへ
+  const xdef = exp ? net.experiments.get(exp) : undefined;
+  if (xdef) {
+    const formulaOf = (id?: string, i = 0) => { const f = id ? net.concepts.get(id)?.formulas?.[i] : undefined; return f ? { ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) } : undefined; };
+    return (
+      <main className={st.app}>
+        <Experiment def={xdef} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
+          onConcept={(id) => net.concepts.has(id) && setSel(id)} conceptName={(id) => name(net, id)}
+          onBack={() => (history.length > 1 ? history.back() : setExp(null))} />
+      </main>
+    );
+  }
   const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
   return (
     <main className={`${st.app}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
@@ -122,7 +136,7 @@ export default function App() {
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
       {concept ? <Detail net={net} concept={concept} tracing={tracing} inCompare={cmp.includes(concept.id)}
-        onTrace={() => { setTracing(!tracing); setModal(tracing ? null : "trace"); }} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
+        onTrace={() => { setTracing(!tracing); setModal(tracing ? null : "trace"); }} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">

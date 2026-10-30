@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 8,
+ "schema_revision": 9,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -5137,6 +5137,170 @@
    ],
    "units": [
     "stats2:U16"
+   ]
+  }
+ ],
+ "experiments": [
+  {
+   "id": "stats2:EXP-binom-p",
+   "version": 1,
+   "title": "二項分布 実験室",
+   "question": "成功確率を上げると、成功回数の山はどう動く？",
+   "model": "binom",
+   "vary": {
+    "n": {
+     "min": 1,
+     "max": 30,
+     "step": 1
+    },
+    "p": {
+     "min": 0,
+     "max": 1,
+     "step": 0.01
+    }
+   },
+   "start": {
+    "n": 10,
+    "p": 0.5
+   },
+   "compare": {
+    "p": 0.8
+   },
+   "themes": [
+    {
+     "id": "coin",
+     "name": "コインの表",
+     "icon": "🪙",
+     "success": "表",
+     "failure": "裏",
+     "unit": "回",
+     "p": 0.5,
+     "story": "コインを n 回投げて、表が出た回数を数える"
+    },
+    {
+     "id": "shop",
+     "name": "来店客が買う",
+     "icon": "🛒",
+     "success": "買った",
+     "failure": "見ただけ",
+     "unit": "人",
+     "p": 0.25,
+     "story": "売場に n 人来て、買った人の数を数える"
+    },
+    {
+     "id": "check",
+     "name": "検品で不良品",
+     "icon": "📦",
+     "success": "不良品",
+     "failure": "良品",
+     "unit": "個",
+     "p": 0.05,
+     "story": "n 個を検品して、不良品の数を数える"
+    },
+    {
+     "id": "shot",
+     "name": "フリースロー",
+     "icon": "🏀",
+     "success": "入った",
+     "failure": "外れ",
+     "unit": "本",
+     "p": 0.7,
+     "story": "n 本打って、入った本数を数える"
+    },
+    {
+     "id": "dice",
+     "name": "さいころの6",
+     "icon": "🎲",
+     "success": "6",
+     "failure": "6以外",
+     "unit": "回",
+     "p": 0.17,
+     "story": "さいころを n 回振って、6 が出た回数を数える（6 の確率は 1/6＝約 0.17）"
+    },
+    {
+     "id": "guess",
+     "name": "4択を当てずっぽう",
+     "icon": "✍️",
+     "success": "正解",
+     "failure": "不正解",
+     "unit": "問",
+     "p": 0.25,
+     "story": "4択を n 問当てずっぽうで答えて、正解の数を数える"
+    }
+   ],
+   "next": [
+    {
+     "question": "成功確率を 20% に下げると、山の中心はどこ？ 形はどうなる？",
+     "set": {
+      "p": 0.2
+     }
+    },
+    {
+     "question": "回数を 30 回に増やすと、山の形はどうなる？",
+     "set": {
+      "n": 30
+     }
+    }
+   ],
+   "points": [
+    "p を上げると、山の中心は右へ動く（中心は np）",
+    "散らばりは np(1−p)。p＝0.5 でいちばん広い",
+    "n を大きくすると、山は左右対称に近づく（正規分布へ）"
+   ],
+   "links": {
+    "concepts": [
+     "stats2:TERM-binom",
+     "stats2:TERM-expect"
+    ],
+    "relations": [
+     "stats2:REL-indep-binom",
+     "stats2:REL-comb-binom",
+     "stats2:DER-binom-moments"
+    ]
+   },
+   "reason": {
+    "title": "山の中心＝期待値 np",
+    "concept": "stats2:TERM-binom",
+    "formula": 1,
+    "steps": [
+     "1回の成功は 0 か 1。1回の平均は p",
+     "n 回は独立なので、平均は足し合わせられる",
+     "p を n 回足すと np。p を上げると中心は右へ動く"
+    ]
+   },
+   "counterexamples": [
+    {
+     "id": "urn",
+     "name": "箱から戻さずに取る",
+     "breaks": "各回の成功確率 p が同じ・各回が独立",
+     "mechanism": {
+      "kind": "urn",
+      "total": 40
+     },
+     "concept": "stats2:TERM-hyper",
+     "text": "取った物を戻さないと、取るたびに残りの割合が変わる。二項分布より散らばりが小さくなる（超幾何分布）。箱が小さいほどずれる"
+    },
+    {
+     "id": "streak",
+     "name": "前の結果に引きずられる",
+     "breaks": "各回が独立",
+     "mechanism": {
+      "kind": "streak",
+      "carry": 0.3
+     },
+     "concept": "stats2:TERM-indep",
+     "text": "入ると次も入りやすく、外すと次も外しやすい（口コミ・連れ立ち・調子の波）。平均は近くても、二項分布より山が広がる"
+    },
+    {
+     "id": "mix",
+     "name": "人や時間で確率が違う",
+     "breaks": "各回の成功確率 p が同じ",
+     "mechanism": {
+      "kind": "mix",
+      "spread": 0.2
+     },
+     "text": "買いやすい日と買いにくい日が混ざると、平均は np のままでも山が広がる。全体の p だけで二項分布を当てると、ばらつきを小さく見積もる"
+    }
    ]
   }
  ]
