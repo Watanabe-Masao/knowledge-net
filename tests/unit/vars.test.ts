@@ -10,7 +10,7 @@ for (const [g, v] of Object.entries(tokens)) if (!g.startsWith("$") && !g.starts
 describe("手触りの値", () => {
   it("画面の CSS・部品が使う変数はすべて定義がある", () => {
     const used: string[] = [];
-    const walk = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) { if (f !== "generated") walk(p); } else if (/\.(css|tsx?)$/.test(f)) for (const m of readFileSync(p, "utf8").matchAll(/var\(--([\w-]+)/g)) used.push(`${m[1]}（${p}）`); } };
+    const walk = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) { if (f !== "generated") walk(p); } else if (/\.(css|tsx?)$/.test(f)) { const t = readFileSync(p, "utf8"); for (const m of t.matchAll(/var\(--([\w-]+)/g)) used.push(`${m[1]}（${p}）`); for (const m of t.matchAll(/["']--([\w-]+)["']\s*:/g)) defined.add(m[1]!); } } };   // 部品が style で渡す変数（スライダーの --fill）は定義として数える
     walk("src");
     walk("vendor/math-lab/packages/ui/src");
     expect(used.filter((u) => !defined.has(u.split("（")[0]!))).toEqual([]);
