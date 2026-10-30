@@ -592,6 +592,14 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
   await expect(x.getByTestId("exp-guess")).toHaveCount(1);   // あなたの予想の山を理論と重ねる
   await expect(x.getByTestId("exp-verdict")).toContainText("細く高く");   // 予想は前の形のまま。p＝0.8 の山は細い
+  // 積み上がりの再生：倍々の目盛りで戻ると、その時点までの平均に変わる。全部に戻すと、上の平均（実験）と同じ
+  const replay = x.getByTestId("exp-replay");
+  await expect(replay.getByRole("radio")).toHaveText(["1", "3", "10", "30", "100", "全 101"]);
+  await replay.getByRole("radio", { name: "1", exact: true }).click();
+  await expect(x.getByTestId("exp-replay-stat")).toContainText(/^1 セットまで：平均 \d+/);
+  await replay.getByRole("radio", { name: "全 101" }).click();
+  const tileMean = (await x.locator("div:has(> b)", { hasText: "平均（実験）" }).locator("b").textContent())!.trim();
+  await expect(x.getByTestId("exp-replay-stat")).toContainText(`101 セットまで：平均 ${tileMean}`);
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.locator(".katex").first()).toContainText("10×0.8");
   // 式はこの中で確かめる：概念のページと同じ作業台を、今の条件（p＝0.8）で置く（外へ移らない）
