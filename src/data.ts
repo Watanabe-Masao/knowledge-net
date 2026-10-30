@@ -8,6 +8,8 @@ export type Symbol = {
   symbol: string; meaning: string; range?: string;
   /** 木の葉から指す名前 */ key?: string;
   /** この記号が表す概念（教材名:ID）。木をたどってその概念の式へ開く */ concept?: string;
+  /** どの確率変数の記号か（μ は X の期待値なら X） */ of?: string;
+  /** 定義域（値を入れて計算するときの範囲） */ domain?: { min?: number | string; max?: number | string; minOpen?: boolean; maxOpen?: boolean; integer?: boolean; nonzero?: boolean };
   kind?: "value" | "data" | "rv" | "param" | "index" | "const";
 };
 /** 式の分解の木（schema の formulaNode）。計算・展開・表示は math-lab の部品が受け持つ。 */
