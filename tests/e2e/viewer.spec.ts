@@ -563,3 +563,34 @@ test("ほかの概念と比べる：相手を選ぶとすぐ比べられる", as
   expect(page.url()).not.toContain("cmp=");
 });
 
+// 実験室 v0（#102）：予測 → 実験 → 観察 → 理由 → 応用 を1画面ずつ。予想するまで進めない、テーマで言葉が変わる、反例を実験する
+test("実験室：予想してから実験し、観察で予想と照らし、反例を実験する", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.getByTestId("open-stats2:EXP-binom-p").click();
+  const x = page.getByTestId("experiment");
+  await expect(x.getByTestId("exp-question")).toContainText("成功確率を上げると");
+  await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();   // 予想するまで結果を見せない
+  await x.getByRole("radio", { name: "右へ動く" }).click();
+  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("radio", { name: /来店客が買う/ }).click();
+  await x.getByTestId("exp-run-1").click();
+  await expect(x.getByTestId("exp-set").locator("span")).toHaveCount(10);   // 1セット＝10人
+  await expect(x).toContainText("人 買った");
+  await x.getByTestId("exp-run-100").click();
+  await expect(x.getByTestId("exp-sets")).toHaveText("101 セット");
+  await x.getByRole("button", { name: "観察する →" }).click();
+  await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await x.getByRole("button", { name: /理由を考える/ }).click();
+  await expect(x.locator(".katex").first()).toContainText("10×0.8");
+  await x.getByRole("button", { name: "別の条件で試す" }).click();
+  await x.getByTestId("exp-bnd-urn").click();
+  await expect(x).toContainText("崩した条件：各回の成功確率 p が同じ・各回が独立");
+  expect(page.url()).toContain("x=stats2%3AEXP-binom-p");
+  await page.goBack();   // 戻ると概念のページ
+  await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  expect(errs).toEqual([]);
+});
+

@@ -1,5 +1,5 @@
 {
- "ref": "d873a1d686f5edfa8a745aecc0d0c3cc9c9a5a85",
+ "ref": "852ebc38c3e6f58a3820010d39ed1037cc4fc463",
  "files": [
   "packages/engine/src/experiment.ts",
   "packages/engine/src/formula/domain.ts",
@@ -12,9 +12,12 @@
   "packages/engine/src/formula/types.ts",
   "packages/engine/src/formula/validate.ts",
   "packages/engine/src/index.ts",
+  "packages/engine/src/lab.ts",
   "packages/engine/src/random.ts",
   "packages/ui/src/Button.module.css",
   "packages/ui/src/Button.tsx",
+  "packages/ui/src/Experiment.module.css",
+  "packages/ui/src/Experiment.tsx",
   "packages/ui/src/Formula.module.css",
   "packages/ui/src/Formula.tsx",
   "packages/ui/src/FullView.module.css",

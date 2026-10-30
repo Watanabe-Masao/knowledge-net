@@ -42,10 +42,12 @@ export type Derivation = {
   steps: string[]; conditions: string[]; units: string[];
 };
 export type Unit = { id: string; number: string; title: string; url?: string };
+/** 実験室の定義（型の改訂9。中身は math-lab の ExperimentDef と同じ形） */
+export type ExperimentData = import("@math-lab/ui").ExperimentDef;
 export type CourseData = {
   schema: "kn-schema"; version: 1; schema_revision?: number;
   course: { id: string; title: string; units: Unit[] };
-  concepts: Concept[]; relations: Relation[]; derivations: Derivation[];
+  concepts: Concept[]; relations: Relation[]; derivations: Derivation[]; experiments?: ExperimentData[];
 };
 export type Kind = { definition: string; reading: string; trace: boolean; required: string[] };
 export const KINDS = kinds.types as unknown as Record<string, Kind>;
@@ -69,6 +71,8 @@ export type Network = {
   concepts: Map<string, Concept>;
   relations: Relation[];
   derivations: Derivation[];
+  /** 実験室（id → 定義）。概念・線から「実験室で試す」で開く */
+  experiments: Map<string, ExperimentData>;
   units: Map<string, Unit>;
   /** 指されているが、どの教材にもない概念（別の教材がまだつながっていない） */
   missing: Set<string>;
@@ -77,7 +81,7 @@ export type Network = {
 
 /** いくつかの教材のデータを1つのネットワークにする。型に合わない教材は errors に入れて外す。 */
 export function merge(list: { id: string; data: unknown }[]): { net: Network; errors: string[] } {
-  const net: Network = { courses: [], concepts: new Map(), relations: [], derivations: [], units: new Map(), missing: new Set(), problems: [] };
+  const net: Network = { courses: [], concepts: new Map(), relations: [], derivations: [], experiments: new Map(), units: new Map(), missing: new Set(), problems: [] };
   const errors: string[] = [];
   for (const { id, data } of list) {
     const errs = schemaErrors(data);
@@ -93,6 +97,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     for (const c of d.concepts) net.concepts.set(c.id, c);
     net.relations.push(...d.relations);
     net.derivations.push(...d.derivations);
+    for (const x of d.experiments ?? []) net.experiments.set(x.id, x);
   }
   const ends = [...net.relations.flatMap((r) => [r.from, r.to]), ...net.derivations.flatMap((d) => [...d.premises, d.conclusion])];
   const relIds = new Set(net.relations.map((r) => r.id));
@@ -122,6 +127,11 @@ export function trace(net: Network, id: string): { order: string[]; steps: Step[
     frontier = next;
   }
   return { order, steps };
+}
+
+/** 概念か線（関係・導出）につながる実験室 */
+export function experimentsFor(net: Network, id: string): ExperimentData[] {
+  return [...net.experiments.values()].filter((x) => x.links.concepts?.includes(id) || x.links.relations?.includes(id));
 }
 
 /** id につながる関係と導出（向きを問わない）。 */

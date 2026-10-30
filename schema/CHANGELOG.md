@@ -14,3 +14,4 @@
 | 6 | 2026-10-30 | 関係に任意の `gist`（つまり：日常の言葉で1〜2文）（stats2-course #95）。任意 |
 | 7 | 2026-10-30 | 式の記号に任意の `of`（どの確率変数の記号か）と `domain`（定義域：min・max は数か同じ式の記号の key〔k ≦ n〕・minOpen・maxOpen・integer・nonzero）（stats2-course #109）。任意 |
 | 8 | 2026-10-30 | 式に任意の `parts`（意味のかたまり：path・name・meaning）、概念に任意の `workspace`（式の作業台：formula・vary・over・mean）（stats2-course #110）。任意 |
+| 9 | 2026-10-31 | 任意の `experiments`（実験室：問い・つなぐ概念と線・モデル・条件の範囲・前の条件と変える条件・理由・テーマ・反例の実験〔counterexamples：崩す条件と起き方。urn・streak・mix〕・次の問い・ポイント。予想の答えは書かない）（stats2-course #102）。任意 |
