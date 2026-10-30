@@ -214,8 +214,9 @@ test("枠の大きさが後から決まっても図が枠に収まり、⤢ で�
     return b.x1 >= 0 && b.y1 >= 0 && b.x2 <= cy.width() && b.y2 <= cy.height();
   });
   await expect.poll(inside).toBe(true);
+  await settle(page);   // 枠の大きさに合わせて収め直す動きが終わってから動かす（途中だと収め直しに戻されて、GitHub でまれに落ちた）
   await page.evaluate(() => { (window as any).kn.panBy({ x: 0, y: -400 }); });   // 戻り値（cy 全体）を返さない（返すと書き出しに約17秒かかる）
-  expect(await inside()).toBe(false);
+  await expect.poll(inside).toBe(false);
   await page.getByRole("button", { name: "図を枠に収める" }).click();
   await expect.poll(inside).toBe(true);
 });
