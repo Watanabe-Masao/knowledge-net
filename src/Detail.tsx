@@ -65,7 +65,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         <Muted>{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
         <Row>
           <Button onClick={onTrace} pressed={tracing}>{tracing ? "前提の表示をやめる" : "前提をさかのぼる"}</Button>
-          <Button onClick={onCompare} pressed={inCompare}>{inCompare ? "比べるから外す" : "比べるに入れる"}</Button>
+          <Button onClick={onCompare} pressed={inCompare}>ほかの概念と比べる</Button>
         </Row>
       </header>
       {c.definition && <p className={st.definition}>{c.definition}</p>}

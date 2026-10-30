@@ -9,7 +9,8 @@ import Panel from "./Panel";
 import Search from "./Search";
 import { Button, Card, ErrorText, FullView, Muted, Sheet } from "@math-lab/ui";
 import st from "./App.module.css";
-import { KINDS, MODES, compare, load, neighborhood, trace, type Network } from "./data";
+import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
+import { relationParts } from "./Relation";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
@@ -49,7 +50,7 @@ export default function App() {
   const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing } = useUrlState();
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
-  const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | null>(null);
+  const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
   const setEdgeSel = (id: string | null) => { setEdgeRaw(id); if (id) setModalRaw(null); };
   const setModal = (m: typeof modal) => { setModalRaw(m); if (m) setEdgeRaw(null); };
   useEffect(() => setEdgeRaw(null), [sel]);   // 別の概念へ進んだら、線の説明は閉じる
@@ -84,7 +85,6 @@ export default function App() {
   const positions = useMemo(() => (net && sel && (view === "around" || EMBED) && net.concepts.has(sel) ? neighborhood(net, sel) : undefined), [net, sel, view]);
   if (!net) return <main className={st.app}><Muted>読み込み中…</Muted>{errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}</main>;
   const concept = sel ? net.concepts.get(sel) : undefined;
-  const toggleCmp = (id: string) => setCmp(cmp.includes(id) ? cmp.filter((x) => x !== id) : [...cmp, id].slice(-3));
 
   if (EMBED) {
     const full = `${location.pathname}?${new URLSearchParams({ ...(sel ? { c: sel } : {}), ...(SRC ? { src: SRC } : {}) }).toString()}`;
@@ -122,7 +122,7 @@ export default function App() {
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
       {concept ? <Detail net={net} concept={concept} tracing={tracing} inCompare={cmp.includes(concept.id)}
-        onTrace={() => { setTracing(!tracing); setModal(tracing ? null : "trace"); }} onCompare={() => toggleCmp(concept.id)} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
+        onTrace={() => { setTracing(!tracing); setModal(tracing ? null : "trace"); }} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">
@@ -140,11 +140,31 @@ export default function App() {
         </Sheet>
       )}
       {modal === "trace" && tr && concept && (
-        <Sheet label="前提をさかのぼる" title={`${concept.name} の前提`} onClose={() => setModal(null)} data-testid="trace">
-          <Muted>近い順。図では前提の道を強調している（「前提の表示をやめる」で戻る）。</Muted>
+        <Sheet label="前提をさかのぼる" title={`${concept.name} の前提`} onClose={() => { setModal(null); setTracing(false); }} data-testid="trace">
+          <Muted>近い順。図では前提の道を強調している（閉じると元の表示に戻る）。</Muted>
           {tr.order.length ? <ol>{tr.order.map((id) => <li key={id}><Button variant="link" onClick={() => setSel(id)}>{name(net, id)}</Button></li>)}</ol> : <Muted>たどれる前提はない</Muted>}
         </Sheet>
       )}
+      {modal === "pick" && cmp.length ? (() => {
+        // 比べる相手を選ぶ：つながりのある概念を先に（どうつながるかの文つき）、ほかは探して選ぶ
+        const base = cmp[0]!, a = around(net, base);
+        const near = a.relations.map((r) => ({ id: r.from === base ? r.to : r.from, why: relationParts(net, r).text })).filter((x) => !cmp.includes(x.id) && net.concepts.has(x.id))
+          .filter((x, i, xs) => xs.findIndex((y) => y.id === x.id) === i);
+        const add = (id: string) => setCmp([...cmp, id].slice(0, 3));
+        return (
+          <Sheet label="比べる相手を選ぶ" title={`${cmp.map((id) => name(net, id)).join("・")} と比べる`} onClose={() => { if (cmp.length >= 2) setModal("compare"); else { setCmp([]); setModal(null); } }} data-testid="pick">
+            <Muted>定義・条件・期待値と分散などを同じ並びで比べ、2つの関係と共通の前提を出す。</Muted>
+            {near.length ? <>
+              <h4>つながりのある概念</h4>
+              <ul className={st.pick}>{near.map((x) => (
+                <li key={x.id}><button type="button" className={st.pickItem} onClick={() => add(x.id)}><b>{name(net, x.id)}</b><span>{x.why}</span></button></li>
+              ))}</ul>
+            </> : null}
+            <h4>ほかの概念から探す</h4>
+            <Search concepts={[...net.concepts.values()].filter((c) => !cmp.includes(c.id))} onPick={add} />
+          </Sheet>
+        );
+      })() : null}
       {modal === "compare" && cmp.length ? (
         <Sheet label="比べる" title={`比べる：${cmp.map((id) => name(net, id)).join(" と ")}`} onClose={() => setModal(null)} data-testid="compare">
           {cmpData ? <>
@@ -155,8 +175,11 @@ export default function App() {
               </div>))}
             {cmpData.between.length ? <div className={st.compareRow}><h4>この組の関係</h4>{cmpData.between.map((r) => <p key={r.id}>{sentence(net, r)}：{r.description}</p>)}</div> : null}
             {cmpData.common.length ? <div className={st.compareRow}><h4>共通の前提</h4><p>{cmpData.common.map((id) => name(net, id)).join("・")}</p></div> : null}
-          </> : <Muted>もう1つ選んで「比べるに入れる」を押す（3つまで）。</Muted>}
-          <Button onClick={() => { setCmp([]); setModal(null); }}>比べるを空にする</Button>
+          </> : <Muted>比べる相手を選ぶ。</Muted>}
+          <div className={st.cmpActs}>
+            {cmp.length < 3 && <Button onClick={() => setModal("pick")}>＋ もう1つ足す</Button>}
+            <Button variant="quiet" onClick={() => { setCmp([]); setModal(null); }}>比べるのをやめる</Button>
+          </div>
         </Sheet>
       ) : null}
       {full && (

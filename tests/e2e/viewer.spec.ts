@@ -116,10 +116,10 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   await expect(d.getByTestId("labs-concept")).toBeVisible();
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await tab(page, /つながり/);
-  await tab(page, /つながり/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
-  await media.getByRole("radio", { name: /触る/ }).click();
+  // 上で「触る」を選んだので、覚えた形（触る）で開いている
+  await expect(media.getByRole("radio", { name: /触る/ })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByTestId("labs-panel-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
@@ -547,5 +547,19 @@ test("線の見方は下から開く面で、種類を隠せる", async ({ page 
   await k.getByRole("button", { name: "説明を閉じる" }).click();
   await expect(k).toHaveCount(0);
   await expect(page.getByRole("button", { name: /線の見方・1 種類を隠す/ })).toBeVisible();
+});
+
+// 比べる（#42）：「ほかの概念と比べる」→ つながりのある概念から相手を選ぶ → そのまま比べる面が開く
+test("ほかの概念と比べる：相手を選ぶとすぐ比べられる", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.getByRole("button", { name: "ほかの概念と比べる" }).click();
+  const pick = page.getByTestId("pick");
+  await expect(pick).toContainText("二項分布 を変換すると ポアソン分布");   // どうつながるかの文つき
+  await pick.getByRole("button", { name: /ポアソン分布/ }).first().click();
+  const cmp = page.getByTestId("compare");
+  await expect(cmp.getByRole("heading", { name: "この組の関係" })).toBeVisible();
+  await cmp.getByRole("button", { name: "比べるのをやめる" }).click();
+  await expect(cmp).toHaveCount(0);
+  expect(page.url()).not.toContain("cmp=");
 });
 
