@@ -504,3 +504,22 @@ test("作業台で実験する：100回・1回・条件を変えると記録を�
   await w.getByTestId("ws-slider-k").fill("4");
   await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
 });
+
+// 式を分解する（#110）：ₙCₖ → n!/(k!(n−k)!) → 階乗を ∏ に。値は変わらず、計算の段も分解した式で進む
+test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分解しても値は変わらない", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const w = page.getByTestId("workspace");
+  await w.locator('[data-part="0"]').first().click();
+  await w.getByTestId("ws-break-comb").click();
+  await expect(w.getByTestId("ws-part-value")).toHaveText("120");   // かたまりは選んだまま、値は ₁₀C₃ と同じ
+  await expect(w.getByTestId("ws-formula").locator(".katex")).toContainText("n!");
+  await expect(w.getByTestId("ws-calc").locator(".katex")).toContainText("10!");
+  await w.getByTestId("ws-break-fact").first().click();
+  await expect(w.getByTestId("ws-part-value")).toHaveText("120");
+  await expect(w.getByTestId("ws-result")).toContainText("26.68%");
+  await w.getByTestId("ws-close-comb").click();   // たたむと元の ₙCₖ に戻る
+  await expect(w.getByTestId("ws-formula").locator(".katex")).not.toContainText("n!");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+

@@ -7,7 +7,7 @@
 import katex from "katex";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  applyOpens, createRandom, definitionsFor, describeDomain, distribution, emptyRecord, evaluate, expand, formatNum, frequencies, lhsOf, nodeAt, runTrials, openSymbol, rhsOf, sliderRange, substitute, symbolsIn, toTex,
+  applyOpens, createRandom, definitionsFor, describeDomain, distribution, emptyRecord, evaluate, expand, formatNum, frequencies, fnsIn, lhsOf, nodeAt, runTrials, openSymbol, rhsOf, sliderRange, substitute, symbolsIn, toTex,
   type Definition, type Formula as EngineFormula, type FormulaNode, type FormulaPart, type FormulaSymbol,
 } from "@math-lab/engine";
 import { flash, haptic, reduced } from "./motion";
@@ -168,7 +168,7 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
   const freq = frequencies(rec);
 
   // 計算過程：右辺に今の値を入れて1段ずつ（252 × 0.5⁵ × 0.5⁵ ＝ 0.2461）。最初は「値を入れた式」の段
-  const steps = useMemo(() => expand(original.tree!, env), [original.tree, JSON.stringify(values)]);   // eslint-disable-line react-hooks/exhaustive-deps
+  const steps = useMemo(() => expand(tree, env), [tree, JSON.stringify(values)]);   // 開いた式（₁₀C₃ を 10!/(3!7!) に）で計算の段を作る   // eslint-disable-line react-hooks/exhaustive-deps
   const [step, setStep] = useState(1);
   const shownStep = Math.min(step, steps.length - 1);
   const isProb = lhs && "op" in lhs && lhs.op === "fn" && lhs.name === "P";
@@ -176,11 +176,16 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
 
   // ---- 開き方（選んだ記号） ----
   const selSym = sel?.sym ? symOf(sel.sym, symbols) : undefined;
-  const choices = useMemo(() => {
-    if (!selSym?.concept || !definitions) return [];
-    return definitionsFor(selSym.key, toEngine(definitions(selSym.concept))).filter((d) => openSymbol(tree, symbols, selSym.key, d, new Map(), { resolve }).count > 0);
-  }, [selSym, definitions, tree, symbols, resolve]);
-  const open = (d: Definition) => { snapshot(selSym!.key); setOpens((o) => [...o, { key: selSym!.key, def: d }]); setSel(null); };
+  // 記号・関数（ₙCₖ・k!）を開ける定義：その概念の式のうち、今の式の中で実際に開けるもの
+  const choicesFor = (key: string): Definition[] => {
+    const sym = symOf(key, symbols);
+    if (!sym?.concept || !definitions) return [];
+    return definitionsFor(key, toEngine(definitions(sym.concept))).filter((d) => openSymbol(tree, symbols, key, d, new Map(), { resolve }).count > 0);
+  };
+  const choices = useMemo(() => (selSym ? choicesFor(selSym.key) : []), [selSym, definitions, tree, symbols, resolve]);   // eslint-disable-line react-hooks/exhaustive-deps
+  // 開いたあとも、かたまりは選んだまま（分解した中身がそのまま帯に出る。続けて k! なども分解できる）
+  const open = (d: Definition, key = selSym!.key) => { haptic(); snapshot(key); setOpens((o) => [...o, { key, def: d }]); setSel((x) => (x?.part !== undefined ? { part: x.part } : null)); };
+  const defTex = (d: Definition) => { const t = d.formula.tree as { args: FormulaNode[] }; return `${toTex(t.args[0]!, { symbols: d.formula.symbols })}=${toTex(t.args[d.side]!, { symbols: d.formula.symbols })}`; };
   const pickSym = (k: string) => { haptic(); setSel((x) => ({ part: x?.part, sym: x?.sym === k ? undefined : k })); };
   const openKeys = [...new Set(opened.marks.values())];
   const close = (k: string) => { snapshot(); setOpens((o) => {
@@ -194,7 +199,10 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
     if (!sel) return <div className={`${s.strip} ${s.stripEmpty}`} data-testid="ws-strip"><p className={s.hint}>式のかたまり（ₙCₖ・pᵏ など）を押すと、意味と今の値がここに出る。</p></div>;
     const p = sel.part !== undefined ? parts[sel.part] : undefined;
     const node = p ? nodeAt(tree, p.path) : undefined;
-    const inside = node ? symbolsIn(node).filter((k) => symOf(k, symbols)) : [];
+    // この中の記号：値の記号（n・k・p）と、意味のある関数（ₙCₖ・k!）。関数は「分解する」で定義の式に開ける
+    const fns = node ? fnsIn(node).filter((k) => symOf(k, symbols)) : [];
+    const inside = node ? [...fns, ...symbolsIn(node).filter((k) => symOf(k, symbols))] : [];
+    const breakable = fns.map((k) => ({ key: k, defs: choicesFor(k) })).filter((x) => x.defs.length > 0);
     const v = selSym ? values[selSym.key] : undefined;
     return (
       <div className={s.strip} data-testid="ws-strip">
@@ -204,6 +212,15 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
             <span className={s.ctxVal} data-testid="ws-part-value">{fmt(evaluate(node, env))}</span>
             <b className={s.ctxName}>{p.name}</b>
             {!selSym && <p className={s.ctxText}>{p.meaning}</p>}
+            {breakable.length > 0 && (
+              <div className={s.ctxActs}>
+                {breakable.map(({ key, defs }) => defs.map((d, i) => (
+                  <button key={`${key}${i}`} type="button" className={s.act} onClick={() => open(d, key)} data-testid={`ws-break-${key}`}>
+                    分解する<span dangerouslySetInnerHTML={{ __html: render(defTex(d), false) }} />
+                  </button>
+                )))}
+              </div>
+            )}
           </div>
         )}
         {inside.length > 0 && (
