@@ -110,7 +110,13 @@ export default function App() {
       <main className={st.app}>
         <Experiment def={xdef} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
           onConcept={(id) => net.concepts.has(id) && setSel(id)} conceptName={(id) => name(net, id)}
-          onBack={() => (history.length > 1 ? history.back() : setExp(null))} />
+          onBack={() => (history.length > 1 ? history.back() : setExp(null))}
+          definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map((f) => formulaOf(id, (net.concepts.get(id)?.formulas ?? []).indexOf(f))!)}
+          workspace={(() => {   // 理由の段に、つなぐ概念の作業台を置く（概念のページと同じもの）
+            const cid = xdef.reason?.concept ?? xdef.links.concepts?.[0], c = cid ? net.concepts.get(cid) : undefined, w = c?.workspace;
+            const f = w ? formulaOf(cid, w.formula) : undefined;
+            return w && f?.tree ? { formula: f, mean: w.mean !== undefined ? formulaOf(cid, w.mean) : undefined, vary: w.vary, over: w.over } : undefined;
+          })()} />
       </main>
     );
   }

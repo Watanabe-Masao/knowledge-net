@@ -594,9 +594,19 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await expect(x.getByTestId("exp-verdict")).toContainText("細く高く");   // 予想は前の形のまま。p＝0.8 の山は細い
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.locator(".katex").first()).toContainText("10×0.8");
+  // 式はこの中で確かめる：概念のページと同じ作業台を、今の条件（p＝0.8）で置く（外へ移らない）
+  await expect(x.getByTestId("exp-workspace").getByTestId("ws-result")).toContainText("P(X=8)");
+  await expect(x.getByTestId("exp-workspace").getByTestId("ws-exp")).toHaveCount(0);
   await x.getByRole("button", { name: "別の条件で試す" }).click();
+  // 反例も実験する：起き方 → 予想 → 実験 → 二項分布と照らす。結果と説明は実験のあと
   await x.getByTestId("exp-bnd-urn").click();
-  await expect(x).toContainText("崩した条件：各回の成功確率 p が同じ・各回が独立");
+  const cx = x.getByTestId("exp-cx");
+  await expect(cx).toContainText("40 個の箱");
+  await expect(cx.getByTestId("exp-cx-run-100")).toHaveCount(0);   // 予想するまで実験できない
+  await cx.getByRole("radio", { name: "狭くなる" }).click();
+  await cx.getByTestId("exp-cx-run-100").click();
+  await expect(cx.getByTestId("exp-cx-verdict")).toContainText("山は二項分布より");
+  await expect(cx).toContainText("崩した条件：各回の成功確率 p が同じ・各回が独立");
   expect(page.url()).toContain("x=stats2%3AEXP-binom-p");
   await page.goBack();   // 戻ると概念のページ
   await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
