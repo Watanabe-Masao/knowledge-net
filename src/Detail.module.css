@@ -3,3 +3,23 @@
 .misconceptions { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
 .wrong { color: var(--ink); font-weight: 600; }
 .derivation { border-top: 1px solid var(--line); margin-top: var(--sp-3); }
+.definition { margin: var(--sp-2) 0 0; font-size: var(--fs-body); line-height: 1.7; }
+.tabs { margin: var(--sp-3) 0 var(--sp-2); }
+.tabs > * { width: 100%; }
+.n { font-size: var(--fs-tag); color: var(--ink-3); margin-left: 2px; }
+.pane { display: grid; gap: var(--sp-2); }
+.pane > h3:first-child { margin-top: var(--sp-2); }
+/* つながり：1行ずつ。札・関係の文・つまり（2行まで）。押すと下からシート */
+.rels { list-style: none; margin: 0; padding: 0; display: grid; }
+.rels > li + li { border-top: 1px solid var(--line); }
+.rel { all: unset; box-sizing: border-box; width: 100%; display: grid; gap: 4px; padding: 10px 2px; cursor: pointer; min-height: var(--tap);
+  transition: background var(--dur) var(--ease); border-radius: var(--r-s); }
+.rel:active, .rel[aria-pressed="true"] { background: var(--accent-soft); }
+.rel:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.relText { font-size: var(--fs-head); font-weight: 600; line-height: 1.45; }
+.relGist { font-size: var(--fs-small); color: var(--ink-2); line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.derTag { justify-self: start; font-size: var(--fs-tag); color: var(--k-der); border: 1px solid currentColor; border-radius: var(--r-pill); padding: 0 8px; }
+/* 概念のカードの中では作業台の枠を外す（枠の中に枠を重ねない） */
+.pane [data-testid="workspace"] { border: none; box-shadow: none; background: transparent; padding: 0; }
+.problems { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0; }
+.problems span { font-size: var(--fs-small); color: var(--ink-2); background: var(--surface-2); border-radius: var(--r-s); padding: 1px 6px; }

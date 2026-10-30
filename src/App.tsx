@@ -6,10 +6,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
-import { Badges, relationParts } from "./Relation";
 import { Button, Card, Disclosure, ErrorText, Field, Muted, Split } from "@math-lab/ui";
 import st from "./App.module.css";
-import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
+import { KINDS, MODES, compare, load, neighborhood, trace, type Network } from "./data";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
@@ -102,15 +101,6 @@ export default function App() {
       ) : null}
       <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions}
         onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} />
-      {concept ? (() => {
-        const a = around(net, concept.id);
-        const items = [...a.relations.map((r) => ({ id: r.id, text: relationParts(net, r).text, rel: r })), ...a.derivations.map((d) => ({ id: d.id, text: `導出：${d.statement}`, rel: undefined }))];
-        return items.length ? (
-          <Disclosure data-testid="edge-list" open={view === "around"} summary={<>つながり一覧（{items.length}）<Muted as="span">線を押すのと同じ</Muted></>}>
-            <ul className={st.edges}>{items.map((it) => <li key={it.id}><Button block className={st.chip} pressed={edgeSel === it.id} onClick={() => setEdgeSel(it.id)}>{it.rel && <Badges net={net} r={it.rel} />}<span>{it.text}</span></Button></li>)}</ul>
-          </Disclosure>
-        ) : null;
-      })() : null}
       <Disclosure summary="関係の種類（押すと表示を切り替える）">
         <Muted>矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。</Muted>
         <ul className={st.kinds}>{Object.entries(KINDS).map(([t, k]) => (
@@ -131,7 +121,7 @@ export default function App() {
         </Card>
       ) : null}
       {concept ? <Detail net={net} concept={concept} tracing={tracing} inCompare={cmp.includes(concept.id)}
-        onTrace={() => setTracing(!tracing)} onCompare={() => toggleCmp(concept.id)} onSelect={setSel} /> :
+        onTrace={() => setTracing(!tracing)} onCompare={() => toggleCmp(concept.id)} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}
       {cmp.length ? (
         <Card data-testid="compare">
