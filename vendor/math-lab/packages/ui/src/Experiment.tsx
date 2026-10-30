@@ -56,7 +56,7 @@ const peak = (f: number[]) => f.reduce((b, v, i) => (v > f[b]! ? i : b), 0);
 const dirOf = (a: Cond, b: Cond) => { const d = mean(b) - mean(a); return Math.abs(d) < 0.25 ? 1 : d > 0 ? 2 : 0; };
 
 /** 棒（実験の割合）・点（理論）・点線（前の条件）を重ねる図。高さは前の値から動く */
-function Bars({ freq, theory, ghost, hi, height = 150, label }: { freq?: number[]; theory?: number[]; ghost?: number[]; hi?: number; height?: number; label: string }) {
+function Bars({ freq, theory, ghost, hi, mark, height = 150, label }: { freq?: number[]; theory?: number[]; ghost?: number[]; hi?: number; mark?: number; height?: number; label: string }) {
   const base = freq ?? theory ?? [];
   const n = base.length - 1, W = 340, B = height - 20, R = 30;
   const raw = Math.max(1e-9, ...(freq ?? []), ...(theory ?? []), ...(ghost ?? []));
@@ -78,6 +78,12 @@ function Bars({ freq, theory, ghost, hi, height = 150, label }: { freq?: number[
       ))}
       {freq && theory?.map((v, k) => <circle key={k} cx={x(k)} cy={y(v)} r={3} className={s.dot} />)}
       <line x1={0} x2={W - R + 4} y1={B} y2={B} className={s.base} />
+      {mark !== undefined && mark >= 0 && mark <= n && (
+        <g className={s.mark} key={`m${mark}`}>
+          <line x1={x(mark)} x2={x(mark)} y1={12} y2={B} />
+          <text x={Math.min(W - R - 14, Math.max(14, x(mark)))} y={9} textAnchor="middle">予想</text>
+        </g>
+      )}
       {base.map((_, k) => (k % every === 0 || k === hi) && <text key={k} x={x(k)} y={height - 5} textAnchor="middle" className={k === hi ? s.tickOn : s.tick}>{k}</text>)}
     </svg>
   );
@@ -116,7 +122,17 @@ export function Experiment({ def, reasonFormula, mainFormula, seed: seed0, onCon
   };
   const sum = summarize(rec);
   const theoryNow = useMemo(() => modelPmf({ kind: "binom", ...cond }), [cond.n, cond.p]);   // eslint-disable-line react-hooks/exhaustive-deps
-  const theoryStart = useMemo(() => modelPmf({ kind: "binom", ...round.start }), [round]);
+  // 前の条件の山。次の条件で n が増えるときは、横軸を次の n まで伸ばす（予想の頂点を同じ図に置けるように）
+  const theoryStart = useMemo(() => { const f = modelPmf({ kind: "binom", ...round.start }); return [...f, ...Array(Math.max(0, round.next.n - round.start.n)).fill(0)]; }, [round]);
+  // 予想は1つの答えにそろえる：向きと山の頂点は連動する（右へ＝頂点が今の頂点より右）。どちらを触っても、もう一方が合わせて動く
+  const base = peak(modelPmf({ kind: "binom", ...round.start }));
+  const dirOfPeak = (k: number) => (k > base ? 2 : k < base ? 0 : 1);
+  const chooseDir = (i: number) => setPred((p) => {
+    const ok = dirOfPeak(p.peak) === i;
+    const pk = ok ? p.peak : i === 1 ? base : i === 2 ? Math.min(round.next.n, base + 1) : Math.max(0, base - 1);
+    return { dir: i, peak: pk };
+  });
+  const choosePeak = (k: number) => setPred({ dir: dirOfPeak(k), peak: k });
   const k = rec.last ? rec.last.reduce((a, b) => a + b, 0) : undefined;
 
   // 反例を実験する：同じ n・p で、成り立つ条件を1つ崩した起き方にして、二項の理論と比べる
@@ -166,16 +182,16 @@ export function Experiment({ def, reasonFormula, mainFormula, seed: seed0, onCon
     body = <>
       <section className={s.card}>
         <p className={s.h}>{`p＝${pct(round.start.p)}・n＝${round.start.n} のときの山`}<span>前の条件</span></p>
-        <Bars theory={theoryStart} hi={peak(theoryStart)} height={130} label="前の条件の理論の分布" />
+        <Bars theory={theoryStart} hi={base} mark={pred.dir !== undefined ? pred.peak : undefined} height={130} label="前の条件の理論の分布と予想の頂点" />
       </section>
       <section className={s.card}>
         <p className={s.h}>{`${round.next.p !== round.start.p ? `p＝${pct(round.next.p)}` : `n＝${round.next.n}`} にすると、山は…`}</p>
         <div className={s.choice} role="radiogroup" aria-label="予想">
-          {DIRS.map((d, i) => <button key={d} type="button" role="radio" aria-checked={pred.dir === i} onClick={() => { haptic(); setPred((p) => ({ ...p, dir: i })); }}>{d}</button>)}
+          {DIRS.map((d, i) => <button key={d} type="button" role="radio" aria-checked={pred.dir === i} disabled={(i === 0 && base === 0) || (i === 2 && base >= round.next.n)} onClick={() => { haptic(); chooseDir(i); }}>{d}</button>)}
         </div>
         <label className={s.peak}>
-          <span>山のいちばん高い所は？</span><b>k＝{pred.peak}</b>
-          <input type="range" min={0} max={round.next.n} step={1} value={pred.peak} onChange={(e) => setPred((p) => ({ ...p, peak: Number(e.target.value) }))}
+          <span>山のいちばん高い所は？<small className={s.muted}>　今は k＝{base}</small></span><b>k＝{pred.peak}</b>
+          <input type="range" min={0} max={round.next.n} step={1} value={pred.peak} onChange={(e) => choosePeak(Number(e.target.value))}
             style={{ "--fill": `${(pred.peak / round.next.n) * 100}%` } as CSSProperties} aria-label="予想する山の頂点" />
         </label>
       </section>
@@ -219,7 +235,7 @@ export function Experiment({ def, reasonFormula, mainFormula, seed: seed0, onCon
       </div>
       <section className={s.card}>
         <div className={s.legend}><span><i className={s.kBar} />実験 {rec.sets} セット</span><span><i className={s.kDot} />理論</span><span><i className={s.kGhost} />前の条件</span></div>
-        <Bars freq={sum.freq} theory={theoryNow} ghost={theoryStart} hi={pk} height={170} label="実験と理論と前の条件" />
+        <Bars freq={sum.freq} theory={theoryNow} ghost={theoryStart.slice(0, cond.n + 1)} hi={pk} mark={pred.peak} height={170} label="実験と理論と前の条件と予想の頂点" />
       </section>
       <div className={s.tiles}>
         <div>平均（実験）<b>{r2(sum.mean)}</b><i>前の条件では {r2(mean(round.start))}</i></div>

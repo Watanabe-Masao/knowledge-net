@@ -117,3 +117,8 @@
 .points { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; font-size: 13px; }
 .breaks { margin: 0; font-size: var(--fs-small); font-weight: 700; color: var(--bad); }
 .story { margin: -4px 0 0; font-size: var(--fs-small); color: var(--ink-3); }
+/* 予想の頂点：点線と札。置き直すと少し伸びて出る */
+.mark line { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.mark text { font-size: 10px; font-weight: 700; fill: var(--accent); }
+.mark { animation: enter var(--dur) var(--ease); }
+.choice button:disabled { opacity: .35; cursor: default; }

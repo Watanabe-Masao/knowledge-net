@@ -572,7 +572,15 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   const x = page.getByTestId("experiment");
   await expect(x.getByTestId("exp-question")).toContainText("成功確率を上げると");
   await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();   // 予想するまで結果を見せない
+  // 予想は向きと山の頂点が連動する（食い違った予想を入れられない）
+  const peakIn = x.getByRole("slider", { name: "予想する山の頂点" });
   await x.getByRole("radio", { name: "右へ動く" }).click();
+  expect(Number(await peakIn.inputValue())).toBeGreaterThan(5);
+  await peakIn.fill("3");
+  await expect(x.getByRole("radio", { name: "左へ動く" })).toHaveAttribute("aria-checked", "true");
+  await x.getByRole("radio", { name: "右へ動く" }).click();
+  await peakIn.fill("8");
+  await expect(x.getByRole("radio", { name: "右へ動く" })).toHaveAttribute("aria-checked", "true");
   await x.getByRole("button", { name: "この予想で実験する" }).click();
   await x.getByRole("radio", { name: /来店客が買う/ }).click();
   await x.getByTestId("exp-run-1").click();
