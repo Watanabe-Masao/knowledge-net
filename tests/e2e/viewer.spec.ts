@@ -449,3 +449,19 @@ test("式の作業台：かたまり・スライダー・分布が1つの操作�
   await expect(w.getByTestId("ws-strip")).toContainText("0以上 n 以下の整数");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
+
+// 作業台 P0（#110）：計算過程を1段ずつ・k のスライダー・確率は %・初期値に戻す・開くと広がる
+test("作業台：計算過程を1段ずつ見て、k を動かし、初期値に戻す", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const w = page.getByTestId("workspace");
+  await expect(w.getByTestId("ws-result")).toContainText("26.68%");
+  const calc = w.getByTestId("ws-calc");
+  await expect(calc).toContainText("1／");
+  await calc.getByRole("button", { name: "次の段" }).click();
+  await expect(calc.locator(".katex")).toContainText("120×0.027×0.7");   // ₁₀C₃・0.3³・(1−0.3) を計算した段（0.7⁷ は次の段）
+  await w.getByTestId("ws-slider-k").fill("5");
+  await expect(w.getByTestId("ws-result")).toContainText("P(X=5)");
+  await w.getByTestId("ws-reset").click();
+  await expect(w.getByTestId("ws-result")).toContainText("P(X=3)");
+});
