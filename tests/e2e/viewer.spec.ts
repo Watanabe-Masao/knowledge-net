@@ -214,8 +214,9 @@ test("枠の大きさが後から決まっても図が枠に収まり、⤢ で�
     return b.x1 >= 0 && b.y1 >= 0 && b.x2 <= cy.width() && b.y2 <= cy.height();
   });
   await expect.poll(inside).toBe(true);
+  await settle(page);   // 枠の大きさに合わせて収め直す動きが終わってから動かす（途中だと収め直しに戻されて、GitHub でまれに落ちた）
   await page.evaluate(() => { (window as any).kn.panBy({ x: 0, y: -400 }); });   // 戻り値（cy 全体）を返さない（返すと書き出しに約17秒かかる）
-  expect(await inside()).toBe(false);
+  await expect.poll(inside).toBe(false);
   await page.getByRole("button", { name: "図を枠に収める" }).click();
   await expect.poll(inside).toBe(true);
 });
@@ -448,4 +449,41 @@ test("式の作業台：かたまり・スライダー・分布が1つの操作�
   await w.getByTestId("ws-strip").getByRole("button", { name: "k" }).click();   // かたまりの中の記号へ
   await expect(w.getByTestId("ws-strip")).toContainText("0以上 n 以下の整数");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+// 作業台 P0（#110）：計算過程を1段ずつ・k のスライダー・確率は %・初期値に戻す・開くと広がる
+test("作業台：計算過程を1段ずつ見て、k を動かし、初期値に戻す", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const w = page.getByTestId("workspace");
+  await expect(w.getByTestId("ws-result")).toContainText("26.68%");
+  const calc = w.getByTestId("ws-calc");
+  await expect(calc).toContainText("1／");
+  await calc.getByRole("button", { name: "次の段" }).click();
+  await expect(calc.locator(".katex")).toContainText("120×0.027×0.7");   // ₁₀C₃・0.3³・(1−0.3) を計算した段（0.7⁷ は次の段）
+  await w.getByTestId("ws-slider-k").fill("5");
+  await expect(w.getByTestId("ws-result")).toContainText("P(X=5)");
+  await w.getByTestId("ws-reset").click();
+  await expect(w.getByTestId("ws-result")).toContainText("P(X=3)");
+});
+
+// 実験（#102・#110）：100回で実験の割合が棒に重なり、平均と理論が並ぶ。1回で今回の値。条件を変えたら記録を分ける
+test("作業台で実験する：100回・1回・条件を変えると記録を分ける", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const w = page.getByTestId("workspace");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
+  await w.getByTestId("ws-run-100").click();
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("理論 3");
+  await expect(w.locator('[data-testid^="ws-emp-"]')).toHaveCount(11);   // k＝0〜10 に実験の割合
+  await w.getByTestId("ws-run-1").click();
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 101 回");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("今回 k＝");
+  await w.getByTestId("ws-slider-p").fill("0.5");   // 条件を変えると記録を分ける
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
+  await w.getByTestId("ws-slider-k").fill("6");     // k を変えても記録は残る（条件ではない）
+  await w.getByTestId("ws-run-100").click();
+  await w.getByTestId("ws-slider-k").fill("4");
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
 });
