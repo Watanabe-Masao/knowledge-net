@@ -349,3 +349,29 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
   await expect(panel).toHaveCount(0);
   await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
 });
+
+// 式を触る（#72）：記号を押すと意味と概念、値を入れると右辺を1段ずつ計算する
+test("式の記号を押すと意味が出て、値を入れると1段ずつ計算できる", async ({ page }) => {
+  await page.setViewportSize({ width: 380, height: 800 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  const d = page.getByTestId("detail");
+  const f = d.getByTestId("formula").nth(1);   // E(X)＝np
+  await f.getByTestId("sym-p").click();
+  await expect(f.getByTestId("sym-card")).toContainText("成功");
+  await expect(f.locator('[data-sym="p"][data-on]').first()).toBeVisible();   // 式の中でも強調
+  await f.getByRole("button", { name: "値を入れて計算する" }).click();
+  await f.getByRole("spinbutton", { name: /^n/ }).fill("10");
+  await f.getByRole("spinbutton", { name: /^p/ }).fill("0.3");
+  const ex = f.getByTestId("expansion");
+  await expect(ex).toContainText("3／3");
+  await expect(ex.locator(".katex")).toContainText("=3");
+  await ex.getByRole("button", { name: "前の段" }).click();
+  await expect(ex).toContainText("2／3");
+  await expect(ex.locator(".katex")).toContainText("10×0.3");
+  // 記号から概念へ（V(X)＝np(1−p) の V から分散へ）
+  const v = d.getByTestId("formula").nth(2);
+  await v.getByTestId("sym-V").click();
+  await v.getByRole("button", { name: /分散 を開く/ }).click();
+  await expect(page.getByTestId("detail").getByRole("heading", { name: "分散", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
+});
