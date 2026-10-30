@@ -1,8 +1,11 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import RelationCard, { Media } from "./Relation";
-import { Button, Card, Formula, Muted, Row, Stack } from "@math-lab/ui";
+import { Button, Card, Disclosure, Formula, Muted, Row, Stack, Workspace } from "@math-lab/ui";
 import st from "./Detail.module.css";
-import { KINDS, MODES, PREMISES, around, type Concept, type Network, type Relation } from "./data";
+import { KINDS, MODES, PREMISES, around, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
+
+/** 画面の型（key が任意）から部品の型へ（key のない記号は木から指せないので落とす） */
+const keyed = (f: NetFormula) => ({ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) });
 
 export function name(net: Network, id: string): string {
   return net.concepts.get(id)?.name ?? id;
@@ -24,18 +27,8 @@ type Props = {
 export default function Detail({ net, concept: c, tracing, inCompare, onTrace, onCompare, onSelect }: Props) {
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
-  return (
-    <Card data-testid="detail">
-      <header className={st.head}>
-        <h2>{c.name}</h2>
-        <Muted>{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
-        <Row>
-          <Button onClick={onTrace} pressed={tracing}>{tracing ? "前提の表示をやめる" : "前提をさかのぼる"}</Button>
-          <Button onClick={onCompare} pressed={inCompare}>{inCompare ? "比べるから外す" : "比べるに入れる"}</Button>
-        </Row>
-      </header>
-      {c.definition && <><h3>定義</h3><p>{c.definition}</p></>}
-      <Media figures={c.figures} labs={c.labs} context="concept" open />
+  // 作業台がある概念では、原理・式・条件・例・反例は閉じて下に（作業台を主役に。#110）
+  const body = <>
       {c.principle && <><h3>原理</h3><p>{c.principle}</p></>}
       {c.formulas?.length ? <>
         <h3>式</h3>
@@ -57,6 +50,25 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         <ul className={st.misconceptions}>{c.misconceptions.map((m, i) => (
           <li key={m.misconception}><Card as="div" tone="inset"><span className={st.wrong}>✕ {m.misconception}</span><p>→ {m.correction}</p><Media labs={m.labs} context={`misconception-${i}`} /></Card></li>))}</ul>
       </> : null}
+  </>;
+  return (
+    <Card data-testid="detail">
+      <header className={st.head}>
+        <h2>{c.name}</h2>
+        <Muted>{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
+        <Row>
+          <Button onClick={onTrace} pressed={tracing}>{tracing ? "前提の表示をやめる" : "前提をさかのぼる"}</Button>
+          <Button onClick={onCompare} pressed={inCompare}>{inCompare ? "比べるから外す" : "比べるに入れる"}</Button>
+        </Row>
+      </header>
+      {c.definition && <><h3>定義</h3><p>{c.definition}</p></>}
+      {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
+        <Workspace formula={keyed(c.formulas[c.workspace.formula]!)} mean={c.workspace.mean !== undefined ? keyed(c.formulas[c.workspace.mean]!) : undefined}
+          vary={c.workspace.vary} over={c.workspace.over} definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
+          onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)} />
+      )}
+      <Media figures={c.figures} labs={c.labs} context="concept" open />
+      {c.workspace ? <Disclosure summary="原理・式・条件・例・反例" data-testid="details">{body}</Disclosure> : body}
       {relations.length ? <>
         <h3>つながり</h3>
         <Stack className={st.relations}>{relations.map((r) => (
