@@ -73,7 +73,7 @@ test("線の名前は選んだ概念の線だけに出る", async ({ page }) => 
 test("つながりから別の概念へ移る・教材へのリンク", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   const d = page.getByTestId("detail");
-  await d.getByRole("button", { name: /二項分布 を変換すると ポアソン分布（極限/ }).click();
+  await d.getByTestId("rel-stats2:REL-binom-poisson").getByRole("button", { name: "二項分布 を変換すると ポアソン分布" }).click();
   await expect(d.getByRole("heading", { name: "ポアソン分布", exact: true })).toBeVisible();
   await expect(d.getByRole("link", { name: /15｜/ })).toHaveAttribute("href", /app\.notion\.com/);
 });
@@ -96,16 +96,17 @@ test("読めないデータは知らせる", async ({ page }) => {
   await expect(page.getByRole("alert").or(page.locator(".error"))).toContainText("データを読めない");
 });
 
-test("概念と関係からラボを開く（共通の起動）", async ({ page }) => {
+test("概念と関係からラボを開く（図／解説／触る の切り替え）", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-std`);
   const d = page.getByTestId("detail");
-  await d.getByTestId("labs-concept").getByRole("button", { name: "🧪 ラボで確かめる" }).click();
-  await expect(d.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
-  await expect(d.getByRole("link", { name: "大きく開く ↗" })).toHaveAttribute("href", /zscore\/\?p=s1-z$/);
+  await d.getByTestId("media-concept").getByRole("radio", { name: /触る/ }).click();
+  await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
+  await expect(d.getByTestId("labs-concept").getByRole("link", { name: "大きく開く ↗" })).toHaveAttribute("href", /zscore\/\?p=s1-z$/);
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
-  const rel = page.getByTestId("labs-relation-stats2:REL-binom-poisson");
-  await rel.getByRole("button", { name: "🧪 ラボで確かめる" }).click();
-  await expect(rel.locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
+  const media = page.getByTestId("media-relation-stats2:REL-binom-poisson");
+  await expect(page.getByTestId("labs-relation-stats2:REL-binom-poisson")).toHaveCount(0);   // 一覧では閉じておく（ラボは押すまで読み込まない）
+  await media.getByRole("radio", { name: /触る/ }).click();
+  await expect(page.getByTestId("labs-relation-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
 
@@ -174,7 +175,7 @@ test("つながり一覧からも同じ説明を開ける", async ({ page }) => 
   await page.getByTestId("edge-list").getByRole("button", { name: /超幾何分布 を変換すると 二項分布/ }).click();
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toContainText("集団 N を大きく");
-  await expect(panel.getByRole("button", { name: /ラボで確かめる/ })).toBeVisible();
+  await expect(panel.getByRole("radio", { name: /触る/ })).toBeVisible();
   await panel.getByRole("button", { name: "超幾何分布 へ" }).click();
   await expect(page.getByTestId("detail").getByRole("heading", { name: "超幾何分布", exact: true })).toBeVisible();
 });
@@ -238,26 +239,35 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
   await expect(figs.locator("figcaption")).toContainText("B(4, 0.25)");
 });
 
-test("ラボで解説を先、ラボで確かめるを後に並べる。段ごとの図は1枚ずつ前へ／次へで見る", async ({ page }) => {
+test("図／解説／触る は切り替えて1つだけ出す。最初は図、選んだ形を覚える。一覧のカードは閉じておく", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
   const panel = page.getByTestId("edge-panel");
-  const btns = panel.getByTestId(/^labs-panel-/).getByRole("button");
-  await expect(btns.nth(0)).toHaveText("▶ ラボで解説");
-  await expect(btns.nth(1)).toHaveText("🧪 ラボで確かめる");
+  const sw = panel.getByTestId(/^media-panel-/);
+  await expect(sw.getByRole("radio")).toHaveText(["🖼 図 3", "▶ 解説", "🧪 触る"]);
   const figs = panel.getByTestId(/^figures-panel-/);
   await expect(figs.locator("img")).toHaveCount(1);
   await expect(figs).toContainText("1／3");
-  await expect(figs.locator("img")).toHaveAttribute("src", /tour-1\.svg$/);
   await figs.getByRole("button", { name: "次の図" }).click();
   await expect(figs).toContainText("2／3");
   await expect(figs.locator("img")).toHaveAttribute("src", /tour-2\.svg$/);
-  // 概念の詳細のつながりの一覧では、図は閉じておく
-  const row = page.getByTestId("figures-relation-stats2:REL-binom-poisson");
-  await expect(row.locator("img")).toHaveCount(0);
-  await row.getByRole("button", { name: "🖼 図で見る（3枚）" }).click();
-  await expect(row.locator("img")).toHaveCount(1);
+  await sw.getByRole("radio", { name: /解説/ }).click();
+  await expect(figs).toHaveCount(0);
+  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=rel-approx-tour&embed=1/);
+  await sw.getByRole("radio", { name: /触る/ }).click();
+  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=rel-approx&embed=1/);
+  await panel.getByTestId(/^labs-panel-/).getByRole("button", { name: "閉じる" }).click();
+  await expect(panel.locator("iframe")).toHaveCount(0);
+  // 選んだ形（触る）を覚え、別の線も同じ形で開く
+  await sw.getByRole("radio", { name: /触る/ }).click();
+  await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると 正規分布/ }).click();
+  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=s5-norm&embed=1/);
+  // 概念の詳細のつながりのカードは閉じておく
+  const card = page.getByTestId("media-relation-stats2:REL-binom-poisson");
+  await expect(page.getByTestId("figures-relation-stats2:REL-binom-poisson")).toHaveCount(0);
+  await card.getByRole("radio", { name: /図/ }).click();
+  await expect(page.getByTestId("figures-relation-stats2:REL-binom-poisson").locator("img")).toHaveCount(1);
 });
 
 test("つながりは「💡 つまり」を説明より先に出す（対比・変換）", async ({ page }) => {
@@ -269,6 +279,8 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
   await expect(gist).toContainText("散らばりが小さい");
   const [g, d] = await Promise.all([gist.boundingBox(), panel.getByText(/二項分布は回数に上限 n があり/).boundingBox()]);
   expect(g!.y).toBeLessThan(d!.y);
-  await expect(panel.getByTestId(/^labs-panel-/).getByRole("button").first()).toHaveText("▶ ラボで解説");
+  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["🖼 図 2", "▶ 解説", "🧪 触る"]);
   await expect(panel.getByTestId(/^figures-panel-/)).toContainText("1／2");
+  await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
+  await expect(panel.getByText("対比", { exact: false }).first()).toBeVisible();   // 種類は札で出す（括弧を重ねない）
 });

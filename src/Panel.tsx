@@ -1,7 +1,6 @@
 // 線（関係・導出）の説明パネル。画面の下から開く。閉じても選んだ概念はそのまま。
-import LabLaunch from "./Lab";
-import Figures from "./Figure";
-import { name, sentence } from "./Detail";
+import RelationCard from "./Relation";
+import { name } from "./Detail";
 import { type Network } from "./data";
 
 /** 線の id（関係の id、導出の点、導出の線 DER-…>…）から、説明する関係か導出を探す。 */
@@ -21,19 +20,16 @@ export default function Panel({ net, edgeId, onClose, onSelect }: Props) {
   return (
     <aside className="panel" role="dialog" aria-label="関係の説明" data-testid="edge-panel">
       <div className="panel-head">
-        <b>{found.rel ? sentence(net, found.rel) : `導出：${found.der!.statement}`}</b>
-        <button onClick={onClose} aria-label="説明を閉じる">閉じる</button>
+        <span className="panel-kicker">{found.rel ? "つながり" : "導出"}</span>
+        <button className="quiet" onClick={onClose} aria-label="説明を閉じる">閉じる</button>
       </div>
       {found.rel ? <>
-        {found.rel.gist && <p className="gist" data-testid="gist">💡 <b>つまり</b>　{found.rel.gist}</p>}
-        <p>{found.rel.description}</p>
-        {found.rel.conditions?.length ? <p className="mute">条件：{found.rel.conditions.join("／")}</p> : null}
-        <Figures figures={found.rel.figures} context={`panel-${found.rel.id}`} />
-        <LabLaunch labs={found.rel.labs} context={`panel-${found.rel.id}`} />
+        <RelationCard net={net} r={found.rel} context={`panel-${found.rel.id}`} open as="plain" />
         <div className="actions">
           {[found.rel.from, found.rel.to].map((c) => <button key={c} onClick={() => onSelect(c)}>{name(net, c)} へ</button>)}
         </div>
       </> : <>
+        <b className="panel-title">{found.der!.statement}</b>
         <p className="mute">前提：{found.der!.premises.map((p) => name(net, p)).join("・")}</p>
         <ol>{found.der!.steps.map((s) => <li key={s}>{s}</li>)}</ol>
         <p className="mute">条件：{found.der!.conditions.join("／")}</p>
