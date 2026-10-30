@@ -8,3 +8,5 @@ export { Sheet } from "./Sheet";
 export { change, flash, haptic, reduced, tokenMs, useTween } from "./motion";
 export { Formula, type FormulaData } from "./Formula";
 export { Workspace, type WorkspaceData } from "./Workspace";
+export { Lightbox } from "./Lightbox";
+export { FullView } from "./FullView";

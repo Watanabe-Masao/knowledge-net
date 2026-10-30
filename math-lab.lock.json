@@ -1,5 +1,5 @@
 {
- "ref": "248f2e880ac118b1de3f092001f77d93661c11b4",
+ "ref": "3ebda457e7e5159defd947eb0f7492af6de1e5af",
  "files": [
   "packages/engine/src/experiment.ts",
   "packages/engine/src/formula/domain.ts",
@@ -17,8 +17,12 @@
   "packages/ui/src/Button.tsx",
   "packages/ui/src/Formula.module.css",
   "packages/ui/src/Formula.tsx",
+  "packages/ui/src/FullView.module.css",
+  "packages/ui/src/FullView.tsx",
   "packages/ui/src/Layout.module.css",
   "packages/ui/src/Layout.tsx",
+  "packages/ui/src/Lightbox.module.css",
+  "packages/ui/src/Lightbox.tsx",
   "packages/ui/src/Segmented.module.css",
   "packages/ui/src/Segmented.tsx",
   "packages/ui/src/Sheet.module.css",

@@ -104,7 +104,14 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   const d = page.getByTestId("detail");
   await d.getByTestId("media-concept").getByRole("radio", { name: /触る/ }).click();
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
-  await expect(d.getByTestId("labs-concept").getByRole("link", { name: "大きく開く ↗" })).toHaveAttribute("href", /zscore\/\?p=s1-z$/);
+  await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /host=kn/);   // ラボの中の「大きく開く ↗」は親に知らせる
+  // 大きく開く：新しいタブではなく同じ画面の全面に出し、✕ で元の画面に戻る
+  await d.getByTestId("labs-concept").getByRole("button", { name: "大きく開く" }).click();
+  const full = page.getByTestId("fullview");
+  await expect(full.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z$/);
+  await full.getByRole("button", { name: "閉じて戻る" }).click();
+  await expect(full).toHaveCount(0);
+  await expect(d.getByTestId("labs-concept")).toBeVisible();
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await tab(page, /つながり/);
   await tab(page, /つながり/);
@@ -246,7 +253,13 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
   await page.getByTestId("media-concept").getByRole("radio", { name: /図/ }).click();   // 作業台のある概念では図は閉じておく
   const figs = page.getByTestId("figures-concept");
   await expect(figs.locator("img")).toHaveAttribute("src", /\/fig\/FIG-U14-concept\.svg$/);
-  await expect(figs.getByRole("link", { name: /図を大きく見る/ })).toHaveAttribute("target", "_blank");
+  // 図を押すと、その場で拡大して大きく見る（別の画面に出さない）。押すと縮んで戻る
+  await figs.getByRole("button", { name: /図を大きく見る/ }).click();
+  const box = page.getByTestId("lightbox");
+  await expect(box.locator("img")).toHaveAttribute("src", /\/fig\/FIG-U14-concept\.svg$/);
+  await expect(box.getByRole("link", { name: "別の画面で開く ↗" })).toHaveAttribute("target", "_blank");
+  await box.getByRole("button", { name: "閉じる" }).click();
+  await expect(box).toHaveCount(0);
   await expect(figs.locator("figcaption")).toContainText("B(4, 0.25)");
 });
 
@@ -521,5 +534,16 @@ test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分�
   await w.getByTestId("ws-close-comb").click();   // たたむと元の ₙCₖ に戻る
   await expect(w.getByTestId("ws-formula").locator(".katex")).not.toContainText("n!");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+// モーダルで足りるものはモーダルに（#42）：線の見方は下から開く面、隠すと数を出す
+test("線の見方は下から開く面で、種類を隠せる", async ({ page }) => {
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.getByRole("button", { name: /^線の見方/ }).click();
+  const k = page.getByTestId("kinds");
+  await k.getByRole("checkbox").first().uncheck();
+  await k.getByRole("button", { name: "説明を閉じる" }).click();
+  await expect(k).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /線の見方（1 種類を隠している）/ })).toBeVisible();
 });
 

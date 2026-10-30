@@ -10,7 +10,7 @@ import {
   applyOpens, createRandom, definitionsFor, describeDomain, distribution, emptyRecord, evaluate, expand, formatNum, frequencies, fnsIn, lhsOf, nodeAt, runTrials, openSymbol, rhsOf, sliderRange, substitute, symbolsIn, toTex,
   type Definition, type Formula as EngineFormula, type FormulaNode, type FormulaPart, type FormulaSymbol,
 } from "@math-lab/engine";
-import { flash, haptic, reduced, useTween } from "./motion";
+import { flash, haptic, reduced, tokenMs, useTween } from "./motion";
 import type { FormulaData } from "./Formula";
 import s from "./Workspace.module.css";
 
@@ -144,6 +144,13 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
   const found = boxes.find((b) => b.i === sel?.part);
   if (found) lastBox.current = found;
   const selBox = found ?? lastBox.current;
+  // かたまりを選んだ瞬間だけ、囲みを少し大きくしてから戻す（どこを選んだかに目が行くように）
+  const selEl = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (sel?.part === undefined || reduced() || !selEl.current?.animate) return;
+    selEl.current.animate([{ transform: "scale(1)" }, { transform: "scale(1.07)", offset: 0.45 }, { transform: "scale(1)" }],
+      { duration: tokenMs("--dur-sheet", 320), easing: "cubic-bezier(.2,.8,.2,1)" });
+  }, [sel?.part]);
 
   // ---- その場で展開する動き（FLIP。手本：FormulaNode 計算ツリー） ----
   // 開く・閉じる前に記号の位置を覚え、描き直したあと、残った記号は前の位置から滑らせ、新しく出た所は開いた記号の位置から広げる
@@ -342,7 +349,7 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
       <div ref={wrap} className={s.stageWrap}>
         <div className={s.boxes} aria-hidden="true">
           {boxes.map((b) => <span key={b.i} className={s.box} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
-          {selBox && <span className={s.boxSel} data-on={sel?.part !== undefined || undefined} style={{ left: selBox.x, top: selBox.y, width: selBox.w, height: selBox.h }} />}
+          {selBox && <span ref={selEl} className={s.boxSel} data-on={sel?.part !== undefined || undefined} style={{ left: selBox.x, top: selBox.y, width: selBox.w, height: selBox.h }} />}
         </div>
         <div ref={stage} className={s.stage} onClick={onStage} dangerouslySetInnerHTML={{ __html: html }} data-testid="ws-formula" />
       </div>
@@ -420,7 +427,7 @@ export function Workspace({ formula: original, mean, vary, over, initial, seed: 
               style={d.x === lastDraw ? ({ "--drop": `${TOP - 14 - yPos(freq.get(d.x) ?? 0)}px` } as React.CSSProperties) : undefined} />
           ))}
           {dist.map((d, i) => [d, ys[i] ?? 0] as const).filter(([d]) => d.x === cur).map(([d, yv]) => (
-            <text key="v" x={Math.min(W - RIGHT - 14, Math.max(LEFT + 14, xPos(d.x)))} y={Math.min(yPos(yv), rec.values.length ? yPos(freq.get(d.x) ?? 0) : BASE) - 8} className={s.valLabel} textAnchor="middle">{pct(d.y ?? 0)}</text>
+            <text key={`v${d.x}`} x={Math.min(W - RIGHT - 14, Math.max(LEFT + 14, xPos(d.x)))} y={Math.min(yPos(yv), rec.values.length ? yPos(freq.get(d.x) ?? 0) : BASE) - 8} className={s.valLabel} textAnchor="middle">{pct(d.y ?? 0)}</text>
           ))}
           {dist.map((d) => {
             const on = d.x === cur;
