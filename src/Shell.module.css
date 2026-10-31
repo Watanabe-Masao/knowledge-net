@@ -50,3 +50,31 @@
 .labCard b { font-size: 16px; font-weight: 600; line-height: 1.45; }
 .labTag { align-self: flex-start; padding: 2px 9px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .row, .labCard { transition: none; } .row:active, .labCard:active { transform: none; } }
+
+/* まとまりの切り替え（学習・問題集）。横に流す */
+.chips { display: flex; gap: 6px; overflow-x: auto; margin: var(--sp-2) calc(-1 * var(--sp-4)) 0; padding: 2px var(--sp-4); scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { all: unset; flex: none; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: 13px; color: var(--ink-2); cursor: pointer; position: relative; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur-spring) var(--ease-bounce); }
+.chips button::before { content: ""; position: absolute; inset: -4px 0; }
+.chips button[aria-checked="true"] { background: var(--ink); color: var(--bg); box-shadow: none; font-weight: 600; }
+.chips button:active { transform: scale(var(--press-scale)); transition-duration: var(--dur), var(--dur), var(--dur-press); }
+.chips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 問題集：単元を押すと段階ごとの数と問題の一覧 */
+button.row { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px 8px 8px; border-radius: var(--r-l);
+  background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--ink); cursor: pointer; transition: transform var(--dur-spring) var(--ease-bounce); }
+button.row:active { transform: scale(var(--press-scale)); transition-duration: var(--dur-press); }
+button.row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mute { color: var(--ink-3) !important; }
+.chev { color: var(--ink-3); display: flex; transition: transform var(--dur-spring) var(--ease-spring); }
+.chevOn { transform: rotate(90deg); }
+.probs { padding: var(--sp-2) 4px var(--sp-3); animation: fade var(--dur-spring) var(--ease-spring); }
+@keyframes fade { from { opacity: 0; transform: translateY(-4px); } }
+.stageCounts { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 6px; }
+.stageCounts span { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--r-m); background: var(--surface-2); font-size: 12px; color: var(--ink-2); }
+.stageCounts b { font-size: 18px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.probs ul { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: grid; }
+.probs li + li { border-top: 1px solid var(--line); }
+.probs a { display: flex; flex-direction: column; gap: 2px; padding: 10px 2px; min-height: var(--tap); box-sizing: border-box; color: var(--ink); text-decoration: none; font-size: 14px; line-height: 1.6; }
+.probs a small { font-size: 11.5px; color: var(--ink-3); }
+@media (prefers-reduced-motion: reduce) { .probs { animation: none; } .chev, .chips button, button.row { transition: none; } }

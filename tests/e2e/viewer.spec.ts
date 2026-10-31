@@ -845,6 +845,9 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   await expect(page).toHaveURL(/t=learn/);
   await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
   await expect(page.getByTestId("page-learn")).toContainText("実験室：二項分布");
+  // まとまりで絞る（単元の group。型の改訂12）
+  await page.getByTestId("group-chips").getByRole("radio", { name: "確率分布" }).click();
+  await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(3);
   // 実験室：問いから選んで開く
   await bar.getByRole("link", { name: "実験室" }).click();
   await expect(page).toHaveURL(/t=lab/);
@@ -854,7 +857,13 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   await expect(page.getByTestId("page-lab")).toBeVisible();
   // 問題集：概念とつないだ問題のある単元
   await bar.getByRole("link", { name: "問題集" }).click();
-  await expect(page.getByTestId("page-problems")).toContainText("概念とつないだ問題");
+  // 問題集：単元を押すと段階ごとの数と問題の一覧（押すと Notion の単元ページへ）
+  const pp = page.getByTestId("page-problems");
+  await pp.getByTestId("unit-stats2:U14").click();
+  const list = pp.getByTestId("problems-stats2:U14");
+  await expect(list.getByRole("link")).toHaveCount(16);
+  await expect(list).toContainText("5初学");
+  await expect(list.getByRole("link").first()).toHaveAttribute("href", /notion\.com/);
   // 探索へ戻り、パンくずの分類を押すとその分類の地図
   await bar.getByRole("link", { name: "探索" }).click();
   await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");

@@ -42,7 +42,9 @@ export type Derivation = {
   id: string; version: number; premises: string[]; conclusion: string; statement: string;
   steps: string[]; conditions: string[]; units: string[];
 };
-export type Unit = { id: string; number: string; title: string; url?: string };
+export type Unit = { id: string; number: string; title: string; url?: string;
+  /** まとまり（学習・問題集のタブで分ける。型の改訂12） */ group?: string;
+  /** 問題の一覧（id・段階の名前・問題文の始め。解いた記録は持たない） */ problems?: { id: string; stage: string; prompt: string }[] };
 /** 実験室の定義（型の改訂9。中身は math-lab の ExperimentDef と同じ形） */
 export type ExperimentData = import("@math-lab/ui").ExperimentDef;
 export type CourseData = {
