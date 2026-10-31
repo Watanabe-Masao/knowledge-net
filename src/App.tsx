@@ -11,9 +11,9 @@ import PathList from "./PathList";
 import Search from "./Search";
 import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
 import st from "./App.module.css";
-import { KINDS, MODES, around, compare, learnOrder, load, neighborhood, trace, type Network } from "./data";
+import { KINDS, MODES, around, compare, experimentsFor, learnOrder, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
-import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, readTab, type Tab } from "./Shell";
+import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, readTab, type Focus, type Tab } from "./Shell";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
@@ -70,6 +70,7 @@ export default function App() {
   const narrow = useNarrow();
   // 詳しくの段（少し・半分・全部）。別の概念を選ぶと「少し」から
   const [detent, setDetent] = useState<Detent>("peek");
+  const [recenter, setRecenter] = useState(0);   // 探索のタブをもう一度押すと、面をしまい地図を選んだ概念に合わせて収め直す
   const [tabH, setTabH] = useState(58);
   // スマホで概念を選んでいるとき：上を詰め（探すは印に）、地図の高さを上の欄と詳しくの面（少し）の間の空きに合わせる（#42）
   const [peek, setPeek] = useState(0);
@@ -200,11 +201,15 @@ export default function App() {
     );
   }
   const sub = net.courses.map((c) => c.title).join("・");
+  // 選んだ概念の分：下のタブに目印を出し、押すとその分に絞って開く（学ぶ行動は下のタブに。詳しくの面には置かない）
+  const fc = sel ? net.concepts.get(sel) : undefined;
+  const focus: Focus | null = fc ? { id: fc.id, name: fc.name, units: fc.units, problems: fc.problems, exps: experimentsFor(net, fc.id).map((x) => x.id) } : null;
+  const badges = focusBadges(net, focus);
   if (tab !== "explore") return (
     <main className={`${st.app} ${st.withTabs}`}>
       <Header title="知識ネットワーク" sub={sub} />
-      {tab === "learn" ? <LearnPage net={net} /> : tab === "lab" ? <LabPage net={net} onOpen={setExp} /> : <ProblemsPage net={net} />}
-      <TabBar tab={tab} onTab={setTab} />
+      {tab === "learn" ? <LearnPage net={net} focus={focus} /> : tab === "lab" ? <LabPage net={net} onOpen={setExp} focus={focus} /> : <ProblemsPage net={net} focus={focus} />}
+      <TabBar tab={tab} onTab={setTab} badges={badges} focusName={focus?.name} />
     </main>
   );
   const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
@@ -230,7 +235,7 @@ export default function App() {
           ]} />
         </div>
       ) : null}
-      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers} height={mapH}
+      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers} height={mapH} recenter={recenter}
         onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
         only={positions ? undefined : path ? path.only : grouped.only} outer={positions || path ? undefined : grouped.outer}
         overview={positions || path ? undefined : overview}
@@ -250,7 +255,7 @@ export default function App() {
       {concept && path ? <PathList net={net} target={concept.id} seq={path.seq} onOpen={(id) => { setView("around"); setSel(id); }}
         sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} /> :
         concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
-        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
+        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         null}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">
@@ -312,7 +317,7 @@ export default function App() {
       )}
       {edgeSel ? <Panel net={net} edgeId={edgeSel} onClose={() => setEdgeSel(null)} onSelect={(id) => setSel(id)} /> : null}
       <Muted as="div" className={st.footer}>データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</Muted>
-      <TabBar tab="explore" onTab={setTab} />
+      <TabBar tab="explore" onTab={(t) => { if (t === "explore" && sel) { setDetent("min"); setRecenter((n) => n + 1); } else setTab(t); }} badges={badges} focusName={focus?.name} />
     </main>
   );
 }

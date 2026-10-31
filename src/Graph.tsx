@@ -32,6 +32,8 @@ type Props = {
   only?: Set<string>; outer?: Set<string>;
   /** 図の高さ（px）。決めると点の数による自動の高さより優先（スマホで詳しくの面の上に収めるとき） */
   height?: number;
+  /** 数が変わるたびに、全体を枠に収め直す（探索のタブをもう一度押したとき） */
+  recenter?: number;
   /** 経路（前提をさかのぼる）：点の前に付ける学ぶ順の番号 */
   numbers?: Map<string, number>;
   /** 分類の地図（#105）：点＝分類（語の数）、線＝分類の間の関係の本数。押すと onSelect に "group:分類" */
@@ -76,7 +78,7 @@ export function elements(net: Network, hidden: Set<string>, keep?: Set<string>, 
   return els;
 }
 
-export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview, numbers, height }: Props) {
+export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview, numbers, height, recenter }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const tl = useRef<HTMLDivElement>(null);
   const bl = useRef<HTMLDivElement>(null);
@@ -262,6 +264,11 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       if (b && (b.x1 < 0 || b.y1 < 0 || b.x2 > c.width() || b.y2 > c.height())) c.animate({ center: { eles: n } }, { duration: reduced() ? 0 : 200 });
     }
   }, [selected, highlight, fill, edgeSel, positions, only, overview, numbers, net, hidden]);   // 図を作り直したとき（見方の切り替え）も選び直す
+
+  useEffect(() => {
+    const c = cy.current; if (!c || !recenter) return;
+    c.animate({ fit: { eles: c.elements(), padding: padOf() } }, { duration: reduced() ? 0 : 320, easing: "ease-in-out-cubic" });
+  }, [recenter]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   // 地図の全画面（渡辺さん 2026-10-31）：地図だけを画面いっぱいに。下の面・タブの上に重ね、閉じると元の枠に戻す。
   // 開いている間も点を押すと選べる（下の面は後ろで切り替わる）。Esc でも閉じる。広さが変わったら全体を収め直す
