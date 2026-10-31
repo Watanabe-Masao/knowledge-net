@@ -188,7 +188,10 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     c.on("taphold", "node", (e) => { held = true; showTip(e); });
     c.on("mouseover", "node", (e) => { if (!bigRef.current) showTip(e); });
     c.on("mouseout", "node", () => { if (!bigRef.current) setTip(null); });   // 全画面の札は押せるので、マウスが離れても消さない
-    c.on("tapstart pan zoom", () => setTip(null));
+    // 札は指を置いたら消す。画面を動かしたとき（指でも、枠に収め直すなどのプログラムでも）は点について動く
+    // （前は pan・zoom で消していたので、全画面に広げた直後の収め直しで札が消えることがあった）
+    c.on("tapstart", () => setTip(null));
+    c.on("pan zoom", () => setTip((t) => { if (!t) return t; const n = c.getElementById(t.id); if (n.empty()) return null; const p = n.renderedPosition(), h = n.renderedHeight(); return { id: t.id, x: p.x, y: p.y - h / 2 }; }));
     // 全画面は地図を見る所：点を押すと札（名前・分類・定義1文）を出すだけで、選び直さない（選ぶと地図が組み替わって見失う）
     c.on("tap", "node", (e) => { if (held) { held = false; return; } if (bigRef.current) { if (e.target.data("kind") !== "derivation") showTip(e); return; } if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
     c.on("tap", "edge", (e) => { if (held) { held = false; return; } if (!bigRef.current) edge.current?.(e.target.id()); });
