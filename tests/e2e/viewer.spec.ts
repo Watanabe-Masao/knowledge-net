@@ -1133,3 +1133,16 @@ test("戻ると、分類の絞り込みも URL のとおりに戻る", async ({ 
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
   await expect(sel).toHaveValue("確率分布");                                                  // 直す前は「検定」が残った
 });
+
+// 確かめる対象：実験の途中で「初期値に戻す」と、古い実験から記録が増えない（stats2-course #142）。想定する故障：リセットが実験のタイマーを止めず、
+// 条件が初期値のままだと、消した記録を次の更新が書き戻す。見つけ方：100回を押した直後（流している途中）に戻し、更新の間隔を十分に過ぎても記録が空か
+test("作業台：実験の途中で初期値に戻すと、記録は空のまま", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await tab(page, /^式$/);
+  const w = page.getByTestId("workspace");
+  await w.getByTestId("ws-run-100").click();
+  await w.getByTestId("ws-reset").click();
+  await page.waitForTimeout(1200);   // 更新の間隔（60ms）×10回ぶんより長く待つ
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
+});
