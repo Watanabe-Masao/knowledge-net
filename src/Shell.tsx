@@ -14,7 +14,7 @@ export const readTab = (p: URLSearchParams): Tab => (p.get("x") ? "lab" : (TABS.
 
 /** 線で描く小さな印（絵文字は使わない） */
 export function Icon({ name, size = 22 }: { name: Tab | "search" | "chevron" | "out"; size?: number }) {
-  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
   switch (name) {
     case "explore": return <svg {...p}><circle cx="6" cy="7" r="2.6" /><circle cx="18" cy="6" r="2.6" /><circle cx="12" cy="18" r="2.6" /><path d="M8.5 7.5l7-1M7.2 9.3l3.6 6.4M16.8 8.4l-3.6 7.3" /></svg>;
     case "learn": return <svg {...p}><path d="M3 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H3zM21 5h-7a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h7z" /></svg>;
@@ -30,7 +30,7 @@ export function Header({ title, sub, children }: { title: string; sub?: ReactNod
   return (
     <header className={s.header}>
       <div className={s.brand}>
-        <span className={s.logo}><Icon name="explore" size={20} /></span>
+        <span className={s.logo}><Icon name="explore" size={22} /></span>
         <div className={s.titles}><h1>{title}</h1>{sub ? <div className={s.sub}>{sub}</div> : null}</div>
       </div>
       {children}
@@ -45,7 +45,7 @@ export function Crumbs({ items }: { items: { label: string; onClick?: () => void
     <nav className={s.crumbs} aria-label="いまいる所" data-testid="crumbs">
       {items.map((it, i) => (
         <span key={i} className={s.crumb}>
-          {i ? <span className={s.sep}><Icon name="chevron" size={14} /></span> : null}
+          {i ? <span className={s.sep} aria-hidden="true">/</span> : null}
           {it.onClick && i < items.length - 1 ? <button type="button" onClick={it.onClick}>{it.label}</button> : <b aria-current={i === items.length - 1 ? "page" : undefined}>{it.label}</b>}
         </span>
       ))}

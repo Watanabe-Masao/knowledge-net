@@ -72,7 +72,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   // 作り直すのは、データ・表示する種類・全体図と周辺図の切り替えのときだけ
   useEffect(() => {
     if (!box.current) return;
-    const ink = css("--ink"), mute = css("--mute"), bg = css("--card"), accent = css("--accent");
+    const ink = css("--ink"), mute = css("--mute"), bg = css("--card"), accent = css("--accent"), edgeLine = css("--line-strong"), raised = css("--surface-2");
     const keep = positions ? new Set(positions.keys()) : only;
     const c = cytoscape({
       container: box.current,
@@ -83,7 +83,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       minZoom: 0.3, maxZoom: around ? 1.2 : 3, wheelSensitivity: 0.3,   // 周辺図は点が少ないときに大きくなりすぎないように
       style: [
         { selector: "node", style: { label: "data(label)", "font-size": around ? 15 : 13, color: ink, "text-valign": "center", "text-halign": "center",
-          "text-wrap": "wrap", "text-max-width": around ? "110px" : "96px", "background-color": bg, "border-width": 2, "border-color": ink,
+          "text-wrap": "wrap", "text-max-width": around ? "110px" : "96px", "background-color": bg, "border-width": 1, "border-color": edgeLine,
           shape: "round-rectangle", width: "label", height: "label", padding: "8px" } },
         { selector: 'node[kind = "skeleton"]', style: { "border-style": "dashed" } },   // 骨格：定義1文と分類だけ（点線の枠。文字はふつう）
         { selector: 'node[kind = "stub"]', style: { "border-style": "dashed", "border-color": mute, color: mute } },
@@ -95,6 +95,9 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         { selector: "edge.named, edge.picked", style: { label: "data(label)", "text-background-color": bg, "text-background-opacity": 1, "text-background-padding": "2px" } },   // 線の名前は、選んだ概念につながる線だけに出す（重ならないように）
         ...Object.entries(TYPE_COLOR).map(([t, v]) => ({ selector: `edge[type = "${t}"]`, style: { "line-color": css(v), "target-arrow-color": css(v) } })),
         { selector: 'edge[type = "対比"]', style: { "target-arrow-shape": "none", "line-style": "dashed" } },
+        // 構造の線（導出・一般化・特殊化・統合）は同じ青。形で見分ける：一般化・特殊化は二重線、統合は点線（tokens の改訂3）
+        { selector: 'edge[type = "一般化"], edge[type = "特殊化"]', style: { "line-style": "double", width: 3.5 } },
+        { selector: 'edge[type = "統合"], edge[type = "応用"]', style: { "line-style": "dotted" } },
         { selector: 'edge[mode = "approximation"]', style: { "line-style": "dashed" } },
         { selector: 'edge[mode = "limit"]', style: { "line-style": "dotted" } },
         { selector: ".dim", style: { opacity: 0.18 } },
@@ -105,7 +108,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         { selector: "node.hl", style: { "border-color": accent, "border-width": 3 } },
         { selector: "edge.hl", style: { "line-color": accent, "target-arrow-color": accent, width: 3 } },   // width は線の太さ（点に付けると枠の幅になる）
         { selector: "edge.picked", style: { width: 6, "line-color": accent, "target-arrow-color": accent, color: accent, "font-weight": "bold" } },
-        { selector: "node:selected", style: { "background-color": accent, color: bg, "border-color": accent, "border-width": 3 } },
+        { selector: "node:selected", style: { "background-color": raised, color: ink, "border-color": accent, "border-width": 2, "font-weight": "bold" } },   // 中心：塗らず、青緑の枠だけ（浮かせない）
       ],
       layout: positions
         ? { name: "preset", padding: 20 } as cytoscape.LayoutOptions
