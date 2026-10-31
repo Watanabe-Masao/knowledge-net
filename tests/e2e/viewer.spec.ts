@@ -619,7 +619,13 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await expect(cx.getByTestId("exp-cx-run-100")).toHaveCount(0);   // 予想するまで実験できない
   await cx.getByRole("radio", { name: "狭くなる" }).click();
   await cx.getByTestId("exp-cx-run-100").click();
+  // 条件どおり（二項分布）と崩した起き方を、同じセット数ずつ起こして並べる（#121）
+  await expect(cx.getByTestId("exp-cx-set-before").locator("span")).toHaveCount(10);
+  await expect(cx.getByTestId("exp-cx-set").locator("span")).toHaveCount(10);
+  await expect(cx).toContainText("各 100 セット");
+  expect(await cx.getByTestId("exp-bar-before").count()).toBeGreaterThan(0);
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("山は二項分布より");
+  await expect(cx.getByTestId("exp-cx-verdict")).toContainText("条件どおり");
   await expect(cx).toContainText("崩した条件：各回の成功確率 p が同じ・各回が独立");
   expect(page.url()).toContain("x=stats2%3AEXP-binom-p");
   await page.goBack();   // 戻ると概念のページ
