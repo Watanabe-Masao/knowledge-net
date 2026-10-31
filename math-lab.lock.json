@@ -1,6 +1,7 @@
 {
- "ref": "4fe6a9680ee6454006093eec4e80c80099775185",
+ "ref": "663ce47d889477bad97773fd6c0a245f4873652d",
  "files": [
+  "packages/engine/src/cards.ts",
   "packages/engine/src/experiment.ts",
   "packages/engine/src/formula/domain.ts",
   "packages/engine/src/formula/evaluate.ts",
@@ -16,6 +17,7 @@
   "packages/engine/src/random.ts",
   "packages/ui/src/Button.module.css",
   "packages/ui/src/Button.tsx",
+  "packages/ui/src/Compare.tsx",
   "packages/ui/src/Experiment.module.css",
   "packages/ui/src/Experiment.tsx",
   "packages/ui/src/ExperimentTable.tsx",

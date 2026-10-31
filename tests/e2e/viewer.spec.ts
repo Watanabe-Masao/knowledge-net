@@ -683,3 +683,66 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   await expect(x).toContainText("崩した条件：和（連続なら積分）が有限の値になる");
   expect(errs).toEqual([]);
 });
+
+// 比べるの段（#122）：自分で決めた条件を記録カードに残して重ねる。カードは条件と種だけなので、URL を開き直すと同じ結果に戻る
+test("比べる：前と後のカードから始め、条件を足して重ね、URL を開き直すと同じ結果に戻る", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  const x = page.getByTestId("experiment");
+  await expect(x.getByRole("list", { name: "段" }).getByRole("button")).toHaveText([/予測/, /実験/, /観察/, /理由/, /応用/, /比べる/]);
+  await x.getByRole("radio", { name: "右へ動く" }).click();
+  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByTestId("exp-run-100").click();
+  await expect(x.getByTestId("exp-sets")).toHaveText("各 100 セット");
+  await x.getByRole("button", { name: "観察する →" }).click();
+  await x.getByRole("button", { name: /理由を考える/ }).click();
+  await x.getByRole("button", { name: "別の条件で試す" }).click();
+  await x.getByTestId("exp-to-compare").click();
+  // 最初は前と後の実験のカード。理論の平均 np と散らばり np(1−p) を並べる
+  const cardsEl = x.getByTestId("cmp-card");
+  await expect(cardsEl).toHaveCount(2);
+  await expect(cardsEl.nth(0)).toContainText("n＝10・p＝0.5");
+  await expect(cardsEl.nth(1)).toContainText("n＝10・p＝0.8");
+  const rows = x.getByTestId("cmp-table").locator("tbody tr");
+  await expect(rows.nth(0)).toContainText("（5）"); await expect(rows.nth(0)).toContainText("（2.5）");
+  await expect(rows.nth(1)).toContainText("（8）"); await expect(rows.nth(1)).toContainText("（1.6）");
+  await expect(page).toHaveURL(/cards=b10_0\.5_100_\d+%2Cb10_0\.8_100_\d+/);
+  // 条件を足す：p＝0.2 は p＝0.8 と散らばりが同じ（np(1−p) は p と 1−p で同じ）
+  await x.getByTestId("cmp-p").fill("0.2");
+  await x.getByTestId("cmp-save-100").click();
+  await expect(cardsEl).toHaveCount(3);
+  await expect(rows.nth(2)).toContainText("（2）"); await expect(rows.nth(2)).toContainText("（1.6）");
+  const before = await x.getByTestId("cmp-table").textContent();
+  // ブラウザの保存を消して URL だけで開き直しても、同じカード・同じ結果（種が同じなら同じ）。比べるの段から開く
+  const url = page.url();
+  await page.evaluate(() => localStorage.clear());
+  await page.goto(url);
+  await expect(x.getByRole("list", { name: "段" }).getByRole("button", { name: /比べる/ })).toHaveAttribute("aria-current", "step");
+  await expect(x.getByTestId("cmp-card")).toHaveCount(3);
+  await expect(x.getByTestId("cmp-table")).toHaveText(before!);
+  // 重ねるのは4つまで。外すと表の行も減り、消すと URL からも消える
+  await x.getByTestId("cmp-card").nth(0).getByRole("checkbox").click();
+  await expect(rows).toHaveCount(2);
+  await x.getByTestId("cmp-card").nth(0).getByRole("button", { name: /を消す/ }).click();
+  await expect(x.getByTestId("cmp-card")).toHaveCount(2);
+  await expect(page).not.toHaveURL(/b10_0\.5_/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  expect(errs).toEqual([]);
+});
+
+test("比べる（値の表）：URL のカードからテーマと重みを戻し、重みを変えて足すと期待値の理論が並ぶ", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&x=stats2:EXP-expect-table&cards=dice:t1~1~1~1~1~3_100_7`);
+  const x = page.getByTestId("experiment");
+  await expect(x.getByTestId("cmp-card")).toHaveCount(1);
+  await expect(x.getByTestId("cmp-table").locator("tbody tr").nth(0)).toContainText("（4.13）");   // (1+2+3+4+5+6×3)÷8＝4.125
+  // 6 の重みを増やして足す：重いほど平均は 6 へ寄る
+  await x.getByRole("button", { name: "6 の重みを増やす" }).click();
+  await expect(x.getByTestId("cmp-w-5")).not.toHaveText("3");
+  await x.getByTestId("cmp-save-100").click();
+  await expect(x.getByTestId("cmp-card")).toHaveCount(2);
+  await expect(page).toHaveURL(/cards=dice%3At1%7E1%7E1%7E1%7E1%7E3_100_7%2Ct1%7E1%7E1%7E1%7E1%7E4_100_\d+/);   // URL の中では ~ が %7E になる（開くと戻る）
+  expect(errs).toEqual([]);
+});
