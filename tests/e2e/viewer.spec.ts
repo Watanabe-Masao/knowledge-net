@@ -854,7 +854,8 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   const crumbs = page.getByTestId("crumbs");
   await expect(crumbs).toContainText("確率分布");
   await expect(crumbs).toContainText("二項分布");
-  // 学習：単元の一覧（Notion へのリンク）
+  // 学習：単元の一覧（Notion へのリンク）。概念を選んでいないときは全部（選んでいるときの絞り込みは別のテスト）
+  await page.goto("./?src=sample/stats2-p1.json");
   await bar.getByRole("link", { name: "学習" }).click();
   await expect(page).toHaveURL(/t=learn/);
   await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
