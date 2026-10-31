@@ -1033,7 +1033,11 @@ test("点を長押しすると、名前・分類・定義1文の札が出る", a
   await page.evaluate(() => { (window as any).kn.getElementById("stats2:TERM-binom").emit("tap"); });
   await expect(page).not.toHaveURL(/c=stats2/);
   await expect(tip).toContainText("二項分布");
-  await page.evaluate(() => { (window as any).kn.emit("pan"); });
+  // 画面を動かすと札は点について動き、指を置くと消える
+  const y0 = (await tip.boundingBox())!.y;
+  await page.evaluate(() => { (window as any).kn.panBy({ x: 0, y: 40 }); });
+  await expect.poll(async () => Math.round((await tip.boundingBox())!.y - y0)).toBe(40);
+  await page.evaluate(() => { (window as any).kn.emit("tapstart"); });
   await expect(tip).toHaveCount(0);
   expect(errs).toEqual([]);
 });
