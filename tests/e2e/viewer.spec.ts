@@ -811,3 +811,46 @@ test("全体図を分類で絞り、骨格の概念は定義1文と「まだ骨�
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
 });
+
+// サイトの骨組み（stats2-course #42・#130）：下のタブ4つ・パンくず・学習／実験室／問題集の一覧。埋め込みにはタブを出さない
+test("下のタブで探索・学習・実験室・問題集を切り替え、パンくずで分類へ戻る", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  const bar = page.getByTestId("tabbar");
+  await expect(bar.getByRole("link")).toHaveCount(4);
+  await expect(bar.getByRole("link", { name: "探索" })).toHaveAttribute("aria-current", "page");
+  const crumbs = page.getByTestId("crumbs");
+  await expect(crumbs).toContainText("確率分布");
+  await expect(crumbs).toContainText("二項分布");
+  // 学習：単元の一覧（Notion へのリンク）
+  await bar.getByRole("link", { name: "学習" }).click();
+  await expect(page).toHaveURL(/t=learn/);
+  await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
+  await expect(page.getByTestId("page-learn")).toContainText("実験室：二項分布");
+  // 実験室：問いから選んで開く
+  await bar.getByRole("link", { name: "実験室" }).click();
+  await expect(page).toHaveURL(/t=lab/);
+  await page.getByTestId("page-lab").getByRole("button", { name: /成功確率を上げると/ }).click();
+  await expect(page).toHaveURL(/x=stats2%3AEXP-binom-p|x=stats2:EXP-binom-p/);
+  await page.goBack();
+  await expect(page.getByTestId("page-lab")).toBeVisible();
+  // 問題集：概念とつないだ問題のある単元
+  await bar.getByRole("link", { name: "問題集" }).click();
+  await expect(page.getByTestId("page-problems")).toContainText("概念とつないだ問題");
+  // 探索へ戻り、パンくずの分類を押すとその分類の地図
+  await bar.getByRole("link", { name: "探索" }).click();
+  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await page.getByTestId("crumbs").getByRole("button", { name: "確率分布" }).click();
+  await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
+  await expect(page).not.toHaveURL(/c=stats2/);
+  // タブは 380px で横にはみ出さず、押す所は 44px 以上
+  const box = (await bar.getByRole("link", { name: "問題集" }).boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  // 埋め込みではタブを出さない
+  await page.goto("./?src=sample/stats2-p1.json&embed=1&c=stats2:TERM-binom");
+  await expect(page.getByTestId("embed-card")).toBeVisible();
+  await expect(page.getByTestId("tabbar")).toHaveCount(0);
+  expect(errs).toEqual([]);
+});
