@@ -65,13 +65,14 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
     <Card data-testid="detail">
       <header className={st.head}>
         <h2>{c.name}</h2>
-        <Muted>{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
+        <Muted>{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.category ? `・${c.category}` : ""}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
         <Row>
           <Button onClick={onTrace} pressed={tracing}>{tracing ? "前提の表示をやめる" : "前提をさかのぼる"}</Button>
           <Button onClick={onCompare} pressed={inCompare}>ほかの概念と比べる</Button>
         </Row>
       </header>
-      {c.definition && <p className={st.definition}>{c.definition}</p>}
+      {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
+      {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">まだ骨格：定義1文と分類だけ。原理・条件・例・式は、単元を進めるときに足す</p>}
       <div className={st.tabs}>
         <Segmented value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身"
           items={[

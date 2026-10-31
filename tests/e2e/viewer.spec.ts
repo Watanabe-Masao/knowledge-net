@@ -747,3 +747,22 @@ test("比べる（値の表）：URL のカードからテーマと重みを戻�
   await expect(page).toHaveURL(/cards=dice%3At1%7E1%7E1%7E1%7E1%7E3_100_7%2Ct1%7E1%7E1%7E1%7E1%7E4_100_\d+/);   // URL の中では ~ が %7E になる（開くと戻る）
   expect(errs).toEqual([]);
 });
+
+// 骨格（#105・P1）：定義1文と分類だけの概念は点線の枠で、押すと定義1文と「まだ骨格」
+test("骨格の概念は定義1文と分類と「まだ骨格」を出し、見出しに骨格の数", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.route((u) => u.pathname.endsWith("/sample/stats2-w0.json"), async (r) => {   // ページの URL（?src=…）ではなくデータの読み込みだけ
+    const d = await (await r.fetch()).json();
+    const c = d.concepts.find((x: { status: string }) => x.status === "stub");
+    Object.assign(c, { status: "skeleton", short: "独立に同じ分布から取った平均は、n が大きいと正規分布に近づく", category: "標本分布・極限" });
+    await r.fulfill({ json: d });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-clt`);
+  const det = page.getByTestId("detail");
+  await expect(det).toContainText("独立に同じ分布から取った平均は");
+  await expect(det).toContainText("標本分布・極限");
+  await expect(det.getByTestId("skeleton-note")).toContainText("まだ骨格");
+  await expect(page.getByText(/（骨格 1）/)).toBeVisible();
+  expect(errs).toEqual([]);
+});

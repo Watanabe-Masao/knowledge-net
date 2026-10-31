@@ -17,12 +17,13 @@ export default function Search({ concepts, onPick }: Props) {
   const [at, setAt] = useState(0);
   const list = useId();
   const input = useRef<HTMLInputElement>(null);
+  const rank = (s: string) => (s === "filled" ? 0 : s === "skeleton" ? 1 : 2);   // 説明あり → 骨格 → 説明なし
   const hits = useMemo(() => {
     const k = q.trim().toLowerCase();
     const m = concepts.filter((c) => !k || (c.name + " " + (c.en ?? "")).toLowerCase().includes(k));
     // 名前の頭で一致 → 説明のある概念 → 名前順
     return m.sort((a, b) => Number(!a.name.toLowerCase().startsWith(k)) - Number(!b.name.toLowerCase().startsWith(k))
-      || Number(a.status === "stub") - Number(b.status === "stub") || a.name.localeCompare(b.name, "ja")).slice(0, 30);
+      || rank(a.status) - rank(b.status) || a.name.localeCompare(b.name, "ja")).slice(0, 30);
   }, [q, concepts]);
   const pick = (id: string) => { onPick(id); setQ(""); setOpen(false); input.current?.blur(); };
   const onKey = (e: React.KeyboardEvent) => {

@@ -127,7 +127,7 @@ export default function App() {
     <main className={`${st.app}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <header className={st.top}>
         <h1>知識ネットワーク</h1>
-        <Muted>{net.courses.map((c) => c.title).join("・")}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}・関係 {net.relations.length}・導出 {net.derivations.length}</Muted>
+        <Muted>{net.courses.map((c) => c.title).join("・")}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（骨格 ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</Muted>
         <Search concepts={[...net.concepts.values()]} onPick={setSel} />
       </header>
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
