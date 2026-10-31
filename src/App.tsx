@@ -1,4 +1,5 @@
-// 画面全体。状態は URL に持つ（?c=選んだ概念&view=around|all&cmp=比べる概念&trace=1&x=実験室&embed=1&src=データ）。
+// 画面全体。状態は URL に持つ（?t=タブ&c=選んだ概念&view=around|all&cmp=比べる概念&trace=1&x=実験室&embed=1&src=データ）。
+// 下のタブは4つ（探索・学習・実験室・問題集。stats2-course #130）。埋め込みではタブとヘッダーを出さない。
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
@@ -11,6 +12,7 @@ import { Button, Card, ErrorText, Experiment, FullView, Muted, Sheet } from "@ma
 import st from "./App.module.css";
 import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
+import { Crumbs, Header, LabPage, LearnPage, ProblemsPage, TabBar, readTab, type Tab } from "./Shell";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
@@ -29,31 +31,34 @@ function useUrlState() {
   const [cards, setCards] = useState<string | null>(params.get("cards"));
   // 全体図を分類で絞る（?g=分類。#105 の骨格の分類）
   const [group, setGroup] = useState<string | null>(params.get("g"));
+  // タブ（?t=。探索は付けない。実験室を開いているときは実験室）
+  const [tab, setTabRaw] = useState<Tab>(readTab(params));
   const push = useRef(false);
-  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); setCards(null); };
-  const setExp = (id: string | null) => { push.current = true; setExpRaw(id); setCards(null); };
+  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); setCards(null); setTabRaw("explore"); };
+  const setExp = (id: string | null) => { push.current = true; setExpRaw(id); setCards(null); if (id) setTabRaw("lab"); };
+  const setTab = (t: Tab) => { push.current = true; setTabRaw(t); setExpRaw(null); setCards(null); scrollTo(0, 0); };
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
-    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp); set("cards", exp ? cards : null); set("g", group);
+    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp); set("cards", exp ? cards : null); set("g", group); set("t", tab === "explore" || exp ? null : tab);
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, tracing, exp, cards, group]);
+  }, [sel, view, cmp, tracing, exp, cards, group, tab]);
   useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
-    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); };
+    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); setTabRaw(readTab(p)); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
-  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup };
+  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup, tab, setTab };
 }
 
 export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup } = useUrlState();
+  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup, tab, setTab } = useUrlState();
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
   const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
@@ -155,14 +160,25 @@ export default function App() {
       </main>
     );
   }
+  const sub = net.courses.map((c) => c.title).join("・");
+  if (tab !== "explore") return (
+    <main className={`${st.app} ${st.withTabs}`}>
+      <Header title="知識ネットワーク" sub={sub} />
+      {tab === "learn" ? <LearnPage net={net} /> : tab === "lab" ? <LabPage net={net} onOpen={setExp} /> : <ProblemsPage net={net} />}
+      <TabBar tab={tab} onTab={setTab} />
+    </main>
+  );
   const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
   return (
-    <main className={`${st.app}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
-      <header className={st.top}>
-        <h1>知識ネットワーク</h1>
-        <Muted>{net.courses.map((c) => c.title).join("・")}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（骨格 ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</Muted>
+    <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
+      <div className={st.top}>
+        <Header title="知識ネットワーク" sub={<>{sub}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（骨格 ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>} />
         <Search concepts={[...net.concepts.values()]} onPick={setSel} />
-      </header>
+        <Crumbs items={concept ? [
+          ...(concept.category ? [{ label: concept.category, onClick: () => { setSel(null); setGroup(concept.category!); } }] : []),
+          { label: concept.name },
+        ] : eff ? [{ label: eff === "*" ? "全部の語" : eff }] : []} />
+      </div>
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
       <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions}
         onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
@@ -256,6 +272,7 @@ export default function App() {
       )}
       {edgeSel ? <Panel net={net} edgeId={edgeSel} onClose={() => setEdgeSel(null)} onSelect={(id) => setSel(id)} /> : null}
       <Muted as="div" className={st.footer}>データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</Muted>
+      <TabBar tab="explore" onTab={setTab} />
     </main>
   );
 }

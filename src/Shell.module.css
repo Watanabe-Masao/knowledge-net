@@ -1,0 +1,53 @@
+/* サイトの骨組み（#42・#130）。色と動きの値は tokens（math-lab）から */
+.header { display: flex; align-items: center; gap: var(--sp-2); justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logo { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; flex: none; }
+.titles { min-width: 0; }
+.titles h1 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: .03em; line-height: 1.25; }
+.sub { font-size: var(--fs-tag); color: var(--ink-3); }
+
+.crumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; margin: var(--sp-2) 0 0; font-size: 13px; color: var(--ink-3); }
+.crumb { display: inline-flex; align-items: center; gap: 2px; }
+.crumb button { all: unset; cursor: pointer; display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; border-radius: var(--r-pill); background: var(--surface-2); box-shadow: 0 0 0 1px var(--line); color: var(--ink-2); position: relative; }
+.crumb button::before { content: ""; position: absolute; inset: -7px -2px; }
+.crumb button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.crumb b { color: var(--ink); font-weight: 700; padding: 0 4px; }
+.sep { display: inline-flex; color: var(--ink-3); }
+
+/* 下のタブ（埋め込みと実験室の中では出さない）。下から開く面（z 10〜11）の下に入る */
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; display: flex; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 94%, transparent); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.tabs a { flex: 1; max-width: 190px; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  color: var(--ink-3); font-size: 11px; text-decoration: none; -webkit-tap-highlight-color: transparent; transition: color var(--dur) var(--ease); }
+.tabIcon { width: 54px; height: 30px; border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center; transition: background var(--dur) var(--ease), transform var(--dur-press) var(--ease); }
+.tabs a[aria-current="page"] { color: var(--accent); font-weight: 700; }
+.tabs a[aria-current="page"] .tabIcon { background: var(--accent-soft); }
+.tabs a:active .tabIcon { transform: scale(var(--press-scale)); }
+.tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: var(--r-m); }
+@media (prefers-reduced-motion: reduce) { .tabs a, .tabIcon { transition: none; } .tabs a:active .tabIcon { transform: none; } }
+
+/* 学習・実験室・問題集の一覧 */
+.page { display: flex; flex-direction: column; gap: var(--sp-2); }
+.pageTitle { margin: var(--sp-3) 0 0; font-size: 24px; font-weight: 800; letter-spacing: .03em; }
+.list { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: grid; gap: 6px; }
+.row { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 12px 8px 8px; box-sizing: border-box; border-radius: var(--r-l);
+  background: var(--surface); box-shadow: 0 0 0 1px var(--line); color: var(--ink); text-decoration: none; transition: transform var(--dur-press) var(--ease); }
+.row:active { transform: scale(var(--press-scale)); }
+.row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--ink-2); font-variant-numeric: tabular-nums; flex: none; font-size: 14px; }
+.rowText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-body); line-height: 1.4; }
+.rowText small { font-size: var(--fs-tag); color: var(--accent); }
+.out { color: var(--ink-3); display: flex; flex: none; }
+
+.stages { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: flex; justify-content: space-between; }
+.stages li { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-2); }
+.stages i { font-style: normal; width: 26px; height: 26px; border-radius: 13px; box-shadow: 0 0 0 1.5px var(--line-strong); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11.5px; color: var(--ink); background: var(--surface); }
+.cards { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: var(--sp-3); }
+.labCard { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: var(--sp-4); border-radius: 18px;
+  background: var(--surface); box-shadow: 0 0 0 1px var(--line); transition: transform var(--dur-press) var(--ease); }
+.labCard:active { transform: scale(var(--press-scale)); }
+.labCard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.labCard b { font-size: 17px; font-weight: 800; line-height: 1.45; }
+.labTag { align-self: flex-start; padding: 2px 9px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) { .row, .labCard { transition: none; } .row:active, .labCard:active { transform: none; } }
