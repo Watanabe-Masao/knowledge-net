@@ -31,7 +31,7 @@ type Props = {
   sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
 };
 
-type Tab = "main" | "rel" | "more";
+type Tab = "about" | "formula" | "exp" | "rel" | "learn";
 
 /** 使うことの少ない操作（比べる・共有）をまとめる「…」（CLAUDE.md「画面の決まり」：出しておく印は絞る） */
 function MoreMenu({ items }: { items: { label: string; onClick: () => void; pressed?: boolean }[] }) {
@@ -69,90 +69,99 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
     ro.observe(el);
     return () => ro.disconnect();
   }, [sheet !== undefined]);   // eslint-disable-line react-hooks/exhaustive-deps
-  const peekOut = sheet ? Math.max(120, Math.min(peekH + 30, Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.4))) : 0;
+  // 「少し」の段：見出し（名前の1行と切り替え）＋ 定義が見える高さ
+  const leadRef = useRef<HTMLDivElement>(null);
+  const [leadH, setLeadH] = useState(80);
+  useEffect(() => {
+    const el = leadRef.current;
+    if (!el || typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(() => setLeadH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
+  const peekOut = sheet ? Math.max(140, Math.min(peekH + leadH + 36, Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.42))) : 0;
   useEffect(() => { if (sheet) sheet.onPeek?.(peekOut); }, [peekOut]);   // eslint-disable-line react-hooks/exhaustive-deps
   const exps = experimentsFor(net, c.id);
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
   const unit = units[0];
-  // 縦に長くならないよう、定義の下を「動かす（または説明）｜つながり｜くわしく」に分けて1つだけ出す
-  const [tab, setTab] = useState<Tab>("main");
-  // くわしく：項目ごとに開閉する（見出しだけ並べ、読みたい所だけ開く）。作業台のない概念では「説明」に全部開いて出す
-  const sec = (id: string, title: string, node: React.ReactNode, open: boolean) =>
-    c.workspace ? <Disclosure key={id} summary={title} data-testid={`more-${id}`} open={open}>{node}</Disclosure> : <div key={id}><h3>{title}</h3>{node}</div>;
-  const body = <>
-      {c.principle && sec("principle", "原理", <p>{c.principle}</p>, true)}
-      {c.formulas?.length ? sec("formulas", `式（${c.formulas.length}）`, <>
-        {c.formulas.map((f, i) => (
-          <Formula key={i} formula={keyed(f)} editable onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)}
-            definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)} />
-        ))}
-        <Muted>記号を押すと意味が出る。「開く」でその記号の定義の式に置き換わる。値を入れると1段ずつ計算できる。</Muted>
-      </>, false) : null}
-      {c.conditions && sec("conditions", "成り立つ条件", <>
-        <ul>{c.conditions.math.map((x) => <li key={x}>{x}</li>)}</ul>
-        {c.conditions.data?.length ? <><h4>データに当てはめるとき</h4><ul>{c.conditions.data.map((x) => <li key={x}>{x}</li>)}</ul></> : null}
-      </>, false)}
-      {(c.example || c.counterexample) && sec("examples", "具体例と反例", <>
-        {c.example && <p><b>例</b>　{c.example}</p>}
-        {c.counterexample && <><p><b>反例</b>　{c.counterexample}</p><Media labs={c.counterexample_labs} context="counterexample" /></>}
-      </>, false)}
-      {c.misconceptions?.length ? sec("misconceptions", `よくある誤解（${c.misconceptions.length}）`,
-        <ul className={st.misconceptions}>{c.misconceptions.map((m, i) => (
-          <li key={m.misconception}><Card as="div" tone="inset"><span className={st.wrong}>✕ {m.misconception}</span><p>→ {m.correction}</p><Media labs={m.labs} context={`misconception-${i}`} /></Card></li>))}</ul>, false) : null}
-  </>;
-  const definitionBlock = <>
-      {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
-      {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">まだ骨格：定義1文と分類だけ。原理・条件・例・式は、単元を進めるときに足す</p>}
-  </>;
+  // 面の作り（渡辺さん 2026-10-31「スライドで見る部分が狭い」「実験してみるはここにいりますか」）：
+  // 動かない見出しは「名前の1行」と切り替え（概要・式・実験・つながり・教材）だけ。中身は面の残り全部で指で送る。1つずつ見せて縦に長くしない
+  const hasFormula = !!(c.workspace || c.formulas?.length);
+  const tabs: { value: Tab; label: string }[] = [
+    { value: "about", label: "概要" },
+    ...(hasFormula ? [{ value: "formula" as Tab, label: "式" }] : []),
+    ...(exps.length ? [{ value: "exp" as Tab, label: "実験" }] : []),
+    { value: "rel", label: "つながり" },
+    { value: "learn", label: "教材" },
+  ];
+  const [tabRaw, setTab] = useState<Tab>("about");
+  const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
+  const formulaList = c.formulas?.length ? (
+    <Disclosure summary={`式（${c.formulas.length}）`} data-testid="more-formulas" open={!c.workspace}>
+      {c.formulas.map((f, i) => (
+        <Formula key={i} formula={keyed(f)} editable onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)}
+          definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)} />
+      ))}
+      <Muted>記号を押すと意味が出る。「開く」でその記号の定義の式に置き換わる。値を入れると1段ずつ計算できる。</Muted>
+    </Disclosure>
+  ) : null;
   const head = <>
       <header className={st.head}>
         <div className={st.titles}>
-          <Muted as="div" className={st.kicker}>{[c.category, units.map((u) => `U${u!.number}`).join(" ")].filter(Boolean).join("・")}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
           <h2>{c.name}</h2>
-          {c.en ? <Muted as="div">{c.en}</Muted> : null}
+          <Muted as="div" className={st.kicker}>{[c.category, units.map((u) => `U${u!.number}`).join(" ")].filter(Boolean).join("・")}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
         </div>
         <MoreMenu items={[
           { label: inCompare ? "比べる面を開く" : "ほかの概念と比べる", onClick: onCompare, pressed: inCompare },
           { label: "この概念の URL をコピー", onClick: copyUrl },
         ]} />
       </header>
-      {!sheet ? definitionBlock : null}
-      {exps.length || unit?.url ? (
-        <div className={st.actions} data-testid="actions">
-          {exps[0] ? <Button variant="primary" onClick={() => onExperiment?.(exps[0]!.id)} data-testid={`open-${exps[0].id}`}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" /></svg>
-            実験してみる</Button> : null}
-          {unit?.url && c.problems.length ? <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">問題を解く<span>{c.problems.length}</span></a> : null}
-          {unit?.url ? <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">単元で読む<span>U{unit.number}</span></a> : null}
-        </div>
-      ) : null}
+      <div className={st.tabs}>
+        <Segmented value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身" items={tabs} />
+      </div>
   </>;
   const rest = <>
-      {sheet ? definitionBlock : null}
-      <div className={st.tabs}>
-        <Segmented value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身"
-          items={[
-            { value: "main", label: c.workspace ? "動かす" : "説明" },
-            { value: "rel", label: <>つながり <span className={st.n}>{relations.length + derivations.length}</span></> },
-            { value: "more", label: "くわしく" },
-          ]} />
-      </div>
-      {tab === "main" && <div className={st.pane} data-testid="tab-main">
-        {exps.slice(1).map((x) => (
-          <button key={x.id} type="button" className={st.expCard} onClick={() => onExperiment?.(x.id)} data-testid={`open-${x.id}`}>
-            <span className={st.expIcon} aria-hidden="true">🧪</span>
-            <span><b>実験室で試す</b><span>{x.question}</span></span>
-            <span className={st.expGo} aria-hidden="true">›</span>
-          </button>
-        ))}
+      {tab === "about" && <div className={st.pane} data-testid="tab-about">
+        <div ref={leadRef}>
+          {c.en ? <Muted as="div" className={st.en}>{c.en}</Muted> : null}
+          {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
+          {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">まだ骨格：定義1文と分類だけ。原理・条件・例・式は、単元を進めるときに足す</p>}
+        </div>
+        <Media figures={c.figures} labs={c.labs} context="concept" open={!c.workspace} />
+        {c.principle && <section><h3>原理</h3><p>{c.principle}</p></section>}
+        {c.conditions && <section><h3>成り立つ条件</h3>
+          <ul>{c.conditions.math.map((x) => <li key={x}>{x}</li>)}</ul>
+          {c.conditions.data?.length ? <><h4>データに当てはめるとき</h4><ul>{c.conditions.data.map((x) => <li key={x}>{x}</li>)}</ul></> : null}
+        </section>}
+        {(c.example || c.counterexample) && <section><h3>具体例と反例</h3>
+          {c.example && <p><b>例</b>　{c.example}</p>}
+          {c.counterexample && <><p><b>反例</b>　{c.counterexample}</p><Media labs={c.counterexample_labs} context="counterexample" /></>}
+        </section>}
+        {c.misconceptions?.length ? <section><h3>よくある誤解（{c.misconceptions.length}）</h3>
+          <ul className={st.misconceptions}>{c.misconceptions.map((m, i) => (
+            <li key={m.misconception}><Card as="div" tone="inset"><span className={st.wrong}>✕ {m.misconception}</span><p>→ {m.correction}</p><Media labs={m.labs} context={`misconception-${i}`} /></Card></li>))}</ul>
+        </section> : null}
+      </div>}
+      {tab === "formula" && <div className={st.pane} data-testid="tab-formula">
         {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
           <Workspace formula={keyed(c.formulas[c.workspace.formula]!)} mean={c.workspace.mean !== undefined ? keyed(c.formulas[c.workspace.mean]!) : undefined}
             vary={c.workspace.vary} over={c.workspace.over} definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
             onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)} />
         )}
-        <Media figures={c.figures} labs={c.labs} context="concept" open={!c.workspace} />
-        {!c.workspace && body}
+        {formulaList}
+      </div>}
+      {tab === "exp" && <div className={st.pane} data-testid="tab-exp">
+        {exps.map((x) => (
+          <button key={x.id} type="button" className={st.expCard} onClick={() => onExperiment?.(x.id)} data-testid={`open-${x.id}`}>
+            <span className={st.expIcon} aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" /></svg>
+            </span>
+            <span><b>{x.title ?? "実験してみる"}</b><span>{x.question}</span></span>
+            <span className={st.expGo} aria-hidden="true">›</span>
+          </button>
+        ))}
+        <Muted>予想してから実験し、自分で起こした結果から決まりを見つける。</Muted>
       </div>}
       {tab === "rel" && <div className={st.pane} data-testid="tab-rel">
         {relations.length + derivations.length ? (
@@ -179,21 +188,26 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         ) : <Muted>まだつながりがない。</Muted>}
         <Muted>押すと、下から説明（図・解説・触る）が開く。グラフの線を押すのと同じ。</Muted>
       </div>}
-      {tab === "more" && <div className={st.pane} data-testid="tab-more">
-        {c.workspace ? body : null}
+      {tab === "learn" && <div className={st.pane} data-testid="tab-learn">
+        {unit?.url ? (
+          <div className={st.actions} data-testid="actions">
+            {c.problems.length ? <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">問題を解く<span>{c.problems.length}</span></a> : null}
+            <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">単元で読む<span>U{unit.number}</span></a>
+          </div>
+        ) : null}
         {units.length ? <>
           <h3>教材で学ぶ</h3>
           <ul>{units.map((u) => <li key={u!.id}>{u!.url ? <a href={u!.url} target="_blank" rel="noreferrer">{u!.number}｜{u!.title} ↗</a> : `${u!.number}｜${u!.title}`}</li>)}</ul>
         </> : null}
         {c.problems.length ? <><h3>確かめる問題（{c.problems.length}）</h3><p className={st.problems}>{c.problems.map((q) => <span key={q}>{q.replace(/^[\w-]+:Q-/, "")}</span>)}</p></> : null}
         {c.sources?.length ? <Muted>出典：{c.sources.map((s) => (s.url ? <a key={s.title} href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title))}{c.sources[0].locator ? `（${c.sources[0].locator}）` : ""}</Muted> : null}
-        {!c.workspace && !units.length && !c.problems.length && !c.sources?.length ? <Muted>教材・問題・出典はまだない。</Muted> : null}
+        {!units.length && !c.problems.length && !c.sources?.length ? <Muted>教材・問題・出典はまだない。</Muted> : null}
         <Muted as="div" className={st.idLine}>{c.id}・版 {c.version}</Muted>
       </div>}
   </>;
   if (!sheet) return <Card data-testid="detail">{head}{rest}</Card>;
-  const peek = Math.max(120, Math.min(peekH + 30, Math.round(innerHeight * 0.4)));
-  // スマホ：地図の上に重なる下からの面。見出し・定義・学ぶ行動が「少し」の段で見え、つかんで広げると中身（#42）
+  const peek = peekOut;
+  // スマホ：地図の上に重なる下からの面。見出し・切り替え・定義が「少し」の段で見え、広げると面の残り全部で中身を送る（#42）
   return (
     <BottomSheet label={`${c.name} の詳しく`} data-testid="detail" detent={sheet.detent} onDetent={sheet.onDetent} bottom={sheet.bottom}
       peek={peek} min={84} header={<div ref={headRef}>{head}</div>}>
