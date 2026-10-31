@@ -56,16 +56,37 @@ export function Crumbs({ items }: { items: { label: string; onClick?: () => void
   );
 }
 
-export function TabBar({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
+/** 選んだ概念（探索で選んだもの）。下のタブは、その概念の分の単元・実験室・問題に絞って開く（渡辺さん 2026-11-01：学ぶ行動は下のタブに動的に） */
+export type Focus = { id: string; name: string; units: string[]; problems: string[]; exps: string[] };
+
+/** 下のタブに出す、選んだ概念の分の目印（学習＝単元、実験室・問題集＝数） */
+export function focusBadges(net: Network, f: Focus | null): Partial<Record<Tab, string>> {
+  if (!f) return {};
+  const u = f.units.map((id) => net.units.get(id)).find((x) => !!x);
+  return { ...(u ? { learn: `U${u.number}` } : {}), ...(f.exps.length ? { lab: String(f.exps.length) } : {}), ...(f.problems.length ? { problems: String(f.problems.length) } : {}) };
+}
+
+export function TabBar({ tab, onTab, badges = {}, focusName }: { tab: Tab; onTab: (t: Tab) => void; badges?: Partial<Record<Tab, string>>; focusName?: string }) {
   return (
     <nav className={s.tabs} aria-label="タブ" data-testid="tabbar">
       {TABS.map((t) => (
         <a key={t.id} href={t.id === "explore" ? "?" : `?t=${t.id}`} aria-current={tab === t.id ? "page" : undefined}
+          aria-label={badges[t.id] ? `${t.label}（${focusName}：${badges[t.id]}）` : undefined}
           onClick={(e) => { e.preventDefault(); onTab(t.id); }}>
-          <span className={s.tabIcon}><Icon name={t.id} /></span>{t.label}
+          <span className={s.tabIcon}><Icon name={t.id} />{badges[t.id] ? <span className={s.badge} data-testid={`badge-${t.id}`}>{badges[t.id]}</span> : null}</span>{t.label}
         </a>
       ))}
     </nav>
+  );
+}
+
+/** 絞り込みの札：「期待値 の分」を出し、押すと全部に戻す（もう一度押すと絞る） */
+function FocusChip({ focus, on, onToggle }: { focus: Focus | null; on: boolean; onToggle: () => void }) {
+  if (!focus) return null;
+  return (
+    <button type="button" className={s.focusChip} aria-pressed={on} onClick={onToggle} data-testid="focus-chip">
+      {on ? <>{focus.name} の分<span aria-hidden="true">✕</span></> : <>{focus.name} の分だけにする</>}
+    </button>
   );
 }
 
@@ -83,15 +104,18 @@ function GroupChips({ net, value, onChange }: { net: Network; value: string; onC
 }
 
 /** 学習：単元の一覧（まとまりで絞る）。押すと Notion の単元ページ（読んで、自分のメモを書き足す所） */
-export function LearnPage({ net }: { net: Network }) {
+export function LearnPage({ net, focus = null }: { net: Network; focus?: Focus | null }) {
   const [group, setGroup] = useState("");
-  const units = [...net.units.values()].filter((u) => !group || u.group === group);
+  const [on, setOn] = useState(true);
+  const only = focus && on ? new Set(focus.units) : null;
+  const units = [...net.units.values()].filter((u) => (only ? only.has(u.id) : !group || u.group === group));
   const labUnits = labsByUnit(net);
   return (
     <section className={s.page} data-testid="page-learn">
       <h2 className={s.pageTitle}>学習</h2>
       <Muted>単元のページは Notion で読み、自分のメモを書き足す。</Muted>
-      <GroupChips net={net} value={group} onChange={setGroup} />
+      <FocusChip focus={focus} on={on} onToggle={() => setOn(!on)} />
+      {!only ? <GroupChips net={net} value={group} onChange={setGroup} /> : null}
       <ul className={s.list}>
         {units.map((u) => (
           <li key={u.id}>
@@ -108,17 +132,19 @@ export function LearnPage({ net }: { net: Network }) {
 }
 
 /** 実験室：問いから選ぶ一覧 */
-export function LabPage({ net, onOpen }: { net: Network; onOpen: (id: string) => void }) {
-  const xs = [...net.experiments.values()];
+export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (id: string) => void; focus?: Focus | null }) {
+  const [on, setOn] = useState(true);
+  const xs = [...net.experiments.values()].filter((x) => !(focus && on) || focus.exps.includes(x.id));
   return (
     <section className={s.page} data-testid="page-lab">
       <h2 className={s.pageTitle}>実験室</h2>
       <Muted>予想してから、自分で起こして確かめる。</Muted>
+      <FocusChip focus={focus} on={on} onToggle={() => setOn(!on)} />
       <ol className={s.stages} aria-label="実験室の段">{["予測", "実験", "観察", "理由", "応用", "比べる"].map((x, i) => <li key={x}><i>{i + 1}</i>{x}</li>)}</ol>
       <ul className={s.cards}>
         {xs.map((x) => (
           <li key={x.id}>
-            <button type="button" className={s.labCard} onClick={() => onOpen(x.id)}>
+            <button type="button" className={s.labCard} onClick={() => onOpen(x.id)} data-testid={`open-${x.id}`}>
               <span className={s.labTag}>{x.title.replace(/\s*実験室$/, "")}</span>
               <b>{x.question}</b>
               <Muted as="span">場面 {x.themes.length}・反例 {x.counterexamples?.length ?? 0}</Muted>
@@ -132,27 +158,31 @@ export function LabPage({ net, onOpen }: { net: Network; onOpen: (id: string) =>
 }
 
 /** 問題集：まとまり → 単元 → 段階ごとの数と問題の一覧。押すと Notion の単元ページ（問題を解き、記録は Notion の解答記録へ） */
-export function ProblemsPage({ net }: { net: Network }) {
+export function ProblemsPage({ net, focus = null }: { net: Network; focus?: Focus | null }) {
   const [group, setGroup] = useState("");
-  const [open, setOpen] = useState<string | null>(null);
-  const units = [...net.units.values()].filter((u) => u.problems?.length && (!group || u.group === group));
+  const [on, setOn] = useState(true);
+  const only = focus && on ? new Set(focus.problems) : null;
+  const probsOf = (u: { problems?: { id: string; stage: string; prompt: string }[] }) => (u.problems ?? []).filter((p) => !only || only.has(p.id));
+  const units = [...net.units.values()].filter((u) => probsOf(u).length && (only || !group || u.group === group));
+  const [open, setOpen] = useState<string | null>(only && units[0] ? units[0].id : null);   // 絞ったときは最初の単元を開いておく
   return (
     <section className={s.page} data-testid="page-problems">
       <h2 className={s.pageTitle}>問題集</h2>
       <Muted>押すと Notion の単元ページの問題へ。解いた記録は Notion の解答記録に残す（このサイトは記録を持たない）。</Muted>
-      <GroupChips net={net} value={group} onChange={(g) => { setGroup(g); setOpen(null); }} />
+      <FocusChip focus={focus} on={on} onToggle={() => { setOn(!on); setOpen(null); }} />
+      {!only ? <GroupChips net={net} value={group} onChange={(g) => { setGroup(g); setOpen(null); }} /> : null}
       <ul className={s.list}>
         {units.map((u) => {
-          const ps = u.problems!, on = open === u.id;
+          const ps = probsOf(u), isOpen = open === u.id;
           const stages = [...new Set(ps.map((p) => p.stage))];
           return (
             <li key={u.id}>
-              <button type="button" className={s.row} aria-expanded={on} onClick={() => setOpen(on ? null : u.id)} data-testid={`unit-${u.id}`}>
+              <button type="button" className={s.row} aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : u.id)} data-testid={`unit-${u.id}`}>
                 <span className={s.num}>{u.number}</span>
                 <span className={s.rowText}>{u.title}<small className={s.mute}>{ps.length} 問</small></span>
-                <span className={`${s.chev}${on ? ` ${s.chevOn}` : ""}`} aria-hidden="true"><Icon name="chevron" size={16} /></span>
+                <span className={`${s.chev}${isOpen ? ` ${s.chevOn}` : ""}`} aria-hidden="true"><Icon name="chevron" size={16} /></span>
               </button>
-              {on ? (
+              {isOpen ? (
                 <div className={s.probs} data-testid={`problems-${u.id}`}>
                   <div className={s.stageCounts}>{stages.map((st) => <span key={st}><b>{ps.filter((p) => p.stage === st).length}</b>{st}</span>)}</div>
                   <ul>{ps.map((p) => (

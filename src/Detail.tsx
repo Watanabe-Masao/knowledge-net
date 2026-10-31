@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Badges, Media, relationParts } from "./Relation";
 import { BottomSheet, Button, Card, Disclosure, Formula, Muted, Segmented, Workspace, type Detent } from "@math-lab/ui";
 import st from "./Detail.module.css";
-import { KINDS, MODES, PREMISES, around, experimentsFor, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
+import { KINDS, MODES, PREMISES, around, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
 
 /** 画面の型（key が任意）から部品の型へ（key のない記号は木から指せないので落とす） */
 const keyed = (f: NetFormula) => ({ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) });
@@ -25,13 +25,11 @@ type Props = {
   onCompare: () => void; onSelect: (id: string) => void;
   /** つながりの行を押す（線を押したのと同じ。下からシートが開く） */
   onEdge: (id: string) => void; edgeSel?: string | null;
-  /** 実験室を開く */
-  onExperiment?: (id: string) => void;
   /** スマホでは下からの面にする（段と、下のタブの高さ） */
   sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
 };
 
-type Tab = "about" | "formula" | "exp" | "rel" | "learn";
+type Tab = "about" | "formula" | "rel";
 
 /** 使うことの少ない操作（比べる・共有）をまとめる「…」（CLAUDE.md「画面の決まり」：出しておく印は絞る） */
 function MoreMenu({ items }: { items: { label: string; onClick: () => void; pressed?: boolean }[] }) {
@@ -58,7 +56,7 @@ function MoreMenu({ items }: { items: { label: string; onClick: () => void; pres
 
 const copyUrl = () => { try { void navigator.clipboard?.writeText(location.href); } catch { /* コピーできない環境 */ } };
 
-export default function Detail({ net, concept: c, inCompare, onCompare, onSelect, onEdge, edgeSel, onExperiment, sheet }: Props) {
+export default function Detail({ net, concept: c, inCompare, onCompare, onSelect, onEdge, edgeSel, sheet }: Props) {
   // 「少し」の段の高さ：見出し・定義・学ぶ行動がちょうど見える高さ（中身の量で変わるので測る）
   const headRef = useRef<HTMLDivElement>(null);
   const [peekH, setPeekH] = useState(240);
@@ -81,19 +79,16 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   });
   const peekOut = sheet ? Math.max(140, Math.min(peekH + leadH + 36, Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.42))) : 0;
   useEffect(() => { if (sheet) sheet.onPeek?.(peekOut); }, [peekOut]);   // eslint-disable-line react-hooks/exhaustive-deps
-  const exps = experimentsFor(net, c.id);
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
-  const unit = units[0];
-  // 面の作り（渡辺さん 2026-10-31「スライドで見る部分が狭い」「実験してみるはここにいりますか」）：
-  // 動かない見出しは「名前の1行」と切り替え（概要・式・実験・つながり・教材）だけ。中身は面の残り全部で指で送る。1つずつ見せて縦に長くしない
+  // 面の作り（渡辺さん 2026-10-31「スライドで見る部分が狭い」・11-01「下のツールバーに動的に」）：
+  // 動かない見出しは「名前の1行」と切り替え（概要・式・つながり）だけ。中身は面の残り全部で指で送る。
+  // 学ぶ行動（実験室・問題・単元）は下のタブが選んだ概念の分に絞って開く（同じ機能を2か所に置かない）
   const hasFormula = !!(c.workspace || c.formulas?.length);
   const tabs: { value: Tab; label: string }[] = [
     { value: "about", label: "概要" },
     ...(hasFormula ? [{ value: "formula" as Tab, label: "式" }] : []),
-    ...(exps.length ? [{ value: "exp" as Tab, label: "実験" }] : []),
     { value: "rel", label: "つながり" },
-    { value: "learn", label: "教材" },
   ];
   const [tabRaw, setTab] = useState<Tab>("about");
   const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
@@ -142,6 +137,8 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
           <ul className={st.misconceptions}>{c.misconceptions.map((m, i) => (
             <li key={m.misconception}><Card as="div" tone="inset"><span className={st.wrong}>✕ {m.misconception}</span><p>→ {m.correction}</p><Media labs={m.labs} context={`misconception-${i}`} /></Card></li>))}</ul>
         </section> : null}
+        {c.sources?.length ? <Muted>出典：{c.sources.map((s) => (s.url ? <a key={s.title} href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title))}{c.sources[0].locator ? `（${c.sources[0].locator}）` : ""}</Muted> : null}
+        <Muted as="div" className={st.idLine}>{c.id}・版 {c.version}</Muted>
       </div>}
       {tab === "formula" && <div className={st.pane} data-testid="tab-formula">
         {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
@@ -150,18 +147,6 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
             onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)} />
         )}
         {formulaList}
-      </div>}
-      {tab === "exp" && <div className={st.pane} data-testid="tab-exp">
-        {exps.map((x) => (
-          <button key={x.id} type="button" className={st.expCard} onClick={() => onExperiment?.(x.id)} data-testid={`open-${x.id}`}>
-            <span className={st.expIcon} aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" /></svg>
-            </span>
-            <span><b>{x.title ?? "実験してみる"}</b><span>{x.question}</span></span>
-            <span className={st.expGo} aria-hidden="true">›</span>
-          </button>
-        ))}
-        <Muted>予想してから実験し、自分で起こした結果から決まりを見つける。</Muted>
       </div>}
       {tab === "rel" && <div className={st.pane} data-testid="tab-rel">
         {relations.length + derivations.length ? (
@@ -187,22 +172,6 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
           </ul>
         ) : <Muted>まだつながりがない。</Muted>}
         <Muted>押すと、下から説明（図・解説・触る）が開く。グラフの線を押すのと同じ。</Muted>
-      </div>}
-      {tab === "learn" && <div className={st.pane} data-testid="tab-learn">
-        {unit?.url ? (
-          <div className={st.actions} data-testid="actions">
-            {c.problems.length ? <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">問題を解く<span>{c.problems.length}</span></a> : null}
-            <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">単元で読む<span>U{unit.number}</span></a>
-          </div>
-        ) : null}
-        {units.length ? <>
-          <h3>教材で学ぶ</h3>
-          <ul>{units.map((u) => <li key={u!.id}>{u!.url ? <a href={u!.url} target="_blank" rel="noreferrer">{u!.number}｜{u!.title} ↗</a> : `${u!.number}｜${u!.title}`}</li>)}</ul>
-        </> : null}
-        {c.problems.length ? <><h3>確かめる問題（{c.problems.length}）</h3><p className={st.problems}>{c.problems.map((q) => <span key={q}>{q.replace(/^[\w-]+:Q-/, "")}</span>)}</p></> : null}
-        {c.sources?.length ? <Muted>出典：{c.sources.map((s) => (s.url ? <a key={s.title} href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title))}{c.sources[0].locator ? `（${c.sources[0].locator}）` : ""}</Muted> : null}
-        {!units.length && !c.problems.length && !c.sources?.length ? <Muted>教材・問題・出典はまだない。</Muted> : null}
-        <Muted as="div" className={st.idLine}>{c.id}・版 {c.version}</Muted>
       </div>}
   </>;
   if (!sheet) return <Card data-testid="detail">{head}{rest}</Card>;
