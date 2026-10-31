@@ -47,7 +47,9 @@ function useUrlState() {
     push.current = false;
   }, [sel, view, cmp, exp, cards, group, tab]);
   useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
-    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); setTabRaw(readTab(p)); };
+    // URL に持つものは全部戻す（分類の絞り込み g・比べる相手 cmp も。戻らないと前の絞り込みが残る。stats2-course #142）
+    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); setTabRaw(readTab(p));
+      setGroup(p.get("g")); setCmp((p.get("cmp") ?? "").split(",").filter(Boolean)); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
