@@ -3,5 +3,6 @@
 .fill { flex: 1; height: auto; min-height: 0; margin: 0; border-radius: 0; border: none; }
 .wrapFill { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .fit { position: absolute; top: 20px; right: 8px; opacity: .92; }
-.topLeft { position: absolute; top: 20px; left: 8px; }
+.topLeft { position: absolute; top: 20px; left: 8px; right: 64px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: none; }   /* 右の「収める」ボタンに重ならない。折り返す */
+.topLeft > * { pointer-events: auto; }
 .bottomLeft { position: absolute; bottom: 20px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; }

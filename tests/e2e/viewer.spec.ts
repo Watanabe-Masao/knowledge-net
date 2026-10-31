@@ -778,6 +778,16 @@ test("全体図を分類で絞り、骨格の概念は定義1文と「まだ骨�
   const count = () => page.evaluate(() => (window as unknown as { kn: { nodes: () => { length: number } } }).kn.nodes().length);
   // 入口は分類の地図：点は12の分類。押すとその分類で絞る
   await expect.poll(count).toBe(12);
+  // 390px で：左上の選ぶ欄が「収める」ボタンに重ならず、点が左上の操作の下に隠れない
+  const fitBox = (await page.getByRole("button", { name: "図を枠に収める" }).boundingBox())!;
+  const selBox = (await sel.boundingBox())!;
+  expect(selBox.x + selBox.width).toBeLessThanOrEqual(fitBox.x);
+  const hidden = () => page.evaluate((bottom) => {
+    const c = (window as unknown as { kn: { container: () => HTMLElement; nodes: () => { toArray: () => { renderedBoundingBox: () => { y1: number } }[] } } }).kn;
+    const top = c.container().getBoundingClientRect().top;
+    return c.nodes().toArray().filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
+  }, selBox.y + selBox.height);
+  await expect.poll(hidden).toBe(0);
   await sel.selectOption("*");
   await expect.poll(count).toBeGreaterThan(129);   // 全部の語＋導出の点
   const all = await count();

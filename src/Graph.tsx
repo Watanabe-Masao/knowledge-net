@@ -59,6 +59,9 @@ export function elements(net: Network, hidden: Set<string>, keep?: Set<string>):
 
 export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview }: Props) {
   const box = useRef<HTMLDivElement>(null);
+  const tl = useRef<HTMLDivElement>(null);
+  /** 左上の操作（まわり／全体・分類）に図が隠れないよう、その高さの分だけ余白を取って収める */
+  const padOf = () => Math.max(20, (tl.current?.offsetHeight ?? 0) + 16);
   const cy = useRef<Core | null>(null);
   const select = useRef(onSelect);
   select.current = onSelect;
@@ -124,12 +127,11 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     // （iPhone の Notion から開くと、作った時点では枠の大きさが決まっていないことがある）
     let touched = false;
     c.on("tapstart", () => { touched = true; });
-    const refit = () => { if (!touched && box.current) { c.resize(); c.fit(undefined, overview ? 56 : 20); } };
+    const refit = () => { if (!touched && box.current) { c.resize(); c.fit(undefined, padOf()); } };
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(refit) : null;
     ro?.observe(box.current);
     document.fonts?.ready.then(refit);
-    const pad = overview ? 56 : 20;   // 分類の地図は左上の選ぶ欄に隠れないよう余白を広く
-    c.fit(undefined, pad);   // 最初は全体が見えるように
+    c.fit(undefined, padOf());   // 最初は全体が見えるように（左上の操作の下から）
     // 周辺図（位置を指定して並べたとき）は、最初に線が描かれないことがある（Cytoscape 3.34）。線の見た目を一度変えて戻し、描き直させる
     const redraw = () => c.edges().style("arrow-scale", 0.91).removeStyle("arrow-scale");
     redraw();
@@ -158,7 +160,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     const moved = c.nodes().toArray().some((n) => { const q = positions.get(n.id()), p = n.position(); return !q || Math.abs(q.x - p.x) > 0.5 || Math.abs(q.y - p.y) > 0.5; });
     if (!moved) return;   // 作ったばかりで、もう正しい位置にある
     const l = c.layout({ name: "preset", positions: (n: cytoscape.NodeSingular) => positions.get(n.id()) ?? { x: 0, y: 0 },
-      animate: !reduced(), animationDuration: 320, fit: true, padding: 20 } as cytoscape.LayoutOptions);
+      animate: !reduced(), animationDuration: 320, fit: true, padding: padOf() } as cytoscape.LayoutOptions);
     l.run();
   }, [positions, net, hidden, selected]);
 
@@ -192,10 +194,10 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   return (
     <div className={fill ? `${s.wrap} ${s.wrapFill}` : s.wrap}>
       <div ref={box} className={`${s.graph}${fill ? ` ${s.fill}` : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
-      {!fill && topLeft && <div className={s.topLeft}>{topLeft}</div>}
+      {!fill && topLeft && <div ref={tl} className={s.topLeft}>{topLeft}</div>}
       {!fill && bottomLeft && <div className={s.bottomLeft}>{bottomLeft}</div>}
       {!fill && <Button icon className={s.fit} aria-label="図を枠に収める" title="図を枠に収める"
-        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: 20 } }, { duration: reduced() ? 0 : 200 })}>⤢</Button>}
+        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: padOf() } }, { duration: reduced() ? 0 : 200 })}>⤢</Button>}
     </div>
   );
 }
