@@ -81,6 +81,15 @@ export default function App() {
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const { sel, setSel, view, setView, cmp, setCmp, exp, setExp, cards, setCards, group, setGroup, tab, setTab } = useUrlState();
+  // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
+  const locked = narrow && !!sel && tab === "explore" && !exp;
+  useEffect(() => {
+    if (!locked) return;
+    scrollTo(0, 0);
+    const r = document.documentElement, b = document.body;
+    r.style.overflow = "hidden"; b.style.overflow = "hidden"; r.style.overscrollBehavior = "none";
+    return () => { r.style.overflow = ""; b.style.overflow = ""; r.style.overscrollBehavior = ""; };
+  }, [locked]);
   useLayoutEffect(() => {
     if (!narrow || !sel || tab !== "explore" || exp) { setMapH(undefined); return; }
     const fit = () => {
@@ -215,7 +224,7 @@ export default function App() {
   const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
   const compact = narrow && !!concept;
   return (
-    <main className={`${st.app} ${st.withTabs}${narrow && concept ? ` ${st.withDetailSheet}` : ""}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
+    <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <div className={st.top}>
         <Header title="知識ネットワーク" sub={<>{sub}{compact ? null : <>　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（定義だけ ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>}</>}>
           {compact ? <Button variant="quiet" icon aria-label="探す" aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Icon name="search" size={20} /></Button> : null}
@@ -316,7 +325,7 @@ export default function App() {
         </FullView>
       )}
       {edgeSel ? <Panel net={net} edgeId={edgeSel} onClose={() => setEdgeSel(null)} onSelect={(id) => setSel(id)} /> : null}
-      <Muted as="div" className={st.footer}>データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</Muted>
+      {narrow && concept ? null : <Muted as="div" className={st.footer}>データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</Muted>}
       <TabBar tab="explore" onTab={(t) => { if (t === "explore" && sel) { setDetent("min"); setRecenter((n) => n + 1); } else setTab(t); }} badges={badges} focusName={focus?.name} />
     </main>
   );
