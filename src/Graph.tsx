@@ -182,13 +182,16 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     };
     c.on("zoom", applyLod);
     const showTip = (e: cytoscape.EventObject) => { if (e.target.data("kind") === "derivation") return; const p = e.target.renderedPosition(), h = e.target.renderedHeight(); setTip({ id: e.target.id(), x: p.x, y: p.y - h / 2 }); };
-    c.on("taphold", "node", showTip);
+    // 長押しは札を見るだけ：離したあとに来る tap を選択にしない（渡辺さん 2026-11-01「概要を見たいだけで長押ししたつもりが選択扱いになる」）
+    let held = false;
+    c.on("tapstart", () => { held = false; });
+    c.on("taphold", "node", (e) => { held = true; showTip(e); });
     c.on("mouseover", "node", (e) => { if (!bigRef.current) showTip(e); });
     c.on("mouseout", "node", () => { if (!bigRef.current) setTip(null); });   // 全画面の札は押せるので、マウスが離れても消さない
     c.on("tapstart pan zoom", () => setTip(null));
     // 全画面は地図を見る所：点を押すと札（名前・分類・定義1文）を出すだけで、選び直さない（選ぶと地図が組み替わって見失う）
-    c.on("tap", "node", (e) => { if (bigRef.current) { if (e.target.data("kind") !== "derivation") showTip(e); return; } if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
-    c.on("tap", "edge", (e) => { if (!bigRef.current) edge.current?.(e.target.id()); });
+    c.on("tap", "node", (e) => { if (held) { held = false; return; } if (bigRef.current) { if (e.target.data("kind") !== "derivation") showTip(e); return; } if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
+    c.on("tap", "edge", (e) => { if (held) { held = false; return; } if (!bigRef.current) edge.current?.(e.target.id()); });
     c.on("tap", (e) => { if (e.target === c && !bigRef.current) select.current(null); });
     // 図を指で動かすまでは、枠の大きさや文字の幅が後から決まっても全体を枠に収め直す
     // （iPhone の Notion から開くと、作った時点では枠の大きさが決まっていないことがある）
