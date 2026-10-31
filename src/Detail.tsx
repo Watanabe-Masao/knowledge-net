@@ -1,7 +1,7 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import { useEffect, useRef, useState } from "react";
 import { Badges, Media, relationParts } from "./Relation";
-import { Button, Card, Disclosure, Formula, Muted, Segmented, Workspace } from "@math-lab/ui";
+import { BottomSheet, Button, Card, Disclosure, Formula, Muted, Segmented, Workspace, type Detent } from "@math-lab/ui";
 import st from "./Detail.module.css";
 import { KINDS, MODES, PREMISES, around, experimentsFor, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
 
@@ -27,6 +27,8 @@ type Props = {
   onEdge: (id: string) => void; edgeSel?: string | null;
   /** 実験室を開く */
   onExperiment?: (id: string) => void;
+  /** スマホでは下からの面にする（段と、下のタブの高さ） */
+  sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number };
 };
 
 type Tab = "main" | "rel" | "more";
@@ -56,7 +58,17 @@ function MoreMenu({ items }: { items: { label: string; onClick: () => void; pres
 
 const copyUrl = () => { try { void navigator.clipboard?.writeText(location.href); } catch { /* コピーできない環境 */ } };
 
-export default function Detail({ net, concept: c, inCompare, onCompare, onSelect, onEdge, edgeSel, onExperiment }: Props) {
+export default function Detail({ net, concept: c, inCompare, onCompare, onSelect, onEdge, edgeSel, onExperiment, sheet }: Props) {
+  // 「少し」の段の高さ：見出し・定義・学ぶ行動がちょうど見える高さ（中身の量で変わるので測る）
+  const headRef = useRef<HTMLDivElement>(null);
+  const [peekH, setPeekH] = useState(240);
+  useEffect(() => {
+    const el = headRef.current;
+    if (!el || typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(() => setPeekH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [sheet !== undefined]);   // eslint-disable-line react-hooks/exhaustive-deps
   const exps = experimentsFor(net, c.id);
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
@@ -87,8 +99,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         <ul className={st.misconceptions}>{c.misconceptions.map((m, i) => (
           <li key={m.misconception}><Card as="div" tone="inset"><span className={st.wrong}>✕ {m.misconception}</span><p>→ {m.correction}</p><Media labs={m.labs} context={`misconception-${i}`} /></Card></li>))}</ul>, false) : null}
   </>;
-  return (
-    <Card data-testid="detail">
+  const head = <>
       <header className={st.head}>
         <div className={st.titles}>
           <Muted as="div" className={st.kicker}>{[c.category, units.map((u) => `U${u!.number}`).join(" ")].filter(Boolean).join("・")}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
@@ -111,6 +122,8 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
           {unit?.url ? <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">単元で読む<span>U{unit.number}</span></a> : null}
         </div>
       ) : null}
+  </>;
+  const rest = <>
       <div className={st.tabs}>
         <Segmented value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身"
           items={[
@@ -171,6 +184,13 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         {!c.workspace && !units.length && !c.problems.length && !c.sources?.length ? <Muted>教材・問題・出典はまだない。</Muted> : null}
         <Muted as="div" className={st.idLine}>{c.id}・版 {c.version}</Muted>
       </div>}
-    </Card>
+  </>;
+  if (!sheet) return <Card data-testid="detail">{head}{rest}</Card>;
+  // スマホ：地図の上に重なる下からの面。見出し・定義・学ぶ行動が「少し」の段で見え、つかんで広げると中身（#42）
+  return (
+    <BottomSheet label={`${c.name} の詳しく`} data-testid="detail" detent={sheet.detent} onDetent={sheet.onDetent} bottom={sheet.bottom}
+      peek={Math.max(160, Math.min(peekH + 34, Math.round(innerHeight * 0.45)))} header={<div ref={headRef}>{head}</div>}>
+      {rest}
+    </BottomSheet>
   );
 }
