@@ -47,6 +47,17 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   const w = await page.evaluate(() => (window as any).kn.getElementById("stats2:TERM-expect").width());
   expect(w).toBeGreaterThan(20);
   await expect(tr.getByRole("button", { name: "正規分布" })).toHaveCount(0);   // 応用はたどらない
+  // 確かめる対象：順に読むの行はその場で開く（渡辺さん 2026-11-01「画面がうつっては順番に追えない」）。想定する故障：押すと別の概念へ移ってしまう・
+  // 概要が出ない・「開く」で移れない。見つけ方：行を押しても選んだ概念（URL）と経路の見方が変わらず、概要が出て、「開く」でフォーカスに移る
+  await tr.getByTestId("path-row-stats2:TERM-var").click();
+  await expect(tr.getByTestId("path-panel-stats2:TERM-var")).toContainText("期待値");
+  await expect(page).toHaveURL(/c=stats2%3ATERM-std/);
+  await expect(page).toHaveURL(/view=path/);
+  await tr.getByTestId("path-row-stats2:TERM-expect").click();   // 1つずつ開く
+  await expect(tr.getByTestId("path-panel-stats2:TERM-var")).toHaveCount(0);
+  await tr.getByRole("button", { name: /期待値 を開く/ }).click();
+  await expect(page).toHaveURL(/c=stats2%3ATERM-expect/);
+  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
 });
 
 test("比べる：二項分布とポアソン分布", async ({ page }) => {
