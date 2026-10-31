@@ -1114,3 +1114,22 @@ test("スマホで概念を選んでいる間は、ページが縦に送れず�
   await page.evaluate(() => scrollTo(0, 400));
   expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
 });
+
+// 確かめる対象：ブラウザの「戻る」で URL に持つ状態が全部戻る（stats2-course #142）。想定する故障：popstate で分類の絞り込み（g）・比べる相手（cmp）を
+// 戻さず、戻ったページに前の絞り込みが残る。見つけ方：絞り込み中に概念を選び（履歴に積む）、絞り込みを変えてから戻ると、前の絞り込みか。
+// cmp も同じ1行で戻すので、g で代表して確かめる
+test("戻ると、分類の絞り込みも URL のとおりに戻る", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 800 });
+  await page.goto("./?src=sample/stats2-p1.json&g=" + encodeURIComponent("確率分布"));
+  const sel = page.getByTestId("group-select");
+  await expect(sel).toHaveValue("確率分布");
+  await expect.poll(() => page.evaluate(() => (window as any).kn?.getElementById("stats2:TERM-binom").length ?? 0)).toBe(1);
+  await page.evaluate(() => { (window as any).kn.getElementById("stats2:TERM-binom").emit("tap"); });   // 概念を選ぶ（履歴に1つ積む）
+  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
+  await sel.selectOption("検定");                                                             // 絞り込みを変える（同じ履歴の中で書き換え）
+  await expect(page).toHaveURL(/g=%E6%A4%9C%E5%AE%9A/);
+  await page.goBack();
+  await expect(page).not.toHaveURL(/c=stats2/);
+  await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
+  await expect(sel).toHaveValue("確率分布");                                                  // 直す前は「検定」が残った
+});
