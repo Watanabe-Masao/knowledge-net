@@ -10,7 +10,7 @@
 .item { display: flex; align-items: baseline; gap: var(--sp-2); min-height: 40px; padding: 8px 10px; border-radius: var(--r-s); cursor: pointer; }
 .item[aria-selected="true"] { background: var(--accent-soft); }
 .name { font-weight: 600; }
-.name b, .en b { color: var(--accent); font-weight: 700; }
+.name b, .en b { color: var(--accent); font-weight: 600; }
 .en { font-size: var(--fs-small); color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stub { opacity: .55; }
 .none { padding: 10px; font-size: var(--fs-small); color: var(--ink-3); }
