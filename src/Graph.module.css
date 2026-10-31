@@ -7,3 +7,14 @@
 .topLeft { position: absolute; top: 20px; left: 8px; right: 64px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: none; }   /* 右の「収める」ボタンに重ならない。折り返す */
 .topLeft > * { pointer-events: auto; }
 .bottomLeft { position: absolute; bottom: 20px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+/* 点の札（長押し・指を乗せる）。点の上に出す。押す邪魔をしない */
+.tip { position: absolute; z-index: 4; width: 240px; transform: translateY(-100%); display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--r-l);
+  background: var(--raised); box-shadow: 0 0 0 1px var(--line-strong), 0 10px 28px var(--scrim); pointer-events: none;
+  animation: tipIn var(--dur-spring) var(--ease-spring); }
+.tip b { font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.tipMeta { font-size: var(--fs-tag); color: var(--ink-3); }
+.tipText { font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+@keyframes tipIn { from { opacity: 0; transform: translateY(calc(-100% + 4px)) scale(.97); } }
+@media (prefers-reduced-motion: reduce) { .tip { animation: none; } }
+.tipBelow { transform: none; animation-name: tipInBelow; }
+@keyframes tipInBelow { from { opacity: 0; transform: translateY(-4px) scale(.97); } }

@@ -1,5 +1,5 @@
 {
- "ref": "fbfe9fc2a86f881ef3fed5ecec92e0aed806a53e",
+ "ref": "c6514185a0bdb1b05133ce312d9a30de5acb9156",
  "files": [
   "packages/engine/src/cards.ts",
   "packages/engine/src/experiment.ts",
@@ -42,6 +42,7 @@
   "packages/ui/src/index.ts",
   "packages/ui/src/labParts.tsx",
   "packages/ui/src/motion.ts",
+  "packages/ui/src/nudge.ts",
   "packages/ui/src/tokens.css",
   "packages/ui/tokens.json"
  ]
