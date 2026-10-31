@@ -301,8 +301,9 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
   const panel = page.getByTestId("edge-panel");
   const gist = panel.getByTestId("gist");
   await expect(gist).toContainText("散らばりが小さい");
-  const [g, d] = await Promise.all([gist.boundingBox(), panel.getByText(/二項分布は回数に上限 n があり/).boundingBox()]);
-  expect(g!.y).toBeLessThan(d!.y);
+  // 面が開く動きの途中で2つの位置を別々に測ると、ずれて逆になることがある。同じ時点の位置で比べ、落ち着くまで待つ
+  const desc = panel.getByText(/二項分布は回数に上限 n があり/);
+  await expect.poll(async () => { const [g, d] = await Promise.all([gist.boundingBox(), desc.boundingBox()]); return g && d ? d.y - (g.y + g.height) : -1; }).toBeGreaterThanOrEqual(0);
   await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["🖼 図 2", "▶ 解説", "🧪 触る"]);
   await expect(panel.getByTestId(/^figures-panel-/)).toContainText("1／2");
   await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
@@ -585,9 +586,11 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await x.getByRole("radio", { name: /来店客が買う/ }).click();
   await x.getByTestId("exp-run-1").click();
   await expect(x.getByTestId("exp-set").locator("span")).toHaveCount(10);   // 1セット＝10人
+  await expect(x.getByTestId("exp-set-before").locator("span")).toHaveCount(10);   // 前の条件も同じ数だけ起こす（#121）
   await expect(x).toContainText("人 買った");
   await x.getByTestId("exp-run-100").click();
-  await expect(x.getByTestId("exp-sets")).toHaveText("101 セット");
+  await expect(x.getByTestId("exp-sets")).toHaveText("各 101 セット");   // 前と後は同じセット数
+  expect(await x.getByTestId("exp-bar-before").count()).toBeGreaterThan(0);
   await x.getByRole("button", { name: "観察する →" }).click();
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
   await expect(x.getByTestId("exp-guess")).toHaveCount(1);   // あなたの予想の山を理論と重ねる
@@ -596,10 +599,13 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   const replay = x.getByTestId("exp-replay");
   await expect(replay.getByRole("radio")).toHaveText(["1", "3", "10", "30", "100", "全 101"]);
   await replay.getByRole("radio", { name: "1", exact: true }).click();
-  await expect(x.getByTestId("exp-replay-stat")).toContainText(/^1 セットまで：平均 \d+/);
+  await expect(x.getByTestId("exp-replay-stat")).toContainText(/^1 セットまで：前 \d+ → 後 \d+/);
+  await expect(replay.getByTestId("exp-run-line-b")).toHaveCount(1);   // 前と後の平均の線が2本
+  await expect(replay.getByTestId("exp-run-line-a")).toHaveCount(1);
   await replay.getByRole("radio", { name: "全 101" }).click();
-  const tileMean = (await x.locator("div:has(> b)", { hasText: "平均（実験）" }).locator("b").textContent())!.trim();
-  await expect(x.getByTestId("exp-replay-stat")).toContainText(`101 セットまで：平均 ${tileMean}`);
+  const [mb, ma] = (await x.getByTestId("exp-tile-exp").locator("b").textContent())!.split("→").map((t) => t.trim());
+  await expect(x.getByTestId("exp-replay-stat")).toContainText(`101 セットまで：前 ${mb} → 後 ${ma}`);
+  await expect(x.getByTestId("exp-tile-theory")).toContainText("5 → 8");   // 理論の平均 n×p：10×0.5 → 10×0.8
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.locator(".katex").first()).toContainText("10×0.8");
   // 式はこの中で確かめる：概念のページと同じ作業台を、今の条件（p＝0.8）で置く（外へ移らない）
@@ -644,12 +650,15 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   await x.getByRole("button", { name: "この予想で引いてみる" }).click();
   await x.getByTestId("exp-run-1").click();
   await expect(x.getByTestId("exp-draws").locator("span")).toHaveCount(1);
+  await expect(x.getByTestId("exp-draws-before").locator("span")).toHaveCount(1);   // 前の表からも同じ回数だけ引く（#121）
   await x.getByTestId("exp-run-100").click();
-  await expect(x.getByTestId("exp-sets")).toHaveText("101 回");
+  await expect(x.getByTestId("exp-sets")).toHaveText("各 101 回");
   await x.getByRole("button", { name: "観察する →" }).click();
   // 6 の面を3倍：期待値 (1+2+3+4+5+6×3)÷8＝4.125。表の中の値としては出ない
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
   await expect(x.getByTestId("exp-verdict")).toContainText("3.5 → 4.13");
+  await expect(x.getByTestId("exp-tile-theory")).toContainText("3.5 → 4.13");   // 前の表と変えた表の期待値
+  await expect(x.getByTestId("exp-replay").getByTestId("exp-run-line-b")).toHaveCount(1);
   await expect(x.getByTestId("exp-verdict")).toContainText("一度も出ない");
   await expect(x.getByTestId("exp-replay")).toBeVisible();
   await x.getByRole("button", { name: /理由を考える/ }).click();
