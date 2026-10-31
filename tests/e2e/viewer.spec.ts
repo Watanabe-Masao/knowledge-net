@@ -39,7 +39,7 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await expect(page.getByRole("listbox", { name: "候補" })).toBeVisible();
   await page.getByRole("option", { name: /標準化/ }).click();
   await expect(page.getByRole("listbox", { name: "候補" })).toHaveCount(0);
-  await page.getByRole("button", { name: "前提をさかのぼる" }).click();
+  await page.getByRole("radio", { name: "経路" }).click();   // 前提をさかのぼる＝見方の「経路」（学ぶ順の一覧も開く）
   const tr = page.getByTestId("trace");
   for (const n of ["期待値", "分散", "確率変数"]) await expect(tr.getByRole("button", { name: n })).toBeVisible();
   // 強調した点の枠が潰れない（線の太さの指定が点に付かない）
@@ -332,7 +332,7 @@ test("切り替えの印は選んだ項目の上に滑って重なる", async ({
 
 test("押した瞬間に少し沈み、動きを減らす設定では動かない", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
-  const btn = page.getByRole("button", { name: "前提をさかのぼる" });
+  const btn = page.getByRole("button", { name: "ほかの操作" });
   // 離すとばねで戻る（tokens 改訂4：dur-spring 0.48s・ease-bounce は linear()）。押している間は速く沈む（0.09s。:active）
   await expect(btn).toHaveCSS("transition-duration", /0\.48s/);
   await expect(btn).toHaveCSS("transition-timing-function", /linear\(/);
@@ -555,7 +555,8 @@ test("線の見方は下から開く面で、種類を隠せる", async ({ page 
 // 比べる（#42）：「ほかの概念と比べる」→ つながりのある概念から相手を選ぶ → そのまま比べる面が開く
 test("ほかの概念と比べる：相手を選ぶとすぐ比べられる", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
-  await page.getByRole("button", { name: "ほかの概念と比べる" }).click();
+  await page.getByRole("button", { name: "ほかの操作" }).click();
+  await page.getByRole("menuitem", { name: "ほかの概念と比べる" }).click();
   const pick = page.getByTestId("pick");
   await expect(pick).toContainText("二項分布 を変換すると ポアソン分布");   // どうつながるかの文つき
   await pick.getByRole("button", { name: /ポアソン分布/ }).first().click();
@@ -879,5 +880,31 @@ test("見方を切り替える：経路は前提を学ぶ順の番号で並べ�
   await page.getByRole("radio", { name: "俯瞰" }).click();
   await expect(page).toHaveURL(/view=all/);
   await expect.poll(() => page.evaluate(() => (window as any).kn.$(":selected").map((n: any) => n.id()))).toEqual(["stats2:TERM-binom"]);
+  expect(errs).toEqual([]);
+});
+
+// 詳しく（stats2-course #42 PR 3）：学ぶ行動（実験してみる が主、問題・単元は中立）と、使うことの少ない操作は「…」に
+test("詳しく：学ぶ行動のボタンと「…」のメニュー", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  const det = page.getByTestId("detail");
+  await expect(det).toContainText("確率分布・U14 U15 U19");
+  const acts = det.getByTestId("actions");
+  await expect(acts.getByRole("button", { name: "実験してみる" })).toBeVisible();
+  await expect(acts.getByRole("link", { name: /問題を解く\s*17/ })).toHaveAttribute("href", /notion\.com/);
+  await expect(acts.getByRole("link", { name: /単元で読む\s*U14/ })).toBeVisible();
+  for (const name of ["実験してみる"]) expect((await acts.getByRole("button", { name }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  // 前提をさかのぼるボタンは置かない（見方の「経路」と同じ機能を2か所に置かない）
+  await expect(det.getByRole("button", { name: "前提をさかのぼる" })).toHaveCount(0);
+  // 「…」：開くとメニュー、外を押すと閉じる
+  await det.getByRole("button", { name: "ほかの操作" }).click();
+  await expect(page.getByRole("menu")).toBeVisible();
+  await expect(page.getByRole("menuitem")).toHaveCount(2);
+  await page.mouse.click(10, 10);
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  // 実験してみる で実験室へ
+  await acts.getByRole("button", { name: "実験してみる" }).click();
+  await expect(page).toHaveURL(/x=stats2/);
   expect(errs).toEqual([]);
 });

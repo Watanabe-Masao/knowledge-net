@@ -182,7 +182,7 @@ export default function App() {
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
       {concept ? (
         <div className={st.views}>
-          <Segmented label="見方" value={view} onChange={(v) => { if (v) { setView(v as View); if (v !== "path" && modal === "trace") setModal(null); } }} items={[
+          <Segmented label="見方" value={view} onChange={(v) => { if (v) { setView(v as View); if (v === "path") setModal("trace"); else if (modal === "trace") setModal(null); } }} items={[
             { value: "around", label: "フォーカス" }, { value: "path", label: "経路" }, { value: "all", label: "俯瞰" },
           ]} />
         </div>
@@ -204,8 +204,8 @@ export default function App() {
           <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `・${hidden.size} 種類を隠す` : ""}</button>
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
-      {concept ? <Detail net={net} concept={concept} tracing={tracing} inCompare={cmp.includes(concept.id)}
-        onTrace={() => { setView(tracing ? "around" : "path"); setModal(tracing ? null : "trace"); }} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
+      {concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
+        onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">

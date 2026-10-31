@@ -1,4 +1,25 @@
-.head { display: flex; flex-direction: column; gap: var(--sp-1); }
+.head { display: flex; align-items: flex-start; gap: var(--sp-2); }
+.titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.titles h2 { margin: 2px 0 0; font-size: 21px; font-weight: 600; letter-spacing: .01em; }
+.kicker { font-size: var(--fs-tag); }
+/* 「…」：使うことの少ない操作 */
+.more { position: relative; flex: none; margin: -6px -8px 0 0; }
+.menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 8; min-width: 210px; display: grid; padding: 4px; border-radius: var(--r-l);
+  background: var(--raised); box-shadow: 0 0 0 1px var(--line-strong), 0 12px 32px var(--scrim); animation: pop var(--dur-spring) var(--ease-spring); transform-origin: top right; }
+.menu button { all: unset; box-sizing: border-box; min-height: var(--tap); padding: 0 12px; display: flex; align-items: center; border-radius: var(--r-m); font-size: var(--fs-body); color: var(--ink); cursor: pointer; }
+.menu button:active, .menu button:focus-visible { background: var(--surface-2); }
+@keyframes pop { from { opacity: 0; transform: scale(.94); } }
+/* 学ぶ行動：主の1つ（実験してみる）だけ色、ほかは中立の枠 */
+.actions { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--sp-3) 0 0; }
+.actions > * { flex: 1 1 0; white-space: nowrap; }
+.actions > button:first-child { flex-basis: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; font-size: 15px; }
+.act { min-height: var(--tap); display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: var(--r-m); border: 1px solid var(--line-strong);
+  color: var(--ink); text-decoration: none; font-size: 14px; font-weight: 500; transition: transform var(--dur-spring) var(--ease-bounce); }
+.act span { color: var(--ink-3); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.act:active { transform: scale(var(--press-scale)); transition-duration: var(--dur-press); }
+.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.idLine { margin-top: var(--sp-3); font-size: var(--fs-tag); }
+@media (prefers-reduced-motion: reduce) { .menu { animation: none; } .act { transition: none; } }
 .relations > article { background: var(--bg); }
 .misconceptions { list-style: none; padding: 0; display: flex; flex-direction: column; gap: var(--sp-2); }
 .wrong { color: var(--ink); font-weight: 600; }

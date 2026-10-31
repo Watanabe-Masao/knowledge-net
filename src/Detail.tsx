@@ -1,7 +1,7 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badges, Media, relationParts } from "./Relation";
-import { Button, Card, Disclosure, Formula, Muted, Row, Segmented, Workspace } from "@math-lab/ui";
+import { Button, Card, Disclosure, Formula, Muted, Segmented, Workspace } from "@math-lab/ui";
 import st from "./Detail.module.css";
 import { KINDS, MODES, PREMISES, around, experimentsFor, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
 
@@ -21,8 +21,8 @@ export function sentence(net: Network, r: Relation): string {
 }
 
 type Props = {
-  net: Network; concept: Concept; tracing: boolean; inCompare: boolean;
-  onTrace: () => void; onCompare: () => void; onSelect: (id: string) => void;
+  net: Network; concept: Concept; inCompare: boolean;
+  onCompare: () => void; onSelect: (id: string) => void;
   /** つながりの行を押す（線を押したのと同じ。下からシートが開く） */
   onEdge: (id: string) => void; edgeSel?: string | null;
   /** 実験室を開く */
@@ -31,10 +31,36 @@ type Props = {
 
 type Tab = "main" | "rel" | "more";
 
-export default function Detail({ net, concept: c, tracing, inCompare, onTrace, onCompare, onSelect, onEdge, edgeSel, onExperiment }: Props) {
+/** 使うことの少ない操作（比べる・共有）をまとめる「…」（CLAUDE.md「画面の決まり」：出しておく印は絞る） */
+function MoreMenu({ items }: { items: { label: string; onClick: () => void; pressed?: boolean }[] }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const off = (e: Event) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    addEventListener("pointerdown", off); addEventListener("keydown", esc);
+    return () => { removeEventListener("pointerdown", off); removeEventListener("keydown", esc); };
+  }, [open]);
+  return (
+    <div className={st.more} ref={box}>
+      <Button variant="quiet" icon aria-label="ほかの操作" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+      </Button>
+      {open && <div className={st.menu} role="menu">
+        {items.map((it) => <button key={it.label} type="button" role="menuitem" aria-pressed={it.pressed} onClick={() => { setOpen(false); it.onClick(); }}>{it.label}</button>)}
+      </div>}
+    </div>
+  );
+}
+
+const copyUrl = () => { try { void navigator.clipboard?.writeText(location.href); } catch { /* コピーできない環境 */ } };
+
+export default function Detail({ net, concept: c, inCompare, onCompare, onSelect, onEdge, edgeSel, onExperiment }: Props) {
   const exps = experimentsFor(net, c.id);
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
+  const unit = units[0];
   // 縦に長くならないよう、定義の下を「動かす（または説明）｜つながり｜くわしく」に分けて1つだけ出す
   const [tab, setTab] = useState<Tab>("main");
   // くわしく：項目ごとに開閉する（見出しだけ並べ、読みたい所だけ開く）。作業台のない概念では「説明」に全部開いて出す
@@ -64,15 +90,27 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
   return (
     <Card data-testid="detail">
       <header className={st.head}>
-        <h2>{c.name}</h2>
-        <Muted>{c.en}{c.en ? "　" : ""}{c.id}・版 {c.version}{c.category ? `・${c.category}` : ""}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
-        <Row>
-          <Button onClick={onTrace} pressed={tracing}>{tracing ? "前提の表示をやめる" : "前提をさかのぼる"}</Button>
-          <Button onClick={onCompare} pressed={inCompare}>ほかの概念と比べる</Button>
-        </Row>
+        <div className={st.titles}>
+          <Muted as="div" className={st.kicker}>{[c.category, units.map((u) => `U${u!.number}`).join(" ")].filter(Boolean).join("・")}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
+          <h2>{c.name}</h2>
+          {c.en ? <Muted as="div">{c.en}</Muted> : null}
+        </div>
+        <MoreMenu items={[
+          { label: inCompare ? "比べる面を開く" : "ほかの概念と比べる", onClick: onCompare, pressed: inCompare },
+          { label: "この概念の URL をコピー", onClick: copyUrl },
+        ]} />
       </header>
       {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
       {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">まだ骨格：定義1文と分類だけ。原理・条件・例・式は、単元を進めるときに足す</p>}
+      {exps.length || unit?.url ? (
+        <div className={st.actions} data-testid="actions">
+          {exps[0] ? <Button variant="primary" onClick={() => onExperiment?.(exps[0]!.id)} data-testid={`open-${exps[0].id}`}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" /></svg>
+            実験してみる</Button> : null}
+          {unit?.url && c.problems.length ? <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">問題を解く<span>{c.problems.length}</span></a> : null}
+          {unit?.url ? <a className={st.act} href={unit.url} target="_blank" rel="noreferrer">単元で読む<span>U{unit.number}</span></a> : null}
+        </div>
+      ) : null}
       <div className={st.tabs}>
         <Segmented value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身"
           items={[
@@ -82,7 +120,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
           ]} />
       </div>
       {tab === "main" && <div className={st.pane} data-testid="tab-main">
-        {exps.map((x) => (
+        {exps.slice(1).map((x) => (
           <button key={x.id} type="button" className={st.expCard} onClick={() => onExperiment?.(x.id)} data-testid={`open-${x.id}`}>
             <span className={st.expIcon} aria-hidden="true">🧪</span>
             <span><b>実験室で試す</b><span>{x.question}</span></span>
@@ -131,6 +169,7 @@ export default function Detail({ net, concept: c, tracing, inCompare, onTrace, o
         {c.problems.length ? <><h3>確かめる問題（{c.problems.length}）</h3><p className={st.problems}>{c.problems.map((q) => <span key={q}>{q.replace(/^[\w-]+:Q-/, "")}</span>)}</p></> : null}
         {c.sources?.length ? <Muted>出典：{c.sources.map((s) => (s.url ? <a key={s.title} href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title))}{c.sources[0].locator ? `（${c.sources[0].locator}）` : ""}</Muted> : null}
         {!c.workspace && !units.length && !c.problems.length && !c.sources?.length ? <Muted>教材・問題・出典はまだない。</Muted> : null}
+        <Muted as="div" className={st.idLine}>{c.id}・版 {c.version}</Muted>
       </div>}
     </Card>
   );
