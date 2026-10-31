@@ -13,43 +13,40 @@ import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type 
 import st from "./App.module.css";
 import { KINDS, MODES, around, compare, experimentsFor, learnOrder, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
-import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, readTab, type Focus, type Tab } from "./Shell";
+import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
+import { fromUrl, toUrl, type Tab, type View } from "./urlState";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
 const SRC = params.get("src");
 
-type View = "around" | "path" | "all";   // フォーカス（まわり）・経路（前提をさかのぼる）・俯瞰（全体）
-const readView = (p: URLSearchParams): View => (p.get("view") === "all" ? "all" : p.get("view") === "path" || (p.get("trace") === "1" && p.get("c")) ? "path" : p.get("view") === "around" || p.get("c") ? "around" : "all");
-
 function useUrlState() {
-  const [sel, setSelRaw] = useState<string | null>(params.get("c"));
-  const [view, setView] = useState<View>(readView(params));
-  const [cmp, setCmp] = useState<string[]>((params.get("cmp") ?? "").split(",").filter(Boolean));
-  const [exp, setExpRaw] = useState<string | null>(params.get("x"));
+  // 保存と復元は urlState.ts の1つの定義から（#142）
+  const init = fromUrl(params);
+  const [sel, setSelRaw] = useState<string | null>(init.sel);
+  const [view, setView] = useState<View>(init.view);
+  const [cmp, setCmp] = useState<string[]>(init.cmp);
+  const [exp, setExpRaw] = useState<string | null>(init.exp);
   // 実験室の「比べる」の記録カード（?cards=。条件と種だけなので、開けば同じ結果に戻る。stats2-course #122）
-  const [cards, setCards] = useState<string | null>(params.get("cards"));
+  const [cards, setCards] = useState<string | null>(init.cards);
   // 全体図を分類で絞る（?g=分類。#105 の骨格の分類）
-  const [group, setGroup] = useState<string | null>(params.get("g"));
+  const [group, setGroup] = useState<string | null>(init.group);
   // タブ（?t=。探索は付けない。実験室を開いているときは実験室）
-  const [tab, setTabRaw] = useState<Tab>(readTab(params));
+  const [tab, setTabRaw] = useState<Tab>(init.tab);
   const push = useRef(false);
   const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); setCards(null); setTabRaw("explore"); };
   const setExp = (id: string | null) => { push.current = true; setExpRaw(id); setCards(null); if (id) setTabRaw("lab"); };
   const setTab = (t: Tab) => { push.current = true; setTabRaw(t); setExpRaw(null); setCards(null); scrollTo(0, 0); };
   useEffect(() => {
-    const p = new URLSearchParams(location.search);
-    const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
-    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", null); set("x", exp); set("cards", exp ? cards : null); set("g", group); set("t", tab === "explore" || exp ? null : tab);
+    const p = toUrl({ sel, view, cmp, exp, cards, group, tab }, new URLSearchParams(location.search));
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
     push.current = false;
   }, [sel, view, cmp, exp, cards, group, tab]);
-  useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
-    // URL に持つものは全部戻す（分類の絞り込み g・比べる相手 cmp も。戻らないと前の絞り込みが残る。stats2-course #142）
-    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); setTabRaw(readTab(p));
-      setGroup(p.get("g")); setCmp((p.get("cmp") ?? "").split(",").filter(Boolean)); };
+  useEffect(() => {   // 「戻る」：URL から全部の項目を、書き込みと同じ定義で戻す
+    const back = () => { const s = fromUrl(new URLSearchParams(location.search));
+      setSelRaw(s.sel); setView(s.view); setCmp(s.cmp); setExpRaw(s.exp); setCards(s.cards); setGroup(s.group); setTabRaw(s.tab); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
