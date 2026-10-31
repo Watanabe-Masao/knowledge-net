@@ -995,3 +995,27 @@ test("動きを減らす設定でも、積み上がりの再生は1セット目�
   await expect(stat).toContainText(/^10 セットまで/);
   await expect(stat).toContainText(/^100 セットまで/, { timeout: 10000 });
 });
+
+// 確かめる対象：地図の全画面（渡辺さん 2026-10-31）。想定する故障：全画面にしても枠の高さ（mapH の指定）が残って広がらない・下の面やタブが上に重なる・
+// 閉じても元の高さに戻らない・全画面で点を押しても何も見えない。見つけ方：390×844 で開き、地図の枠が画面いっぱいか・点を押すと札が出るか・閉じると元の高さかを測る
+test("地図を全画面で見て、点を押すと札が出て、閉じると元の枠に戻る", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-binom&view=path`);
+  const g = page.getByTestId("graph");
+  await expect.poll(async () => (await g.boundingBox())?.height ?? 0).toBeGreaterThan(150);
+  const before = (await g.boundingBox())!.height;
+  await page.getByTestId("map-full").click();
+  await expect(page.getByRole("dialog", { name: "地図（全画面）" })).toBeVisible();
+  await expect.poll(async () => (await g.boundingBox())!.height).toBeGreaterThan(800);
+  // 全画面の上には何も重ならない（下の面・タブより手前）
+  const top = await page.evaluate(() => document.elementFromPoint(195, 800)?.closest('[data-testid="graph"]') !== null);
+  expect(top).toBe(true);
+  await page.evaluate(() => (window as any).kn.getElementById("stats2:TERM-indep").emit("tap"));
+  await expect(page.getByTestId("node-tip")).toContainText("独立");
+  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);   // 全画面では選び直さない
+  await page.getByRole("button", { name: "全画面を閉じる" }).click();
+  await expect(page.getByRole("dialog", { name: "地図（全画面）" })).toHaveCount(0);
+  await expect.poll(async () => Math.round((await g.boundingBox())!.height)).toBe(Math.round(before));
+  expect(errs).toEqual([]);
+});

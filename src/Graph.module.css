@@ -3,7 +3,7 @@
   background-image: radial-gradient(var(--line) 1px, transparent 1.2px); background-size: 20px 20px; }   /* 方眼の点（実験ノート）。#42 */
 .fill { flex: 1; height: auto; min-height: 0; margin: 0; border-radius: 0; border: none; }
 .wrapFill { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-.fit { position: absolute; top: 20px; right: 8px; opacity: .92; }
+.mapTools { position: absolute; top: 20px; right: 8px; display: flex; flex-direction: column; gap: 6px; opacity: .94; }
 .topLeft { position: absolute; top: 20px; left: 8px; right: 64px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: none; }   /* 右の「収める」ボタンに重ならない。折り返す */
 .topLeft > * { pointer-events: auto; }
 .bottomLeft { position: absolute; bottom: 20px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
@@ -18,3 +18,10 @@
 @media (prefers-reduced-motion: reduce) { .tip { animation: none; } }
 .tipBelow { transform: none; animation-name: tipInBelow; }
 @keyframes tipInBelow { from { opacity: 0; transform: translateY(-4px) scale(.97); } }
+/* 地図の全画面：画面いっぱいに重ねる（ノッチ・ホームバーの分は避ける）。高さは flex で決まる（枠の高さの指定より優先） */
+.big { position: fixed; inset: 0; z-index: 60; background: var(--bg); display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); animation: bigIn var(--dur-spring) var(--ease-spring); }
+.big .graph { flex: 1; min-height: 0; margin: 0; border: none; border-radius: 0; }
+.big .mapTools { top: calc(env(safe-area-inset-top) + 12px); }
+@keyframes bigIn { from { opacity: 0; transform: scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .big { animation: none; } }

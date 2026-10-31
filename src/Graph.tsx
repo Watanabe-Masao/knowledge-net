@@ -8,6 +8,7 @@ import { type Network, type Placed } from "./data";
 import { Button } from "@math-lab/ui";
 import { iconUri } from "./icons";
 import s from "./Graph.module.css";
+import { Icon } from "./Shell";
 
 cytoscape.use(dagre);
 
@@ -89,6 +90,8 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   const around = !!positions;
   // 点の札（ツールチップ）：長押し（スマホ）・指を乗せる（マウス）で、名前・分類・定義1文を点のそばに出す。押すと選ぶのはそのまま
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [big, setBig] = useState(false);
+  const bigRef = useRef(false); bigRef.current = big;
 
   // 作り直すのは、データ・表示する種類・全体図と周辺図の切り替えのときだけ
   useEffect(() => {
@@ -179,9 +182,10 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     c.on("mouseover", "node", showTip);
     c.on("mouseout", "node", () => setTip(null));
     c.on("tapstart pan zoom", () => setTip(null));
-    c.on("tap", "node", (e) => { if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
-    c.on("tap", "edge", (e) => edge.current?.(e.target.id()));
-    c.on("tap", (e) => { if (e.target === c) select.current(null); });
+    // 全画面は地図を見る所：点を押すと札（名前・分類・定義1文）を出すだけで、選び直さない（選ぶと地図が組み替わって見失う）
+    c.on("tap", "node", (e) => { if (bigRef.current) { if (e.target.data("kind") !== "derivation") showTip(e); return; } if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
+    c.on("tap", "edge", (e) => { if (!bigRef.current) edge.current?.(e.target.id()); });
+    c.on("tap", (e) => { if (e.target === c && !bigRef.current) select.current(null); });
     // 図を指で動かすまでは、枠の大きさや文字の幅が後から決まっても全体を枠に収め直す
     // （iPhone の Notion から開くと、作った時点では枠の大きさが決まっていないことがある）
     let touched = false;
@@ -259,8 +263,20 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     }
   }, [selected, highlight, fill, edgeSel, positions, only, overview, numbers, net, hidden]);   // 図を作り直したとき（見方の切り替え）も選び直す
 
+  // 地図の全画面（渡辺さん 2026-10-31）：地図だけを画面いっぱいに。下の面・タブの上に重ね、閉じると元の枠に戻す。
+  // 開いている間も点を押すと選べる（下の面は後ろで切り替わる）。Esc でも閉じる。広さが変わったら全体を収め直す
+  useEffect(() => {
+    const c = cy.current; if (!c) return;
+    c.resize(); c.fit(undefined, padOf());
+    if (!big) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setBig(false); };
+    addEventListener("keydown", esc);
+    document.documentElement.style.overflow = "hidden";
+    return () => { removeEventListener("keydown", esc); document.documentElement.style.overflow = ""; };
+  }, [big]);   // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
-    <div className={fill ? `${s.wrap} ${s.wrapFill}` : s.wrap}>
+    <div className={fill ? `${s.wrap} ${s.wrapFill}` : big ? `${s.wrap} ${s.big}` : s.wrap} role={big ? "dialog" : undefined} aria-modal={big || undefined} aria-label={big ? "地図（全画面）" : undefined}>
       <div ref={box} className={`${s.graph}${fill ? ` ${s.fill}` : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
       {tip ? (() => {
         const g = tip.id.startsWith("group:") ? tip.id.slice(6) : null, cpt = g ? undefined : net.concepts.get(tip.id);
@@ -277,8 +293,12 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       })() : null}
       {!fill && topLeft && <div ref={tl} className={s.topLeft}>{topLeft}</div>}
       {!fill && bottomLeft && <div ref={bl} className={s.bottomLeft}>{bottomLeft}</div>}
-      {!fill && <Button icon className={s.fit} aria-label="図を枠に収める" title="図を枠に収める"
-        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: padOf() } }, { duration: reduced() ? 0 : 320, easing: "ease-in-out-cubic" })}>⤢</Button>}
+      {!fill && <div className={s.mapTools}>
+        <Button icon aria-label={big ? "全画面を閉じる" : "地図を全画面で見る"} title={big ? "全画面を閉じる" : "地図を全画面で見る"} aria-pressed={big} onClick={() => setBig(!big)} data-testid="map-full">
+          <Icon name={big ? "shrink" : "full"} size={20} /></Button>
+        <Button icon aria-label="図を枠に収める" title="図を枠に収める"
+          onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: padOf() } }, { duration: reduced() ? 0 : 320, easing: "ease-in-out-cubic" })}><Icon name="fit" size={20} /></Button>
+      </div>}
     </div>
   );
 }
