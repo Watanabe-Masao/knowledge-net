@@ -132,7 +132,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         { selector: ".dim", style: { opacity: 0.18 } },
         { selector: "node.outer", style: { opacity: 0.5 } },
         { selector: 'node[kind = "group"]', style: { "font-size": 14, "font-weight": "bold", "text-max-width": "120px", padding: "12px", "border-color": edgeLine, "border-width": 1 } },
-        { selector: 'edge[type = "group"]', style: { width: "mapData(w, 1, 30, 1.5, 9)", "line-color": mute, "target-arrow-color": mute, opacity: 0.7 } },   // 分類で絞ったとき、分類の外からつながる点
+        { selector: 'edge[type = "group"]', style: { width: "mapData(w, 1, 30, 1, 6)", "line-color": mute, "target-arrow-color": mute, opacity: 0.45, "curve-style": "unbundled-bezier", "control-point-distances": 18 } },   // 分類で絞ったとき、分類の外からつながる点
         { selector: "edge.faint", style: { opacity: 0.3, width: 1.5 } },
         { selector: "node.hl", style: { "border-color": accent, "border-width": 3 } },
         { selector: "edge.hl", style: { "line-color": accent, "target-arrow-color": accent, width: 3 } },   // width は線の太さ（点に付けると枠の幅になる）
@@ -141,6 +141,9 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       ],
       layout: positions
         ? { name: "preset", padding: 20 } as cytoscape.LayoutOptions
+        // 分類の地図：3列の格子に、データの並び（教材の分類の順＝学ぶ順）で置く。スマホの幅で字が読める大きさに収まる（#42）
+        : overview
+        ? { name: "preset", padding: 20, positions: (n: cytoscape.NodeSingular) => { const i = overview.nodes.findIndex((g) => `group:${g.id}` === n.id()); return { x: (i % 3) * 170, y: Math.floor(i / 3) * 120 }; } } as cytoscape.LayoutOptions
         // 段に分けて並べる（dagre）。線が別の点の上を通りにくく、矢印の向きが上から下にそろう
         : { name: "dagre", rankDir: "TB", nodeSep: 24, rankSep: 56, edgeSep: 8, padding: 16 } as cytoscape.LayoutOptions,
     });
