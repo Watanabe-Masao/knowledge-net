@@ -1029,6 +1029,10 @@ test("点を長押しすると、名前・分類・定義1文の札が出る", a
   await expect(tip).toContainText("二項分布");
   await expect(tip).toContainText("確率分布");
   await expect(tip).toContainText("成功確率");
+  // 長押しは見るだけ：離したあとの tap で選ばない（URL に概念が付かない）
+  await page.evaluate(() => { (window as any).kn.getElementById("stats2:TERM-binom").emit("tap"); });
+  await expect(page).not.toHaveURL(/c=stats2/);
+  await expect(tip).toContainText("二項分布");
   await page.evaluate(() => { (window as any).kn.emit("pan"); });
   await expect(tip).toHaveCount(0);
   expect(errs).toEqual([]);
