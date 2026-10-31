@@ -132,6 +132,27 @@ export function trace(net: Network, id: string): { order: string[]; steps: Step[
   return { order, steps };
 }
 
+/**
+ * 学ぶ順（経路の番号と「順に読む」の並び）：前提をたどった点を、どの前提よりも後になるように並べる。
+ * 深さ＝いちばん遠い前提からの段の数（長い道で数える）。同じ段は、たどった順（近い前提が後）のまま。
+ * 導出の点（via が導出）は、前提 → 導出 → 結論 を1段とみなして飛ばす。
+ */
+export function learnOrder(t: { order: string[]; steps: Step[] }): string[] {
+  const ids = new Set(t.order);
+  const pre = new Map<string, Set<string>>();
+  for (const st of t.steps) if (ids.has(st.from) && ids.has(st.to)) pre.set(st.to, new Set([...(pre.get(st.to) ?? []), st.from]));
+  const depth = new Map<string, number>();
+  const d = (x: string, seen = new Set<string>()): number => {
+    if (depth.has(x)) return depth.get(x)!;
+    if (seen.has(x)) return 0;   // 輪（データの誤り）でも止まる
+    seen.add(x);
+    const v = Math.max(0, ...[...(pre.get(x) ?? [])].map((y) => d(y, seen) + 1));
+    depth.set(x, v); return v;
+  };
+  const back = [...t.order].reverse();
+  return back.map((x, i) => ({ x, i, k: d(x) })).sort((a, b) => a.k - b.k || a.i - b.i).map((o) => o.x);
+}
+
 /** 概念か線（関係・導出）につながる実験室 */
 export function experimentsFor(net: Network, id: string): ExperimentData[] {
   return [...net.experiments.values()].filter((x) => x.links.concepts?.includes(id) || x.links.relations?.includes(id));

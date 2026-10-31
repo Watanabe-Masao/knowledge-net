@@ -976,3 +976,22 @@ test("点を長押しすると、名前・分類・定義1文の札が出る", a
   await expect(tip).toHaveCount(0);
   expect(errs).toEqual([]);
 });
+
+// 確かめる対象：動きを減らす設定（iPhone の「視差効果を減らす」）での積み上がりの再生（math-lab #28）。
+// 想定する故障：再生の間隔が 0 になり、押すと一気に最後（全 N）へ飛ぶ（渡辺さん 2026-10-31）。見つけ方：reduce で再生し、3 → 10 → 100 セットと順に出るか。
+// 既存の再生のテストは動きを減らさない設定だけを見ていた。直す前のコードで落ちることを確かめた
+test("動きを減らす設定でも、積み上がりの再生は1セット目から順に進む", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  const x = page.getByTestId("experiment");
+  await x.getByRole("radio", { name: "右へ動く" }).click();
+  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByTestId("exp-run-100").click();
+  await x.getByRole("button", { name: "観察する →" }).click();
+  const stat = x.getByTestId("exp-replay-stat");
+  await x.getByRole("button", { name: "1セット目から再生" }).click();
+  await expect(stat).toContainText(/^3 セットまで/);
+  await expect(stat).toContainText(/^10 セットまで/);
+  await expect(stat).toContainText(/^100 セットまで/, { timeout: 10000 });
+});

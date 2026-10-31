@@ -150,7 +150,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         ? { name: "preset", padding: 20, positions: (n: cytoscape.NodeSingular) => { const i = overview.nodes.findIndex((g) => `group:${g.id}` === n.id()); return { x: (i % 3) * 170, y: Math.floor(i / 3) * 120 }; } } as cytoscape.LayoutOptions
         // 段に分けて並べる（dagre）。線が別の点の上を通りにくく、矢印の向きが上から下にそろう
         // 縦長の枠（スマホ）では、段を横に並べる（LR）。横に広がって字が小さくなるのを防ぐ（渡辺さん 2026-10-31：iPhone で見にくい）
-        : { name: "dagre", rankDir: box.current.clientHeight > box.current.clientWidth * 1.1 || (height ?? 0) > box.current.clientWidth ? "LR" : "TB", nodeSep: 16, rankSep: 56, edgeSep: 8, padding: 16 } as cytoscape.LayoutOptions,
+        : { name: "dagre", rankDir: !numbers && (box.current.clientHeight > box.current.clientWidth * 1.1 || (height ?? 0) > box.current.clientWidth) ? "LR" : "TB", nodeSep: 16, rankSep: 56, edgeSep: 8, padding: 16 } as cytoscape.LayoutOptions,
     });
     if (!fill && box.current) {   // 点の数と並びに合わせて図の高さを決める（余白を残しすぎない）
       const bb = c.elements().boundingBox({});

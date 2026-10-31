@@ -7,10 +7,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
+import PathList from "./PathList";
 import Search from "./Search";
 import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
 import st from "./App.module.css";
-import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
+import { KINDS, MODES, around, compare, learnOrder, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, readTab, type Tab } from "./Shell";
 
@@ -93,7 +94,7 @@ export default function App() {
   }, [narrow, sel, tab, exp, peek, tabH, detent, view, searchOpen]);
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
-  const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
+  const [modal, setModalRaw] = useState<"kinds" | "compare" | "pick" | null>(null);
   const setEdgeSel = (id: string | null) => { setEdgeRaw(id); if (id) setModalRaw(null); };
   const setModal = (m: typeof modal) => { setModalRaw(m); if (m) setEdgeRaw(null); };
   useEffect(() => { setEdgeRaw(null); setDetent("peek"); }, [sel]);   // 別の概念へ進んだら、線の説明は閉じ、詳しくは「少し」に
@@ -126,8 +127,9 @@ export default function App() {
     if (!tr || !sel || !net) return undefined;
     const only = new Set<string>([sel, ...tr.order]);
     for (const st of tr.steps) if (!net.relations.some((x) => x.from === st.from && x.to === st.to && x.type === st.via)) only.add(st.via);   // 導出の点
-    const numbers = new Map([...tr.order].reverse().map((id, i) => [id, i + 1] as const));
-    return { only, numbers };
+    const seq = learnOrder(tr);
+    const numbers = new Map(seq.map((id, i) => [id, i + 1] as const));
+    return { only, numbers, seq };
   }, [tr, sel, net]);
   const highlight = useMemo(() => new Set<string>(), []);
   // 分類（データに出てくる順）と、絞ったときに出す点：分類の概念 ＋ 1本の線でつながる点（薄く）＋ その間の導出
@@ -216,13 +218,14 @@ export default function App() {
         {!compact || searchOpen ? <Search concepts={[...net.concepts.values()]} onPick={(id) => { setSearchOpen(false); setSel(id); }} /> : null}
         <Crumbs items={concept ? [
           ...(concept.category ? [{ label: concept.category, onClick: () => { setSel(null); setGroup(concept.category!); } }] : []),
-          { label: concept.name },
+          { label: concept.name, ...(path ? { onClick: () => setView("around") } : {}) },
+          ...(path ? [{ label: "前提をさかのぼる" }] : []),
         ] : eff ? [{ label: eff === "*" ? "全部の語" : eff }] : []} />
       </div>
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
       {concept ? (
         <div className={st.views} ref={aboveMap}>
-          <Segmented label="見方" value={view} onChange={(v) => { if (v) { setView(v as View); if (v === "path") setModal("trace"); else if (modal === "trace") setModal(null); } }} items={[
+          <Segmented label="見方" value={view} onChange={(v) => { if (v) setView(v as View); }} items={[
             { value: "around", label: "フォーカス" }, { value: "path", label: "経路" }, { value: "all", label: "俯瞰" },
           ]} />
         </div>
@@ -244,7 +247,9 @@ export default function App() {
           <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `・${hidden.size} 種類を隠す` : ""}</button>
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
-      {concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
+      {concept && path ? <PathList net={net} target={concept.id} seq={path.seq} onOpen={(id) => { setView("around"); setSel(id); }}
+        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} /> :
+        concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
         sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         null}
       {modal === "kinds" && (
@@ -260,12 +265,6 @@ export default function App() {
             </li>))}
           </ul>
           <Muted>変換の線：実線＝{MODES.exact}、破線＝{MODES.approximation}、点線＝{MODES.limit}。点線の枠＝まだ説明がない概念。</Muted>
-        </Sheet>
-      )}
-      {modal === "trace" && tr && concept && (
-        <Sheet label="前提をさかのぼる" title={`${concept.name} の前提`} onClose={() => setModal(null)} data-testid="trace">
-          <Muted>学ぶ順（遠い前提から）。図の番号と同じ。</Muted>
-          {tr.order.length ? <ol>{[...tr.order].reverse().map((id) => <li key={id}><Button variant="link" onClick={() => setSel(id)}>{name(net, id)}</Button></li>)}</ol> : <Muted>たどれる前提はない</Muted>}
         </Sheet>
       )}
       {modal === "pick" && cmp.length ? (() => {
