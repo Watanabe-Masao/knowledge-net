@@ -778,8 +778,8 @@ test("比べる（値の表）：URL のカードからテーマと重みを戻�
   expect(errs).toEqual([]);
 });
 
-// 骨格（#105・P1）：定義1文と分類だけの概念は点線の枠で、押すと定義1文と「まだ骨格」
-test("骨格の概念は定義1文と分類と「まだ骨格」を出し、見出しに骨格の数", async ({ page }) => {
+// 骨格（#105・P1）：定義1文と分類だけの概念は点線の枠で、押すと定義1文と「定義だけ」（画面の言葉。渡辺さん 2026-11-01）
+test("骨格の概念は定義1文と分類と「定義だけ」を出し、見出しにその数", async ({ page }) => {
   const errs = noErrors(page);
   await page.route((u) => u.pathname.endsWith("/sample/stats2-w0.json"), async (r) => {   // ページの URL（?src=…）ではなくデータの読み込みだけ
     const d = await (await r.fetch()).json();
@@ -792,18 +792,18 @@ test("骨格の概念は定義1文と分類と「まだ骨格」を出し、見�
   const det = page.getByTestId("detail");
   await expect(det).toContainText("独立に同じ分布から取った平均は");
   await expect(det).toContainText("標本分布・極限");
-  await expect(det.getByTestId("skeleton-note")).toContainText("まだ骨格");
+  await expect(det.getByTestId("skeleton-note")).toContainText("定義だけ");
   await page.setViewportSize({ width: 1024, height: 844 });   // スマホで概念を選ぶと見出しの数はしまう（地図を広く）
-  await expect(page.getByText(/（骨格 1）/)).toBeVisible();
+  await expect(page.getByText(/（定義だけ 1）/)).toBeVisible();
   expect(errs).toEqual([]);
 });
 
 // 129語の骨格（#105）：全体図を分類で絞ると、その分類の概念と、1本の線でつながる外の点（薄く）だけになる
-test("全体図を分類で絞り、骨格の概念は定義1文と「まだ骨格」を出す", async ({ page }) => {
+test("全体図を分類で絞り、骨格の概念は定義1文と「定義だけ」を出す", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2-p1.json");
-  await expect(page.getByText(/（骨格 110）/)).toBeVisible();
+  await expect(page.getByText(/（定義だけ 110）/)).toBeVisible();
   const sel = page.getByTestId("group-select");
   await expect(sel.locator("option")).toHaveCount(14);   // 分類の地図・全部の語 ＋ 12の分類
   const count = () => page.evaluate(() => (window as unknown as { kn: { nodes: () => { length: number } } }).kn.nodes().length);
@@ -1060,8 +1060,18 @@ test("地図を全画面で見て、点を押すと札が出て、閉じると�
   await page.evaluate(() => { (window as any).kn.getElementById("stats2:TERM-indep").emit("tap"); });
   await expect(page.getByTestId("node-tip")).toContainText("独立");
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);   // 全画面では選び直さない
+  // 札の「選ぶ」：その概念をフォーカスで開き、全画面から戻る（渡辺さん 2026-11-01）
+  await page.getByTestId("tip-pick").click();
+  await expect(page.getByRole("dialog", { name: "地図（全画面）" })).toHaveCount(0);
+  await expect(page).toHaveURL(/c=stats2%3ATERM-indep/);
+  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("detail").getByRole("heading", { name: "独立", exact: true })).toBeVisible();
+  // 閉じるボタンでも元の枠に戻る（高さは選んだ概念の面に合わせて決め直す）
+  await page.getByTestId("map-full").click();
+  await expect(page.getByRole("dialog", { name: "地図（全画面）" })).toBeVisible();
   await page.getByRole("button", { name: "全画面を閉じる" }).click();
   await expect(page.getByRole("dialog", { name: "地図（全画面）" })).toHaveCount(0);
-  await expect.poll(async () => Math.round((await g.boundingBox())!.height)).toBe(Math.round(before));
+  await expect.poll(async () => (await g.boundingBox())!.height).toBeLessThan(700);
+  void before;
   expect(errs).toEqual([]);
 });

@@ -6,7 +6,8 @@ import { BottomSheet, Card, type Detent } from "@math-lab/ui";
 import type { Network } from "./data";
 import st from "./PathList.module.css";
 
-const STATUS: Record<string, string> = { filled: "説明あり", skeleton: "骨格", stub: "まだ" };
+// 画面の言葉（渡辺さん 2026-11-01「骨格の意味が伝わりにくい」）：データの状態 skeleton は「定義だけ」と出す
+const STATUS: Record<string, string> = { filled: "説明あり", skeleton: "定義だけ", stub: "まだ" };
 
 type Props = {
   net: Network; target: string; seq: string[];

@@ -217,7 +217,7 @@ export default function App() {
   return (
     <main className={`${st.app} ${st.withTabs}${narrow && concept ? ` ${st.withDetailSheet}` : ""}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <div className={st.top}>
-        <Header title="知識ネットワーク" sub={<>{sub}{compact ? null : <>　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（骨格 ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>}</>}>
+        <Header title="知識ネットワーク" sub={<>{sub}{compact ? null : <>　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（定義だけ ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>}</>}>
           {compact ? <Button variant="quiet" icon aria-label="探す" aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Icon name="search" size={20} /></Button> : null}
         </Header>
         {!compact || searchOpen ? <Search concepts={[...net.concepts.values()]} onPick={(id) => { setSearchOpen(false); setSel(id); }} /> : null}
@@ -235,7 +235,7 @@ export default function App() {
           ]} />
         </div>
       ) : null}
-      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers} height={mapH} recenter={recenter}
+      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers} height={mapH} recenter={recenter} onFocus={(id) => { setView("around"); setSel(id); }}
         onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
         only={positions ? undefined : path ? path.only : grouped.only} outer={positions || path ? undefined : grouped.outer}
         overview={positions || path ? undefined : overview}
@@ -269,7 +269,7 @@ export default function App() {
               <Muted as="div">{k.definition}</Muted>
             </li>))}
           </ul>
-          <Muted>変換の線：実線＝{MODES.exact}、破線＝{MODES.approximation}、点線＝{MODES.limit}。点線の枠＝まだ説明がない概念。</Muted>
+          <Muted>変換の線：実線＝{MODES.exact}、破線＝{MODES.approximation}、点線＝{MODES.limit}。点線の枠＝定義だけの概念（説明はこれから）。</Muted>
         </Sheet>
       )}
       {modal === "pick" && cmp.length ? (() => {

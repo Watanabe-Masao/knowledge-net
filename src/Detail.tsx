@@ -121,7 +121,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         <div ref={leadRef}>
           {c.en ? <Muted as="div" className={st.en}>{c.en}</Muted> : null}
           {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
-          {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">まだ骨格：定義1文と分類だけ。原理・条件・例・式は、単元を進めるときに足す</p>}
+          {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">定義だけ：今は定義1文と分類まで。原理・条件・例・式は、単元を進めるときに足す</p>}
         </div>
         <Media figures={c.figures} labs={c.labs} context="concept" open={!c.workspace} />
         {c.principle && <section><h3>原理</h3><p>{c.principle}</p></section>}
