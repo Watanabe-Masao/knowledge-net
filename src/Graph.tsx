@@ -75,6 +75,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         { selector: "node", style: { label: "data(label)", "font-size": around ? 15 : 13, color: ink, "text-valign": "center", "text-halign": "center",
           "text-wrap": "wrap", "text-max-width": around ? "110px" : "96px", "background-color": bg, "border-width": 2, "border-color": ink,
           shape: "round-rectangle", width: "label", height: "label", padding: "8px" } },
+        { selector: 'node[kind = "skeleton"]', style: { "border-style": "dashed" } },   // 骨格：定義1文と分類だけ（点線の枠。文字はふつう）
         { selector: 'node[kind = "stub"]', style: { "border-style": "dashed", "border-color": mute, color: mute } },
         { selector: 'node[kind = "missing"]', style: { "border-style": "dotted", "border-color": mute, color: mute, "font-size": 10 } },
         { selector: 'node[kind = "derivation"]', style: { shape: "diamond", width: 34, height: 34, padding: "0px", "font-size": 9, "border-color": css("--k-der") } },

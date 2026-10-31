@@ -23,7 +23,8 @@ export type LabRef = { id: string; preset?: string; purpose?: string; title?: st
 export type FigRef = { id: string; url: string; caption?: string };
 export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode; parts?: { path: number[]; name: string; meaning: string }[] };
 export type Concept = {
-  id: string; name: string; en?: string; status: "filled" | "stub"; version: number;
+  id: string; name: string; en?: string; status: "filled" | "skeleton" | "stub"; version: number;
+  /** 定義1文と分類（骨格の段から。#105） */ short?: string; category?: string;
   definition?: string; principle?: string; formulas?: Formula[];
   /** 式の作業台（#110） */ workspace?: { formula: number; vary: string[]; over: string; mean?: number };
   conditions?: { math: string[]; data?: string[] };

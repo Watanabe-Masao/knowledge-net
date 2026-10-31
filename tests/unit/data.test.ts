@@ -130,6 +130,16 @@ describe("数理ラボの参照と型の改訂", () => {
     f.experiments.find((x: { model: string }) => x.model === "table").model = "poisson";
     expect(schemaErrors(f).length).toBeGreaterThan(0);
   });
+  it("骨格（改訂11）：定義1文と分類があれば合い、どちらかがないと止める", () => {
+    const d = JSON.parse(readFileSync("public/sample/stats2-w0.json", "utf8"));
+    const c = d.concepts.find((x: { status: string }) => x.status === "stub");
+    Object.assign(c, { status: "skeleton", short: "独立に同じ分布から取った平均は、n が大きいと正規分布に近づく", category: "標本分布・極限" });
+    expect(schemaErrors(d)).toEqual([]);
+    delete c.category;
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+    c.category = "標本分布・極限"; delete c.short;
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+  });
   it("画面より新しい改訂のデータは知らせる（表示はする）", async () => {
     const { REVISION } = await import("../../src/data");
     const d = sample();
