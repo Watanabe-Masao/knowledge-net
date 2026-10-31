@@ -27,31 +27,33 @@ function useUrlState() {
   const [exp, setExpRaw] = useState<string | null>(params.get("x"));
   // 実験室の「比べる」の記録カード（?cards=。条件と種だけなので、開けば同じ結果に戻る。stats2-course #122）
   const [cards, setCards] = useState<string | null>(params.get("cards"));
+  // 全体図を分類で絞る（?g=分類。#105 の骨格の分類）
+  const [group, setGroup] = useState<string | null>(params.get("g"));
   const push = useRef(false);
   const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); setCards(null); };
   const setExp = (id: string | null) => { push.current = true; setExpRaw(id); setCards(null); };
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
-    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp); set("cards", exp ? cards : null);
+    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp); set("cards", exp ? cards : null); set("g", group);
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, tracing, exp, cards]);
+  }, [sel, view, cmp, tracing, exp, cards, group]);
   useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
     const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
-  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards };
+  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup };
 }
 
 export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards } = useUrlState();
+  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup } = useUrlState();
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
   const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
@@ -86,6 +88,37 @@ export default function App() {
     }
     return ids;
   }, [tr, sel, net]);
+  // 分類（データに出てくる順）と、絞ったときに出す点：分類の概念 ＋ 1本の線でつながる点（薄く）＋ その間の導出
+  const groups = useMemo(() => (net ? [...new Set([...net.concepts.values()].map((c) => c.category).filter((x): x is string => !!x))] : []), [net]);
+  // 選んだ概念があって分類を決めていないときは、その概念の分類で絞る（全体図でも迷わないように）
+  const eff = group ?? (sel ? net?.concepts.get(sel)?.category ?? null : null);
+  const grouped = useMemo(() => {
+    if (!net || !eff) return { only: undefined, outer: undefined };
+    const core = new Set([...net.concepts.values()].filter((c) => c.category === eff).map((c) => c.id));
+    if (!core.size) return { only: undefined, outer: undefined };
+    const only = new Set(core), outer = new Set<string>();
+    for (const r of net.relations) {
+      if (core.has(r.from) && !core.has(r.to)) { only.add(r.to); outer.add(r.to); }
+      if (core.has(r.to) && !core.has(r.from)) { only.add(r.from); outer.add(r.from); }
+    }
+    for (const d of net.derivations) if ([d.conclusion, ...d.premises].some((p) => core.has(p))) { only.add(d.id); for (const p of [d.conclusion, ...d.premises]) if (!core.has(p)) { only.add(p); outer.add(p); } }
+    return { only, outer };
+  }, [net, eff]);
+  // 分類の地図（#105）：分類ごとの語の数と、分類の間の関係の本数（学ぶ順の向き）。全体図の入口
+  const overview = useMemo(() => {
+    if (!net || eff !== null || groups.length < 2) return undefined;
+    const cat = (id: string) => net.concepts.get(id)?.category;
+    const nodes = groups.map((g) => ({ id: g, label: `${g}\n${[...net.concepts.values()].filter((c) => c.category === g).length}語` }));
+    const w = new Map<string, number>();
+    for (const r of net.relations) { const a = cat(r.from), b = cat(r.to); if (a && b && a !== b) w.set(`${a}>${b}`, (w.get(`${a}>${b}`) ?? 0) + 1); }
+    // 行き来のある2つの分類は、本数の多い向きの1本にまとめる（線が絡まないように）
+    const edges: { id: string; source: string; target: string; w: number }[] = [];
+    for (const [k, n] of w) {
+      const [a, b] = k.split(">") as [string, string], back = w.get(`${b}>${a}`) ?? 0;
+      if (n > back || (n === back && a < b)) edges.push({ id: `ge:${k}`, source: a, target: b, w: n + back });
+    }
+    return { nodes, edges };
+  }, [net, eff, groups]);
   const positions = useMemo(() => (net && sel && (view === "around" || EMBED) && net.concepts.has(sel) ? neighborhood(net, sel) : undefined), [net, sel, view]);
   if (!net) return <main className={st.app}><Muted>読み込み中…</Muted>{errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}</main>;
   const concept = sel ? net.concepts.get(sel) : undefined;
@@ -132,13 +165,24 @@ export default function App() {
       </header>
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
       <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions}
-        onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel}
-        topLeft={sel ? (
-          <div className={st.mode} role="group" aria-label="表示">
-            <button type="button" aria-pressed={view === "around"} onClick={() => setView("around")}>まわり</button>
-            <button type="button" aria-pressed={view === "all"} onClick={() => setView("all")}>全体</button>
-          </div>
-        ) : null}
+        onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
+        only={positions ? undefined : grouped.only} outer={positions ? undefined : grouped.outer}
+        overview={positions ? undefined : overview}
+        topLeft={<>
+          {sel ? (
+            <div className={st.mode} role="group" aria-label="表示">
+              <button type="button" aria-pressed={view === "around"} onClick={() => setView("around")}>まわり</button>
+              <button type="button" aria-pressed={view === "all"} onClick={() => setView("all")}>全体</button>
+            </div>
+          ) : null}
+          {!positions && groups.length > 1 ? (
+            <select className={st.groupSel} value={eff ?? ""} onChange={(e) => setGroup(e.target.value || null)} aria-label="分類で絞る" data-testid="group-select">
+              <option value="">分類の地図</option>
+              <option value="*">全部の語（{[...net.concepts.values()].length}）</option>
+              {groups.map((g) => <option key={g} value={g}>{g}（{[...net.concepts.values()].filter((c) => c.category === g).length}）</option>)}
+            </select>
+          ) : null}
+        </>}
         bottomLeft={<>
           <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `・${hidden.size} 種類を隠す` : ""}</button>
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}

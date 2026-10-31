@@ -26,6 +26,10 @@ type Props = {
   fill?: boolean;                // 埋め込み：枠いっぱい（高さを自動で決めない）
   /** 図の中に重ねる小さな操作（左上：まわり／全体、左下：線の見方など） */
   topLeft?: React.ReactNode; bottomLeft?: React.ReactNode;
+  /** 全体図をこの点だけにする（分類で絞る。#105）。outer はそのうち分類の外のつながる点（薄く出す） */
+  only?: Set<string>; outer?: Set<string>;
+  /** 分類の地図（#105）：点＝分類（語の数）、線＝分類の間の関係の本数。押すと onSelect に "group:分類" */
+  overview?: { nodes: { id: string; label: string }[]; edges: { id: string; source: string; target: string; w: number }[] };
 };
 
 function css(name: string): string {
@@ -53,7 +57,7 @@ export function elements(net: Network, hidden: Set<string>, keep?: Set<string>):
   return els;
 }
 
-export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft }: Props) {
+export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const cy = useRef<Core | null>(null);
   const select = useRef(onSelect);
@@ -66,10 +70,13 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   useEffect(() => {
     if (!box.current) return;
     const ink = css("--ink"), mute = css("--mute"), bg = css("--card"), accent = css("--accent");
-    const keep = positions ? new Set(positions.keys()) : undefined;
+    const keep = positions ? new Set(positions.keys()) : only;
     const c = cytoscape({
       container: box.current,
-      elements: elements(net, hidden, keep).map((e) => (positions && !e.data.source ? { ...e, position: { ...(positions.get(e.data.id!) ?? { x: 0, y: 0 }) } } : e)),
+      elements: overview
+        ? [...overview.nodes.map((n) => ({ data: { id: `group:${n.id}`, label: n.label, kind: "group" } })),
+           ...overview.edges.map((e) => ({ data: { id: e.id, source: `group:${e.source}`, target: `group:${e.target}`, type: "group", w: e.w } }))]
+        : elements(net, hidden, keep).map((e) => (positions && !e.data.source ? { ...e, position: { ...(positions.get(e.data.id!) ?? { x: 0, y: 0 }) } } : e)),
       minZoom: 0.3, maxZoom: around ? 1.2 : 3, wheelSensitivity: 0.3,   // 周辺図は点が少ないときに大きくなりすぎないように
       style: [
         { selector: "node", style: { label: "data(label)", "font-size": around ? 15 : 13, color: ink, "text-valign": "center", "text-halign": "center",
@@ -88,6 +95,9 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         { selector: 'edge[mode = "approximation"]', style: { "line-style": "dashed" } },
         { selector: 'edge[mode = "limit"]', style: { "line-style": "dotted" } },
         { selector: ".dim", style: { opacity: 0.18 } },
+        { selector: "node.outer", style: { opacity: 0.5 } },
+        { selector: 'node[kind = "group"]', style: { "font-size": 15, "font-weight": "bold", "text-max-width": "120px", padding: "12px", "border-color": accent, "border-width": 2 } },
+        { selector: 'edge[type = "group"]', style: { width: "mapData(w, 1, 30, 1.5, 9)", "line-color": mute, "target-arrow-color": mute, opacity: 0.7 } },   // 分類で絞ったとき、分類の外からつながる点
         { selector: "edge.faint", style: { opacity: 0.3, width: 1.5 } },
         { selector: "node.hl", style: { "border-color": accent, "border-width": 3 } },
         { selector: "edge.hl", style: { "line-color": accent, "target-arrow-color": accent, width: 3 } },   // width は線の太さ（点に付けると枠の幅になる）
@@ -106,6 +116,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       box.current.style.height = `${Math.round(h)}px`;
       c.resize();
     }
+    if (outer) c.nodes().filter((n) => outer.has(n.id())).addClass("outer");
     c.on("tap", "node", (e) => { if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
     c.on("tap", "edge", (e) => edge.current?.(e.target.id()));
     c.on("tap", (e) => { if (e.target === c) select.current(null); });
@@ -113,11 +124,12 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     // （iPhone の Notion から開くと、作った時点では枠の大きさが決まっていないことがある）
     let touched = false;
     c.on("tapstart", () => { touched = true; });
-    const refit = () => { if (!touched && box.current) { c.resize(); c.fit(undefined, 20); } };
+    const refit = () => { if (!touched && box.current) { c.resize(); c.fit(undefined, overview ? 56 : 20); } };
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(refit) : null;
     ro?.observe(box.current);
     document.fonts?.ready.then(refit);
-    c.fit(undefined, 20);   // 最初は全体が見えるように
+    const pad = overview ? 56 : 20;   // 分類の地図は左上の選ぶ欄に隠れないよう余白を広く
+    c.fit(undefined, pad);   // 最初は全体が見えるように
     // 周辺図（位置を指定して並べたとき）は、最初に線が描かれないことがある（Cytoscape 3.34）。線の見た目を一度変えて戻し、描き直させる
     const redraw = () => c.edges().style("arrow-scale", 0.91).removeStyle("arrow-scale");
     redraw();
@@ -128,7 +140,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     return () => { ro?.disconnect(); c.destroy(); };
     // positions の変化は下の effect で動かす（作り直さない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [net, hidden, fill, around]);
+  }, [net, hidden, fill, around, only, outer, overview]);
 
   // 周辺図で中心が変わったとき：消える点を外し、新しい点を進んだ先の点の位置から出し、全体を新しい位置へ動かす
   useEffect(() => {
