@@ -13,7 +13,7 @@ export const TABS: { id: Tab; label: string }[] = [
 export const readTab = (p: URLSearchParams): Tab => (p.get("x") ? "lab" : (TABS.find((t) => t.id === p.get("t"))?.id ?? "explore"));
 
 /** 線で描く小さな印（絵文字は使わない） */
-export function Icon({ name, size = 22 }: { name: Tab | "search" | "chevron" | "out"; size?: number }) {
+export function Icon({ name, size = 22 }: { name: Tab | "search" | "chevron" | "out" | "full" | "shrink" | "fit"; size?: number }) {
   const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
   switch (name) {
     case "explore": return <svg {...p}><circle cx="6" cy="7" r="2.6" /><circle cx="18" cy="6" r="2.6" /><circle cx="12" cy="18" r="2.6" /><path d="M8.5 7.5l7-1M7.2 9.3l3.6 6.4M16.8 8.4l-3.6 7.3" /></svg>;
@@ -23,6 +23,9 @@ export function Icon({ name, size = 22 }: { name: Tab | "search" | "chevron" | "
     case "search": return <svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>;
     case "chevron": return <svg {...p}><path d="M9 6l6 6-6 6" /></svg>;
     case "out": return <svg {...p}><path d="M7 17L17 7M9 7h8v8" /></svg>;
+    case "full": return <svg {...p}><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>;
+    case "shrink": return <svg {...p}><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>;
+    case "fit": return <svg {...p}><rect x="4" y="4" width="16" height="16" rx="3" /><circle cx="12" cy="12" r="2.5" /></svg>;
   }
 }
 
