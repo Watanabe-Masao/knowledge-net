@@ -25,31 +25,33 @@ function useUrlState() {
   const [cmp, setCmp] = useState<string[]>((params.get("cmp") ?? "").split(",").filter(Boolean));
   const [tracing, setTracing] = useState(params.get("trace") === "1");
   const [exp, setExpRaw] = useState<string | null>(params.get("x"));
+  // 実験室の「比べる」の記録カード（?cards=。条件と種だけなので、開けば同じ結果に戻る。stats2-course #122）
+  const [cards, setCards] = useState<string | null>(params.get("cards"));
   const push = useRef(false);
-  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); };
-  const setExp = (id: string | null) => { push.current = true; setExpRaw(id); };
+  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); setCards(null); };
+  const setExp = (id: string | null) => { push.current = true; setExpRaw(id); setCards(null); };
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
-    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp);
+    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp); set("cards", exp ? cards : null);
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, tracing, exp]);
+  }, [sel, view, cmp, tracing, exp, cards]);
   useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
-    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); };
+    const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
-  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp };
+  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards };
 }
 
 export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp } = useUrlState();
+  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards } = useUrlState();
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
   const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
@@ -108,7 +110,7 @@ export default function App() {
     const formulaOf = (id?: string, i = 0) => { const f = id ? net.concepts.get(id)?.formulas?.[i] : undefined; return f ? { ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) } : undefined; };
     return (
       <main className={st.app}>
-        <Experiment def={xdef} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
+        <Experiment key={xdef.id} def={xdef} cards={cards ?? undefined} onCards={(e) => setCards(e || null)} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
           onConcept={(id) => net.concepts.has(id) && setSel(id)} conceptName={(id) => name(net, id)}
           onBack={() => (history.length > 1 ? history.back() : setExp(null))}
           definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map((f) => formulaOf(id, (net.concepts.get(id)?.formulas ?? []).indexOf(f))!)}
