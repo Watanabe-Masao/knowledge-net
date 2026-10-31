@@ -8,7 +8,7 @@ import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import Search from "./Search";
-import { Button, Card, ErrorText, Experiment, FullView, Muted, Sheet } from "@math-lab/ui";
+import { Button, Card, ErrorText, Experiment, FullView, Muted, Segmented, Sheet } from "@math-lab/ui";
 import st from "./App.module.css";
 import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
@@ -18,14 +18,13 @@ const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
 const SRC = params.get("src");
 
-type View = "around" | "all";
-const readView = (p: URLSearchParams): View => (p.get("view") === "all" ? "all" : p.get("view") === "around" || p.get("c") ? "around" : "all");
+type View = "around" | "path" | "all";   // フォーカス（まわり）・経路（前提をさかのぼる）・俯瞰（全体）
+const readView = (p: URLSearchParams): View => (p.get("view") === "all" ? "all" : p.get("view") === "path" || (p.get("trace") === "1" && p.get("c")) ? "path" : p.get("view") === "around" || p.get("c") ? "around" : "all");
 
 function useUrlState() {
   const [sel, setSelRaw] = useState<string | null>(params.get("c"));
   const [view, setView] = useState<View>(readView(params));
   const [cmp, setCmp] = useState<string[]>((params.get("cmp") ?? "").split(",").filter(Boolean));
-  const [tracing, setTracing] = useState(params.get("trace") === "1");
   const [exp, setExpRaw] = useState<string | null>(params.get("x"));
   // 実験室の「比べる」の記録カード（?cards=。条件と種だけなので、開けば同じ結果に戻る。stats2-course #122）
   const [cards, setCards] = useState<string | null>(params.get("cards"));
@@ -40,25 +39,26 @@ function useUrlState() {
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
-    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", tracing ? "1" : null); set("x", exp); set("cards", exp ? cards : null); set("g", group); set("t", tab === "explore" || exp ? null : tab);
+    set("c", sel); set("view", sel ? view : null); set("cmp", cmp.join(",") || null); set("trace", null); set("x", exp); set("cards", exp ? cards : null); set("g", group); set("t", tab === "explore" || exp ? null : tab);
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, tracing, exp, cards, group, tab]);
+  }, [sel, view, cmp, exp, cards, group, tab]);
   useEffect(() => {   // 「戻る」：URL から選んだ概念と表示を戻す
     const back = () => { const p = new URLSearchParams(location.search); setSelRaw(p.get("c")); setView(readView(p)); setExpRaw(p.get("x")); setCards(p.get("cards")); setTabRaw(readTab(p)); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
-  return { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup, tab, setTab };
+  const setViewPush = (v: View) => { push.current = true; setView(v); };
+  return { sel, setSel, view, setView: setViewPush, cmp, setCmp, exp, setExp, cards, setCards, group, setGroup, tab, setTab };
 }
 
 export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, view, setView, cmp, setCmp, tracing, setTracing, exp, setExp, cards, setCards, group, setGroup, tab, setTab } = useUrlState();
+  const { sel, setSel, view, setView, cmp, setCmp, exp, setExp, cards, setCards, group, setGroup, tab, setTab } = useUrlState();
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
   const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
@@ -82,17 +82,17 @@ export default function App() {
 
   useEffect(() => { load(SRC).then((r) => { setNet(r.net); setErrors(r.errors); }); }, []);
 
+  // 経路：選んだ概念の前提をさかのぼった点だけを、学ぶ順（遠い前提から）に番号を付けて上から並べる
+  const tracing = view === "path" && !!sel;
   const tr = useMemo(() => (net && sel && tracing ? trace(net, sel) : null), [net, sel, tracing]);
-  const highlight = useMemo(() => {
-    if (!tr || !sel) return new Set<string>();
-    const ids = new Set<string>([sel, ...tr.order]);
-    for (const s of tr.steps) {
-      const r = net!.relations.find((x) => x.from === s.from && x.to === s.to && x.type === s.via);
-      if (r) ids.add(r.id);
-      else { ids.add(s.via); ids.add(`${s.via}>${s.from}`); ids.add(`${s.via}>>`); }
-    }
-    return ids;
+  const path = useMemo(() => {
+    if (!tr || !sel || !net) return undefined;
+    const only = new Set<string>([sel, ...tr.order]);
+    for (const st of tr.steps) if (!net.relations.some((x) => x.from === st.from && x.to === st.to && x.type === st.via)) only.add(st.via);   // 導出の点
+    const numbers = new Map([...tr.order].reverse().map((id, i) => [id, i + 1] as const));
+    return { only, numbers };
   }, [tr, sel, net]);
+  const highlight = useMemo(() => new Set<string>(), []);
   // 分類（データに出てくる順）と、絞ったときに出す点：分類の概念 ＋ 1本の線でつながる点（薄く）＋ その間の導出
   const groups = useMemo(() => (net ? [...new Set([...net.concepts.values()].map((c) => c.category).filter((x): x is string => !!x))] : []), [net]);
   // 選んだ概念があって分類を決めていないときは、その概念の分類で絞る（全体図でも迷わないように）
@@ -180,18 +180,19 @@ export default function App() {
         ] : eff ? [{ label: eff === "*" ? "全部の語" : eff }] : []} />
       </div>
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
-      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions}
+      {concept ? (
+        <div className={st.views}>
+          <Segmented label="見方" value={view} onChange={(v) => { if (v) { setView(v as View); if (v !== "path" && modal === "trace") setModal(null); } }} items={[
+            { value: "around", label: "フォーカス" }, { value: "path", label: "経路" }, { value: "all", label: "俯瞰" },
+          ]} />
+        </div>
+      ) : null}
+      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers}
         onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
-        only={positions ? undefined : grouped.only} outer={positions ? undefined : grouped.outer}
-        overview={positions ? undefined : overview}
+        only={positions ? undefined : path ? path.only : grouped.only} outer={positions || path ? undefined : grouped.outer}
+        overview={positions || path ? undefined : overview}
         topLeft={<>
-          {sel ? (
-            <div className={st.mode} role="group" aria-label="表示">
-              <button type="button" aria-pressed={view === "around"} onClick={() => setView("around")}>まわり</button>
-              <button type="button" aria-pressed={view === "all"} onClick={() => setView("all")}>全体</button>
-            </div>
-          ) : null}
-          {!positions && groups.length > 1 ? (
+          {!positions && !path && groups.length > 1 ? (
             <select className={st.groupSel} value={eff ?? ""} onChange={(e) => setGroup(e.target.value || null)} aria-label="分類で絞る" data-testid="group-select">
               <option value="">分類の地図</option>
               <option value="*">全部の語（{[...net.concepts.values()].length}）</option>
@@ -204,7 +205,7 @@ export default function App() {
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
       {concept ? <Detail net={net} concept={concept} tracing={tracing} inCompare={cmp.includes(concept.id)}
-        onTrace={() => { setTracing(!tracing); setModal(tracing ? null : "trace"); }} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
+        onTrace={() => { setView(tracing ? "around" : "path"); setModal(tracing ? null : "trace"); }} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">
@@ -222,9 +223,9 @@ export default function App() {
         </Sheet>
       )}
       {modal === "trace" && tr && concept && (
-        <Sheet label="前提をさかのぼる" title={`${concept.name} の前提`} onClose={() => { setModal(null); setTracing(false); }} data-testid="trace">
-          <Muted>近い順。図では前提の道を強調している（閉じると元の表示に戻る）。</Muted>
-          {tr.order.length ? <ol>{tr.order.map((id) => <li key={id}><Button variant="link" onClick={() => setSel(id)}>{name(net, id)}</Button></li>)}</ol> : <Muted>たどれる前提はない</Muted>}
+        <Sheet label="前提をさかのぼる" title={`${concept.name} の前提`} onClose={() => setModal(null)} data-testid="trace">
+          <Muted>学ぶ順（遠い前提から）。図の番号と同じ。</Muted>
+          {tr.order.length ? <ol>{[...tr.order].reverse().map((id) => <li key={id}><Button variant="link" onClick={() => setSel(id)}>{name(net, id)}</Button></li>)}</ol> : <Muted>たどれる前提はない</Muted>}
         </Sheet>
       )}
       {modal === "pick" && cmp.length ? (() => {

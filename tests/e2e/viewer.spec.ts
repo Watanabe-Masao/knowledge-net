@@ -134,7 +134,7 @@ test("🕸 リンク（c 付き）で開くと、その概念の周辺図から�
   const errs = noErrors(page);
   await page.setViewportSize({ width: 380, height: 800 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
-  await expect(page.getByRole("button", { name: "まわり" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
   await settle(page);
   const r = await page.evaluate(() => {
     const cy = (window as any).kn;
@@ -201,11 +201,11 @@ test("全体に切り替えても選んだ概念を引き継ぎ、「戻る」�
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
   const around = await page.evaluate(() => (window as any).kn.nodes().length);
-  await page.getByRole("button", { name: "全体" }).click();
+  await page.getByRole("radio", { name: "俯瞰" }).click();
   await page.waitForFunction((n) => (window as any).kn.nodes().length > n, around);
   expect(await page.evaluate(() => (window as any).kn.$(":selected").map((n: any) => n.id()))).toEqual(["stats2:TERM-binom"]);
   expect(page.url()).toContain("view=all");
-  await page.getByRole("button", { name: "まわり" }).click();
+  await page.getByRole("radio", { name: "フォーカス" }).click();
   await settle(page);
   // 周りの点（ポアソン分布）を押すと、並べ直さずにその概念が中心へ
   const p = await page.evaluate(() => {
@@ -789,7 +789,7 @@ test("全体図を分類で絞り、骨格の概念は定義1文と「まだ骨�
     const top = c.container().getBoundingClientRect().top;
     return c.nodes().toArray().filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
   }, selBox.y + selBox.height);
-  await expect.poll(hidden).toBe(0);
+  await expect.poll(hidden, { timeout: 10000 }).toBe(0);   // 文字の読み込み・枠の大きさが決まってから収め直すのを待つ
   await sel.selectOption("*");
   await expect.poll(count).toBeGreaterThan(129);   // 全部の語＋導出の点
   const all = await count();
@@ -854,5 +854,30 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   await page.goto("./?src=sample/stats2-p1.json&embed=1&c=stats2:TERM-binom");
   await expect(page.getByTestId("embed-card")).toBeVisible();
   await expect(page.getByTestId("tabbar")).toHaveCount(0);
+  expect(errs).toEqual([]);
+});
+
+// 探索の見方（stats2-course #42 PR 2）：フォーカス／経路／俯瞰。経路は前提だけを学ぶ順の番号付きで並べる。縮めると 印＋名前 → 名前 → 印
+test("見方を切り替える：経路は前提を学ぶ順の番号で並べ、縮めると点の見せ方が変わる", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("radio", { name: "経路" }).click();
+  await expect(page).toHaveURL(/view=path/);
+  const info = () => page.evaluate(() => { const c = (window as any).kn; return { ids: c.nodes().map((n: any) => n.id()), label: c.getElementById("stats2:TERM-sample-space").data("label") ?? "" }; });
+  await expect.poll(async () => (await info()).ids.includes("stats2:TERM-comb")).toBe(true);
+  const r = await info();
+  expect(r.ids).not.toContain("stats2:TERM-poisson");          // 変換・対比の先はたどらない
+  expect(r.label).toMatch(/^1 /);                          // いちばん遠い前提が 1
+  // 点の見せ方：近い＝印＋名前、縮めると名前だけ、さらに縮めると印だけ
+  const lod = (z: number) => page.evaluate((z) => { const c = (window as any).kn; c.zoom(z); return c.container().dataset.lod; }, z);
+  expect(await lod(1)).toBe("near");
+  expect(await lod(0.5)).toBe("mid");
+  expect(await lod(0.31)).toBe("far");
+  // 俯瞰に切り替えると選んだ概念を引き継ぐ
+  await page.getByRole("radio", { name: "俯瞰" }).click();
+  await expect(page).toHaveURL(/view=all/);
+  await expect.poll(() => page.evaluate(() => (window as any).kn.$(":selected").map((n: any) => n.id()))).toEqual(["stats2:TERM-binom"]);
   expect(errs).toEqual([]);
 });

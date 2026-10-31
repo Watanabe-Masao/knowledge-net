@@ -1,5 +1,6 @@
 .wrap { position: relative; }
-.graph { height: 56vh; min-height: 220px; margin: var(--sp-3) 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-l); touch-action: none; }
+.graph { height: 56vh; min-height: 220px; margin: var(--sp-3) 0; background-color: var(--bg); border: 1px solid var(--line); border-radius: var(--r-l); touch-action: none;
+  background-image: radial-gradient(var(--line) 1px, transparent 1.2px); background-size: 20px 20px; }   /* 方眼の点（実験ノート）。#42 */
 .fill { flex: 1; height: auto; min-height: 0; margin: 0; border-radius: 0; border: none; }
 .wrapFill { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .fit { position: absolute; top: 20px; right: 8px; opacity: .92; }

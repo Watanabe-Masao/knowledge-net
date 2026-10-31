@@ -6,6 +6,7 @@ import dagre from "cytoscape-dagre";
 import { useEffect, useRef } from "react";
 import { type Network, type Placed } from "./data";
 import { Button } from "@math-lab/ui";
+import { iconUri } from "./icons";
 import s from "./Graph.module.css";
 
 cytoscape.use(dagre);
@@ -28,6 +29,8 @@ type Props = {
   topLeft?: React.ReactNode; bottomLeft?: React.ReactNode;
   /** 全体図をこの点だけにする（分類で絞る。#105）。outer はそのうち分類の外のつながる点（薄く出す） */
   only?: Set<string>; outer?: Set<string>;
+  /** 経路（前提をさかのぼる）：点の前に付ける学ぶ順の番号 */
+  numbers?: Map<string, number>;
   /** 分類の地図（#105）：点＝分類（語の数）、線＝分類の間の関係の本数。押すと onSelect に "group:分類" */
   overview?: { nodes: { id: string; label: string }[]; edges: { id: string; source: string; target: string; w: number }[] };
 };
@@ -36,14 +39,27 @@ function css(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "gray";   // 変数が読めないときだけ（色の値は tokens.css）
 }
 
+/** 点の名前の幅（印の分の幅を足すため）。Cytoscape の "label" の幅と同じく、最大幅で折り返す */
+let ctx: CanvasRenderingContext2D | null = null;
+function textWidth(text: string, size: number, max: number): number {
+  ctx ??= typeof document !== "undefined" ? document.createElement("canvas").getContext("2d") : null;
+  if (!ctx) return Math.min(text.length * size, max);
+  ctx.font = `${size}px ${getComputedStyle(document.body).fontFamily}`;
+  return Math.min(Math.max(...text.split("\n").map((t) => ctx!.measureText(t).width)), max);
+}
+
+/** 縮めたときの点の見せ方（CLAUDE.md「画面の決まり」）：近い＝印＋名前、中くらい＝名前だけ、遠い＝印だけ。境目は iPhone で決める */
+export const LOD = { mid: 0.62, far: 0.38 };
+export const lodOf = (zoom: number): "near" | "mid" | "far" => (zoom < LOD.far ? "far" : zoom < LOD.mid ? "mid" : "near");
+
 const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** 表示する点と線。keep を渡すと、その点だけ（周辺図）。 */
-export function elements(net: Network, hidden: Set<string>, keep?: Set<string>): ElementDefinition[] {
+export function elements(net: Network, hidden: Set<string>, keep?: Set<string>, numbers?: Map<string, number>): ElementDefinition[] {
   const has = (id: string) => !keep || keep.has(id);
   const els: ElementDefinition[] = [];
   for (const c of net.concepts.values())
-    if (has(c.id)) els.push({ data: { id: c.id, label: c.name, kind: c.status } });
+    if (has(c.id)) els.push({ data: { id: c.id, label: numbers?.has(c.id) ? `${numbers.get(c.id)}\u00a0${c.name}` : c.name, kind: c.status, cat: c.category ?? "" } });
   for (const id of net.missing) if (has(id)) els.push({ data: { id, label: id, kind: "missing" } });
   for (const r of net.relations)
     if (!hidden.has(r.type) && has(r.from) && has(r.to))
@@ -57,11 +73,12 @@ export function elements(net: Network, hidden: Set<string>, keep?: Set<string>):
   return els;
 }
 
-export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview }: Props) {
+export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview, numbers }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const tl = useRef<HTMLDivElement>(null);
+  const bl = useRef<HTMLDivElement>(null);
   /** 左上の操作（まわり／全体・分類）に図が隠れないよう、その高さの分だけ余白を取って収める */
-  const padOf = () => Math.max(20, (tl.current?.offsetHeight ?? 0) + 16);
+  const padOf = () => Math.max(20, (tl.current?.offsetHeight ?? 0) + 16, (bl.current?.offsetHeight ?? 0) + 16);   // 左下の「線の見方」にも隠れないように
   const cy = useRef<Core | null>(null);
   const select = useRef(onSelect);
   select.current = onSelect;
@@ -74,17 +91,29 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     if (!box.current) return;
     const ink = css("--ink"), mute = css("--mute"), bg = css("--card"), accent = css("--accent"), edgeLine = css("--line-strong"), raised = css("--surface-2");
     const keep = positions ? new Set(positions.keys()) : only;
+    const fs = around ? 15 : 13, maxW = around ? 110 : 96;
+    // 分類の印：点の左に置く（名前の幅＋印の幅）。印は線だけの灰色（色は意味のある所だけ）
+    const withIcon = (e: ElementDefinition): ElementDefinition => {
+      const icon = !e.data.source && e.data.kind !== "derivation" && e.data.kind !== "missing" ? iconUri((e.data.cat as string) || undefined, mute) : undefined;
+      return icon ? { ...e, data: { ...e.data, icon, w: textWidth(String(e.data.label), fs, maxW) + 20 } } : e;
+    };
     const c = cytoscape({
       container: box.current,
       elements: overview
-        ? [...overview.nodes.map((n) => ({ data: { id: `group:${n.id}`, label: n.label, kind: "group" } })),
+        ? [...overview.nodes.map((n) => withIcon({ data: { id: `group:${n.id}`, label: n.label, kind: "group", cat: n.id } })),
            ...overview.edges.map((e) => ({ data: { id: e.id, source: `group:${e.source}`, target: `group:${e.target}`, type: "group", w: e.w } }))]
-        : elements(net, hidden, keep).map((e) => (positions && !e.data.source ? { ...e, position: { ...(positions.get(e.data.id!) ?? { x: 0, y: 0 }) } } : e)),
+        : elements(net, hidden, keep, numbers).map(withIcon).map((e) => (positions && !e.data.source ? { ...e, position: { ...(positions.get(e.data.id!) ?? { x: 0, y: 0 }) } } : e)),
       minZoom: 0.3, maxZoom: around ? 1.2 : 3, wheelSensitivity: 0.3,   // 周辺図は点が少ないときに大きくなりすぎないように
       style: [
         { selector: "node", style: { label: "data(label)", "font-size": around ? 15 : 13, color: ink, "text-valign": "center", "text-halign": "center",
           "text-wrap": "wrap", "text-max-width": around ? "110px" : "96px", "background-color": bg, "border-width": 1, "border-color": edgeLine,
           shape: "round-rectangle", width: "label", height: "label", padding: "8px" } },
+        // 印のある点：名前を右へずらし、左に印（縮めると 名前だけ → 印だけ）
+        { selector: "node[icon]", style: { "background-image": "data(icon)", "background-width": 14, "background-height": 14, "background-position-x": 0, "background-position-y": "50%",
+          "background-clip": "none", "background-image-containment": "over", width: "data(w)", "text-margin-x": 9 } },
+        { selector: "node.mid", style: { "background-image-opacity": 0, width: "label", "text-margin-x": 0 } },
+        { selector: "node.far", style: { "text-opacity": 0, width: 18, height: 18, "background-position-x": "50%", "text-margin-x": 0, "background-width": 16, "background-height": 16 } },
+        { selector: "node.farDot", style: { "text-opacity": 0, width: 14, height: 14 } },
         { selector: 'node[kind = "skeleton"]', style: { "border-style": "dashed" } },   // 骨格：定義1文と分類だけ（点線の枠。文字はふつう）
         { selector: 'node[kind = "stub"]', style: { "border-style": "dashed", "border-color": mute, color: mute } },
         { selector: 'node[kind = "missing"]', style: { "border-style": "dotted", "border-color": mute, color: mute, "font-size": 10 } },
@@ -102,7 +131,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         { selector: 'edge[mode = "limit"]', style: { "line-style": "dotted" } },
         { selector: ".dim", style: { opacity: 0.18 } },
         { selector: "node.outer", style: { opacity: 0.5 } },
-        { selector: 'node[kind = "group"]', style: { "font-size": 15, "font-weight": "bold", "text-max-width": "120px", padding: "12px", "border-color": accent, "border-width": 2 } },
+        { selector: 'node[kind = "group"]', style: { "font-size": 14, "font-weight": "bold", "text-max-width": "120px", padding: "12px", "border-color": edgeLine, "border-width": 1 } },
         { selector: 'edge[type = "group"]', style: { width: "mapData(w, 1, 30, 1.5, 9)", "line-color": mute, "target-arrow-color": mute, opacity: 0.7 } },   // 分類で絞ったとき、分類の外からつながる点
         { selector: "edge.faint", style: { opacity: 0.3, width: 1.5 } },
         { selector: "node.hl", style: { "border-color": accent, "border-width": 3 } },
@@ -118,11 +147,25 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     if (!fill && box.current) {   // 点の数と並びに合わせて図の高さを決める（余白を残しすぎない）
       const bb = c.elements().boundingBox({});
       const scale = Math.min((box.current.clientWidth - 32) / Math.max(bb.w, 1), 1.1);
-      const h = Math.max(around ? 300 : 220, Math.min(bb.h * scale + 40, window.innerHeight * 0.6));
+      const h = Math.max(around ? 300 : 220, Math.min(bb.h * scale + 2 * padOf() + 8, window.innerHeight * 0.7));   // 上下の余白（左上・左下の操作の分）も高さに入れる。入れないと縮めきれず隠れる
       box.current.style.height = `${Math.round(h)}px`;
       c.resize();
     }
     if (outer) c.nodes().filter((n) => outer.has(n.id())).addClass("outer");
+    // 縮めたときの見せ方：倍率が境目をまたいだときだけ付け替える（分類の地図はいつも印＋名前）
+    let lod = "";
+    const applyLod = () => {
+      const l = overview ? "near" : lodOf(c.zoom());
+      if (l === lod) return;
+      lod = l;
+      c.batch(() => {
+        c.nodes().removeClass("mid far farDot");
+        if (l === "mid") c.nodes("[icon]").addClass("mid");
+        if (l === "far") { c.nodes("[icon]").addClass("far"); c.nodes('[!icon][kind != "derivation"]').addClass("farDot"); }
+      });
+      box.current?.setAttribute("data-lod", l);
+    };
+    c.on("zoom", applyLod);
     c.on("tap", "node", (e) => { if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
     c.on("tap", "edge", (e) => edge.current?.(e.target.id()));
     c.on("tap", (e) => { if (e.target === c) select.current(null); });
@@ -135,6 +178,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     ro?.observe(box.current);
     document.fonts?.ready.then(refit);
     c.fit(undefined, padOf());   // 最初は全体が見えるように（左上の操作の下から）
+    applyLod();
     // 周辺図（位置を指定して並べたとき）は、最初に線が描かれないことがある（Cytoscape 3.34）。線の見た目を一度変えて戻し、描き直させる
     const redraw = () => c.edges().style("arrow-scale", 0.91).removeStyle("arrow-scale");
     redraw();
@@ -145,7 +189,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     return () => { ro?.disconnect(); c.destroy(); };
     // positions の変化は下の effect で動かす（作り直さない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [net, hidden, fill, around, only, outer, overview]);
+  }, [net, hidden, fill, around, only, outer, overview, numbers]);
 
   // 周辺図で中心が変わったとき：消える点を外し、新しい点を進んだ先の点の位置から出し、全体を新しい位置へ動かす
   useEffect(() => {
@@ -163,7 +207,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     const moved = c.nodes().toArray().some((n) => { const q = positions.get(n.id()), p = n.position(); return !q || Math.abs(q.x - p.x) > 0.5 || Math.abs(q.y - p.y) > 0.5; });
     if (!moved) return;   // 作ったばかりで、もう正しい位置にある
     const l = c.layout({ name: "preset", positions: (n: cytoscape.NodeSingular) => positions.get(n.id()) ?? { x: 0, y: 0 },
-      animate: !reduced(), animationDuration: 320, fit: true, padding: padOf() } as cytoscape.LayoutOptions);
+      animate: !reduced(), animationDuration: 420, animationEasing: "spring(420, 32)", fit: true, padding: padOf() } as cytoscape.LayoutOptions);   // ばね（Apple の手触り。#42）
     l.run();
   }, [positions, net, hidden, selected]);
 
@@ -192,15 +236,15 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       const b = n.nonempty() ? n.renderedBoundingBox({}) : null;
       if (b && (b.x1 < 0 || b.y1 < 0 || b.x2 > c.width() || b.y2 > c.height())) c.animate({ center: { eles: n } }, { duration: reduced() ? 0 : 200 });
     }
-  }, [selected, highlight, fill, edgeSel, positions]);
+  }, [selected, highlight, fill, edgeSel, positions, only, overview, numbers, net, hidden]);   // 図を作り直したとき（見方の切り替え）も選び直す
 
   return (
     <div className={fill ? `${s.wrap} ${s.wrapFill}` : s.wrap}>
       <div ref={box} className={`${s.graph}${fill ? ` ${s.fill}` : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
       {!fill && topLeft && <div ref={tl} className={s.topLeft}>{topLeft}</div>}
-      {!fill && bottomLeft && <div className={s.bottomLeft}>{bottomLeft}</div>}
+      {!fill && bottomLeft && <div ref={bl} className={s.bottomLeft}>{bottomLeft}</div>}
       {!fill && <Button icon className={s.fit} aria-label="図を枠に収める" title="図を枠に収める"
-        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: padOf() } }, { duration: reduced() ? 0 : 200 })}>⤢</Button>}
+        onClick={() => cy.current?.animate({ fit: { eles: cy.current.elements(), padding: padOf() } }, { duration: reduced() ? 0 : 320, easing: "ease-in-out-cubic" })}>⤢</Button>}
     </div>
   );
 }
