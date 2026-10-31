@@ -6,11 +6,12 @@ import { Muted } from "@math-lab/ui";
 import type { Network } from "./data";
 import s from "./Shell.module.css";
 
-export type Tab = "explore" | "learn" | "lab" | "problems";
+import type { Tab } from "./urlState";
+export type { Tab } from "./urlState";
+export { readTab } from "./urlState";
 export const TABS: { id: Tab; label: string }[] = [
   { id: "explore", label: "探索" }, { id: "learn", label: "学習" }, { id: "lab", label: "実験室" }, { id: "problems", label: "問題集" },
 ];
-export const readTab = (p: URLSearchParams): Tab => (p.get("x") ? "lab" : (TABS.find((t) => t.id === p.get("t"))?.id ?? "explore"));
 
 /** 線で描く小さな印（絵文字は使わない） */
 export function Icon({ name, size = 22 }: { name: Tab | "search" | "chevron" | "out" | "full" | "shrink" | "fit"; size?: number }) {
