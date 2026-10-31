@@ -715,6 +715,7 @@ test("比べる：前と後のカードから始め、条件を足して重ね�
   await expect(rows.nth(2)).toContainText("（2）"); await expect(rows.nth(2)).toContainText("（1.6）");
   const before = await x.getByTestId("cmp-table").textContent();
   // ブラウザの保存を消して URL だけで開き直しても、同じカード・同じ結果（種が同じなら同じ）。比べるの段から開く
+  await expect(page).toHaveURL(/cards=b10_0\.5_[^&]*%2Cb10_0\.8_[^&]*%2Cb10_0\.2_100_\d+/);   // URL は描いたあとに書かれるので、3枚目が入るまで待ってから測る
   const url = page.url();
   await page.evaluate(() => localStorage.clear());
   await page.goto(url);
