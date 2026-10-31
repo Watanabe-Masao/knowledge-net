@@ -34,6 +34,8 @@ type Props = {
   height?: number;
   /** 数が変わるたびに、全体を枠に収め直す（探索のタブをもう一度押したとき） */
   recenter?: number;
+  /** 全画面の札の「選ぶ」：その概念をフォーカスで開く（なければ onSelect） */
+  onFocus?: (id: string) => void;
   /** 経路（前提をさかのぼる）：点の前に付ける学ぶ順の番号 */
   numbers?: Map<string, number>;
   /** 分類の地図（#105）：点＝分類（語の数）、線＝分類の間の関係の本数。押すと onSelect に "group:分類" */
@@ -78,7 +80,7 @@ export function elements(net: Network, hidden: Set<string>, keep?: Set<string>, 
   return els;
 }
 
-export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview, numbers, height, recenter }: Props) {
+export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview, numbers, height, recenter, onFocus }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const tl = useRef<HTMLDivElement>(null);
   const bl = useRef<HTMLDivElement>(null);
@@ -181,8 +183,8 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     c.on("zoom", applyLod);
     const showTip = (e: cytoscape.EventObject) => { if (e.target.data("kind") === "derivation") return; const p = e.target.renderedPosition(), h = e.target.renderedHeight(); setTip({ id: e.target.id(), x: p.x, y: p.y - h / 2 }); };
     c.on("taphold", "node", showTip);
-    c.on("mouseover", "node", showTip);
-    c.on("mouseout", "node", () => setTip(null));
+    c.on("mouseover", "node", (e) => { if (!bigRef.current) showTip(e); });
+    c.on("mouseout", "node", () => { if (!bigRef.current) setTip(null); });   // 全画面の札は押せるので、マウスが離れても消さない
     c.on("tapstart pan zoom", () => setTip(null));
     // 全画面は地図を見る所：点を押すと札（名前・分類・定義1文）を出すだけで、選び直さない（選ぶと地図が組み替わって見失う）
     c.on("tap", "node", (e) => { if (bigRef.current) { if (e.target.data("kind") !== "derivation") showTip(e); return; } if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
@@ -291,9 +293,13 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         if (!g && !cpt) return null;
         const w = box.current?.clientWidth ?? 360;
         return (
-          <div className={`${s.tip}${tip.y < 150 ? ` ${s.tipBelow}` : ""}`} role="tooltip" data-testid="node-tip" style={{ left: Math.max(8, Math.min(tip.x - 120, w - 248)), top: tip.y < 150 ? tip.y + 40 : tip.y - 8 }}>
+          <div className={`${s.tip}${tip.y < 150 ? ` ${s.tipBelow}` : ""}${big && cpt ? ` ${s.tipLive}` : ""}`} role="tooltip" data-testid="node-tip" style={{ left: Math.max(8, Math.min(tip.x - 120, w - 248)), top: tip.y < 150 ? tip.y + 40 : tip.y - 8 }}>
+            {big && cpt ? (
+              // 全画面で押した点：「選ぶ」でその概念をフォーカスで開き、全画面から戻る（渡辺さん 2026-11-01）
+              <button type="button" className={s.tipPick} onClick={() => { const id = tip.id; setTip(null); setBig(false); (onFocus ?? onSelect)?.(id); }} data-testid="tip-pick">選ぶ</button>
+            ) : null}
             <b>{g ?? cpt!.name}</b>
-            <span className={s.tipMeta}>{g ? `${n}語` : [cpt!.category, cpt!.status === "skeleton" ? "まだ骨格" : cpt!.status === "stub" ? "まだ説明がない" : ""].filter(Boolean).join("・")}</span>
+            <span className={s.tipMeta}>{g ? `${n}語` : [cpt!.category, cpt!.status === "skeleton" ? "定義だけ" : cpt!.status === "stub" ? "まだ説明がない" : ""].filter(Boolean).join("・")}</span>
             {cpt && (cpt.short ?? cpt.definition) ? <span className={s.tipText}>{cpt.short ?? cpt.definition}</span> : null}
           </div>
         );
