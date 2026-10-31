@@ -3,16 +3,16 @@
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import Search from "./Search";
-import { Button, Card, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
+import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
 import st from "./App.module.css";
 import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
-import { Crumbs, Header, LabPage, LearnPage, ProblemsPage, TabBar, readTab, type Tab } from "./Shell";
+import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, readTab, type Tab } from "./Shell";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
@@ -62,15 +62,35 @@ function useNarrow() {
   return n;
 }
 
+/** 詳しくの面をしまったときの高さ（つまみと名前の1行） */
+const SHEET_MIN = 84;
+
 export default function App() {
   const narrow = useNarrow();
   // 詳しくの段（少し・半分・全部）。別の概念を選ぶと「少し」から
   const [detent, setDetent] = useState<Detent>("peek");
   const [tabH, setTabH] = useState(58);
+  // スマホで概念を選んでいるとき：上を詰め（探すは印に）、地図の高さを上の欄と詳しくの面（少し）の間の空きに合わせる（#42）
+  const [peek, setPeek] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const aboveMap = useRef<HTMLDivElement>(null);
+  const [mapH, setMapH] = useState<number | undefined>(undefined);
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const { sel, setSel, view, setView, cmp, setCmp, exp, setExp, cards, setCards, group, setGroup, tab, setTab } = useUrlState();
+  useLayoutEffect(() => {
+    if (!narrow || !sel || tab !== "explore" || exp) { setMapH(undefined); return; }
+    const fit = () => {
+      const top = aboveMap.current?.getBoundingClientRect().bottom;
+      if (top === undefined || !peek) return;
+      const sheet = detent === "min" ? SHEET_MIN : peek;   // 半分・全部のときは面が地図に重なるので、少しの高さで決めたままにする
+      setMapH(Math.max(200, Math.round(innerHeight - (top + scrollY) - 24 - sheet - tabH)));
+    };
+    fit();
+    addEventListener("resize", fit);
+    return () => removeEventListener("resize", fit);
+  }, [narrow, sel, tab, exp, peek, tabH, detent, view, searchOpen]);
   // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
   const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
@@ -186,11 +206,14 @@ export default function App() {
     </main>
   );
   const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
+  const compact = narrow && !!concept;
   return (
     <main className={`${st.app} ${st.withTabs}${narrow && concept ? ` ${st.withDetailSheet}` : ""}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <div className={st.top}>
-        <Header title="知識ネットワーク" sub={<>{sub}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（骨格 ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>} />
-        <Search concepts={[...net.concepts.values()]} onPick={setSel} />
+        <Header title="知識ネットワーク" sub={<>{sub}{compact ? null : <>　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（骨格 ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>}</>}>
+          {compact ? <Button variant="quiet" icon aria-label="探す" aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Icon name="search" size={20} /></Button> : null}
+        </Header>
+        {!compact || searchOpen ? <Search concepts={[...net.concepts.values()]} onPick={(id) => { setSearchOpen(false); setSel(id); }} /> : null}
         <Crumbs items={concept ? [
           ...(concept.category ? [{ label: concept.category, onClick: () => { setSel(null); setGroup(concept.category!); } }] : []),
           { label: concept.name },
@@ -198,13 +221,13 @@ export default function App() {
       </div>
       {errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}
       {concept ? (
-        <div className={st.views}>
+        <div className={st.views} ref={aboveMap}>
           <Segmented label="見方" value={view} onChange={(v) => { if (v) { setView(v as View); if (v === "path") setModal("trace"); else if (modal === "trace") setModal(null); } }} items={[
             { value: "around", label: "フォーカス" }, { value: "path", label: "経路" }, { value: "all", label: "俯瞰" },
           ]} />
         </div>
       ) : null}
-      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers}
+      <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers} height={mapH}
         onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
         only={positions ? undefined : path ? path.only : grouped.only} outer={positions || path ? undefined : grouped.outer}
         overview={positions || path ? undefined : overview}
@@ -222,8 +245,8 @@ export default function App() {
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
       {concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
-        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH } : undefined} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
-        <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}
+        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
+        null}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">
           <Muted>矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。チェックを外すと、その種類の線を隠す。</Muted>

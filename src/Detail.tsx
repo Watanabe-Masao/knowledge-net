@@ -28,7 +28,7 @@ type Props = {
   /** 実験室を開く */
   onExperiment?: (id: string) => void;
   /** スマホでは下からの面にする（段と、下のタブの高さ） */
-  sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number };
+  sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
 };
 
 type Tab = "main" | "rel" | "more";
@@ -69,6 +69,8 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
     ro.observe(el);
     return () => ro.disconnect();
   }, [sheet !== undefined]);   // eslint-disable-line react-hooks/exhaustive-deps
+  const peekOut = sheet ? Math.max(120, Math.min(peekH + 30, Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.4))) : 0;
+  useEffect(() => { if (sheet) sheet.onPeek?.(peekOut); }, [peekOut]);   // eslint-disable-line react-hooks/exhaustive-deps
   const exps = experimentsFor(net, c.id);
   const { relations, derivations } = around(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
@@ -99,6 +101,10 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         <ul className={st.misconceptions}>{c.misconceptions.map((m, i) => (
           <li key={m.misconception}><Card as="div" tone="inset"><span className={st.wrong}>✕ {m.misconception}</span><p>→ {m.correction}</p><Media labs={m.labs} context={`misconception-${i}`} /></Card></li>))}</ul>, false) : null}
   </>;
+  const definitionBlock = <>
+      {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
+      {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">まだ骨格：定義1文と分類だけ。原理・条件・例・式は、単元を進めるときに足す</p>}
+  </>;
   const head = <>
       <header className={st.head}>
         <div className={st.titles}>
@@ -111,8 +117,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
           { label: "この概念の URL をコピー", onClick: copyUrl },
         ]} />
       </header>
-      {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
-      {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">まだ骨格：定義1文と分類だけ。原理・条件・例・式は、単元を進めるときに足す</p>}
+      {!sheet ? definitionBlock : null}
       {exps.length || unit?.url ? (
         <div className={st.actions} data-testid="actions">
           {exps[0] ? <Button variant="primary" onClick={() => onExperiment?.(exps[0]!.id)} data-testid={`open-${exps[0].id}`}>
@@ -124,6 +129,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
       ) : null}
   </>;
   const rest = <>
+      {sheet ? definitionBlock : null}
       <div className={st.tabs}>
         <Segmented value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身"
           items={[
@@ -186,10 +192,11 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
       </div>}
   </>;
   if (!sheet) return <Card data-testid="detail">{head}{rest}</Card>;
+  const peek = Math.max(120, Math.min(peekH + 30, Math.round(innerHeight * 0.4)));
   // スマホ：地図の上に重なる下からの面。見出し・定義・学ぶ行動が「少し」の段で見え、つかんで広げると中身（#42）
   return (
     <BottomSheet label={`${c.name} の詳しく`} data-testid="detail" detent={sheet.detent} onDetent={sheet.onDetent} bottom={sheet.bottom}
-      peek={Math.max(160, Math.min(peekH + 34, Math.round(innerHeight * 0.45)))} header={<div ref={headRef}>{head}</div>}>
+      peek={peek} min={84} header={<div ref={headRef}>{head}</div>}>
       {rest}
     </BottomSheet>
   );

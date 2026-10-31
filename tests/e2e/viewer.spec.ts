@@ -780,6 +780,7 @@ test("骨格の概念は定義1文と分類と「まだ骨格」を出し、見�
   await expect(det).toContainText("独立に同じ分布から取った平均は");
   await expect(det).toContainText("標本分布・極限");
   await expect(det.getByTestId("skeleton-note")).toContainText("まだ骨格");
+  await page.setViewportSize({ width: 1024, height: 844 });   // スマホで概念を選ぶと見出しの数はしまう（地図を広く）
   await expect(page.getByText(/（骨格 1）/)).toBeVisible();
   expect(errs).toEqual([]);
 });
@@ -956,5 +957,22 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   // 別の概念を選ぶと少しの段から
   await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-poisson");
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
+  expect(errs).toEqual([]);
+});
+
+// 点の札（渡辺さん 2026-10-31：「概念を押すと…」の文の代わりに概念のツールチップ）：長押しで名前・分類・定義1文。動かすと消える
+test("点を長押しすると、名前・分類・定義1文の札が出る", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2-p1.json&g=" + encodeURIComponent("確率分布"));
+  await expect(page.getByText("概念を押すと、定義")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => (window as any).kn?.getElementById("stats2:TERM-binom").length ?? 0)).toBe(1);
+  await page.evaluate(() => (window as any).kn.getElementById("stats2:TERM-binom").emit("taphold"));
+  const tip = page.getByTestId("node-tip");
+  await expect(tip).toContainText("二項分布");
+  await expect(tip).toContainText("確率分布");
+  await expect(tip).toContainText("成功確率");
+  await page.evaluate(() => (window as any).kn.emit("pan"));
+  await expect(tip).toHaveCount(0);
   expect(errs).toEqual([]);
 });

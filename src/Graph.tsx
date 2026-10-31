@@ -3,7 +3,7 @@
 // 周辺図で別の概念へ進むときは並べ直さず、残る点は新しい位置へ動き、新しい点は進んだ先の点から出てくる。
 import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type Network, type Placed } from "./data";
 import { Button } from "@math-lab/ui";
 import { iconUri } from "./icons";
@@ -29,6 +29,8 @@ type Props = {
   topLeft?: React.ReactNode; bottomLeft?: React.ReactNode;
   /** 全体図をこの点だけにする（分類で絞る。#105）。outer はそのうち分類の外のつながる点（薄く出す） */
   only?: Set<string>; outer?: Set<string>;
+  /** 図の高さ（px）。決めると点の数による自動の高さより優先（スマホで詳しくの面の上に収めるとき） */
+  height?: number;
   /** 経路（前提をさかのぼる）：点の前に付ける学ぶ順の番号 */
   numbers?: Map<string, number>;
   /** 分類の地図（#105）：点＝分類（語の数）、線＝分類の間の関係の本数。押すと onSelect に "group:分類" */
@@ -49,7 +51,7 @@ function textWidth(text: string, size: number, max: number): number {
 }
 
 /** 縮めたときの点の見せ方（CLAUDE.md「画面の決まり」）：近い＝印＋名前、中くらい＝名前だけ、遠い＝印だけ。境目は iPhone で決める */
-export const LOD = { mid: 0.62, far: 0.38 };
+export const LOD = { mid: 0.55, far: 0.32 };
 export const lodOf = (zoom: number): "near" | "mid" | "far" => (zoom < LOD.far ? "far" : zoom < LOD.mid ? "mid" : "near");
 
 const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -73,7 +75,7 @@ export function elements(net: Network, hidden: Set<string>, keep?: Set<string>, 
   return els;
 }
 
-export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview, numbers }: Props) {
+export default function Graph({ net, selected, highlight, hidden, positions, onSelect, onEdge, edgeSel, fill, topLeft, bottomLeft, only, outer, overview, numbers, height }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const tl = useRef<HTMLDivElement>(null);
   const bl = useRef<HTMLDivElement>(null);
@@ -85,6 +87,8 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   const edge = useRef(onEdge);
   edge.current = onEdge;
   const around = !!positions;
+  // 点の札（ツールチップ）：長押し（スマホ）・指を乗せる（マウス）で、名前・分類・定義1文を点のそばに出す。押すと選ぶのはそのまま
+  const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
 
   // 作り直すのは、データ・表示する種類・全体図と周辺図の切り替えのときだけ
   useEffect(() => {
@@ -145,12 +149,13 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
         : overview
         ? { name: "preset", padding: 20, positions: (n: cytoscape.NodeSingular) => { const i = overview.nodes.findIndex((g) => `group:${g.id}` === n.id()); return { x: (i % 3) * 170, y: Math.floor(i / 3) * 120 }; } } as cytoscape.LayoutOptions
         // 段に分けて並べる（dagre）。線が別の点の上を通りにくく、矢印の向きが上から下にそろう
-        : { name: "dagre", rankDir: "TB", nodeSep: 24, rankSep: 56, edgeSep: 8, padding: 16 } as cytoscape.LayoutOptions,
+        // 縦長の枠（スマホ）では、段を横に並べる（LR）。横に広がって字が小さくなるのを防ぐ（渡辺さん 2026-10-31：iPhone で見にくい）
+        : { name: "dagre", rankDir: box.current.clientHeight > box.current.clientWidth * 1.1 || (height ?? 0) > box.current.clientWidth ? "LR" : "TB", nodeSep: 16, rankSep: 56, edgeSep: 8, padding: 16 } as cytoscape.LayoutOptions,
     });
     if (!fill && box.current) {   // 点の数と並びに合わせて図の高さを決める（余白を残しすぎない）
       const bb = c.elements().boundingBox({});
       const scale = Math.min((box.current.clientWidth - 32) / Math.max(bb.w, 1), 1.1);
-      const h = Math.max(around ? 300 : 220, Math.min(bb.h * scale + 2 * padOf() + 8, window.innerHeight * 0.7));   // 上下の余白（左上・左下の操作の分）も高さに入れる。入れないと縮めきれず隠れる
+      const h = height ?? Math.max(around ? 300 : 220, Math.min(bb.h * scale + 2 * padOf() + 8, window.innerHeight * 0.7));   // 上下の余白（左上・左下の操作の分）も高さに入れる。入れないと縮めきれず隠れる
       box.current.style.height = `${Math.round(h)}px`;
       c.resize();
     }
@@ -169,6 +174,11 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       box.current?.setAttribute("data-lod", l);
     };
     c.on("zoom", applyLod);
+    const showTip = (e: cytoscape.EventObject) => { if (e.target.data("kind") === "derivation") return; const p = e.target.renderedPosition(), h = e.target.renderedHeight(); setTip({ id: e.target.id(), x: p.x, y: p.y - h / 2 }); };
+    c.on("taphold", "node", showTip);
+    c.on("mouseover", "node", showTip);
+    c.on("mouseout", "node", () => setTip(null));
+    c.on("tapstart pan zoom", () => setTip(null));
     c.on("tap", "node", (e) => { if (e.target.data("kind") !== "derivation") select.current(e.target.id()); else edge.current?.(e.target.id()); });
     c.on("tap", "edge", (e) => edge.current?.(e.target.id()));
     c.on("tap", (e) => { if (e.target === c) select.current(null); });
@@ -193,6 +203,14 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     // positions の変化は下の effect で動かす（作り直さない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [net, hidden, fill, around, only, outer, overview, numbers]);
+
+  // 高さを後から決めたとき（詳しくの面の高さが分かったとき）：作り直さず枠だけ変えて収め直す
+  useEffect(() => {
+    const c = cy.current;
+    if (!c || !box.current || height === undefined || fill) return;
+    box.current.style.height = `${Math.round(height)}px`;
+    c.resize(); c.fit(undefined, padOf());
+  }, [height]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   // 周辺図で中心が変わったとき：消える点を外し、新しい点を進んだ先の点の位置から出し、全体を新しい位置へ動かす
   useEffect(() => {
@@ -244,6 +262,19 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   return (
     <div className={fill ? `${s.wrap} ${s.wrapFill}` : s.wrap}>
       <div ref={box} className={`${s.graph}${fill ? ` ${s.fill}` : ""}`} data-testid="graph" aria-label="概念と関係のネットワーク" />
+      {tip ? (() => {
+        const g = tip.id.startsWith("group:") ? tip.id.slice(6) : null, cpt = g ? undefined : net.concepts.get(tip.id);
+        const n = g ? [...net.concepts.values()].filter((x) => x.category === g).length : 0;
+        if (!g && !cpt) return null;
+        const w = box.current?.clientWidth ?? 360;
+        return (
+          <div className={`${s.tip}${tip.y < 150 ? ` ${s.tipBelow}` : ""}`} role="tooltip" data-testid="node-tip" style={{ left: Math.max(8, Math.min(tip.x - 120, w - 248)), top: tip.y < 150 ? tip.y + 40 : tip.y - 8 }}>
+            <b>{g ?? cpt!.name}</b>
+            <span className={s.tipMeta}>{g ? `${n}語` : [cpt!.category, cpt!.status === "skeleton" ? "まだ骨格" : cpt!.status === "stub" ? "まだ説明がない" : ""].filter(Boolean).join("・")}</span>
+            {cpt && (cpt.short ?? cpt.definition) ? <span className={s.tipText}>{cpt.short ?? cpt.definition}</span> : null}
+          </div>
+        );
+      })() : null}
       {!fill && topLeft && <div ref={tl} className={s.topLeft}>{topLeft}</div>}
       {!fill && bottomLeft && <div ref={bl} className={s.bottomLeft}>{bottomLeft}</div>}
       {!fill && <Button icon className={s.fit} aria-label="図を枠に収める" title="図を枠に収める"
