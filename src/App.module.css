@@ -36,3 +36,6 @@
 .pickItem:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .pickItem span { font-size: var(--fs-small); color: var(--ink-3); }
 .cmpActs { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+/* 全体図を分類で絞る（#105）。図の左上、まわり／全体の横 */
+.groupSel { min-height: 36px; max-width: 220px; margin-left: 6px; padding: 0 28px 0 12px; border-radius: var(--r-pill); border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font-size: 12.5px; }
+.groupSel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
