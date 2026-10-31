@@ -1090,3 +1090,23 @@ test("地図を全画面で見て、点を押すと札が出て、閉じると�
   void before;
   expect(errs).toEqual([]);
 });
+
+// 確かめる対象：スマホで概念を選んでいる間、ページが縦に送れない（渡辺さん 2026-11-01：下まで送ると下のタブと面が画面の途中に浮いた）。
+// 想定する故障：余白や下の注記でページが画面より長くなり、送れてしまう。見つけ方：390×844 で詳しくの面と経路の面を出し、下へ送っても位置が 0 のままか・タブが画面の下にあるか
+test("スマホで概念を選んでいる間は、ページが縦に送れず、下のタブは画面の下", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const q of ["", "&view=path"]) {
+    await page.goto(`./?src=sample/stats2-p1.json&c=stats2:TERM-sample-space${q}`);
+    await expect(page.getByTestId("tabbar")).toBeVisible();
+    await page.mouse.move(195, 300); await page.mouse.wheel(0, 2000);
+    await page.evaluate(() => scrollTo(0, 5000));
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+    const bar = (await page.getByTestId("tabbar").boundingBox())!;
+    expect(Math.round(bar.y + bar.height)).toBe(844);
+  }
+  // 概念を選んでいないときは、ふつうに送れる（一覧などを読むため）
+  await page.goto("./?src=sample/stats2-p1.json&t=learn");
+  await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
+  await page.evaluate(() => scrollTo(0, 400));
+  expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
+});

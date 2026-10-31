@@ -283,8 +283,9 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     if (!big) return;
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setBig(false); };
     addEventListener("keydown", esc);
+    const prev = document.documentElement.style.overflow;   // 元の値に戻す（スマホで概念を選んでいる間はもともと送らない）
     document.documentElement.style.overflow = "hidden";
-    return () => { removeEventListener("keydown", esc); document.documentElement.style.overflow = ""; };
+    return () => { removeEventListener("keydown", esc); document.documentElement.style.overflow = prev; };
   }, [big]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
