@@ -8,7 +8,7 @@ import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import Search from "./Search";
-import { Button, Card, ErrorText, Experiment, FullView, Muted, Segmented, Sheet } from "@math-lab/ui";
+import { Button, Card, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
 import st from "./App.module.css";
 import { KINDS, MODES, around, compare, load, neighborhood, trace, type Network } from "./data";
 import { relationParts } from "./Relation";
@@ -54,7 +54,19 @@ function useUrlState() {
   return { sel, setSel, view, setView: setViewPush, cmp, setCmp, exp, setExp, cards, setCards, group, setGroup, tab, setTab };
 }
 
+/** スマホの幅か（詳しくを下からの面にする） */
+function useNarrow() {
+  const q = "(max-width: 759px)";
+  const [n, setN] = useState(() => typeof matchMedia === "function" && matchMedia(q).matches);
+  useEffect(() => { const m = matchMedia(q); const f = () => setN(m.matches); m.addEventListener("change", f); return () => m.removeEventListener("change", f); }, []);
+  return n;
+}
+
 export default function App() {
+  const narrow = useNarrow();
+  // 詳しくの段（少し・半分・全部）。別の概念を選ぶと「少し」から
+  const [detent, setDetent] = useState<Detent>("peek");
+  const [tabH, setTabH] = useState(58);
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -64,7 +76,12 @@ export default function App() {
   const [modal, setModalRaw] = useState<"kinds" | "trace" | "compare" | "pick" | null>(null);
   const setEdgeSel = (id: string | null) => { setEdgeRaw(id); if (id) setModalRaw(null); };
   const setModal = (m: typeof modal) => { setModalRaw(m); if (m) setEdgeRaw(null); };
-  useEffect(() => setEdgeRaw(null), [sel]);   // 別の概念へ進んだら、線の説明は閉じる
+  useEffect(() => { setEdgeRaw(null); setDetent("peek"); }, [sel]);   // 別の概念へ進んだら、線の説明は閉じ、詳しくは「少し」に
+  useEffect(() => {   // 下のタブの高さ（詳しくの面はその上に乗る）
+    const el = document.querySelector<HTMLElement>('[data-testid="tabbar"]');
+    if (!el || typeof ResizeObserver !== "function") return;
+    const ro = new ResizeObserver(() => setTabH(el.offsetHeight)); ro.observe(el); return () => ro.disconnect();
+  });
   // ラボを全面で開く：一覧の「大きく開く」と、ラボの中の「大きく開く ↗」（host=kn のときは親に知らせてくる）
   const [full, setFull] = useState<{ url: string; title?: string } | null>(null);
   useEffect(() => {
@@ -170,7 +187,7 @@ export default function App() {
   );
   const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
   return (
-    <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
+    <main className={`${st.app} ${st.withTabs}${narrow && concept ? ` ${st.withDetailSheet}` : ""}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <div className={st.top}>
         <Header title="知識ネットワーク" sub={<>{sub}　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（骨格 ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>} />
         <Search concepts={[...net.concepts.values()]} onPick={setSel} />
@@ -205,7 +222,7 @@ export default function App() {
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
       {concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
-        onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
+        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH } : undefined} onExperiment={setExp} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} /> :
         <Card><Muted>概念を押すと、定義・式・条件・つながり・教材へのリンクが出る。</Muted></Card>}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">

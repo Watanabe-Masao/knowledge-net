@@ -129,6 +129,12 @@ const W0 = "src=sample/stats2-w0.json";
 /** 概念の中身のタブ（動かす・説明｜つながり｜くわしく）を選ぶ */
 const tab = (page: Page, name: RegExp) => page.getByTestId("detail").getByRole("radio", { name }).click();
 const settle = (page: Page) => page.waitForFunction(() => { const cy = (window as any).kn; return cy && !cy.nodes().some((n: any) => n.animated()); });
+// スマホの幅では詳しくは下からの面（#42）。中身を触るテストは、つまみを押して全部に広げてから
+const fullSheet = async (page: Page) => {
+  const s = page.getByTestId("detail");
+  for (let i = 0; i < 2 && (await s.getAttribute("data-detent")) !== "full"; i++) await s.getByRole("button", { name: "広げる" }).click();
+  await expect(s).toHaveAttribute("data-detent", "full");
+};
 
 test("🕸 リンク（c 付き）で開くと、その概念の周辺図から始まり、名前が重ならない", async ({ page }) => {
   const errs = noErrors(page);
@@ -314,6 +320,7 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
 test("切り替えの印は選んだ項目の上に滑って重なる", async ({ page }) => {
   await page.setViewportSize({ width: 380, height: 800 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await fullSheet(page);
   const media = page.getByTestId("media-concept");
   const mark = media.getByTestId("segmented-mark");
   for (const name of [/触る/, /解説/, /図/]) {
@@ -347,6 +354,7 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
+  await fullSheet(page);
   await tab(page, /つながり/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
   const panel = page.getByTestId("edge-panel");
@@ -382,6 +390,7 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
 test("式の記号を押すと意味が出て、値を入れると1段ずつ計算できる", async ({ page }) => {
   await page.setViewportSize({ width: 380, height: 800 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await fullSheet(page);
   const d = page.getByTestId("detail");
   await tab(page, /くわしく/);   // 作業台のある概念では、式は「くわしく」の中
   await d.getByTestId("more-formulas").locator("summary").click();
@@ -410,6 +419,7 @@ test("式の記号を押すと意味が出て、値を入れると1段ずつ計�
 test("式の記号を定義の式で開き、閉じると戻る", async ({ page }) => {
   await page.setViewportSize({ width: 380, height: 800 });
   await page.goto(`./?${W0}&c=stats2:TERM-std`);
+  await fullSheet(page);
   const f = page.getByTestId("detail").getByTestId("formula").first();
   const tex = f.locator(".katex").first();
   await f.getByTestId("sym-sigma").click();
@@ -463,6 +473,7 @@ test("V(aX+b) を開くと中の μ は E(aX+b) になり、μ は μ＝E(X) で
 test("式の作業台：かたまり・スライダー・分布が1つの操作で連動する", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await fullSheet(page);
   const w = page.getByTestId("workspace");
   await expect(w.getByTestId("ws-result")).toContainText("P(X=3)");   // n＝10・p＝0.3 の期待値 3 の近く
   await expect(w.getByTestId("ws-result")).toContainText("0.2668");
@@ -490,6 +501,7 @@ test("式の作業台：かたまり・スライダー・分布が1つの操作�
 test("作業台：計算過程を1段ずつ見て、k を動かし、初期値に戻す", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await fullSheet(page);
   const w = page.getByTestId("workspace");
   await expect(w.getByTestId("ws-result")).toContainText("26.68%");
   const calc = w.getByTestId("ws-calc");
@@ -527,6 +539,7 @@ test("作業台で実験する：100回・1回・条件を変えると記録を�
 test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分解しても値は変わらない", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await fullSheet(page);
   const w = page.getByTestId("workspace");
   await w.locator('[data-part="0"]').first().click();
   await w.getByTestId("ws-break-comb").click();
@@ -643,6 +656,7 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&c=stats2:TERM-expect`);
+  await fullSheet(page);
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   const x = page.getByTestId("experiment");
   await expect(x).toContainText("表を変えると");
@@ -906,5 +920,32 @@ test("詳しく：学ぶ行動のボタンと「…」のメニュー", async ({
   // 実験してみる で実験室へ
   await acts.getByRole("button", { name: "実験してみる" }).click();
   await expect(page).toHaveURL(/x=stats2/);
+  expect(errs).toEqual([]);
+});
+
+// 詳しくの下からの面（#42 PR 3b）：少し → 半分 → 全部。指で上へ払うと次の段、全部では後ろが暗く、押すと半分へ
+test("スマホ：詳しくは地図に重なる下からの面で、段を動かせる", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  const s = page.getByTestId("detail");
+  await expect(s).toHaveAttribute("data-detent", "peek");
+  await expect(s.getByRole("button", { name: "実験してみる" })).toBeInViewport();   // 少しの段で、見出しと学ぶ行動が見える
+  const tabs = (await page.getByTestId("tabbar").boundingBox())!;
+  await expect.poll(async () => { const b = (await s.boundingBox())!; return b.y + b.height; }).toBeLessThanOrEqual(tabs.y + 1);   // 下のタブの上に乗る（出てくる動きが止まってから）
+  await s.getByRole("button", { name: "広げる" }).click();
+  await expect(s).toHaveAttribute("data-detent", "half");
+  // 見出しをつかんで上へ速く払う → 全部
+  const h = (await s.getByRole("heading", { name: "二項分布", exact: true }).boundingBox())!;
+  await page.mouse.move(h.x + 4, h.y + 4); await page.mouse.down();
+  for (const dy of [20, 60, 140]) await page.mouse.move(h.x + 4, h.y + 4 - dy);
+  await page.mouse.up();
+  await expect(s).toHaveAttribute("data-detent", "full");
+  await expect(page.getByTestId("bottomsheet-scrim")).toHaveCSS("opacity", "1");
+  await page.getByTestId("bottomsheet-scrim").click({ position: { x: 10, y: 10 } });
+  await expect(s).toHaveAttribute("data-detent", "half");
+  // 別の概念を選ぶと少しの段から
+  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-poisson");
+  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
   expect(errs).toEqual([]);
 });

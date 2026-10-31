@@ -1,5 +1,6 @@
 .app { max-width: 760px; margin: 0 auto; padding: var(--sp-3) var(--sp-4) 32px; }
 .withTabs { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }   /* 下のタブに内容が隠れないように */
+.withDetailSheet { padding-bottom: 48vh; }   /* スマホ：詳しくの面（少し）に地図が隠れないよう、下までスクロールできる余白 */
 .withSheet { padding-bottom: 55vh; }   /* 線の説明を開いている間は、下の内容が隠れないよう余白を足す */
 .top { display: flex; flex-direction: column; gap: var(--sp-1); }
 .hits { list-style: none; padding: 0; margin: var(--sp-1) 0; display: flex; flex-wrap: wrap; gap: 6px; }
