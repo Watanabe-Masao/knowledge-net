@@ -569,6 +569,9 @@ test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分�
   await w.getByTestId("ws-break-fact").first().click();
   await expect(w.getByTestId("ws-part-value")).toHaveText("120");
   await expect(w.getByTestId("ws-result")).toContainText("26.68%");
+  // たたむは最後に開いたものから左に（同じ指の位置で、開いた逆の順に閉じられる。渡辺さん 2026-11-01）
+  await expect(w.locator('[data-testid^="ws-close-"]')).toHaveText([/n! をたたむ/, /をたたむ/]);
+  expect(await w.locator('[data-testid^="ws-close-"]').first().getAttribute("data-testid")).toBe("ws-close-fact");
   await w.getByTestId("ws-close-comb").click();   // たたむと元の ₙCₖ に戻る
   await expect(w.getByTestId("ws-formula").locator(".katex")).not.toContainText("n!");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
