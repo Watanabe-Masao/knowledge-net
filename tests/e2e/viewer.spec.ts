@@ -613,6 +613,7 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();   // 下のタブが選んだ概念の実験室に絞って開く
   await page.getByTestId("open-stats2:EXP-binom-p").click();
   const x = page.getByTestId("experiment");
+  await x.getByTestId("exp-q-main").click();   // 入口「何を確かめたい？」から最初の問い（位置）を選ぶ（#161）
   await expect(x.getByTestId("exp-question")).toContainText("成功確率を上げると");
   await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();   // 予想するまで結果を見せない
   // 予想は向きと山の頂点が連動する（食い違った予想を入れられない）
@@ -669,6 +670,10 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await expect(x.getByTestId("exp-workspace").getByTestId("ws-result")).toContainText("P(X=8)");
   await expect(x.getByTestId("exp-workspace").getByTestId("ws-exp")).toHaveCount(0);
   await x.getByRole("button", { name: "別の条件で試す" }).click();
+  // 反例は入口の「前提崩し」に置く（応用の段には出さない。#161）
+  await expect(x.getByTestId("exp-bnd-urn")).toHaveCount(0);
+  await x.getByTestId("exp-to-menu").click();
+  await x.getByTestId("exp-q-break").click();
   // 反例も実験する：起き方 → 予想 → 実験 → 二項分布と照らす。結果と説明は実験のあと
   await x.getByTestId("exp-bnd-urn").click();
   const cx = x.getByTestId("exp-cx");
@@ -684,12 +689,14 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("山は二項分布より");
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("条件どおり");
   // 予想の答えは実験の結果ではなく理論の散らばりで決まる（stats2-course #118 層5）。期待値は式で別に求めた値：
-  // n＝10・p＝0.8、箱 40 個（当たり 32）の超幾何の分散 10×0.8×0.2×30/39＝1.2308、二項分布 10×0.8×0.2＝1.6 → 狭くなる
+  // 前提崩しは最初の条件 n＝10・p＝0.5、箱 40 個（当たり 20）の超幾何の分散 10×0.5×0.5×30/39＝1.923、二項分布 10×0.5×0.5＝2.5 → 狭くなる
   // 想定する故障：答えを実験の比で決める（ゆれで外れる）・画面の理論の数が engine とずれる
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("予想どおり");
-  await expect(cx.getByTestId("exp-cx-verdict")).toContainText("崩した起き方 1.23・二項分布 1.6");
+  await expect(cx.getByTestId("exp-cx-verdict")).toContainText("崩した起き方 1.92・二項分布 2.5");
   await expect(cx).toContainText("崩した条件：各回が独立");
   expect(page.url()).toContain("x=stats2%3AEXP-binom-p");
+  await x.getByRole("button", { name: "戻る" }).click();   // 問いの中の「戻る」は入口へ
+  await expect(x.getByTestId("exp-menu")).toBeVisible();
   await page.goBack();   // 戻ると来た所（下のタブの実験室）、もう一度戻ると概念のページ
   await expect(page.getByTestId("page-lab")).toBeVisible();
   await page.goBack();
@@ -774,6 +781,7 @@ test("比べる：前と後のカードから始め、条件を足して重ね�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
+  await x.getByTestId("exp-q-main").click();
   await expect(x.getByRole("list", { name: "段" }).getByRole("button")).toHaveText([/予測/, /実験/, /観察/, /理由/, /応用/, /比べる/]);
   await x.getByRole("radio", { name: "右へ動く" }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
@@ -1093,6 +1101,7 @@ test("動きを減らす設定でも、積み上がりの再生は1セット目�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
+  await x.getByTestId("exp-q-main").click();
   await x.getByRole("radio", { name: "右へ動く" }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
@@ -1231,4 +1240,58 @@ test("実験室の基本の面は型どおり：式は記号を押せる・本�
     else await expect(info.getByTestId("exp-info-related")).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   }
+});
+
+test("実験室の入口：何を確かめたい？から確率の値の問いを予想・実験・観察・理由・応用で確かめる", async ({ page }) => {
+  // 確かめる対象：入口と確率の値の問い（stats2-course issue 161）。想定する故障：入口の並び・形の札の取り違え、事象の範囲の取り違え
+  // （9 回以上を 9 回より多いで数える）、目盛りの区間の取り違え、当てはまったセットの数と図・観察の数の食い違い、応用で前の予想が残る。
+  // 見つけ方：答えは手で求めた値（10 回中 9 回以上・p＝0.7：10×0.7⁹×0.3＋0.7¹⁰＝14.93%、区間は 5%〜20%）と照らす。
+  // 既存との違い：確率の値の問いは新しい形で、既存のテストは位置の問いだけを見ていた
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  const x = page.getByTestId("experiment");
+  const menu = x.getByTestId("exp-menu");
+  await expect(menu.locator("button")).toHaveCount(4);
+  expect(await menu.locator("button").evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(["exp-q-main", "exp-q-rare", "exp-q-exact", "exp-q-break"]);
+  await expect(menu.locator("button").first()).toContainText("位置");
+  await expect(x.getByTestId("exp-q-rare")).toContainText("確率の値");
+  await expect(x.getByTestId("exp-q-break")).toContainText("前提崩し");
+  await x.getByTestId("exp-q-rare").click();
+  await expect(x.getByRole("list", { name: "段" }).getByRole("button")).toHaveText([/予測/, /実験/, /観察/, /理由/, /応用/]);
+  await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();
+  await x.getByRole("radio", { name: "20%〜50%" }).click();   // わざと外す
+  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByTestId("exp-run-100").click();
+  await expect(x.getByTestId("exp-sets")).toHaveText("100 セット");
+  const h = Number((await x.getByTestId("exp-hit-0").locator("b").textContent())!.split("／")[0]);
+  expect(await x.locator("svg rect[data-hi]").count()).toBeLessThanOrEqual(2);   // 塗るのは k＝9・10 の棒だけ
+  await x.getByRole("button", { name: "観察する →" }).click();
+  const v = x.getByTestId("exp-verdict-0");
+  await expect(v).toContainText("予想と違った");
+  await expect(v).toContainText("14.93%");
+  await expect(v).toContainText("5%〜20%");
+  await expect(v).toContainText(`100 セット中 ${h} セット`);
+  await x.getByRole("button", { name: /理由を考える/ }).click();
+  await expect(x.getByTestId("exp-sum").locator("tbody tr")).toHaveCount(3);   // k＝9・10 と合計
+  await expect(x.getByTestId("exp-sum-total")).toHaveText("14.93%");
+  await x.getByRole("button", { name: "別の条件で試す" }).click();
+  await x.getByTestId("exp-app-k").fill("8");
+  await x.getByTestId("exp-app-go").click();
+  await expect(x.getByTestId("exp-question")).toContainText("8 回以上");
+  await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();   // 前の予想は残らない
+  await x.getByRole("button", { name: "戻る" }).click();
+  // ちょうど k 回と k 回以上：2つの確率を並べ、k 回以上にちょうど k 回が入ることを言う。手で求めた値 252/1024＝24.61%、638/1024＝62.3%
+  await x.getByTestId("exp-q-exact").click();
+  await x.getByRole("radiogroup", { name: "ちょうど 5 回 の確率の予想" }).getByRole("radio", { name: "20%〜50%" }).click();
+  await x.getByRole("radiogroup", { name: "5 回以上 の確率の予想" }).getByRole("radio", { name: "50%以上" }).click();
+  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByTestId("exp-run-100").click();
+  await x.getByRole("button", { name: "観察する →" }).click();
+  await expect(x.getByTestId("exp-verdict-0")).toContainText("24.61%");
+  await expect(x.getByTestId("exp-verdict-1")).toContainText("62.3%");
+  await expect(x.getByTestId("exp-verdict-1")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-compare-note")).toContainText("その 39%");   // 252÷638
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  expect(errs).toEqual([]);
 });
