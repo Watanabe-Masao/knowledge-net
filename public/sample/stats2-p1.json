@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 12,
+ "schema_revision": 19,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -11611,6 +11611,248 @@
       {
        "op": "ge",
        "k": 5
+      }
+     ]
+    }
+   ],
+   "catalog": [
+    {
+     "id": "A",
+     "title": "分布の形と仕組み",
+     "items": [
+      {
+       "id": "stats2:binom-A-01",
+       "title": "成功確率を変えると分布はどう動く？",
+       "finds": "成功確率と分布の形の関係",
+       "concept": "stats2:TERM-binom",
+       "open": "shift"
+      },
+      {
+       "id": "stats2:binom-A-02",
+       "title": "試行回数を増やすと分布はどう変わる？",
+       "finds": "成功回数と成功割合の散らばり",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-sd"
+       ],
+       "open": "spread"
+      },
+      {
+       "id": "stats2:binom-A-03",
+       "title": "なぜ中央付近の成功回数が起こりやすい？",
+       "finds": "組合せ数と確率の関係",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-comb"
+       ]
+      },
+      {
+       "id": "stats2:binom-A-04",
+       "title": "成功確率 50% なら必ず左右対称？",
+       "finds": "対称性と非対称性",
+       "concept": "stats2:TERM-binom"
+      }
+     ]
+    },
+    {
+     "id": "B",
+     "title": "事象と確率計算",
+     "items": [
+      {
+       "id": "stats2:binom-B-01",
+       "title": "ちょうど k 回成功する確率を調べる",
+       "finds": "確率質量関数",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-comb"
+       ],
+       "open": "exact"
+      },
+      {
+       "id": "stats2:binom-B-02",
+       "title": "k 回以上・以下の確率を調べる",
+       "finds": "累積確率と事象の範囲",
+       "concept": "stats2:TERM-binom",
+       "open": "exact"
+      },
+      {
+       "id": "stats2:binom-B-03",
+       "title": "補集合を使うと計算が簡単になる？",
+       "finds": "補集合と確率の和",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-complement"
+       ]
+      },
+      {
+       "id": "stats2:binom-B-04",
+       "title": "珍しい結果はどのくらい起こる？",
+       "finds": "裾確率と稀な事象",
+       "concept": "stats2:TERM-binom",
+       "open": "rare"
+      }
+     ]
+    },
+    {
+     "id": "C",
+     "title": "理論と実験",
+     "items": [
+      {
+       "id": "stats2:binom-C-01",
+       "title": "理論分布と実験結果は一致する？",
+       "finds": "理論確率と実測割合",
+       "concept": "stats2:TERM-binom",
+       "open": "conv"
+      },
+      {
+       "id": "stats2:binom-C-02",
+       "title": "実験セット数を増やすと誤差はどう変わる？",
+       "finds": "大数の法則",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-lln"
+       ],
+       "open": "conv"
+      },
+      {
+       "id": "stats2:binom-C-03",
+       "title": "同じ実験を繰り返すと同じ結果になる？",
+       "finds": "標本変動",
+       "concept": "stats2:TERM-binom"
+      },
+      {
+       "id": "stats2:binom-C-04",
+       "title": "珍しい結果を何セット試せば観察できる？",
+       "finds": "少なくとも1回発生する確率",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-complement",
+        "stats2:TERM-indep"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "D",
+     "title": "期待値・分散との接続",
+     "items": [
+      {
+       "id": "stats2:binom-D-01",
+       "title": "成功回数の期待値はどこにある？",
+       "finds": "E(X)＝np",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-expect"
+       ]
+      },
+      {
+       "id": "stats2:binom-D-02",
+       "title": "成功回数のばらつきは何で決まる？",
+       "finds": "V(X)＝np(1−p)",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-var",
+        "stats2:TERM-indep"
+       ]
+      },
+      {
+       "id": "stats2:binom-D-03",
+       "title": "期待値が同じでも分布は違う？",
+       "finds": "期待値だけでは分布を特定できない",
+       "concept": "stats2:TERM-expect",
+       "related": [
+        "stats2:TERM-binom",
+        "stats2:TERM-var"
+       ]
+      },
+      {
+       "id": "stats2:binom-D-04",
+       "title": "成功回数と成功割合では何が違う？",
+       "finds": "個数と割合の分散の違い",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-var"
+       ],
+       "open": "spread"
+      }
+     ]
+    },
+    {
+     "id": "E",
+     "title": "前提条件と反例",
+     "items": [
+      {
+       "id": "stats2:binom-E-01",
+       "title": "成功確率が毎回違っても二項分布になる？",
+       "finds": "成功確率一定の条件",
+       "concept": "stats2:TERM-binom",
+       "open": "break:fatigue"
+      },
+      {
+       "id": "stats2:binom-E-02",
+       "title": "前回の結果が次回に影響すると？",
+       "finds": "独立性の重要性",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-indep"
+       ],
+       "open": "break:streak"
+      },
+      {
+       "id": "stats2:binom-E-03",
+       "title": "戻さずに抽出するとどうなる？",
+       "finds": "超幾何分布との違い",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-hyper"
+       ],
+       "open": "break:urn"
+      },
+      {
+       "id": "stats2:binom-E-04",
+       "title": "同じ平均成功確率でも結果は同じ？",
+       "finds": "確率の異質性と分布の広がり",
+       "concept": "stats2:TERM-binom",
+       "open": "break:mix"
+      }
+     ]
+    },
+    {
+     "id": "F",
+     "title": "応用・発展",
+     "items": [
+      {
+       "id": "stats2:binom-F-01",
+       "title": "購入人数を確率から予測できる？",
+       "finds": "二項モデルによる人数の予測",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-expect"
+       ]
+      },
+      {
+       "id": "stats2:binom-F-02",
+       "title": "不良品が一定数以上出る確率は？",
+       "finds": "閾値とリスク評価",
+       "concept": "stats2:TERM-binom"
+      },
+      {
+       "id": "stats2:binom-F-03",
+       "title": "観測した成功回数から成功確率を推定する",
+       "finds": "母比率の推定",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-sample-prop"
+       ]
+      },
+      {
+       "id": "stats2:binom-F-04",
+       "title": "観測結果は偶然だけで説明できる？",
+       "finds": "二項検定と p 値",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-test"
+       ]
       }
      ]
     }

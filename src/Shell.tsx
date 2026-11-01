@@ -3,7 +3,7 @@
 // 個人の記録（解いた・お気に入り）は持たない。単元と問題は Notion のページへのリンク。
 import { useState, type ReactNode } from "react";
 import { Muted } from "@math-lab/ui";
-import type { Network } from "./data";
+import type { ExperimentData, Network } from "./data";
 import s from "./Shell.module.css";
 
 import type { Tab } from "./urlState";
@@ -132,28 +132,48 @@ export function LearnPage({ net, focus = null }: { net: Network; focus?: Focus |
   );
 }
 
-/** 実験室：問いから選ぶ一覧 */
+/** 実験室のつなぐ概念：つなぐ概念（links）と、テーマ体系の問いの主概念・関連概念（stats2-course #163。問いの側に書き、ここで引く） */
+export function labConcepts(x: ExperimentData): string[] {
+  const items = x.model === "binom" ? (x.catalog ?? []).flatMap((g) => g.items) : [];
+  return [...new Set([...(x.links.concepts ?? []), ...items.flatMap((it) => [it.concept, ...(it.related ?? [])].filter((c): c is string => !!c))])];
+}
+
+/** 実験室：上に概念を並べ（いくつでも選べる）、選んだ概念のどれかにつながる実験室を並べる。何も選ばなければ全部 */
 export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (id: string) => void; focus?: Focus | null }) {
-  const [on, setOn] = useState(true);
-  const xs = [...net.experiments.values()].filter((x) => !(focus && on) || focus.exps.includes(x.id));
+  const all = [...net.experiments.values()];
+  const concepts = [...new Set(all.flatMap(labConcepts))].filter((id) => net.concepts.has(id));
+  const [picked, setPicked] = useState<string[]>(() => (focus && concepts.includes(focus.id) ? [focus.id] : []));
+  const toggle = (id: string) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
+  const xs = all.filter((x) => !picked.length || labConcepts(x).some((c) => picked.includes(c)));
+  const count = (x: (typeof all)[number]) => {
+    if (x.model !== "binom" || !x.catalog?.length) return `反例 ${x.counterexamples?.length ?? 0}`;
+    const items = x.catalog.flatMap((g) => g.items);
+    const hit = picked.length ? items.filter((it) => [it.concept, ...(it.related ?? [])].some((c) => c && picked.includes(c))) : items;
+    const ready = hit.filter((it) => it.open).length;
+    return `問い ${ready}${hit.length > ready ? `（作成中 ${hit.length - ready}）` : ""}${picked.length ? "：選んだ概念につながる問い" : ""}`;
+  };
   return (
     <section className={s.page} data-testid="page-lab">
       <h2 className={s.pageTitle}>実験室</h2>
       <Muted>予想してから、自分で起こして確かめる。</Muted>
-      <FocusChip focus={focus} on={on} onToggle={() => setOn(!on)} />
-      <ol className={s.stages} aria-label="実験室の段">{["予測", "実験", "観察", "理由", "応用", "比べる"].map((x, i) => <li key={x}><i>{i + 1}</i>{x}</li>)}</ol>
+      {concepts.length ? (
+        <div className={`${s.chips} ${s.chipsWrap}`} role="group" aria-label="概念で絞る（いくつでも選べる）" data-testid="lab-concepts">
+          <button type="button" aria-pressed={!picked.length} onClick={() => setPicked([])}>すべて</button>
+          {concepts.map((id) => <button key={id} type="button" aria-pressed={picked.includes(id)} onClick={() => toggle(id)} data-testid={`lab-c-${id}`}>{net.concepts.get(id)!.name}</button>)}
+        </div>
+      ) : null}
       <ul className={s.cards}>
         {xs.map((x) => (
           <li key={x.id}>
             <button type="button" className={s.labCard} onClick={() => onOpen(x.id)} data-testid={`open-${x.id}`}>
               <span className={s.labTag}>{x.title.replace(/\s*実験室$/, "")}</span>
               <b>{x.question}</b>
-              <Muted as="span">場面 {x.themes.length}・反例 {x.counterexamples?.length ?? 0}</Muted>
+              <Muted as="span">{count(x)}</Muted>
             </button>
           </li>
         ))}
       </ul>
-      {!xs.length ? <Muted>実験室はまだない。</Muted> : null}
+      {!xs.length ? <Muted>{picked.length ? "選んだ概念につながる実験室はまだない。" : "実験室はまだない。"}</Muted> : null}
     </section>
   );
 }
