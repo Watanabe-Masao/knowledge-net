@@ -23,3 +23,4 @@
 | 15 | 2026-11-01 | 値の表 `$defs.valueTable`。概念に任意の `table_workspace`（値の表の作業台：formula・linear・tables）。値の表の実験室に任意の `contrasts`（誤解を正す例 misconception・指標の限界を示す比較 limit：確かめる主張 claim と1〜2個の表）（stats2-course #119・#118 の反例の方針）。任意 |
 | 16 | 2026-11-01 | 式の作業台（workspace）に任意の `linear`（E(aX＋b) の式の番号）。作業台の型（stats2-course #156）で、どの作業台にも変換の欄を出すため。任意 |
 | 17 | 2026-11-01 | 二項分布の実験室に任意の `questions`（入口「何を確かめたい？」に並べる問い：id・form〔問いの形。今は prob＝確率の値〕・title・question・set〔n・p〕・events〔eq／ge／le と k。1〜2個〕）と `prob_scale`（確率の値の予想の目盛り）（stats2-course #161）。任意 |
+| 18 | 2026-11-02 | 二項分布の実験室の `questions` の form に spread（広がり：to.n）・conv（理論と実測）を足し、prob に任意の free（学習者が結果を選ぶ）。反例の起き方に fatigue（回を追って確率が変わる：drop）（stats2-course #161）。任意 |
