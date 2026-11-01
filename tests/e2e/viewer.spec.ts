@@ -666,6 +666,11 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   expect(await cx.getByTestId("exp-bar-before").count()).toBeGreaterThan(0);
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("山は二項分布より");
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("条件どおり");
+  // 予想の答えは実験の結果ではなく理論の散らばりで決まる（stats2-course #118 層5）。期待値は式で別に求めた値：
+  // n＝10・p＝0.8、箱 40 個（当たり 32）の超幾何の分散 10×0.8×0.2×30/39＝1.2308、二項分布 10×0.8×0.2＝1.6 → 狭くなる
+  // 想定する故障：答えを実験の比で決める（ゆれで外れる）・画面の理論の数が engine とずれる
+  await expect(cx.getByTestId("exp-cx-verdict")).toContainText("予想どおり");
+  await expect(cx.getByTestId("exp-cx-verdict")).toContainText("崩した起き方 1.23・二項分布 1.6");
   await expect(cx).toContainText("崩した条件：各回の成功確率 p が同じ・各回が独立");
   expect(page.url()).toContain("x=stats2%3AEXP-binom-p");
   await page.goBack();   // 戻ると来た所（下のタブの実験室）、もう一度戻ると概念のページ
