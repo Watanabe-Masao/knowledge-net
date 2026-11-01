@@ -21,3 +21,4 @@
 | 13 | 2026-11-01 | 式に任意の `id`（式の ID。`F-…`。変えない・消さない）と `defined_in`（同じ式を2つの概念に出すとき、元の概念の id）。木から作る TeX と合わせ、式の検証の結果を式 ID で指す（stats2-course #118 D1・D2）。任意 |
 | 14 | 2026-11-01 | 式に任意の `conditions`（記号どうしの条件：text と比べる式の木）、`unverified`（独立な見本で未検証）、`review_pending`（個別レビュー前）。画面は条件を満たさない値で計算せず、2つの印を出す（stats2-course #118 単位 C・D4）。任意 |
 | 15 | 2026-11-01 | 値の表 `$defs.valueTable`。概念に任意の `table_workspace`（値の表の作業台：formula・linear・tables）。値の表の実験室に任意の `contrasts`（誤解を正す例 misconception・指標の限界を示す比較 limit：確かめる主張 claim と1〜2個の表）（stats2-course #119・#118 の反例の方針）。任意 |
+| 16 | 2026-11-01 | 式の作業台（workspace）に任意の `linear`（E(aX＋b) の式の番号）。作業台の型（stats2-course #156）で、どの作業台にも変換の欄を出すため。任意 |

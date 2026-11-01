@@ -1,5 +1,5 @@
 {
- "ref": "4361157610a8e28a965c59ed49acfd0506a9761a",
+ "ref": "8c0f04a0f76c09c3b90437f038535e6f6aac9229",
  "files": [
   "packages/engine/src/cards.ts",
   "packages/engine/src/experiment.ts",
@@ -35,8 +35,6 @@
   "packages/ui/src/Segmented.tsx",
   "packages/ui/src/Sheet.module.css",
   "packages/ui/src/Sheet.tsx",
-  "packages/ui/src/TableWorkspace.module.css",
-  "packages/ui/src/TableWorkspace.tsx",
   "packages/ui/src/Workspace.module.css",
   "packages/ui/src/Workspace.tsx",
   "packages/ui/src/base.css",
