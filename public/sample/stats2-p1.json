@@ -11579,6 +11579,22 @@
      ]
     },
     {
+     "id": "pmf",
+     "form": "prob",
+     "title": "ちょうど k 回成功する確率を調べる",
+     "question": "成功確率 30% で 10 回。「ちょうど 3 回」になる確率は？",
+     "set": {
+      "n": 10,
+      "p": 0.3
+     },
+     "events": [
+      {
+       "op": "eq",
+       "k": 3
+      }
+     ]
+    },
+    {
      "id": "exact",
      "form": "prob",
      "title": "ちょうど k 回と k 回以上を比べる",
@@ -11625,6 +11641,9 @@
        "title": "成功確率を変えると分布はどう動く？",
        "finds": "成功確率と分布の形の関係",
        "concept": "stats2:TERM-binom",
+       "predict": "成功確率を上げたとき、成功回数の山の頂点がどこへ動くか",
+       "operate": "成功確率 p",
+       "judge": "別の n・p で、山の頂点と平均が n×p のあたりに来ることを説明できる",
        "open": "shift"
       },
       {
@@ -11635,6 +11654,9 @@
        "related": [
         "stats2:TERM-sd"
        ],
+       "predict": "試行回数を増やしたとき、成功回数と成功割合の散らばりがどうなるか",
+       "operate": "試行回数 n",
+       "judge": "回数の散らばりは √n 倍に増え、割合の散らばりは 1/√n 倍に減ることを、別の n で説明できる",
        "open": "spread"
       },
       {
@@ -11666,13 +11688,19 @@
        "related": [
         "stats2:TERM-comb"
        ],
-       "open": "exact"
+       "predict": "ちょうど k 回になる確率の桁",
+       "operate": "成功回数 k",
+       "judge": "別の n・p・k で、ちょうど k 回の確率を 並びの数 × pᵏ(1−p)ⁿ⁻ᵏ から見積もれる",
+       "open": "pmf"
       },
       {
        "id": "stats2:binom-B-02",
        "title": "k 回以上・以下の確率を調べる",
        "finds": "累積確率と事象の範囲",
        "concept": "stats2:TERM-binom",
+       "predict": "「ちょうど k 回」と「k 回以上」の確率の桁",
+       "operate": "事象の範囲（ちょうど・以上・以下）",
+       "judge": "以上・以下の確率は、ちょうどの確率の足し合わせで、境目を含むかで値が変わることを説明できる",
        "open": "exact"
       },
       {
@@ -11689,6 +11717,9 @@
        "title": "珍しい結果はどのくらい起こる？",
        "finds": "裾確率と稀な事象",
        "concept": "stats2:TERM-binom",
+       "predict": "自分で選んだ結果の確率の桁",
+       "operate": "結果（k と、ちょうど・以上・以下）",
+       "judge": "何セットに1回起きるかで、結果の珍しさを見積もれる",
        "open": "rare"
       }
      ]
@@ -11701,8 +11732,7 @@
        "id": "stats2:binom-C-01",
        "title": "理論分布と実験結果は一致する？",
        "finds": "理論確率と実測割合",
-       "concept": "stats2:TERM-binom",
-       "open": "conv"
+       "concept": "stats2:TERM-binom"
       },
       {
        "id": "stats2:binom-C-02",
@@ -11712,6 +11742,9 @@
        "related": [
         "stats2:TERM-lln"
        ],
+       "predict": "セットを 100 倍にしたとき、理論とのずれの目安が何分の1になるか",
+       "operate": "実験のセット数",
+       "judge": "ずれの目安はセット数の平方根に反比例して小さくなる（毎回必ず減るのではない）ことを説明できる",
        "open": "conv"
       },
       {
@@ -11761,9 +11794,12 @@
        "finds": "期待値だけでは分布を特定できない",
        "concept": "stats2:TERM-expect",
        "related": [
-        "stats2:TERM-binom",
-        "stats2:TERM-var"
-       ]
+        "stats2:TERM-var",
+        "stats2:TERM-dist",
+        "stats2:TERM-binom"
+       ],
+       "predict": "期待値が同じ2つの分布の形の違い",
+       "operate": "n と p（n×p を同じに保つ）"
       },
       {
        "id": "stats2:binom-D-04",
@@ -11772,8 +11808,7 @@
        "concept": "stats2:TERM-binom",
        "related": [
         "stats2:TERM-var"
-       ],
-       "open": "spread"
+       ]
       }
      ]
     },
@@ -11786,6 +11821,9 @@
        "title": "成功確率が毎回違っても二項分布になる？",
        "finds": "成功確率一定の条件",
        "concept": "stats2:TERM-binom",
+       "predict": "回を追って確率が下がるとき、二項分布と比べた山の広がり",
+       "operate": "起き方（回を追って確率が下がる）",
+       "judge": "成功確率が回ごとに違うと二項分布にならず、散らばりが np(1−p) より小さくなることを、別の下がり方で説明できる",
        "open": "break:fatigue"
       },
       {
@@ -11796,6 +11834,9 @@
        "related": [
         "stats2:TERM-indep"
        ],
+       "predict": "前の結果に引きずられるとき、二項分布と比べた山の広がり",
+       "operate": "起き方（前の結果に引きずられる）",
+       "judge": "独立が崩れると、平均は同じでも散らばりが大きくなることを説明できる",
        "open": "break:streak"
       },
       {
@@ -11806,6 +11847,9 @@
        "related": [
         "stats2:TERM-hyper"
        ],
+       "predict": "戻さずに取るとき、二項分布と比べた山の広がり",
+       "operate": "起き方（箱から戻さずに取る）",
+       "judge": "戻さずに取ると超幾何分布になり、散らばりが小さくなることを、箱の大きさを変えて説明できる",
        "open": "break:urn"
       },
       {
@@ -11813,6 +11857,9 @@
        "title": "同じ平均成功確率でも結果は同じ？",
        "finds": "確率の異質性と分布の広がり",
        "concept": "stats2:TERM-binom",
+       "predict": "日によって確率が違うとき、二項分布と比べた山の広がり",
+       "operate": "起き方（日や時間で確率が違う）",
+       "judge": "平均の成功確率が同じでも、確率のずれがセットの中で共通だと散らばりが大きくなることを説明できる",
        "open": "break:mix"
       }
      ]
