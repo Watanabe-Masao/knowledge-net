@@ -1,0 +1,342 @@
+{
+  "id": "stats2:TERM-expect",
+  "name": "期待値",
+  "status": "filled",
+  "version": 2,
+  "units": [
+    "stats2:U06",
+    "stats2:U13",
+    "stats2:U14",
+    "stats2:U15"
+  ],
+  "problems": [
+    "stats2:Q-U13-001",
+    "stats2:Q-U13-002",
+    "stats2:Q-U13-003",
+    "stats2:Q-U13-005",
+    "stats2:Q-U13-010",
+    "stats2:Q-U13-011",
+    "stats2:Q-U13-012",
+    "stats2:Q-U13-020",
+    "stats2:Q-U13-021",
+    "stats2:Q-U13-023",
+    "stats2:Q-U13-030",
+    "stats2:Q-U13-031",
+    "stats2:Q-U14-012",
+    "stats2:Q-U14-032"
+  ],
+  "en": "expected value",
+  "category": "要約（代表値・散らばり）",
+  "definition": "確率変数がとる値を、その確率で重み付けした平均。",
+  "principle": "値×確率の和。同じ試行を何度もくり返したときの平均の行き着く先になる（大数の法則）。和の期待値は期待値の和（線形性）。",
+  "formulas": [
+    {
+      "id": "F-expect-def",
+      "symbols": [
+        {
+          "symbol": "E( )",
+          "meaning": "期待値（値×確率を足す。連続なら密度で重み付けして積分）",
+          "key": "E",
+          "concept": "stats2:TERM-expect"
+        },
+        {
+          "symbol": "X",
+          "meaning": "確率変数",
+          "key": "X",
+          "kind": "rv"
+        },
+        {
+          "symbol": "x",
+          "meaning": "X がとりうる値",
+          "key": "x",
+          "kind": "index"
+        },
+        {
+          "symbol": "p(x)",
+          "meaning": "X が x になる確率（重み）",
+          "range": "0以上1以下・合計1",
+          "key": "p",
+          "concept": "stats2:TERM-dist"
+        }
+      ],
+      "tree": {
+        "op": "eq",
+        "args": [
+          {
+            "op": "fn",
+            "args": [
+              {
+                "sym": "X"
+              }
+            ],
+            "name": "E"
+          },
+          {
+            "op": "sum",
+            "args": [
+              {
+                "op": "mul",
+                "args": [
+                  {
+                    "sym": "x"
+                  },
+                  {
+                    "op": "fn",
+                    "args": [
+                      {
+                        "sym": "x"
+                      }
+                    ],
+                    "name": "p"
+                  }
+                ]
+              }
+            ],
+            "var": "x"
+          }
+        ]
+      },
+      "tex": "E(X)=\\sum_{x}xp(x)"
+    },
+    {
+      "id": "F-expect-mu",
+      "label": "記号 μ",
+      "symbols": [
+        {
+          "symbol": "μ",
+          "meaning": "X の期待値 E(X) を短く書く記号",
+          "key": "mu",
+          "kind": "param",
+          "of": "X"
+        },
+        {
+          "symbol": "E( )",
+          "meaning": "期待値（値×確率を足す。連続なら密度で重み付けして積分）",
+          "key": "E",
+          "concept": "stats2:TERM-expect"
+        },
+        {
+          "symbol": "X",
+          "meaning": "確率変数",
+          "key": "X",
+          "kind": "rv"
+        }
+      ],
+      "tree": {
+        "op": "eq",
+        "args": [
+          {
+            "sym": "mu"
+          },
+          {
+            "op": "fn",
+            "args": [
+              {
+                "sym": "X"
+              }
+            ],
+            "name": "E"
+          }
+        ]
+      },
+      "tex": "\\mu=E(X)"
+    },
+    {
+      "id": "F-expect-linear",
+      "label": "線形性",
+      "symbols": [
+        {
+          "symbol": "E( )",
+          "meaning": "期待値（値×確率を足す。連続なら密度で重み付けして積分）",
+          "key": "E",
+          "concept": "stats2:TERM-expect"
+        },
+        {
+          "symbol": "X",
+          "meaning": "確率変数",
+          "key": "X",
+          "kind": "rv"
+        },
+        {
+          "symbol": "a",
+          "meaning": "掛ける定数（単位の換算）",
+          "key": "a",
+          "kind": "const"
+        },
+        {
+          "symbol": "b",
+          "meaning": "足す定数（一律の上乗せ）",
+          "key": "b",
+          "kind": "const"
+        }
+      ],
+      "tree": {
+        "op": "eq",
+        "args": [
+          {
+            "op": "fn",
+            "args": [
+              {
+                "op": "add",
+                "args": [
+                  {
+                    "op": "mul",
+                    "args": [
+                      {
+                        "sym": "a"
+                      },
+                      {
+                        "sym": "X"
+                      }
+                    ]
+                  },
+                  {
+                    "sym": "b"
+                  }
+                ]
+              }
+            ],
+            "name": "E"
+          },
+          {
+            "op": "add",
+            "args": [
+              {
+                "op": "mul",
+                "args": [
+                  {
+                    "sym": "a"
+                  },
+                  {
+                    "op": "fn",
+                    "args": [
+                      {
+                        "sym": "X"
+                      }
+                    ],
+                    "name": "E"
+                  }
+                ]
+              },
+              {
+                "sym": "b"
+              }
+            ]
+          }
+        ]
+      },
+      "tex": "E(aX+b)=aE(X)+b"
+    }
+  ],
+  "conditions": {
+    "math": [
+      "値の大きさ×確率の和（連続なら積分）が有限の値になる（絶対収束：足す順序で値が変わらない）"
+    ],
+    "data": [
+      "くり返しの平均として読むには、同じ条件の試行がくり返せること"
+    ]
+  },
+  "example": "さいころの目の期待値は (1＋2＋…＋6)÷6＝3.5。",
+  "counterexample": "期待値 3.5 の目は実際には出ない。期待値は「よく出る値」（最頻値）でも「真ん中の値」（中央値）でもない。",
+  "misconceptions": [
+    {
+      "misconception": "期待値は実際に出る値",
+      "correction": "何度もくり返したときの平均の行き着く先で、1回の結果としては出ないこともある"
+    },
+    {
+      "misconception": "期待値がいちばん出やすい値",
+      "correction": "いちばん出やすい値は最頻値。右に裾が長い分布では、期待値は最頻値より大きくなる"
+    }
+  ],
+  "table_workspace": {
+    "formula": 0,
+    "linear": 2,
+    "tables": [
+      {
+        "id": "dice",
+        "name": "さいころ",
+        "icon": "⚄",
+        "unit": "目",
+        "values": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "weights": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "id": "basket",
+        "name": "買い上げ点数",
+        "unit": "点",
+        "values": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "weights": [
+          1,
+          3,
+          4,
+          2,
+          1
+        ]
+      },
+      {
+        "id": "lottery",
+        "name": "くじ",
+        "unit": "円",
+        "values": [
+          0,
+          100,
+          1000
+        ],
+        "weights": [
+          8,
+          1,
+          1
+        ],
+        "labels": [
+          "外れ",
+          "小当たり",
+          "大当たり"
+        ]
+      }
+    ]
+  },
+  "labs": [
+    {
+      "id": "LAB-expect",
+      "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
+      "title": "期待値ラボ",
+      "kind": "check",
+      "preset": "s1-dist",
+      "purpose": "期待値が分布の重心になることを、予想してから確かめる"
+    }
+  ],
+  "figures": [
+    {
+      "id": "FIG-U13-concept",
+      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U13-concept.svg",
+      "caption": "1人が買う個数 X の確率分布（例題A）。▲が期待値1.1（分布の重心）、薄い帯が期待値±標準偏差（0.4〜1.8）。"
+    }
+  ],
+  "sources": [
+    {
+      "title": "公式2級範囲表",
+      "locator": "確率モデルの導入（確率変数・確率分布）",
+      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+  ]
+}

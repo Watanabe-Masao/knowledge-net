@@ -27,6 +27,7 @@ export type Concept = {
   /** 定義1文と分類（骨格の段から。#105） */ short?: string; category?: string;
   definition?: string; principle?: string; formulas?: Formula[];
   /** 式の作業台（#110） */ workspace?: { formula: number; vary: string[]; over: string; mean?: number };
+  /** 型の改訂15：期待値の値の表の作業台 */ table_workspace?: import("@math-lab/ui").TableWorkspaceData;
   conditions?: { math: string[]; data?: string[] };
   example?: string; counterexample?: string;
   misconceptions?: { misconception: string; correction: string; labs?: LabRef[] }[];
