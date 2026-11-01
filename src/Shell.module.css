@@ -39,9 +39,6 @@
 .rowText small { font-size: var(--fs-tag); color: var(--accent); }
 .out { color: var(--ink-3); display: flex; flex: none; }
 
-.stages { list-style: none; margin: var(--sp-2) 0 0; padding: 0; display: flex; justify-content: space-between; }
-.stages li { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--ink-2); }
-.stages i { font-style: normal; width: 26px; height: 26px; border-radius: 13px; box-shadow: 0 0 0 1.5px var(--line-strong); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 11.5px; color: var(--ink); background: var(--surface); }
 .cards { list-style: none; margin: var(--sp-3) 0 0; padding: 0; display: grid; gap: var(--sp-3); }
 .labCard { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: var(--sp-4); border-radius: var(--r-l);
   background: var(--surface); box-shadow: 0 0 0 1px var(--line); transition: transform var(--dur-press) var(--ease); }
@@ -54,10 +51,11 @@
 /* まとまりの切り替え（学習・問題集）。横に流す */
 .chips { display: flex; gap: 6px; overflow-x: auto; margin: var(--sp-2) calc(-1 * var(--sp-4)) 0; padding: 2px var(--sp-4); scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
+.chipsWrap { flex-wrap: wrap; overflow: visible; margin: var(--sp-2) 0 0; padding: 2px 0; }
 .chips button { all: unset; flex: none; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--line-strong);
   font-size: 13px; color: var(--ink-2); cursor: pointer; position: relative; transition: background var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur-spring) var(--ease-bounce); }
 .chips button::before { content: ""; position: absolute; inset: -4px 0; }
-.chips button[aria-checked="true"] { background: var(--ink); color: var(--bg); box-shadow: none; font-weight: 600; }
+.chips button[aria-checked="true"], .chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); box-shadow: none; font-weight: 600; }
 .chips button:active { transform: scale(var(--press-scale)); transition-duration: var(--dur), var(--dur), var(--dur-press); }
 .chips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* 問題集：単元を押すと段階ごとの数と問題の一覧 */
@@ -89,3 +87,13 @@ button.row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 .focusChip[aria-pressed="true"] { border-color: var(--accent-line); background: var(--accent-soft); }
 .focusChip span { color: var(--ink-3); }
 .focusChip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.subTitle { margin: var(--sp-4) 0 0; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.qList { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.qRow { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; display: grid; grid-template-columns: 40px 1fr auto; gap: 8px; align-items: center; border-radius: var(--r-m); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; font-size: 14px; line-height: 1.45; }
+button.qRow:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.qRow:active { transform: scale(var(--press-scale)); }
+.qRow small { display: block; font-size: 12px; color: var(--ink-3); }
+.qKey { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.qDraft { cursor: default; box-shadow: inset 0 0 0 1px var(--line); border: 1px dashed var(--line-strong); background: transparent; color: var(--ink-3); }
+.qTag { font-size: 11px; color: var(--ink-3); border: 1px solid var(--line-strong); border-radius: var(--r-pill); padding: 0 8px; }
+@media (prefers-reduced-motion: reduce) { button.qRow:active { transform: none; } }

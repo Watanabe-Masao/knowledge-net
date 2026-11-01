@@ -12,6 +12,7 @@ const state: fc.Arbitrary<UrlState> = fc.record({
   view: fc.constantFrom("around", "path", "all"),
   cmp: fc.uniqueArray(id, { maxLength: 3 }),
   exp: fc.option(id, { nil: null }),
+  q: fc.option(fc.constantFrom("stats2:binom-A-01", "stats2:binom-E-03"), { nil: null }),
   cards: fc.option(fc.constantFrom("b10_0.5_100_1", "b10_0.8_100_1~b10_0.5_100_1"), { nil: null }),
   group: fc.option(fc.constantFrom("確率分布", "検定", "*"), { nil: null }),
   tab: fc.constantFrom(...TAB_IDS),
@@ -20,6 +21,7 @@ const state: fc.Arbitrary<UrlState> = fc.record({
 const normal = (s: UrlState): UrlState => ({
   ...s,
   view: s.sel ? s.view : "all",
+  q: s.exp ? s.q : null,
   cards: s.exp ? s.cards : null,
   tab: s.exp ? "lab" : s.tab,
 });
@@ -31,7 +33,7 @@ describe("URL の状態：保存と復元は同じ定義で往復する", () => 
     }), { numRuns: 500 });
   });
   it("ほかの項目（src・embed）は残し、昔の trace は消す", () => {
-    const p = toUrl(normal({ sel: null, view: "all", cmp: [], exp: null, cards: null, group: null, tab: "explore" }), new URLSearchParams("src=sample/x.json&embed=1&trace=1"));
+    const p = toUrl(normal({ sel: null, view: "all", cmp: [], exp: null, q: null, cards: null, group: null, tab: "explore" }), new URLSearchParams("src=sample/x.json&embed=1&trace=1"));
     expect(p.get("src")).toBe("sample/x.json");
     expect(p.get("embed")).toBe("1");
     expect(p.has("trace")).toBe(false);

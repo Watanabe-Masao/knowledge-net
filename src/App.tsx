@@ -27,6 +27,8 @@ function useUrlState() {
   const [view, setView] = useState<View>(init.view);
   const [cmp, setCmp] = useState<string[]>(init.cmp);
   const [exp, setExpRaw] = useState<string | null>(init.exp);
+  // 実験室の問い（?q=テーマ体系の問いの id）：実験室のタブの概念から、問いを直接開く（stats2-course #163）
+  const [q, setQ] = useState<string | null>(init.q);
   // 実験室の「比べる」の記録カード（?cards=。条件と種だけなので、開けば同じ結果に戻る。stats2-course #122）
   const [cards, setCards] = useState<string | null>(init.cards);
   // 全体図を分類で絞る（?g=分類。#105 の骨格の分類）
@@ -34,24 +36,24 @@ function useUrlState() {
   // タブ（?t=。探索は付けない。実験室を開いているときは実験室）
   const [tab, setTabRaw] = useState<Tab>(init.tab);
   const push = useRef(false);
-  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); setCards(null); setTabRaw("explore"); };
-  const setExp = (id: string | null) => { push.current = true; setExpRaw(id); setCards(null); if (id) setTabRaw("lab"); };
-  const setTab = (t: Tab) => { push.current = true; setTabRaw(t); setExpRaw(null); setCards(null); scrollTo(0, 0); };
+  const setSel = (id: string | null) => { push.current = true; setSelRaw(id); setExpRaw(null); setQ(null); setCards(null); setTabRaw("explore"); };
+  const setExp = (id: string | null, question: string | null = null) => { push.current = true; setExpRaw(id); setQ(id ? question : null); setCards(null); if (id) setTabRaw("lab"); };
+  const setTab = (t: Tab) => { push.current = true; setTabRaw(t); setExpRaw(null); setQ(null); setCards(null); scrollTo(0, 0); };
   useEffect(() => {
-    const p = toUrl({ sel, view, cmp, exp, cards, group, tab }, new URLSearchParams(location.search));
+    const p = toUrl({ sel, view, cmp, exp, q, cards, group, tab }, new URLSearchParams(location.search));
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url); else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, exp, cards, group, tab]);
+  }, [sel, view, cmp, exp, q, cards, group, tab]);
   useEffect(() => {   // 「戻る」：URL から全部の項目を、書き込みと同じ定義で戻す
     const back = () => { const s = fromUrl(new URLSearchParams(location.search));
-      setSelRaw(s.sel); setView(s.view); setCmp(s.cmp); setExpRaw(s.exp); setCards(s.cards); setGroup(s.group); setTabRaw(s.tab); };
+      setSelRaw(s.sel); setView(s.view); setCmp(s.cmp); setExpRaw(s.exp); setQ(s.q); setCards(s.cards); setGroup(s.group); setTabRaw(s.tab); };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
   const setViewPush = (v: View) => { push.current = true; setView(v); };
-  return { sel, setSel, view, setView: setViewPush, cmp, setCmp, exp, setExp, cards, setCards, group, setGroup, tab, setTab };
+  return { sel, setSel, view, setView: setViewPush, cmp, setCmp, exp, setExp, q, cards, setCards, group, setGroup, tab, setTab };
 }
 
 /** スマホの幅か（詳しくを下からの面にする） */
@@ -79,7 +81,7 @@ export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, view, setView, cmp, setCmp, exp, setExp, cards, setCards, group, setGroup, tab, setTab } = useUrlState();
+  const { sel, setSel, view, setView, cmp, setCmp, exp, setExp, q, cards, setCards, group, setGroup, tab, setTab } = useUrlState();
   // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
   const locked = narrow && !!sel && tab === "explore" && !exp;
   useEffect(() => {
@@ -196,7 +198,7 @@ export default function App() {
     const formulaOf = (id?: string, i = 0) => { const f = id ? net.concepts.get(id)?.formulas?.[i] : undefined; return f ? { ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) } : undefined; };
     return (
       <main className={st.app}>
-        <Experiment key={xdef.id} def={xdef} cards={cards ?? undefined} onCards={(e) => setCards(e || null)} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
+        <Experiment key={`${xdef.id}-${q ?? ""}`} def={xdef} open={(xdef.model === "binom" && q ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open : undefined)} cards={cards ?? undefined} onCards={(e) => setCards(e || null)} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
           onConcept={(id) => net.concepts.has(id) && setSel(id)} conceptName={(id) => name(net, id)}
           onBack={() => (history.length > 1 ? history.back() : setExp(null))}
           definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map((f) => formulaOf(id, (net.concepts.get(id)?.formulas ?? []).indexOf(f))!)}

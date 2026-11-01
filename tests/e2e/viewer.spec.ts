@@ -139,6 +139,12 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
 
 // 周辺図（#42）：関係の多い二項分布で、W0 の公開データを使って確かめる
 const W0 = "src=sample/stats2-w0.json";
+/** 実験室の入口で問いを開く：上の選択でまとまり（A〜F）を選び、その中の問い（A-01 など）を押す（stats2-course #163） */
+async function openQ(x: import("@playwright/test").Locator, key: string) {
+  await x.getByTestId("exp-group-pick").click();
+  await x.getByTestId(`exp-group-${key[0]}`).click();
+  await x.getByTestId(`exp-q-${key}`).click();
+}
 /** 概念の中身の切り替え（概要・式・実験・つながり・教材）を選ぶ */
 const tab = (page: Page, name: RegExp) => page.getByTestId("detail").getByRole("radio", { name }).click();
 const settle = (page: Page) => page.waitForFunction(() => { const cy = (window as any).kn; return cy && !cy.nodes().some((n: any) => n.animated()); });
@@ -616,22 +622,29 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
   await page.getByTestId("open-stats2:EXP-binom-p").click();
   const x = page.getByTestId("experiment");
-  const menu = x.getByTestId("exp-menu").locator("button");
-  await expect(menu).toHaveCount(7);
-  expect(await menu.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(["exp-q-shift", "exp-q-spread", "exp-q-rare", "exp-q-exact", "exp-q-conv", "exp-q-break", "exp-q-compare"]);
-  for (const [id, form] of [["shift", "位置"], ["spread", "広がり"], ["rare", "確率の値"], ["conv", "理論と実測"], ["break", "前提崩し"], ["compare", "比べる"]]) await expect(x.getByTestId(`exp-q-${id}`)).toContainText(form);
+  // テーマ体系（#163）：まとまりを上の選択で選ぶ。A は 4 問のうち 2 問が開け、2 問は作成中（押せない）。比べるはいつも下
+  await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");
+  await expect(x.getByTestId("exp-group-pick")).toContainText("2／4");
+  await x.getByTestId("exp-group-pick").click();
+  await expect(x.getByTestId("exp-group-list").getByRole("option")).toHaveText([/A分布の形と仕組み2／4/, /B事象と確率計算3／4/, /C理論と実験1／4/, /D期待値・分散との接続0／4/, /E前提条件と反例4／4/, /F応用・発展0／4/]);
+  await x.getByTestId("exp-group-A").click();
+  await expect(x.getByTestId("exp-group-list")).toHaveCount(0);
+  expect(await x.getByTestId("exp-items-A").locator("[data-testid^=exp-q-]").evaluateAll((els) => els.map((e) => [e.getAttribute("data-testid"), e.tagName]))).toEqual([["exp-q-A-01", "BUTTON"], ["exp-q-A-02", "BUTTON"], ["exp-q-A-03", "DIV"], ["exp-q-A-04", "DIV"]]);
+  await expect(x.getByTestId("exp-q-A-03")).toContainText("作成中");
+  await expect(x.getByTestId("exp-q-A-01")).toContainText("位置");
+  await expect(x.getByTestId("exp-q-compare")).toContainText("比べる");
   // 位置
-  await x.getByTestId("exp-q-shift").click();
+  await x.getByTestId("exp-q-A-01").click();
   await expect(x.getByRole("list", { name: "段" }).getByRole("button")).toHaveText([/予測/, /実験/, /観察/, /理由/, /応用/]);
   await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();
   for (let i = 0; i < 3; i++) await x.getByRole("button", { name: "増やす" }).click();
   await expect(x.getByTestId("exp-guess-peak")).toHaveText("8 回");
   await x.getByRole("button", { name: "この予想で実験する" }).click();
-  await x.getByRole("radio", { name: /来店客が買う/ }).click();
+  await expect(x.getByRole("radio", { name: /来店客が買う/ })).toHaveCount(0);   // 題材の切り替えは置かない（選んでも計算は同じ）
   await x.getByTestId("exp-run-1").click();
   await expect(x.getByTestId("exp-set").locator("span")).toHaveCount(10);
   await expect(x.getByTestId("exp-set-before").locator("span")).toHaveCount(10);
-  await expect(x).toContainText(/買った \d+ 人（10 人中）/);
+  await expect(x).toContainText(/表 \d+ 回（10 回中）/);
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
@@ -652,8 +665,8 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await x.getByTestId("exp-to-menu").click();
   await expect(x.getByTestId("exp-q-compare")).toContainText("記録カード 1 枚");
   // 前提崩し：疲れて下がる（狭くなる）・戻さずに取る
-  await x.getByTestId("exp-q-break").click();
-  await x.getByTestId("exp-bnd-fatigue").click();
+  await openQ(x, "E-01");   // 成功確率が毎回違っても二項分布になる？ → 疲れて下がるで開く
+  await expect(x.getByTestId("exp-bnd-fatigue")).toHaveAttribute("aria-pressed", "true");
   await x.getByRole("radio", { name: "狭くなる" }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
@@ -665,8 +678,8 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.getByTestId("exp-cx-text")).toContainText("山は二項分布より狭くなる");
   await x.getByRole("button", { name: "戻る" }).click();
-  await x.getByTestId("exp-q-break").click();
-  await x.getByTestId("exp-bnd-urn").click();
+  await openQ(x, "E-03");   // 戻さずに抽出するとどうなる？ → 戻さずに取るで開く
+  await expect(x.getByTestId("exp-bnd-urn")).toHaveAttribute("aria-pressed", "true");
   await x.getByRole("radio", { name: "狭くなる" }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
@@ -982,7 +995,27 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   expect(await pp.locator("[data-testid^=unit-]").count()).toBeGreaterThan(3);
   // 実験室：二項分布の実験室だけ
   await bar.getByRole("link", { name: /^実験室/ }).click();
-  await expect(page.getByTestId("page-lab").locator("[data-testid^=open-]")).toHaveCount(1);
+  const lab = page.getByTestId("page-lab");
+  await expect(lab.locator("[data-testid^=open-]")).toHaveCount(1);
+  // 概念＝知識との関連から問いを探す入口（#163）。いくつでも選べ、選んだ概念を「すべて」主か関連に持つ問いを並べる（かつ）。
+  // 故障：「または」で絞って問いが増える・主と関連の取り違え・作成中を押せる・問いを押しても入口のまま。見つけ方：数と並びを手で数えた値と照らす
+  await expect(lab.getByTestId("lab-c-stats2:TERM-binom")).toHaveAttribute("aria-pressed", "true");
+  await expect(lab.getByTestId("lab-rule")).toContainText("二項分布を使う問い");
+  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p").locator("li")).toHaveCount(24);   // D-03 は主が期待値でも、関連に二項分布がある
+  await lab.getByTestId("lab-c-stats2:TERM-expect").click();
+  await expect(lab.getByTestId("lab-rule")).toContainText("二項分布・期待値をすべて使う問い");
+  expect(await lab.getByTestId("lab-q-stats2:EXP-binom-p").locator("[data-testid^=lab-open-]").evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")!.replace("lab-open-stats2:binom-", "")))).toEqual(["D-01", "D-03", "F-01"]);
+  await expect(lab.getByTestId("lab-open-stats2:binom-D-03")).toContainText("主：期待値｜関連：分散・確率分布・二項分布");
+  await expect(lab.getByTestId("lab-open-stats2:binom-D-01")).toContainText("作成中");
+  await expect(lab.locator("[data-testid^=open-]")).toHaveCount(1);   // 期待値の値の表の実験室は二項分布を使わない
+  await lab.getByTestId("lab-c-stats2:TERM-binom").click();
+  await lab.getByTestId("lab-c-stats2:TERM-expect").click();
+  await lab.getByTestId("lab-c-stats2:TERM-hyper").click();
+  await lab.getByTestId("lab-open-stats2:binom-E-03").click();   // 押すとその問いを直接開く（戻さずに取るを選んだ状態）
+  await expect(page.getByTestId("exp-bnd-urn")).toHaveAttribute("aria-pressed", "true");
+  expect(page.url()).toContain("q=stats2%3Abinom-E-03");
+  await page.getByRole("button", { name: "戻る" }).first().click();
+  await expect(page.getByTestId("page-lab")).toBeVisible();
   // 学習：二項分布の単元だけ
   await bar.getByRole("link", { name: /^学習/ }).click();
   await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(3);   // U14・U15・U19
@@ -1057,7 +1090,7 @@ test("動きを減らす設定でも、移り変わりの再生は1セット目�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
-  await x.getByTestId("exp-q-shift").click();
+  await openQ(x, "A-01");
   await x.getByRole("button", { name: "増やす" }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
@@ -1207,7 +1240,7 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
   // 広がり
-  await x.getByTestId("exp-q-spread").click();
+  await openQ(x, "A-02");
   await x.getByRole("radiogroup", { name: "回数の散らばりの予想" }).getByRole("radio", { name: "広くなる" }).click();
   await x.getByRole("radiogroup", { name: "割合の散らばりの予想" }).getByRole("radio", { name: "広くなる" }).click();   // わざと外す
   await x.getByRole("button", { name: "この予想で実験する" }).click();
@@ -1219,7 +1252,7 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-verdict-share")).toContainText("15.8% → 7.9%");
   await x.getByRole("button", { name: "戻る" }).click();
   // 確率の値（自分で選ぶ）
-  await x.getByTestId("exp-q-rare").click();
+  await openQ(x, "B-04");
   await expect(x.getByTestId("exp-event")).toHaveText("10 回中 ちょうど 10 回 成功");
   await x.getByRole("radio", { name: /^1%〜5%/ }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
@@ -1242,8 +1275,13 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-question")).toContainText("8 回以上");
   await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();   // 前の予想は残らない
   await x.getByRole("button", { name: "戻る" }).click();
+  // B-01 と B-02 は同じ形（確率の値）でも別の問い：初期の条件・予想する事象が違う（渡辺さん 2026-11-02。同じ画面を開くだけにしない）
+  await openQ(x, "B-01");
+  await expect(x.getByTestId("exp-question")).toContainText("ちょうど 3 回");
+  await expect(x.getByRole("radiogroup", { name: /の確率の予想/ })).toHaveCount(1);
+  await x.getByRole("button", { name: "戻る" }).click();
   // 確率の値（決まった問い）
-  await x.getByTestId("exp-q-exact").click();
+  await openQ(x, "B-02");   // ちょうど k 回と k 回以上を比べる
   await x.getByRole("radiogroup", { name: "ちょうど 5 回 の確率の予想" }).getByRole("radio", { name: /^20%〜50%/ }).click();
   await x.getByRole("radiogroup", { name: "5 回以上 の確率の予想" }).getByRole("radio", { name: /^50%以上/ }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
@@ -1254,7 +1292,7 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-compare-note")).toContainText("その 39%");
   await x.getByRole("button", { name: "戻る" }).click();
   // 理論と実測
-  await x.getByTestId("exp-q-conv").click();
+  await openQ(x, "C-02");
   await x.getByRole("radio", { name: "10分の1" }).click();
   await x.getByRole("button", { name: "この予想で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
