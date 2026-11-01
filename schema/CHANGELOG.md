@@ -22,3 +22,4 @@
 | 14 | 2026-11-01 | 式に任意の `conditions`（記号どうしの条件：text と比べる式の木）、`unverified`（独立な見本で未検証）、`review_pending`（個別レビュー前）。画面は条件を満たさない値で計算せず、2つの印を出す（stats2-course #118 単位 C・D4）。任意 |
 | 15 | 2026-11-01 | 値の表 `$defs.valueTable`。概念に任意の `table_workspace`（値の表の作業台：formula・linear・tables）。値の表の実験室に任意の `contrasts`（誤解を正す例 misconception・指標の限界を示す比較 limit：確かめる主張 claim と1〜2個の表）（stats2-course #119・#118 の反例の方針）。任意 |
 | 16 | 2026-11-01 | 式の作業台（workspace）に任意の `linear`（E(aX＋b) の式の番号）。作業台の型（stats2-course #156）で、どの作業台にも変換の欄を出すため。任意 |
+| 17 | 2026-11-01 | 二項分布の実験室に任意の `questions`（入口「何を確かめたい？」に並べる問い：id・form〔問いの形。今は prob＝確率の値〕・title・question・set〔n・p〕・events〔eq／ge／le と k。1〜2個〕）と `prob_scale`（確率の値の予想の目盛り）（stats2-course #161）。任意 |
