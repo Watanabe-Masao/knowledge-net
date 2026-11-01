@@ -629,7 +629,7 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   await x.getByTestId("exp-run-1").click();
   await expect(x.getByTestId("exp-set").locator("span")).toHaveCount(10);   // 1セット＝10人
   await expect(x.getByTestId("exp-set-before").locator("span")).toHaveCount(10);   // 前の条件も同じ数だけ起こす（#121）
-  await expect(x).toContainText("人 買った");
+  await expect(x).toContainText(/買った \d+ 人（10 人中）/);   // 成功の言葉 → 数 → 単位（「6 回 6」のように数と言葉が並ばない）
   await x.getByTestId("exp-run-100").click();
   await expect(x.getByTestId("exp-sets")).toHaveText("各 101 セット");   // 前と後は同じセット数
   expect(await x.getByTestId("exp-bar-before").count()).toBeGreaterThan(0);
@@ -688,7 +688,7 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   // 想定する故障：答えを実験の比で決める（ゆれで外れる）・画面の理論の数が engine とずれる
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("予想どおり");
   await expect(cx.getByTestId("exp-cx-verdict")).toContainText("崩した起き方 1.23・二項分布 1.6");
-  await expect(cx).toContainText("崩した条件：各回の成功確率 p が同じ・各回が独立");
+  await expect(cx).toContainText("崩した条件：各回が独立");
   expect(page.url()).toContain("x=stats2%3AEXP-binom-p");
   await page.goBack();   // 戻ると来た所（下のタブの実験室）、もう一度戻ると概念のページ
   await expect(page.getByTestId("page-lab")).toBeVisible();
@@ -702,6 +702,9 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
 // 値の表の実験室（#119）：平均（▲）の行き先を予想 → 1つずつ引く → 期待値は表の中の値でないこともある → Σ x p(x) を項に開く → 反例（和が有限でない表）
 test("値の表の実験室：平均の行き先を予想し、引いて照らし、式を項に開き、反例を実験する", async ({ page }) => {
   const errs = noErrors(page);
+  // 種は Date.now から作られる。時刻を固定して、引いた結果を毎回同じにする（種しだいで平均の移り変わりの線の高さが 15〜100px と変わり、落ちたり通ったりしていた）。
+  // この時刻の種では大当たりが出て線は約 100px 動く。縦の幅を揺れの目安で広げる故障では 2px ほどにつぶれる
+  await page.clock.setFixedTime(new Date("2026-11-01T13:00:55.555Z"));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&c=stats2:TERM-expect`);
   await fullSheet(page);
@@ -725,6 +728,9 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   await expect(x.getByTestId("exp-draws-before").locator("span")).toHaveCount(1);   // 前の表からも同じ回数だけ引く（#121）
   await x.getByTestId("exp-run-100").click();
   await expect(x.getByTestId("exp-sets")).toHaveText("各 101 回");
+  // 値ごとの回数の表（割合の棒だけでは回数が読めない）：故障＝割合を回数に直すときの取り違え・列の入れ違い。各列の合計が引いた回数になる
+  const cols = await x.getByTestId("exp-counts").locator("tbody tr").evaluateAll((rows) => [1, 2].map((c) => rows.reduce((t, r) => t + parseInt(r.children[c]!.textContent!), 0)));
+  expect(cols).toEqual([101, 101]);
   await x.getByRole("button", { name: "観察する →" }).click();
   // 6 の面を3倍：期待値 (1+2+3+4+5+6×3)÷8＝4.125。表の中の値としては出ない
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
@@ -756,9 +762,9 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   await expect(line).toHaveAttribute("data-upto", "10");
   expect((await line.boundingBox())!.width).toBeLessThan(full * 0.6);   // 10 回目までしか描かない
   const svgBox = (await rp.getByTestId("exp-run-chart").boundingBox())!;
-  for (const t of await rp.getByTestId("exp-run-chart").locator("text").all()) expect((await t.boundingBox())!.x).toBeGreaterThanOrEqual(svgBox.x - 0.5);
+  for (const t of await rp.getByTestId("exp-run-chart").locator("text").all()) { const b = await t.boundingBox(); if (b) expect(b.x).toBeGreaterThanOrEqual(svgBox.x - 0.5); }   // 出していない文字（空）は箱がない
   await expect(rp.getByTestId("exp-run-note")).toContainText("落ち着くとは限らない");
-  await expect(x).toContainText("崩した条件：和（連続なら積分）が有限の値になる");
+  await expect(x).toContainText("崩した条件：値の大きさ×確率の和（連続なら積分）が有限の値になる");
   expect(errs).toEqual([]);
 });
 
@@ -1182,4 +1188,47 @@ test("作業台：実験の途中で初期値に戻すと、記録は空のま�
   await w.getByTestId("ws-reset").click();
   await page.waitForTimeout(1200);   // 更新の間隔（60ms）×10回ぶんより長く待つ
   await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
+});
+
+test("値の表の実験室：横は値に比例し、▲（期待値）と予想の線は値の位置に立つ（くじ 0・100・1000円）", async ({ page }) => {
+  // 確かめる対象：値の間が不ぞろいな表の図（stats2-course issue 158 A1）。想定する故障：棒を番号で等間隔に並べ、▲を番号の間に割って置く
+  // （38円の▲が 0 と 100 の間の 4 割に立ち、重心＝てんびんの支点に見えない）。見つけ方：棒の位置だけから値→位置の直線を作り、
+  // ▲・予想の線がその直線の 38 円・予想の値に立つかを見る（画面の計算式は使わない）。既存のテストは ▲ の有無だけを見ていた
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${W0}&c=stats2:TERM-expect`);
+  await fullSheet(page);
+  await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
+  await page.getByTestId("open-stats2:EXP-expect-table").click();
+  const x = page.getByTestId("experiment");
+  await x.getByRole("radio", { name: /くじの賞金/ }).click();
+  const xs = await x.locator("svg rect[data-x]").evaluateAll((els) => els.map((e) => Number(e.getAttribute("data-x"))));
+  expect(xs).toHaveLength(3);   // はずれ（0円）・100円・1000円
+  const [x0, x100, x1000] = xs as [number, number, number];
+  expect((x1000 - x100) / (x100 - x0)).toBeCloseTo(9, 3);   // 値の間 100 と 900 の比
+  const at = (v: number) => x0 + (v / 100) * (x100 - x0);
+  expect(Number(await x.getByTestId("exp-marker").getAttribute("data-x"))).toBeCloseTo(at(38), 3);   // (100×18＋1000×2)÷100＝38
+  await x.getByRole("slider", { name: "予想する平均" }).fill("200");
+  expect(Number(await x.getByTestId("exp-mark").getAttribute("data-x"))).toBeCloseTo(at(200), 3);
+});
+
+test("実験室の基本の面は型どおり：式は記号を押せる・本体は開く入口・関連は本体以外", async ({ page }) => {
+  // 確かめる対象：基本の面の型（stats2-course issue 158 I1〜I3）。想定する故障：式が静止した絵のまま（押しても何も出ない）、
+  // 関連する概念に実験室の本体が入る、実験室ごとに欄が違う（期待値だけ式しかない）。見つけ方：両方の実験室で同じ確かめ方を当てる
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [cid, eid, mainName, related] of [["TERM-binom", "EXP-binom-p", "二項分布", ["期待値"]], ["TERM-expect", "EXP-expect-table", "期待値", []]] as const) {
+    await page.goto(`./?${W0}&c=stats2:${cid}`);
+    await fullSheet(page);
+    await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
+    await page.getByTestId(`open-stats2:${eid}`).click();
+    await page.getByTestId("experiment").getByRole("button", { name: "基本と用語" }).click();
+    const info = page.getByTestId("exp-info");
+    const f = info.getByTestId("ws-formula");
+    await f.locator("[data-sym]").first().click();   // 記号を押すと、帯に意味が出る
+    await expect(info.getByTestId("ws-strip")).not.toContainText("押すと");
+    await expect(info.getByTestId("exp-info-points").locator("li")).not.toHaveCount(0);
+    await expect(info.getByTestId("exp-info-main")).toHaveText(`${mainName} のページを開く`);
+    if (related.length) await expect(info.getByTestId("exp-info-related").getByRole("button")).toHaveText([...related]);
+    else await expect(info.getByTestId("exp-info-related")).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  }
 });

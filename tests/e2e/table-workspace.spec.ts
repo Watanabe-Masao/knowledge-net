@@ -92,7 +92,8 @@ test("変換中は Y＝aX＋b の式・結果・表・計算過程・図が同�
   await expect(w.getByTestId("ws-result-lhs")).toContainText("E(Y)");
   await expect(w.getByTestId("ws-formula")).toContainText("Y=y");   // E(Y)＝Σ y·P(Y＝y)
   expect(await num(w, "ws-result-val")).toBeCloseTo(want, 9);
-  await expect(w.getByTestId("ws-linear-result")).toHaveText("-4");
+  await expect(w.getByTestId("ws-linear-result")).toHaveText("−4");
+  await expect(w.getByTestId("ws-linear")).toContainText("E(aX＋b)＝(−2)×3.5＋3＝");   // 負の数は「−」と括弧（issue 158 W1）
   await expect(w.getByTestId("ws-rows").locator("> div").first()).toContainText("y＝ax＋b");
   await expect(w.getByTestId("ws-rows").locator("> div").nth(1)).toContainText("1");   // x＝1 → −2×1＋3＝1
   expect(await num(w, "ws-mean")).toBeCloseTo(want, 9);
