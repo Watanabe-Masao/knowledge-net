@@ -92,9 +92,12 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   ];
   const [tabRaw, setTab] = useState<Tab>("about");
   const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
-  const formulaList = c.formulas?.length ? (
-    <Disclosure summary={`式（${c.formulas.length}）`} data-testid="more-formulas" open={!(c.workspace || c.table_workspace)}>
-      {c.formulas.map((f, i) => (
+  // 作業台に出している式（主役・期待値・変換）は、下の一覧に重ねて出さない（同じものを2か所に置かない。#156）
+  const used = new Set([c.workspace?.formula, c.workspace?.mean, c.workspace?.linear, c.table_workspace?.formula, c.table_workspace?.linear].filter((x): x is number => x !== undefined));
+  const others = (c.formulas ?? []).map((f, i) => [f, i] as const).filter(([, i]) => !used.has(i));
+  const formulaList = others.length ? (
+    <Disclosure summary={used.size ? `ほかの式（${others.length}）` : `式（${others.length}）`} data-testid="more-formulas" open={!used.size}>
+      {others.map(([f, i]) => (
         <Formula key={i} formula={keyed(f)} editable onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)}
           definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)} />
       ))}
@@ -149,6 +152,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         )}
         {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
           <Workspace formula={keyed(c.formulas[c.workspace.formula]!)} mean={c.workspace.mean !== undefined ? keyed(c.formulas[c.workspace.mean]!) : undefined}
+            linear={c.workspace.linear !== undefined ? keyed(c.formulas[c.workspace.linear]!) : undefined}
             vary={c.workspace.vary} over={c.workspace.over} definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
             onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)} />
         )}
