@@ -1,7 +1,7 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import { useEffect, useRef, useState } from "react";
 import { Badges, Media, relationParts } from "./Relation";
-import { BottomSheet, Button, Card, Disclosure, Formula, Muted, Segmented, Workspace, type Detent } from "@math-lab/ui";
+import { BottomSheet, Button, Card, Disclosure, Formula, Muted, Segmented, Workspace, TableWorkspace, type Detent } from "@math-lab/ui";
 import st from "./Detail.module.css";
 import { KINDS, MODES, PREMISES, around, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
 
@@ -93,7 +93,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   const [tabRaw, setTab] = useState<Tab>("about");
   const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
   const formulaList = c.formulas?.length ? (
-    <Disclosure summary={`式（${c.formulas.length}）`} data-testid="more-formulas" open={!c.workspace}>
+    <Disclosure summary={`式（${c.formulas.length}）`} data-testid="more-formulas" open={!(c.workspace || c.table_workspace)}>
       {c.formulas.map((f, i) => (
         <Formula key={i} formula={keyed(f)} editable onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)}
           definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)} />
@@ -141,6 +141,12 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         <Muted as="div" className={st.idLine}>{c.id}・版 {c.version}</Muted>
       </div>}
       {tab === "formula" && <div className={st.pane} data-testid="tab-formula">
+        {c.table_workspace && c.formulas?.[c.table_workspace.formula]?.tree && (
+          <TableWorkspace key={c.id} tables={c.table_workspace.tables} formula={keyed(c.formulas[c.table_workspace.formula]!)}
+            linear={c.table_workspace.linear !== undefined ? keyed(c.formulas[c.table_workspace.linear]!) : undefined}
+            definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
+            onConcept={(id) => net.concepts.has(id) && onSelect(id)} conceptName={(id) => name(net, id)} />
+        )}
         {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
           <Workspace formula={keyed(c.formulas[c.workspace.formula]!)} mean={c.workspace.mean !== undefined ? keyed(c.formulas[c.workspace.mean]!) : undefined}
             vary={c.workspace.vary} over={c.workspace.over} definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
