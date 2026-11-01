@@ -1,5 +1,5 @@
 {
- "ref": "afcfcef004b04870e718f68c97f11b105b563c83",
+ "ref": "5a3448a609bdbd5206fcfc9afa7d9d65f43385f0",
  "files": [
   "packages/engine/src/cards.ts",
   "packages/engine/src/experiment.ts",
@@ -33,6 +33,8 @@
   "packages/ui/src/Layout.tsx",
   "packages/ui/src/Lightbox.module.css",
   "packages/ui/src/Lightbox.tsx",
+  "packages/ui/src/QuestionParts.module.css",
+  "packages/ui/src/QuestionParts.tsx",
   "packages/ui/src/Segmented.module.css",
   "packages/ui/src/Segmented.tsx",
   "packages/ui/src/Sheet.module.css",
