@@ -746,6 +746,18 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   await x.getByTestId("exp-cx-run-100").click();
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("予想どおり", { timeout: 15000 });
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("期待値 41");   // どの項も 2^k×(1/2)^k＝1。40 項＋最後の 2
+  // まれな大当たりの表でも平均の動きが見える（渡辺さん 2026-11-01：揺れの目安を縦の幅に入れて横線につぶれていた）。
+  // 想定する故障：縦の幅が目安で広がり線が平らになる・線が再生した回数より先まで伸びる・縦軸の数が左で欠ける・「必ず近づく」と読ませる
+  const rp = x.getByTestId("exp-cx").getByTestId("exp-replay");
+  const line = rp.getByTestId("exp-run-line-a");
+  expect((await line.boundingBox())!.height).toBeGreaterThan(20);   // 平均が上下に動いて見える
+  const full = (await line.boundingBox())!.width;
+  await rp.getByRole("radio", { name: "10", exact: true }).click();
+  await expect(line).toHaveAttribute("data-upto", "10");
+  expect((await line.boundingBox())!.width).toBeLessThan(full * 0.6);   // 10 回目までしか描かない
+  const svgBox = (await rp.getByTestId("exp-run-chart").boundingBox())!;
+  for (const t of await rp.getByTestId("exp-run-chart").locator("text").all()) expect((await t.boundingBox())!.x).toBeGreaterThanOrEqual(svgBox.x - 0.5);
+  await expect(rp.getByTestId("exp-run-note")).toContainText("落ち着くとは限らない");
   await expect(x).toContainText("崩した条件：和（連続なら積分）が有限の値になる");
   expect(errs).toEqual([]);
 });
