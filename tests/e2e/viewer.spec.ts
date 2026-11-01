@@ -641,12 +641,27 @@ test("実験室：予想してから実験し、観察で予想と照らし、�
   const replay = x.getByTestId("exp-replay");
   await expect(replay.getByRole("radio")).toHaveText(["1", "3", "10", "30", "100", "全 101"]);
   await replay.getByRole("radio", { name: "1", exact: true }).click();
-  await expect(x.getByTestId("exp-replay-stat")).toContainText(/^1 セットまで：前 \d+ → 後 \d+/);
+  await expect(x.getByTestId("exp-replay-stat")).toContainText(/^1 セットまで：実験平均 前 \d+・後 \d+／期待値 前 5・後 8/);
   await expect(replay.getByTestId("exp-run-line-b")).toHaveCount(1);   // 前と後の平均の線が2本
   await expect(replay.getByTestId("exp-run-line-a")).toHaveCount(1);
   await replay.getByRole("radio", { name: "全 101" }).click();
   const [mb, ma] = (await x.getByTestId("exp-tile-exp").locator("b").textContent())!.split("→").map((t) => t.trim());
-  await expect(x.getByTestId("exp-replay-stat")).toContainText(`101 セットまで：前 ${mb} → 後 ${ma}`);
+  await expect(x.getByTestId("exp-replay-stat")).toContainText(`実験平均 前 ${mb}・後 ${ma}`);
+  // 何を表す図か（渡辺さん 2026-11-01）：縦軸と横軸の名前、線に変更前・変更後、期待値の線に数、揺れの目安は初めは隠す、説明は「必ず離れる」と読ませない
+  // 想定する故障：色を覚えないと追えない・実験平均と期待値の取り違え・揺れの目安を「必ず入る範囲」と読ませる
+  await expect(replay.getByTestId("exp-run-chart")).toContainText("ここまでの平均");
+  await expect(replay.getByTestId("exp-run-chart")).toContainText("対数目盛");
+  await expect(replay.getByTestId("exp-run-name-b")).toHaveText("変更前");
+  await expect(replay.getByTestId("exp-run-name-a")).toHaveText("変更後");
+  await expect(replay.getByTestId("exp-run-chart")).toContainText("期待値（破線）");
+  await expect(replay.getByTestId("exp-run-expect-a")).toHaveText("後 8");
+  await expect(replay.getByTestId("exp-run-band")).toHaveCount(0);
+  await replay.getByTestId("exp-run-band-toggle").click();
+  await expect(replay.getByTestId("exp-run-band")).toHaveCount(2);
+  await expect(replay).toContainText("いつも必ずこの中に入る範囲ではない");
+  await expect(replay.getByTestId("exp-run-note")).toContainText("近づいたり交差したり");
+  await expect(replay.getByTestId("exp-run-note")).not.toContainText("開いていく");
+  await expect(replay.getByTestId("exp-replay-legend")).toContainText("変更後の理論確率");
   await expect(x.getByTestId("exp-tile-theory")).toContainText("5 → 8");   // 理論の平均 n×p：10×0.5 → 10×0.8
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.locator(".katex").first()).toContainText("10×0.8");
