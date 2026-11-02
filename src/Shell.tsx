@@ -155,6 +155,8 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
   const hits = (x: ExperimentData) => itemsOf(x).filter((it) => picked.every((c) => conceptsOf(it).includes(c)));
   // 選んだ概念をすべて使う問いがある実験室（問いのない実験室は、つなぐ概念にすべて入っていれば出す）
   const xs = all.filter((x) => !picked.length || (itemsOf(x).length ? hits(x).length > 0 : picked.every((c) => labConcepts(x).includes(c))));
+  // 実験室のカードの見出し：主な概念の一言（short。地図と同じ文。なければ定義）。問いの1つを代表にしない（渡辺さん 2026-11-02）
+  const lead = (x: ExperimentData) => { const c = net.concepts.get(x.links.concepts?.[0] ?? ""); return c?.short ?? c?.definition ?? x.question; };   // つなぐ概念の最初＝この実験室の主な概念
   const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1");
   return (
     <section className={s.page} data-testid="page-lab">
@@ -173,21 +175,24 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
           const hs = picked.length ? hits(x) : [];
           return (
             <li key={x.id}>
-              <button type="button" className={s.labCard} onClick={() => onOpen(x.id)} data-testid={`open-${x.id}`}>
-                <span className={s.labTag}>{x.title.replace(/\s*実験室$/, "")}</span>
-                <b>{x.question}</b>
-                <Muted as="span">{itemsOf(x).length ? `目的から探す（A〜F）・問い ${itemsOf(x).filter((it) => it.open).length}／${itemsOf(x).length}` : "実験室を開く"}</Muted>
-              </button>
-              {hs.length ? (
+              {/* 概念で選んだ問いを先に、実験室の入口（目的から選ぶ A〜F・自分で条件を決めて比べる）はその下に（渡辺さん 2026-11-02） */}
+              {hs.length ? <>
+                <p className={s.qHead}>{x.title}の問い</p>
                 <ul className={s.qList} data-testid={`lab-q-${x.id}`}>
                   {hs.map((it) => {
-                    const roles = <small>主：{it.concept ? nm(it.concept) : "—"}{it.related?.length ? `｜関連：${it.related.map(nm).join("・")}` : ""}</small>;
+                    const roles = <small>主：{it.concept ? nm(it.concept) : "—"}{(() => { const r = (it.related ?? []).filter((id) => net.concepts.has(id)); return r.length ? `｜関連：${r.map(nm).join("・")}` : ""; })()}</small>;
                     return <li key={it.id}>{it.open
                       ? <button type="button" className={s.qRow} onClick={() => onOpen(x.id, it.id)} data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span></button>
                       : <div className={`${s.qRow} ${s.qDraft}`} aria-disabled="true" data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span><span className={s.qTag}>作成中</span></div>}</li>;
                   })}
                 </ul>
-              ) : null}
+              </> : null}
+              <button type="button" className={s.labCard} onClick={() => onOpen(x.id)} data-testid={`open-${x.id}`}>
+                <span className={s.labTag}>{x.title}</span>
+                {itemsOf(x).length
+                  ? <><b>{lead(x)}</b><Muted as="span">目的から問いを選ぶ（A〜F の問い {itemsOf(x).filter((it) => it.open).length}／{itemsOf(x).length}）・自分で条件を決めて比べる</Muted></>
+                  : <><b>{x.question}</b><Muted as="span">実験室を開く</Muted></>}
+              </button>
             </li>
           );
         })}
