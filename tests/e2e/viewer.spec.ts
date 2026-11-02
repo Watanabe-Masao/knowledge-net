@@ -626,7 +626,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");
   await expect(x.getByTestId("exp-group-pick")).toContainText("2／4");
   await x.getByTestId("exp-group-pick").click();
-  await expect(x.getByTestId("exp-group-list").getByRole("option")).toHaveText([/A分布の形と仕組み2／4/, /B事象と確率計算3／4/, /C理論と実験1／4/, /D期待値・分散との接続0／4/, /E前提条件と反例4／4/, /F応用・発展0／4/, /自分で条件を決めて比べるカード 0 枚/]);
+  await expect(x.getByTestId("exp-group-list").getByRole("option")).toHaveText([/A分布の形と仕組み2／4/, /B事象と確率計算3／4/, /C理論と実験1／3/, /D期待値・分散との接続0／3/, /E前提条件と反例4／4/, /F応用・発展0／4/, /自分で条件を決めて比べるカード 0 枚/]);
   await x.getByTestId("exp-group-A").click();
   await expect(x.getByTestId("exp-group-list")).toHaveCount(0);
   expect(await x.getByTestId("exp-items-A").locator("[data-testid^=exp-q-]").evaluateAll((els) => els.map((e) => [e.getAttribute("data-testid"), e.tagName]))).toEqual([["exp-q-A-01", "BUTTON"], ["exp-q-A-02", "BUTTON"], ["exp-q-A-03", "DIV"], ["exp-q-A-04", "DIV"]]);
@@ -1007,7 +1007,10 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(lab.getByTestId("lab-sel-stats2:TERM-binom")).toBeVisible();
   await expect(lab.getByTestId("lab-concept-pick")).toContainText("概念で探す：二項分布");
   await expect(lab.getByTestId("lab-rule")).toContainText("二項分布を使う問い");
-  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p").locator("li")).toHaveCount(24);   // D-03 は主が期待値でも、関連に二項分布がある
+  // 24 問のうち、使わない印の2問（C-03・D-04）は並べない。主が関係の問い（E-03：二項分布と超幾何分布の対比、C-01）も両端の概念から引く（#169）
+  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p").locator("li")).toHaveCount(22);
+  await expect(lab.getByTestId("lab-open-stats2:binom-C-03")).toHaveCount(0);
+  await expect(lab.getByTestId("lab-open-stats2:binom-E-03")).toContainText("主：二項分布と超幾何分布のつながり");
   await lab.getByTestId("lab-concept-pick").click();
   const sh = page.getByTestId("lab-concept-sheet");
   await expect(sh.getByTestId("lab-c-stats2:TERM-expect")).toContainText("期待値");
