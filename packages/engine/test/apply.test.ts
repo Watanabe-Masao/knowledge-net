@@ -52,6 +52,21 @@ describe("原本の10の課題（手計算の値と照らす）", () => {
   it("E-04 逆算：n＝10・p＝0.5 で分散 3.4 → d＝0.1（2.5＋90d²＝3.4）", () => close(solveApply({ method: "solve-spread", n: 10, p: 0.5, variance: 3.4 }).answer, 0.1));
 });
 
+describe("解き方の段（答えのあとに出す）", () => {
+  // 確かめる対象：境目の前後を言う段が、1つ手前と答えの両方の値を、区別できる桁で言うこと（「±1%、±1%」のように同じに見えると、なぜその数かが伝わらない）
+  it("最小の数を求める課題は、1つ手前と答えの値を別の値として言う", () => {
+    const last = (r: ReturnType<typeof solveApply>) => r.steps[r.steps.length - 1]!.text ?? "";
+    const a = last(solveApply({ method: "min-n-share-sd", p: 0.3, sd: 0.08 }));
+    expect(a).toContain("32 回では 0.08101");
+    expect(a).toContain("33 回で 0.07977");
+    const c = last(solveApply({ method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01 }));
+    const [x, y] = [...c.matchAll(/±([\d.]+)%/g)].map((m) => Number(m[1]));
+    expect(x).toBeGreaterThan(1);
+    expect(y).toBeLessThanOrEqual(1);
+    expect(last(solveApply({ method: "min-total", n: 10, ratio: 0.8 }))).toMatch(/45 個では 0\.795 倍、46 個で 0\.8 倍/);
+  });
+});
+
 describe("境目と止まる条件", () => {
   it("最小の n・N は、1つ手前では条件を満たさない（いろいろな p と sd）", () => {
     for (const p of [0.01, 0.1, 0.3, 0.5, 0.9]) for (const sd of [0.2, 0.05, 0.013]) {
