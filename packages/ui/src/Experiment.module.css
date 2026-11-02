@@ -253,11 +253,12 @@
 .applyIn { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .applyIn input { flex: 1; min-height: 44px; box-sizing: border-box; border-radius: var(--r-m); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 8px 10px; font: inherit; font-size: 16px; font-variant-numeric: tabular-nums; }
 .applyIn input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.applySteps { margin: 4px 0 0; padding-left: 22px; display: grid; gap: 10px; font-size: 14px; line-height: 1.6; }
+.applySteps { margin: 4px 0 0; padding-left: 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; font-size: 14px; line-height: 1.6; }
+.applySteps li { min-width: 0; }
 .applySteps li::marker { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .applySteps b { display: block; font-size: 13px; color: var(--ink-2); font-weight: 600; }
 .applySteps p { margin: 2px 0 0; }
-.applyTex { margin: 4px 0; overflow-x: auto; overflow-y: hidden; font-size: 15px; }
+.applyTex { margin: 4px 0; max-width: 100%; overflow-x: auto; overflow-y: hidden; font-size: 15px; }
 .applyGist { margin: 12px 0 0; padding: 10px 12px; border-radius: var(--r-m); background: var(--surface-2); font-size: 14px; line-height: 1.6; }
 .applyGist b { display: block; font-size: 13px; color: var(--ink-2); }
 .applyLinks { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 4px; }
