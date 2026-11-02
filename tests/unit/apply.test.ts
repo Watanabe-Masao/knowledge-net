@@ -3,9 +3,10 @@
 // 想定する故障：教材の build は method ごとの項目の有無しか見ないので、値が条件の外（k＞n・平均＞n・分散が二項分布より小さいなど）だと
 // 画面で「課題の条件がおかしい」になる。選ぶ形の答えの番号が選び肢の外、数の答えが有限でない、も画面で照らせない。
 // 見つけ方：見本の JSON（教材の build の写し）の全部の課題を解く。わざと崩した課題が止まることも確かめる。
-// 既存のテストとの違い：答えの値の正しさは math-lab の apply.test.ts（手計算の値）、項目の有無は教材の test_build。ここは「届いたデータで解けるか」。
+// 既存のテストとの違い：答えの値の正しさは math-lab の apply.test.ts（手計算の値）、項目の有無は教材の test_build。ここは「届いたデータで解け、解き方の段が画面で読めるか」。
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import katex from "katex";
 import { solveApply, type ApplySolve } from "@math-lab/engine";
 
 type Apply = { solve: ApplySolve; answer: { type: "number" | "choice"; options?: string[]; tol?: object } };
@@ -19,6 +20,12 @@ const problem = (ap: Apply): string | undefined => {
     const r = solveApply(ap.solve);
     if (!Number.isFinite(r.answer)) return `答えが数でない：${r.answer}`;
     if (ap.answer.type === "choice" && !(Number.isInteger(r.answer) && r.answer >= 0 && r.answer < (ap.answer.options?.length ?? 0))) return `答えの番号 ${r.answer} が選び肢の外`;
+    // 解き方の段：段がある・式（TeX）が KaTeX で読める（読めないと答えのあとの説明が赤い文字になる）・文に NaN や undefined が出ない
+    if (!r.steps.length) return "解き方の段がない";
+    for (const st of r.steps) {
+      if (st.tex) { try { katex.renderToString(st.tex, { throwOnError: true }); } catch (e) { return `段「${st.title}」の式が読めない：${(e as Error).message}`; } }
+      if (/NaN|undefined|Infinity/.test(`${st.tex ?? ""}${st.text ?? ""}`)) return `段「${st.title}」に数でない値`;
+    }
     return undefined;
   } catch (e) { return (e as Error).message; }
 };

@@ -1296,6 +1296,24 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-verdict-count")).toContainText("1.58 → 3.16");
   await expect(x.getByTestId("exp-verdict-share")).toContainText("予想と違った");
   await expect(x.getByTestId("exp-verdict-share")).toContainText("15.8% → 7.9%");
+  // 理由の段の作業台（stats2-course #171）：問いの主概念（二項分布）の作業台。±標準偏差の帯は n＝40 で √(40×0.25)＝3.16、n を 10 にすると 1.58（√4＝2 分の1）
+  await x.getByRole("button", { name: /理由を考える/ }).click();
+  const sd = x.getByTestId("exp-workspace").getByTestId("ws-sd");
+  expect(Number(await sd.getAttribute("data-value"))).toBeCloseTo(Math.sqrt(10), 6);
+  await expect(x.getByTestId("exp-workspace")).toContainText("±標準偏差 3.16");
+  await x.getByTestId("exp-workspace").getByTestId("ws-slider-n").fill("10");
+  expect(Number(await sd.getAttribute("data-value"))).toBeCloseTo(Math.sqrt(2.5), 6);
+  // 応用の答えのあとの解き方（何を求めるか → 使う式 → 数を入れる → 解く → 境目の前後）。なぜ 33 回かを、32 回と 33 回の値で言う
+  await x.getByRole("button", { name: "n を自由に変える" }).click();
+  await x.getByTestId("exp-apply-input").fill("33");
+  await x.getByTestId("exp-apply-check").click();
+  const steps = x.getByTestId("exp-apply-steps").locator("li");
+  await expect(steps).toHaveCount(5);
+  await expect(steps.first()).toContainText("成功の割合");
+  await expect(steps.last()).toContainText("32 回では 0.08101");
+  await expect(x.getByTestId("exp-apply-steps").locator(".katex-error")).toHaveCount(0);
+  await expect(x.getByTestId("exp-apply-why")).toContainText("4倍");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await x.getByRole("button", { name: "戻る" }).click();
   // 確率の値（自分で選ぶ）
   await openQ(x, "B-04");
@@ -1336,6 +1354,8 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-verdict-0")).toContainText("24.6%");
   await expect(x.getByTestId("exp-verdict-1")).toContainText("62.3%");
   await expect(x.getByTestId("exp-compare-note")).toContainText("その 39%");
+  await x.getByRole("button", { name: /理由を考える/ }).click();
+  await expect(x.getByTestId("exp-workspace")).toBeVisible();   // 主（確率分布）に作業台がないので、関連（二項分布）の作業台
   await x.getByRole("button", { name: "戻る" }).click();
   // 理論と実測
   await openQ(x, "C-02");
@@ -1346,6 +1366,8 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
   await expect(x.getByTestId("exp-conv-table").locator("tbody tr")).toHaveCount(4);   // 10・100・1000・10000 セット
+  await x.getByRole("button", { name: /理由を考える/ }).click();
+  await expect(x.getByTestId("exp-workspace")).toHaveCount(0);   // 理論と実測は、式が理由の中心の形でないので作業台を出さない
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
 });

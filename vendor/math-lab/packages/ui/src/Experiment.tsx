@@ -46,6 +46,8 @@ export type BinomDef = {
   catalog?: { id: string; title: string; items: { id: string; title: string; finds?: string; predict?: string; operate?: string; judge?: string; open?: string; concept?: string; related?: string[]; retired?: boolean; apply?: ApplySpec }[] }[];
 };
 
+type WsSpec = { formula: WorkspaceData; mean?: FormulaData; vary: string[]; over: string };
+
 export type Props = {
   def: ExperimentDef;
   /** 理由の段で使う式（定義の reason.concept の reason.formula。E(X)＝np など） */
@@ -59,8 +61,10 @@ export type Props = {
   onBack?: () => void;
   /** 概念の式（記号を定義の式で開く。E → Σ k P(X＝k) など） */
   definitions?: (conceptId: string) => FormulaData[];
-  /** 理由の段に置く式の作業台（概念の workspace と同じもの。今の条件の値で始める） */
-  workspace?: { formula: WorkspaceData; mean?: FormulaData; vary: string[]; over: string };
+  /** 理由の段に置く式の作業台（概念の workspace と同じもの。今の条件の値で始める）。テーマ体系の問いでは workspaceOf を先に使い、なければこれ */
+  workspace?: WsSpec;
+  /** 概念の作業台を引く（stats2-course issue 171）：理由の段は、問いの主概念 → 関連概念の順で最初に作業台を持つ概念のものを出す */
+  workspaceOf?: (conceptId: string) => WsSpec | undefined;
   /** 比べるの記録カード（URL の cmp。あれば比べるの段から開く）。issue 122 */
   cards?: string;
   /** 記録カードが変わったとき（親が URL に書く） */
@@ -85,6 +89,9 @@ function BinomEntry(props: Props & { def: BinomDef }) {
   const [grp, setGrp] = useState<string | null>(null);   // 入口で選んだまとまり（問いから戻ったときも同じまとまりを出す）
   const name = (id: string) => props.conceptName?.(id) ?? id;
   const ws = props.workspace;
+  // 理由の段の作業台：テーマ体系から開いた問いは、主概念 → 関連概念の順で最初に作業台を持つ概念のもの（どれも持たなければ出さない）
+  const item = pick ? def.catalog?.flatMap((g) => g.items).find((it) => it.open === pick && !it.retired) : undefined;
+  const qws = item ? [item.concept, ...(item.related ?? [])].filter((c): c is string => !!c).map((c) => props.workspaceOf?.(c)).find((w) => w) : ws;
   const deck = useCards({ storeKey: `math-lab:cards:${def.id}`, initial: props.cards, onCards: props.onCards, start: () => [] });
   const menu = () => (props.open ? props.onBack?.() : setPick(null));
   const infoSheet = info && (
@@ -95,8 +102,8 @@ function BinomEntry(props: Props & { def: BinomDef }) {
   const common = {
     def, seed: props.seed, onBack: menu, onMenu: menu, onInfo: () => setInfo(true),
     onKeep: (m: CardMechanism) => deck.add({ mechanism: m, sets: 100, seed: Date.now() % 100000 }),
-    workspace: ws ? (c: { n: number; p: number }, k: number) => <Workspace key={`${c.n}-${c.p}-${k}`} formula={ws.formula} mean={ws.mean} vary={ws.vary} over={ws.over} initial={{ n: c.n, p: c.p, [ws.over]: k }} definitions={props.definitions} onConcept={props.onConcept} conceptName={props.conceptName} experiment={false} /> : undefined,
-    apply: pick ? def.catalog?.flatMap((g) => g.items).find((it) => it.open === pick && !it.retired)?.apply : undefined,
+    workspace: qws ? (c: { n: number; p: number }, k: number) => <Workspace key={`${c.n}-${c.p}-${k}`} formula={qws.formula} mean={qws.mean} vary={qws.vary} over={qws.over} initial={{ n: c.n, p: c.p, [qws.over]: k }} definitions={props.definitions} onConcept={props.onConcept} conceptName={props.conceptName} experiment={false} /> : undefined,
+    apply: item?.apply,
     conceptLink: (id: string) => props.onConcept && <button type="button" className={s.link} onClick={() => props.onConcept!(id)}>{name(id)} を見る</button>,
   };
   if (pick === null) {

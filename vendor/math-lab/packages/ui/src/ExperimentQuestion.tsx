@@ -6,7 +6,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { mechanismMoments, modelPmf, runningMean, runningSd, runningShare, solveApply, summarize, type ApplySolve, type CardMechanism, type Mechanism } from "@math-lab/engine";
 import { haptic } from "./motion";
-import { LabShell, peak, useRuns, usePairRuns, useStages } from "./labParts";
+import { LabShell, peak, tex, useRuns, usePairRuns, useStages } from "./labParts";
 import { CompareRows, CompareTable, DistRows, Dock, Field, PairRows, RunChart, ScaleChoice, Seg, TheoryRows, fmtN, oneIn, pc, pctSig, pShort, qs, r2, scaleChoices, type CmpRow } from "./QuestionParts";
 import type { BinomDef, ExperimentTheme } from "./Experiment";
 import s from "./Experiment.module.css";
@@ -138,12 +138,23 @@ export function ApplyTask({ spec }: { spec: ApplySpec }) {
       ? <Seg name="答え" items={a.options.map((o, i) => [String(i), o] as [string, string])} value={pick} onChange={setPick} />
       : <label className={s.applyIn}><input type="number" inputMode="decimal" step="any" value={val} onChange={(e) => setVal(e.target.value)} aria-label="答え" data-testid="exp-apply-input" />{a.unit && <span>{a.unit}</span>}</label>)}
     {!done ? <button type="button" className={s.primary} disabled={!ready} onClick={() => { haptic(); setDone(true); }} data-testid="exp-apply-check">答え合わせ</button>
-      : <div className={ok ? s.ok : s.ng} data-testid="exp-apply-verdict" data-ok={String(ok)}>
+      : <>
+        <div className={ok ? s.ok : s.ng} data-testid="exp-apply-verdict" data-ok={String(ok)}>
           <b>{ok ? "✓ 合っている" : "✗ ちがう"}</b>
           <span className={s.bigNum}>{shown}</span>
-          <span className={s.shape} style={{ display: "block" }}>{spec.why}</span>
           <button type="button" className={s.link} onClick={() => { setDone(false); setVal(""); setPick(""); }} data-testid="exp-apply-retry">もう一度</button>
-        </div>}
+        </div>
+        {/* 解き方の段（engine が理論から作る。数は求めた値だけ）→ つまり（原本の一言） */}
+        <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
+        <ol className={s.applySteps} data-testid="exp-apply-steps">
+          {res.steps.map((st, i) => <li key={i}>
+            <b>{st.title}</b>
+            {st.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(st.tex) }} />}
+            {st.text && <p>{st.text}</p>}
+          </li>)}
+        </ol>
+        <p className={s.applyGist} data-testid="exp-apply-why"><b>つまり</b>{spec.why}</p>
+      </>}
     {!done && <p className={qs.muted}>下の帯で条件を動かして確かめてから答えてよい。</p>}
   </section>;
 }
@@ -285,14 +296,16 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ逆の向き？ 理由を考える</button>;
   } else if (stage === 3) {
-    body = <Card title="回数は √n 倍、割合は 1/√n 倍">
+    body = <><Card title="回数は √n 倍、割合は 1/√n 倍">
       <table className={qs.table}><thead><tr><th /><th>n＝{n0}</th><th>n＝{n1}</th></tr></thead><tbody>
         <tr><td>回数の分散 np(1−p)</td><td>{r2(sd(n0) ** 2)}</td><td>{r2(sd(n1) ** 2)}</td></tr>
         <tr><td>回数の標準偏差</td><td>{r2(sd(n0))}</td><td>{r2(sd(n1))}</td></tr>
         <tr><td>割合の標準偏差 √(p(1−p)/n)</td><td>{pShort(sd(n0) / n0)}</td><td>{pShort(sd(n1) / n1)}</td></tr>
       </tbody></table>
       <p className={qs.note}>分散は n に比例するので、標準偏差は √n に比例する。割合は回数を n で割るので、標準偏差は √n÷n＝1/√n に比例する。たくさん集めると割合が落ち着くのはこのため。</p>
-    </Card>;
+    </Card>
+    {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる<span>n を動かすと ±標準偏差の帯の幅が √n 倍</span></p>{props.workspace({ n: n1, p: q.set.p }, Math.round(n1 * q.set.p))}</section>}
+    </>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>n を自由に変える</button>;
   } else {
     const sdc = Math.sqrt(app.n * app.p * (1 - app.p));
