@@ -3,19 +3,14 @@
 // - 数の比べ表（実験・理論・差と揺れの目安。「中／外」で言い、一致したとは言わない）
 // - 移り変わりの図（倍々の時点・再生・理論の破線と値・線の名前・揺れの目安は初めは隠す。縦の範囲は線と理論から決め、再生の間は動かさない）
 // - 下の操作の帯（札を押すと、その操作だけが出る）・桁の目盛りの予想・3つから選ぶ
+import { NUM2, PCT0, SIG3, formatApply } from "@math-lab/engine";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { haptic, reduced } from "./motion";
 import s from "./QuestionParts.module.css";
 
 export const pShort = (v: number) => (!Number.isFinite(v) ? "—" : v === 0 ? "0%" : v < 0.001 ? "<0.1%" : `${Number((v * 100).toFixed(1))}%`);
-/** 有効数字3桁の％（丸めて 0 に見せない） */
-export const pctSig = (v: number) => {
-  if (!Number.isFinite(v)) return "—";
-  if (v === 0) return "0%"; if (v === 1) return "100%";
-  const x = v * 100;
-  if (x >= 0.1) return `${Number(x.toPrecision(3))}%`;
-  return `${Number(x.toPrecision(3)).toFixed(Math.min(12, 2 - Math.floor(Math.log10(x))))}%`;
-};
+/** 有効数字3桁の％（丸めて 0 に見せない）。応用の課題の答えと同じ関数（engine の formatApply。stats2-course #171） */
+export const pctSig = (v: number) => formatApply(v, SIG3);
 /** 約 N セットに1回 */
 export const oneIn = (v: number) => {
   if (!(v > 0)) return "起きない"; if (v >= 0.5) return v >= 1 ? "毎セット" : "2セットに1回より多い";
@@ -23,9 +18,9 @@ export const oneIn = (v: number) => {
   const t = r >= 1e8 ? `${Number((r / 1e8).toPrecision(2))}億` : r >= 1e4 ? `${Number((r / 1e4).toPrecision(2))}万` : String(r);
   return `約 ${t} セットに1回`;
 };
-export const r2 = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? "—" : String(Number(v.toFixed(2))));
+export const r2 = (v: number | undefined) => (v === undefined ? "—" : formatApply(v, NUM2));
 export const fmtN = (x: number) => (x >= 10 ? String(Math.round(x)) : x >= 0.1 ? String(Number(x.toPrecision(2))) : String(Number(x.toPrecision(1))));
-export const pc = (p: number) => `${Math.round(p * 100)}%`;
+export const pc = (p: number) => formatApply(p, PCT0);
 
 /** 成功の回数ごとのセット数と割合（数つきの横棒）。inEvent の行は色を変える */
 export function DistRows({ counts, sets, inEvent, label = "成功の回数ごとのセット数と割合" }: { counts: number[]; sets: number; inEvent?: (k: number) => boolean; label?: string }) {
@@ -43,13 +38,13 @@ export function DistRows({ counts, sets, inEvent, label = "成功の回数ごと
 }
 
 /** 理論の確率の行 */
-export function TheoryRows({ pmf, inEvent }: { pmf: number[]; inEvent?: (k: number) => boolean }) {
+export function TheoryRows({ pmf, inEvent, mark }: { pmf: number[]; inEvent?: (k: number) => boolean; mark?: number }) {
   const max = Math.max(1e-12, ...pmf);
   return <>
     <div className={s.rowsHead} aria-hidden="true"><span>成功</span><span /><span /><span>確率</span></div>
     <div className={s.rows} role="list" aria-label="成功の回数ごとの理論の確率" data-testid="q-theory">
       {pmf.map((v, k) => (
-        <div key={k} role="listitem" className={inEvent?.(k) ? s.in : undefined}><span>{k} 回</span><span className={s.bar}><i style={{ width: `${(v / max) * 100}%` }} /></span><span /><span>{pShort(v)}</span></div>
+        <div key={k} role="listitem" className={k === mark ? s.mark : inEvent?.(k) ? s.in : undefined} data-mark={k === mark ? "answer" : undefined}><span>{k} 回</span><span className={s.bar}><i style={{ width: `${(v / max) * 100}%` }} /></span><span /><span>{pctSig(v)}</span></div>
       ))}
     </div>
   </>;
@@ -176,10 +171,10 @@ export function RunChart({ title, ylab, fmt = r2, series, note }: { title: strin
 }
 
 /** 下の操作の帯：札を押すと、その1つの操作だけが出る */
-export function Dock({ chips, sel, onSel, children, action }: { chips: [string, string][]; sel: string; onSel: (k: string) => void; children: ReactNode; action: ReactNode }) {
+export function Dock({ chips, sel, onSel, children, action, mark }: { chips: [string, string][]; sel: string; onSel: (k: string) => void; children: ReactNode; action: ReactNode; mark?: string }) {
   return <div style={{ display: "grid", gap: 8 }}>
     <div className={s.chips} style={{ gridTemplateColumns: `repeat(${chips.length}, 1fr)` }} role="tablist" aria-label="変える条件">
-      {chips.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={sel === k} onClick={() => { haptic(); onSel(k); }} data-testid={`q-chip-${k}`}>{t}</button>)}
+      {chips.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={sel === k} onClick={() => { haptic(); onSel(k); }} data-testid={`q-chip-${k}`} className={k === mark ? s.chipMark : undefined} data-mark={k === mark ? "answer" : undefined}>{t}</button>)}
     </div>
     <div className={s.dockCtl}>{children}</div>
     {action}
