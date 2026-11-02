@@ -253,25 +253,17 @@
 .applyIn { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .applyIn input { flex: 1; min-height: 44px; box-sizing: border-box; border-radius: var(--r-m); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 8px 10px; font: inherit; font-size: 16px; font-variant-numeric: tabular-nums; }
 .applyIn input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.applySteps { margin: 4px 0 0; padding-left: 22px; display: grid; gap: 10px; font-size: 14px; line-height: 1.6; }
+.applySteps { margin: 4px 0 0; padding-left: 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; font-size: 14px; line-height: 1.6; }
+.applySteps li { min-width: 0; }
 .applySteps li::marker { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .applySteps b { display: block; font-size: 13px; color: var(--ink-2); font-weight: 600; }
 .applySteps p { margin: 2px 0 0; }
-.applyTex { margin: 4px 0; overflow-x: auto; overflow-y: hidden; font-size: 15px; }
+.applyTex { margin: 4px 0; max-width: 100%; overflow-x: auto; overflow-y: hidden; font-size: 15px; }
 .applyGist { margin: 12px 0 0; padding: 10px 12px; border-radius: var(--r-m); background: var(--surface-2); font-size: 14px; line-height: 1.6; }
 .applyGist b { display: block; font-size: 13px; color: var(--ink-2); }
-/* 検証の帯（課題が問う量を答えと同じ桁で。－／＋で刻みの上を正確に動かす） */
-.applyCheck { margin: 4px 0 12px; padding: 10px 12px; border-radius: var(--r-m); background: var(--surface-2); display: grid; gap: 8px; }
-.applyVar { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13.5px; }
-.applyStep { display: flex; align-items: center; gap: 4px; }
-.applyStep button { min-width: 44px; min-height: 44px; border-radius: var(--r-m); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-size: 18px; }
-.applyStep input { width: 84px; min-height: 44px; box-sizing: border-box; text-align: right; border-radius: var(--r-m); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 0 8px; font: inherit; font-size: 16px; font-variant-numeric: tabular-nums; }
-.applyStep i { font-style: normal; color: var(--ink-2); }
-.applyReads { margin: 0; display: grid; gap: 4px; }
-.applyReads > div { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
-.applyReads dt { color: var(--ink-2); }
-.applyReads dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
-.applyMet, .applyUnmet { margin: 0; font-size: 13.5px; font-weight: 600; }
-.applyMet { color: var(--good); }
-.applyUnmet { color: var(--ink-2); }
-.applyLinks { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.applyLinks { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 4px; }
+/* 応用の答えの所（グラフを問いに合わせたとき。stats2-course #171） */
+.tiles > div.tileMark { box-shadow: inset 0 0 0 2px var(--good); }
+.tileMark { color: var(--good); font-weight: 700; }
+.titleMark { box-shadow: inset 0 -2px 0 var(--good); }
+

@@ -3,8 +3,8 @@
 // - どの問いも 予測 → 実験 → 観察 → 理由 → 応用 の5段。観察は、数の比べ表・分布の比べ・移り変わりの図を同じ部品で出す
 // - 予想の答えは定義に書かず、理論（engine の modelPmf・mechanismMoments）から求める
 // - 応用は課題を1つ解く（別の考え方。apply）。下の操作の帯は課題を解く道具。最後に「この条件をカードに残す」
-import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { answerMatches, applyCheck, formatApply, mechanismMoments, modelPmf, runningMean, runningSd, runningShare, solveApply, summarize, type ApplySolve, type ApplyState, type ApplyVar, type CardMechanism, type Mechanism } from "@math-lab/engine";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { INT, NUM2, PCT2, PCT4, answerMatches, applyCheck, formatApply, mechanismMoments, modelPmf, runningMean, runningSd, runningShare, solveApply, summarize, type ApplyMark, type ApplySolve, type ApplyState, type CardMechanism, type Mechanism } from "@math-lab/engine";
 import { haptic } from "./motion";
 import { LabShell, peak, tex, useRuns, usePairRuns, useStages } from "./labParts";
 import { CompareRows, CompareTable, DistRows, Dock, Field, PairRows, RunChart, ScaleChoice, Seg, TheoryRows, fmtN, oneIn, pc, pctSig, pShort, qs, r2, scaleChoices, type CmpRow } from "./QuestionParts";
@@ -111,8 +111,8 @@ function Verdict({ ok, edge, head, big, children, testid = "exp-verdict" }: { ok
     <span className={s.shape} style={{ display: "block" }}>{children}</span>
   </div>;
 }
-function Card({ title, sub, children, testid }: { title: string; sub?: string; children: ReactNode; testid?: string }) {
-  return <section className={s.card} data-testid={testid}><p className={s.h}>{title}{sub && <span>{sub}</span>}</p>{children}</section>;
+function Card({ title, sub, children, testid, mark }: { title: string; sub?: string; children: ReactNode; testid?: string; mark?: boolean }) {
+  return <section className={s.card} data-testid={testid}><p className={s.h}><span className={mark ? s.titleMark : undefined} data-mark={mark ? "answer" : undefined}>{title}</span>{sub && <span>{sub}</span>}</p>{children}</section>;
 }
 /** 応用の課題（stats2-course issue 171・issue 169 の3）：予測〜理由で練習したのとは別の考え方（逆算・設計・反証・評価・変換）を求める。
  *  答えは定義に書かず、engine の solveApply が solve から求める。下の操作の帯（自由に動かす）は、課題を解く道具として残す */
@@ -120,50 +120,20 @@ export type ApplySpec = {
   kind: "逆算" | "設計" | "反証" | "評価" | "変換" | "モデル選択"; task: string; solve: ApplySolve; why: string;
   answer: { type: "number"; unit?: string; percent?: boolean; tol: { abs?: number; rel?: number } } | { type: "choice"; options: string[] };
 };
-export function ApplyTask({ spec, sync }: { spec: ApplySpec; sync?: (v: ApplyState) => void }) {
+export function ApplyTask({ spec, onFit }: { spec: ApplySpec; onFit?: (at: ApplyState, mark: ApplyMark) => void }) {
   const res = useMemo(() => { try { return { r: solveApply(spec.solve), c: applyCheck(spec.solve) }; } catch (e) { return e as Error; } }, [spec]);
   const [val, setVal] = useState(""), [pick, setPick] = useState<string>(""), [done, setDone] = useState(false);
-  const [st, setSt] = useState<ApplyState>(() => (res instanceof Error ? {} : res.c.setup));
-  // 帯の値を下の道具（実験室の応用の帯）にも渡す（同じキー：n・p・k・強さ）。道具の図・表も同じ条件になる
-  useEffect(() => { if (!(res instanceof Error)) sync?.(st); }, [st]);   // eslint-disable-line react-hooks/exhaustive-deps
   if (res instanceof Error) return <Card title="応用の課題"><p className={qs.note} role="alert">課題の条件がおかしい：{res.message}</p></Card>;
   const { r, c } = res, a = spec.answer, fmt = c.answerFormat;
-  const pctIn = fmt?.kind === "pct";   // % の課題は % の値で入れ、0〜1 に直して照らす
-  const shown = a.type === "choice" ? a.options[r.answer] ?? "—" : `${formatApply(r.answer, fmt!)}${fmt!.kind === "pct" ? "" : a.unit ?? ""}`;
+  const pctIn = fmt?.kind === "pct" || fmt?.kind === "sig";   // % の課題は % の値で入れ、0〜1 に直して照らす
+  const shown = a.type === "choice" ? a.options[r.answer] ?? "—" : `${formatApply(r.answer, fmt!)}${pctIn ? "" : a.unit ?? ""}`;
   const x = Number(val.replace(/[,，]/g, "")), xin = pctIn ? x / 100 : x;
   const ok = a.type === "choice" ? pick === String(r.answer) : val.trim() !== "" && answerMatches(xin, r.answer, fmt!, a.tol);
   const ready = a.type === "choice" ? pick !== "" : val.trim() !== "" && Number.isFinite(x);
-  // 刻みの上にそろえる（－／＋と入力のどちらでも、課題の条件と答えの値に必ずたどり着ける）
-  const snap = (v: ApplyVar, y: number) => Number(Math.min(v.max, Math.max(v.min, v.min + Math.round((y - v.min) / v.step) * v.step)).toFixed(10));
-  const setVar = (v: ApplyVar, y: number) => { if (Number.isFinite(y)) setSt((o) => ({ ...o, [v.key]: snap(v, y) })); };
-  const shownVar = (v: ApplyVar, y: number) => (v.format.kind === "pct" ? Number((y * 100).toFixed(10)) : y);
-  const met = c.goal ? c.goal.ok(st) : undefined;
   return <section className={s.card} data-testid="exp-apply" data-kind={spec.kind}>
     <p className={s.h}>応用の課題<span className={s.applyKind}>{spec.kind}</span></p>
     <p className={s.applyTask}>{spec.task}</p>
-    {/* 検証の帯：課題が問う量を、答えと同じ桁で出す。動かすと下の道具も同じ条件になる */}
-    <div className={s.applyCheck} data-testid="exp-apply-band">
-      {c.vars.map((v) => (
-        <div key={v.key} className={s.applyVar}>
-          <span>{v.label}</span>
-          <div className={s.applyStep}>
-            <button type="button" aria-label={`${v.label}を1つ減らす`} onClick={() => setVar(v, (st[v.key] ?? v.min) - v.step)} data-testid={`exp-apply-dec-${v.key}`}>−</button>
-            <input type="number" inputMode="decimal" step="any" value={shownVar(v, st[v.key] ?? v.min)} aria-label={v.label}
-              onChange={(e) => { const y = Number(e.target.value); setVar(v, v.format.kind === "pct" ? y / 100 : y); }} data-testid={`exp-apply-var-${v.key}`} />
-            {v.format.kind === "pct" && <i>%</i>}
-            <button type="button" aria-label={`${v.label}を1つ増やす`} onClick={() => setVar(v, (st[v.key] ?? v.min) + v.step)} data-testid={`exp-apply-inc-${v.key}`}>＋</button>
-          </div>
-        </div>
-      ))}
-      <dl className={s.applyReads}>
-        {c.reads.map((rd, i) => <div key={i}><dt>{rd.label}</dt><dd data-testid={`exp-apply-read-${i}`}>{formatApply(rd.value(st), rd.format)}</dd></div>)}
-      </dl>
-      {c.goal && <p className={met ? s.applyMet : s.applyUnmet} data-testid="exp-apply-goal" data-ok={String(met)}>{met ? "✓" : "✗"} {c.goal.text}</p>}
-      <div className={s.applyLinks}>
-        <button type="button" className={s.link} onClick={() => { haptic(); setSt(c.setup); }} data-testid="exp-apply-setup">課題の条件にそろえる</button>
-        {done && c.at && <button type="button" className={s.link} onClick={() => { haptic(); setSt(c.at!); }} data-testid="exp-apply-at">答えの値で確かめる</button>}
-      </div>
-    </div>
+    {!done && <p className={qs.muted}>下のつまみを課題の値に合わせ、図や表から読み取って答える。</p>}
     {!done && (a.type === "choice"
       ? <Seg name="答え" items={a.options.map((o, i) => [String(i), o] as [string, string])} value={pick} onChange={setPick} />
       : <label className={s.applyIn}><input type="number" inputMode="decimal" step="any" value={val} onChange={(e) => setVal(e.target.value)} aria-label="答え" data-testid="exp-apply-input" />{(pctIn ? "%" : a.unit) && <span>{pctIn ? "%" : a.unit}</span>}</label>)}
@@ -172,9 +142,13 @@ export function ApplyTask({ spec, sync }: { spec: ApplySpec; sync?: (v: ApplySta
         <div className={ok ? s.ok : s.ng} data-testid="exp-apply-verdict" data-ok={String(ok)}>
           <b>{ok ? "✓ 合っている" : "✗ ちがう"}</b>
           <span className={s.bigNum} data-testid="exp-apply-answer">{shown}</span>
-          <button type="button" className={s.link} onClick={() => { setDone(false); setVal(""); setPick(""); }} data-testid="exp-apply-retry">もう一度</button>
+          <div className={s.applyLinks}>
+            <button type="button" className={s.link} onClick={() => { setDone(false); setVal(""); setPick(""); }} data-testid="exp-apply-retry">もう一度</button>
+            {onFit && <button type="button" className={s.link} onClick={() => { haptic(); onFit(c.at, c.mark); }} data-testid="exp-apply-fit">グラフを問いに合わせる</button>}
+          </div>
+          {onFit && <p className={qs.muted}>つまみが問いの値になり、答えの出ている所に色が付く。自分の値・読んだ所と比べる（入れ間違いか、読み違いか）。</p>}
         </div>
-        {/* 解き方の段（engine が理論から作る。数は帯・答えと同じ形）→ つまり（原本の一言） */}
+        {/* 解き方の段（engine が理論から作る。数は道具・答えと同じ形）→ つまり（原本の一言） */}
         <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
         <ol className={s.applySteps} data-testid="exp-apply-steps">
           {r.steps.map((stp, i) => <li key={i}>
@@ -187,6 +161,14 @@ export function ApplyTask({ spec, sync }: { spec: ApplySpec; sync?: (v: ApplySta
       </>}
   </section>;
 }
+
+/** グラフを問いに合わせた状態（stats2-course #171）。つまみが合わせた値のままの間だけ、答えの所に色を付ける（自分で動かすと消える） */
+function useFit() {
+  const [fit, setFit] = useState<{ at: ApplyState; mark: ApplyMark } | null>(null);
+  const on = (cur: ApplyState) => !!fit && Object.entries(fit.at).every(([k, v]) => cur[k] === undefined || Math.abs(cur[k]! - v) < 1e-9);
+  return { fit, setFit, mark: (cur: ApplyState): ApplyMark => (fit && on(cur) ? fit.mark : {}) };
+}
+const MK = (on: boolean) => (on ? { className: s.tileMark, "data-mark": "answer" } : {});
 
 /** 応用の最後：この条件をカードに残す */
 function AppExtra({ m, from, onKeep, desc }: { m: CardMechanism; from: string; onKeep: QProps["onKeep"]; desc: string }) {
@@ -213,6 +195,7 @@ export function ShiftQ(props: QProps) {
   const { before: A, after: B, run } = usePairRuns({ kind: "bernoulli", ...start }, { kind: "bernoulli", ...next }, props.seed);
   const dir = (k: number) => (k > k0 ? 2 : k < k0 ? 0 : 1);
   const [app, setApp] = useState<Cond>(next), [sel, setSel] = useState("p");
+  const fitS = useFit();
   const unit = theme.unit ?? "回";
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
@@ -266,13 +249,13 @@ export function ShiftQ(props: QProps) {
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "p を自由に変える"}</button>;
   } else {
-    const fa = pmfOf(app), fb = pmfOf({ n: app.n, p: start.p });
+    const fa = pmfOf(app), fb = pmfOf({ n: app.n, p: start.p }), mkS = fitS.mark(app);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}) }))} />}
-      <Card title={`中心 n×p＝${r2(app.n * app.p)}`} sub={`頂点 ${peak(fa)} 回`}><PairRows labels={fa.map((_, k) => `${k} 回`)} a={fb} b={fa} names={[`p＝${pc(start.p)}`, `p＝${pc(app.p)}`]} pk={peak(fa)} /></Card>
+      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p! }); fitS.setFit({ at, mark }); }} />}
+      <Card title={`中心 n×p＝${r2(app.n * app.p)}`} sub={`頂点 ${peak(fa)} 回`} mark={mkS.read === "center"}><PairRows labels={fa.map((_, k) => `${k} 回`)} a={fb} b={fa} names={[`p＝${pc(start.p)}`, `p＝${pc(app.p)}`]} pk={peak(fa)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={def.question} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n })} />
         : <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(p) => setApp({ ...app, p })} />}
     </Dock>;
@@ -291,6 +274,7 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
   const bins = (ks: number[], n: number, N: number) => { const b = Array(11).fill(0); ks.forEach((k) => { b[Math.round((k / n) * 10)]++; }); return b.map((c) => (N ? c / N : 0)); };
   const binLabels = Array.from({ length: 11 }, (_, i) => `${i * 10}%`);
   const [app, setApp] = useState<Cond>({ n: n1, p }), [sel, setSel] = useState("n");
+  const fitS = useFit();
   const ansC = sd(n1) > sd(n0) ? 0 : sd(n1) < sd(n0) ? 2 : 1, ansR = sd(n1) / n1 > sd(n0) / n0 ? 0 : sd(n1) / n1 < sd(n0) / n0 ? 2 : 1;
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
@@ -337,14 +321,14 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "n を自由に変える"}</button>;
   } else {
-    const sdc = Math.sqrt(app.n * app.p * (1 - app.p));
+    const sdc = Math.sqrt(app.n * app.p * (1 - app.p)), mkS = fitS.mark(app);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}) }))} />}
-      <Card title={`n＝${app.n}・p＝${pc(app.p)}`}><div className={s.tiles}><div>回数の標準偏差<b>{r2(sdc)}</b><i>√(np(1−p))</i></div><div>割合の標準偏差<b>{pShort(sdc / app.n)}</b><i>√(p(1−p)/n)</i></div></div></Card>
+      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p! }); fitS.setFit({ at, mark }); }} />}
+      <Card title={`n＝${app.n}・p＝${pc(app.p)}`}><div className={s.tiles}><div>回数の標準偏差<b>{r2(sdc)}</b><i>√(np(1−p))</i></div><div {...MK(mkS.read === "share-sd")}>割合の標準偏差<b data-testid="exp-app-share-sd">{formatApply(sdc / app.n, PCT2)}</b><i>√(p(1−p)/n)</i></div></div></Card>
       <Card title="理論の確率"><TheoryRows pmf={pmfOf(app)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={Math.max(def.vary.n.max, n1)} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n })} />
         : <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(pp) => setApp({ ...app, p: pp })} />}
     </Dock>;
@@ -375,6 +359,7 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
   const firsts = events.map((e) => { const i = rec.ks.findIndex(inEv(e)); return i < 0 ? null : i + 1; });
   const e0 = events[focus] ?? events[0]!, N = rec.sets;
   const [app, setApp] = useState<{ n: number; p: number; op: Op; k: number }>({ ...cond, ...events[0]! }), [sel, setSel] = useState("k");
+  const fitS = useFit();
   const question = free ? `成功確率 ${pc(cond.p)} で、${cond.n} 回中 ${evText(events[0]!)}成功する確率は？` : q.question;
   const focusSeg = events.length > 1 ? <Seg name="図で塗る結果" items={events.map((e, i) => [String(i), `${evText(e)}を塗る`] as [string, string])} value={String(focus)} onChange={(v) => setFocus(Number(v))} /> : null;
   let body: ReactNode, cta: ReactNode;
@@ -451,19 +436,20 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
     const ks = fa.map((_, k) => k);
     const cut = e.op === "ge" ? ks.find((k) => probOf(fa, { op: "ge", k }) < 0.05) : e.op === "le" ? [...ks].reverse().find((k) => probOf(fa, { op: "le", k }) < 0.05) : undefined;
     const eq = probOf(fa, { op: "eq", k: e.k }), ge1 = probOf(fa, { op: "ge", k: e.k + 1 });
+    const OPS: Op[] = ["eq", "ge", "le"], mkS = fitS.mark({ n: app.n, p: app.p, k: app.k, op: OPS.indexOf(app.op) });
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}), ...(v.k !== undefined ? { k: v.k } : {}) }))} />}
+      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, k: at.k!, op: OPS[at.op ?? 0]! }); if (mark.bar !== undefined) setSel("k"); fitS.setFit({ at: free ? at : { n: at.n!, p: at.p!, k: at.k! }, mark }); }} />}
       {free ? <Card title={evText(e)} sub={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">
-        <div className={s.tiles}><div>確率<b data-testid="exp-app-prob">{pctSig(P)}</b><i>{oneIn(P)}</i></div><div>5% を切る境目<b data-testid="exp-app-cut">{e.op === "eq" ? "—" : cut === undefined ? "なし" : evText({ op: e.op, k: cut })}</b><i>{e.op === "eq" ? "ちょうどでは決めない" : cut === undefined ? "どこまで行っても 5% 以上" : "ここから先が「珍しい」"}</i></div></div>
+        <div className={s.tiles}><div {...MK(mkS.read === "prob")}>確率<b data-testid="exp-app-prob">{pctSig(P)}</b><i>{oneIn(P)}</i></div><div>5% を切る境目<b data-testid="exp-app-cut">{e.op === "eq" ? "—" : cut === undefined ? "なし" : evText({ op: e.op, k: cut })}</b><i>{e.op === "eq" ? "ちょうどでは決めない" : cut === undefined ? "どこまで行っても 5% 以上" : "ここから先が「珍しい」"}</i></div></div>
         <p className={qs.note}>{e.op === "eq" ? `ちょうど k 回の確率は、n が大きいほどどの k でも小さくなる（今はいちばん高い棒でも ${pctSig(Math.max(...fa))}）。だから珍しさは「以上」「以下」のように、それより極端な結果をまとめて測る。` : `${P < 0.05 ? "この結果は 5% より起きにくい。" : "この結果は 5% 以上の確率で起きる。"}5% の境目は、検定で「偶然とは言いにくい」と判断する目安になる。`}</p>
       </Card> : <Card title={`ちょうど ${e.k} 回と ${e.k} 回以上`} sub={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">
-        <div className={s.tiles}><div>ちょうど {e.k} 回<b>{pctSig(eq)}</b><i>棒1本</i></div><div>{e.k} 回以上<b>{pctSig(P)}</b><i>＝ちょうど {e.k} 回＋{e.k + 1} 回以上（{pctSig(ge1)}）</i></div></div>
+        <div className={s.tiles}><div {...MK(mkS.read === "eq")}>ちょうど {e.k} 回<b data-testid="exp-app-eq">{pctSig(eq)}</b><i>棒1本</i></div><div>{e.k} 回以上<b>{pctSig(P)}</b><i>＝ちょうど {e.k} 回＋{e.k + 1} 回以上（{pctSig(ge1)}）</i></div></div>
       </Card>}
-      <Card title="理論の確率"><TheoryRows pmf={fa} inEvent={inEv(e)} /></Card>
+      <Card title="理論の確率"><TheoryRows pmf={fa} inEvent={inEv(e)} mark={mkS.bar} /></Card>
       <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={`${descOf({ kind: "bernoulli", n: app.n, p: app.p })}・${evText(e)}`} />
     </>;
     const chips: [string, string][] = [["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ...(free ? [["op", { eq: "ちょうど", ge: "以上", le: "以下" }[app.op]] as [string, string]] : []), ["k", `k ${e.k} 回`]];
-    cta = <Dock chips={chips} sel={sel} onSel={setSel} action={free
+    cta = <Dock chips={chips} mark={mkS.chip} sel={sel} onSel={setSel} action={free
       ? <button type="button" className={s.primary} data-testid="exp-app-go" onClick={() => props.onNew({ ...q, id: `${q.id}-own`, set: { n: app.n, p: app.p }, events: [e] })}>この条件で予想から</button>
       : <button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n, k: Math.min(app.k, n) })} />
@@ -486,7 +472,8 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
   const { rec, run } = useRuns({ kind: "bernoulli", ...cond }, props.seed);
   const path = useMemo(() => runningShare(rec.ks.map(inEv(ev))), [rec]);   // eslint-disable-line react-hooks/exhaustive-deps
   const N = rec.sets, share = path[N - 1];
-  const [app, setApp] = useState({ ...cond, k: ev.k }), [sel, setSel] = useState("k");
+  const [app, setApp] = useState({ ...cond, k: ev.k, N: 1000 }), [sel, setSel] = useState("k");
+  const fitS = useFit();
   const chart = (note: string) => <RunChart title="割合の移り変わり" ylab="ここまでの割合" fmt={pShort} series={[{ name: "実験", path, th: P, se }]} note={note} />;
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
@@ -530,18 +517,22 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
     </Card>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "条件を自由に変える"}</button>;
   } else {
-    const Pa = probOf(pmfOf(app), { op: ev.op, k: Math.min(app.k, app.n) }), sea = (n: number) => 2 * Math.sqrt((Pa * (1 - Pa)) / n);
+    const Pa = probOf(pmfOf(app), { op: ev.op, k: Math.min(app.k, app.n) }), sea = (n: number) => 2 * Math.sqrt((Pa * (1 - Pa)) / n), mkS = fitS.mark(app);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}), ...(v.k !== undefined ? { k: v.k } : {}) }))} />}
+      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, k: at.k!, N: at.N ?? app.N }); setSel("N"); fitS.setFit({ at, mark }); }} />}
+      <Card title={`${app.N.toLocaleString()} セットのとき`} sub={`理論 ${pctSig(Pa)}`}>
+        <div className={s.tiles}><div {...MK(mkS.read === "se")}>ずれの目安 ±2SE<b data-testid="exp-app-se">±{formatApply(sea(app.N), PCT4)}</b><i>2√(P(1−P)÷N)</i></div><div>セット数 N<b>{formatApply(app.N, INT)}</b><i>100 セット刻み</i></div></div>
+      </Card>
       <Card title={`${app.n} 回中 ${evText({ op: ev.op, k: Math.min(app.k, app.n) })}`} sub={`理論 ${pctSig(Pa)}`}>
         <table className={qs.table}><thead><tr><th>セット</th><th>ずれの目安</th></tr></thead><tbody>{[100, 1000, 10000, 100000].map((t) => <tr key={t}><td>{t.toLocaleString()}</td><td>±{pShort(sea(t))}</td></tr>)}</tbody></table>
         <p className={qs.note}>{Pa < 0.05 || Pa > 0.95 ? "理論の確率が 0 や 1 に近いと、ずれの目安も小さい。ただし珍しい結果は、そもそも起きた回数が少ない。" : "セットを 100 倍にするたびに、目安は 10分の1。"}</p>
       </Card>
       <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["k", `k ${Math.min(app.k, app.n)} 回`]]} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["k", `k ${Math.min(app.k, app.n)} 回`], ["N", `N ${formatApply(app.N, INT)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n, k: Math.min(app.k, n) })} />
         : sel === "p" ? <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(p) => setApp({ ...app, p })} />
+        : sel === "N" ? <Field id="exp-app-N" label="セット数 N" value={app.N} min={100} max={100000} step={100} show={(v) => `${formatApply(v, INT)} セット`} onChange={(N) => setApp({ ...app, N })} />
         : <Field id="exp-app-k" label={`k（${evText({ op: ev.op, k: 0 }).replace("0 ", "")}）`} value={Math.min(app.k, app.n)} min={0} max={app.n} step={1} show={(v) => `${v} 回`} onChange={(k) => setApp({ ...app, k })} />}
     </Dock>;
   }
@@ -577,6 +568,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
   const st = STRENGTH[m.kind]!;
   const xOf = (c: Cx) => { const k = STRENGTH[c.mechanism.kind]![4]; return Number(c.mechanism[k] ?? (c.mechanism.kind === "urn" ? 40 : c.mechanism.kind === "mix" ? 0.2 : 0.3)); };
   const [x, setX] = useState<number>(() => xOf(cx));
+  const fitS = useFit();
   const labels = Array.from({ length: cond.n + 1 }, (_, k) => `${k} 回`);
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
@@ -615,18 +607,19 @@ export function BreakQ(props: QProps & { initial?: string }) {
     body = <Card title={`崩した条件：${cx.breaks}`}><p className={qs.note} data-testid="exp-cx-text">{cx.text}</p><p className={qs.note}>二項分布の式（分散 np(1−p)）を使えるのは、各回が独立で、毎回同じ確率のときだけ。</p>{cx.concept && props.conceptLink?.(cx.concept)}</Card>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "崩す強さを変える"}</button>;
   } else {
-    const ma = mechOfCx(cx, cond, x), ba = baseOf(ma, cond), vma = mechanismMoments(ma).variance, vba = ba.n * ba.p * (1 - ba.p);
+    const ma = mechOfCx(cx, cond, x), ba = baseOf(ma, cond), vma = mechanismMoments(ma).variance, vba = ba.n * ba.p * (1 - ba.p), mkS = fitS.mark({ s: x });
+    const showX = (v: number) => (ma.kind === "urn" ? `${formatApply(v, INT)} 個` : formatApply(v, NUM2));
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} sync={(v) => { const y = v[st[4]]; if (y !== undefined) setX(y); }} />}
-      <Card title={cx.name} sub={`${st[0]} ${x}`} testid="exp-app">
-        <div className={s.tiles}><div>分散（崩した）<b>{r2(vma)}</b><i>理論</i></div><div>分散（二項分布）<b>{r2(vba)}</b><i>n×p×(1−p)</i></div></div>
-        <p className={qs.note}>{Math.abs(vma - vba) <= 1e-9 * Math.max(1, vba) ? "この強さでは差が出ない。" : `崩した方が ${vma > vba ? "広い" : "狭い"}（${r2(vma / vba)} 倍）。`}{ma.kind === "urn" ? "箱が大きいほど、戻さなくても二項分布に近づく。" : "強さが 0 なら二項分布と同じ。"}</p>
+      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { if (at.s !== undefined) setX(at.s); fitS.setFit({ at, mark }); }} />}
+      <Card title={cx.name} sub={`${st[0]} ${showX(x)}`} testid="exp-app">
+        <div className={s.tiles}><div {...MK(mkS.read === "variance")}>分散（崩した）<b data-testid="exp-app-var">{r2(vma)}</b><i>理論</i></div><div {...MK(mkS.read === "variance")}>分散（二項分布）<b>{r2(vba)}</b><i>n×p×(1−p)</i></div></div>
+        <p className={qs.note}>{Math.abs(vma - vba) <= 1e-9 * Math.max(1, vba) ? "この強さでは差が出ない。" : <>崩した方が {vma > vba ? "広い" : "狭い"}（<span {...MK(mkS.read === "ratio")} data-testid="exp-app-ratio">{r2(vma / vba)} 倍</span>）。</>}{ma.kind === "urn" ? "箱が大きいほど、戻さなくても二項分布に近づく。" : "強さが 0 なら二項分布と同じ。"}</p>
       </Card>
       <Card title="理論の確率（二項分布）"><TheoryRows pmf={pmfOf(ba)} /></Card>
       <AppExtra m={ma as CardMechanism} from={`前提崩し：${cx.name}`} onKeep={props.onKeep} desc={`${cx.name}・n＝${cond.n}・p＝${pc(ba.p)}・${st[0]} ${x}`} />
     </>;
-    cta = <Dock chips={[["s", st[0]]]} sel="s" onSel={() => {}} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
-      <Field id="exp-app-s" label={st[0]} value={x} min={st[1]} max={st[2]} step={st[3]} show={(v) => (ma.kind === "urn" ? `${v} 個` : String(v))} onChange={setX} />
+    cta = <Dock chips={[["s", `${st[0]} ${showX(x)}`]]} mark={mkS.chip} sel="s" onSel={() => {}} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+      <Field id="exp-app-s" label={st[0]} value={x} min={st[1]} max={st[2]} step={st[3]} show={showX} onChange={setX} />
     </Dock>;
   }
   return <LabShell title={def.title} question={`「${cx.name}」とき、成功の回数の山は二項分布と比べてどうなる？`} stage={stage} reached={reached} go={go} onBack={props.onBack} onInfo={props.onInfo} stages={STAGES_Q} body={body} cta={cta}>{props.children}</LabShell>;
