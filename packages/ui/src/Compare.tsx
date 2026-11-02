@@ -1,6 +1,6 @@
 // 比べるの段（stats2-course #122）：学習者が自分で決めた条件を記録カードに残し、いくつも重ねて比べる。
 // カードは条件と種とセット数だけ（engine の Card）。記録は開くたびにカードから作り直す（同じ種なら同じ結果）。
-// 保存は3つの段：その端末のブラウザ（消えることがある前提）・URL（onCards で親が URL に書く）・発見メモ（親が送る）。
+// 保存は2つの段：その端末のブラウザ（消えることがある前提）・URL（onCards で親が URL に書く）。外部への送り出しはしない（stats2-course issue 171）。
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MAX_CARDS, decodeCards, encodeCards, mechanismMoments, recordOfCard, summarize, type Card, type CardMechanism, type Mechanism } from "@math-lab/engine";
 import { haptic } from "./motion";

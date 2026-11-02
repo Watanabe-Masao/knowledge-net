@@ -96,8 +96,6 @@
 .rowBtn::after { content: "予想から始める"; font-size: var(--fs-tag); color: var(--accent); }
 .note { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
 .link { all: unset; color: var(--accent); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; min-height: 32px; }
-.memo { width: 100%; box-sizing: border-box; min-height: 84px; border-radius: var(--r-m); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 8px 10px; font: inherit; font-size: 14px; resize: vertical; }
-.memo:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 /* 下に止まる押す所 */
 .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; display: grid; gap: 6px; padding: 10px var(--sp-4) calc(12px + env(safe-area-inset-bottom));
   background: var(--raised); border-top: 1px solid var(--line); box-shadow: var(--shadow-raised); }
@@ -249,3 +247,9 @@
 .groupList { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 5; margin: 0; padding: 4px; list-style: none; border-radius: var(--r-m); background: var(--raised); border: 1px solid var(--line-strong); box-shadow: var(--shadow-raised); }
 .groupList li { min-height: var(--tap); padding: 0 10px; border-radius: 8px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; cursor: pointer; font-size: 14.5px; }
 .groupList li[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+/* 応用の課題（stats2-course issue 171） */
+.applyKind { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); font-size: 12px; font-weight: 600; }
+.applyTask { margin: 4px 0 10px; font-size: 15px; line-height: 1.6; }
+.applyIn { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.applyIn input { flex: 1; min-height: 44px; box-sizing: border-box; border-radius: var(--r-m); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); padding: 8px 10px; font: inherit; font-size: 16px; font-variant-numeric: tabular-nums; }
+.applyIn input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
