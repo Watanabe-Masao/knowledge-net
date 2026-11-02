@@ -77,7 +77,7 @@ export function solveApply(s: ApplySolve): ApplyResult {
         { title: "何を求めるか", tex: `\\hat p=\\dfrac{X}{n}`, text: `成功の割合 p̂（成功の回数 X を n で割った値）は、調べるたびにぶれる。そのぶれ（標準偏差）を ${f(s.sd)}（${f(s.sd * 100)} パーセントポイント）以下にする、いちばん少ない回数 n。` },
         { title: "使う式", tex: `\\sigma_{\\hat p}=\\sqrt{\\dfrac{p(1-p)}{n}}`, text: "回数 X の分散は np(1−p)。割合は X を n で割るので、分散は n² で割って p(1−p)÷n になる。" },
         { title: "数を入れる", tex: `\\sqrt{\\dfrac{${s.p}\\times${f(1 - s.p)}}{n}}\\le ${f(s.sd)}` },
-        { title: "解く", tex: `\\dfrac{${f(v)}}{n}\\le ${f(s.sd * s.sd)}\\quad\\Rightarrow\\quad n\\ge\\dfrac{${f(v)}}{${f(s.sd * s.sd)}}=${f(v / (s.sd * s.sd), 6)}`, text: "両辺を2乗してから n について解く。" },
+        { title: "解く", tex: `\\begin{aligned}&\\dfrac{${f(v)}}{n}\\le ${f(s.sd * s.sd)}\\\\ \\Rightarrow\\;& n\\ge\\dfrac{${f(v)}}{${f(s.sd * s.sd)}}=${f(v / (s.sd * s.sd), 6)}\\end{aligned}`, text: "両辺を2乗してから n について解く。" },
         { title: "整数に切り上げて確かめる", text: n > 1 ? `回数は整数。${n - 1} 回では ${f(before)}（${f(s.sd)} を超える）、${n} 回で ${f(at)}（${f(s.sd)} 以下）。だから ${n} 回。` : `${n} 回で ${f(at)}。` },
       ] };
     }
@@ -126,7 +126,7 @@ export function solveApply(s: ApplySolve): ApplyResult {
         { title: "何を求めるか", text: `何セットも実験して「${s.event.k} 回${OP_TEXT[s.event.op]}」になったセットの割合を数える。その割合と理論の確率とのずれの目安（±2 標準誤差）を ${f(s.err * 100)}% 以内にする、いちばん少ないセット数 N。` },
         { title: "理論の確率", tex: `P=${evTex(s.event)}=${f(P)}` },
         { title: "使う式", tex: `2\\sqrt{\\dfrac{P(1-P)}{N}}\\le ${f(s.err)}`, text: "1セットごとに「当てはまる・当てはまらない」の 0 か 1。割合はその平均なので、標準誤差は √(P(1−P)÷N)。" },
-        { title: "解く", tex: `N\\ge\\dfrac{4P(1-P)}{${f(s.err)}^2}=\\dfrac{4\\times${f(P)}\\times${f(1 - P)}}{${f(s.err * s.err)}}=${f((4 * v) / (s.err * s.err), 6)}` },
+        { title: "解く", tex: `\\begin{aligned}N&\\ge\\dfrac{4P(1-P)}{${f(s.err)}^2}\\\\ &=\\dfrac{4\\times${f(P)}\\times${f(1 - P)}}{${f(s.err * s.err)}}=${f((4 * v) / (s.err * s.err), 6)}\\end{aligned}` },
         { title: "整数に切り上げて確かめる", text: N > 1 ? `${(N - 1).toLocaleString()} セットでは ±${(before * 100).toFixed(5)}%（${f(s.err * 100)}% を超える）、${N.toLocaleString()} セットで ±${(at * 100).toFixed(5)}%（${f(s.err * 100)}% 以内）。` : undefined },
       ] };
     }
@@ -169,7 +169,7 @@ export function solveApply(s: ApplySolve): ApplyResult {
       return { answer: N, facts: { fpc: fpc(N), share: s.n / N }, steps: [
         { title: "何を求めるか", text: `箱から戻さずに ${s.n} 個取ると、分散は戻して取るとき（二項分布）より小さくなる。小さくなっても ${f(s.ratio)} 倍以上にとどまる、いちばん少ない箱の数 N。` },
         { title: "使う式（有限母集団修正）", tex: `\\dfrac{V_{\\text{戻さない}}}{V_{\\text{戻す}}}=\\dfrac{N-n}{N-1}`, text: "戻さないと、取るたびに箱の中身が変わる。その分だけ分散が縮む割合。" },
-        { title: "数を入れて解く", tex: `\\dfrac{N-${s.n}}{N-1}\\ge ${f(s.ratio)}\\quad\\Rightarrow\\quad N\\ge\\dfrac{${s.n}-${f(s.ratio)}}{1-${f(s.ratio)}}=${f((s.n - s.ratio) / (1 - s.ratio), 6)}` },
+        { title: "数を入れて解く", tex: `\\begin{aligned}&\\dfrac{N-${s.n}}{N-1}\\ge ${f(s.ratio)}\\\\ \\Rightarrow\\;& N\\ge\\dfrac{${s.n}-${f(s.ratio)}}{1-${f(s.ratio)}}=${f((s.n - s.ratio) / (1 - s.ratio), 6)}\\end{aligned}` },
         { title: "整数に切り上げて確かめる", text: `${N - 1} 個では ${f(fpc(N - 1), 3)} 倍、${N} 個で ${f(fpc(N), 3)} 倍。取る数は箱の約 ${f((s.n / N) * 100, 2)}%。` },
       ] };
     }
@@ -185,7 +185,7 @@ export function solveApply(s: ApplySolve): ApplyResult {
         { title: "何を求めるか", text: `日によって成功確率が p−d か p＋d に変わると、成功の回数の分散は二項分布より大きくなる。増えた分から、ずれ幅 d を逆に求める。` },
         { title: "使う式", tex: `V(X)=np(1-p)+n(n-1)d^2`, text: "1日の中のぶれ（二項分布の分）に、日ごとの確率の違いの分が足される。" },
         { title: "数を入れる", tex: `${f(s.variance)}=${f(bv)}+${nn}\\,d^2` },
-        { title: "解く", tex: `d^2=\\dfrac{${f(s.variance)}-${f(bv)}}{${nn}}=${f(extra / nn)}\\quad\\Rightarrow\\quad d=${f(d)}` },
+        { title: "解く", tex: `\\begin{aligned}&d^2=\\dfrac{${f(s.variance)}-${f(bv)}}{${nn}}=${f(extra / nn)}\\\\ \\Rightarrow\\;& d=${f(d)}\\end{aligned}` },
         { title: "確かめる", tex: `${f(bv)}+${nn}\\times${f(d)}^2=${f(bv + nn * d * d)}`, text: `確率は p−d＝${f(s.p - d)} と p＋d＝${f(s.p + d)} の日が半々。` },
       ] };
     }
