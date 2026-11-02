@@ -41,9 +41,9 @@ export type BinomDef = {
   prob_scale?: number[];
   /** テーマ体系（stats2-course issue 163）：まとまり（A〜F）の下に問い（id は 教材名:概念-まとまり-番号。stats2:binom-A-01）を並べる。open は開く入口
    *  （shift＝最初の問い・questions の id・break:反例の id・compare）。open のない問いは「作成中」として並べるだけ。
-   *  concept（主概念）・related（関連概念）は問いの側で持ち、サイトが概念で問いを絞るのに使う。predict・operate・judge は問いごとの予測・操作・理解判定。
+   *  retired は使わない印（重複などで外した問い。id は残し、入口には並べない）。concept は主（概念か関係 REL-…）、related（関連概念）は問いの側で持ち、サイトが概念で問いを絞るのに使う。predict・operate・judge は問いごとの予測・操作・理解判定。
    *  開く先（実験の仕組み）は共有してよいが、open は問いごとに1つ（同じ画面を開くだけで別の問いにしない） */
-  catalog?: { id: string; title: string; items: { id: string; title: string; finds?: string; predict?: string; operate?: string; judge?: string; open?: string; concept?: string; related?: string[] }[] }[];
+  catalog?: { id: string; title: string; items: { id: string; title: string; finds?: string; predict?: string; operate?: string; judge?: string; open?: string; concept?: string; related?: string[]; retired?: boolean }[] }[];
 };
 
 export type Props = {
@@ -109,7 +109,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
     if (def.catalog?.length) {
       const formOf = (open: string): MenuItem["form"] => open === "shift" ? "shift" : open.startsWith("break:") ? "break" : def.questions?.find((q) => q.id === open)?.form ?? "shift";
       const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1");   // stats2:binom-A-01 → A-01（まとまりの中の番号）
-      const groups: MenuGroup[] = def.catalog.map((g) => ({ id: g.id, title: g.title, items: g.items.map((it): MenuItem => it.open ? { id: it.open, key: short(it.id), form: formOf(it.open), title: it.title } : { id: it.id, key: short(it.id), form: "shift", title: it.title, draft: true }) }));
+      const groups: MenuGroup[] = def.catalog.map((g) => ({ id: g.id, title: g.title, items: g.items.filter((it) => !it.retired).map((it): MenuItem => it.open ? { id: it.open, key: short(it.id), form: formOf(it.open), title: it.title } : { id: it.id, key: short(it.id), form: "shift", title: it.title, draft: true }) }));
       // 比べるは A〜F の後ろに、まとまりの1つとして置く（下に別のカードで重ねない。渡辺さん 2026-11-02）
       groups.push({ id: "compare", title: "自分で条件を決めて比べる", note: `カード ${deck.cards.length} 枚`, items: [{ id: "compare", form: "compare", title: "自分で条件を決めて比べる", sub: `記録カード ${deck.cards.length} 枚。条件や起き方を変えて残し、4 つまで重ねる` }] });
       return <QuestionMenu title={def.title} groups={groups} group={grp ?? undefined} onGroup={setGrp} onPick={setPick} onBack={props.onBack} onInfo={() => setInfo(true)}>{infoSheet}</QuestionMenu>;

@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 19,
+ "schema_revision": 20,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -11673,7 +11673,10 @@
        "id": "stats2:binom-A-04",
        "title": "成功確率 50% なら必ず左右対称？",
        "finds": "対称性と非対称性",
-       "concept": "stats2:TERM-binom"
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-comb"
+       ]
       }
      ]
     },
@@ -11698,7 +11701,10 @@
        "id": "stats2:binom-B-02",
        "title": "k 回以上・以下の確率を調べる",
        "finds": "累積確率と事象の範囲",
-       "concept": "stats2:TERM-binom",
+       "concept": "stats2:TERM-dist",
+       "related": [
+        "stats2:TERM-binom"
+       ],
        "predict": "「ちょうど k 回」と「k 回以上」の確率の桁",
        "operate": "事象の範囲（ちょうど・以上・以下）",
        "judge": "以上・以下の確率は、ちょうどの確率の足し合わせで、境目を含むかで値が変わることを説明できる",
@@ -11708,9 +11714,9 @@
        "id": "stats2:binom-B-03",
        "title": "補集合を使うと計算が簡単になる？",
        "finds": "補集合と確率の和",
-       "concept": "stats2:TERM-binom",
+       "concept": "stats2:TERM-complement",
        "related": [
-        "stats2:TERM-complement"
+        "stats2:TERM-binom"
        ]
       },
       {
@@ -11733,7 +11739,10 @@
        "id": "stats2:binom-C-01",
        "title": "理論分布と実験結果は一致する？",
        "finds": "理論確率と実測割合",
-       "concept": "stats2:TERM-binom"
+       "concept": "stats2:REL-samplingerror-se-contrast",
+       "related": [
+        "stats2:TERM-binom"
+       ]
       },
       {
        "id": "stats2:binom-C-02",
@@ -11741,7 +11750,8 @@
        "finds": "大数の法則",
        "concept": "stats2:TERM-binom",
        "related": [
-        "stats2:TERM-lln"
+        "stats2:TERM-lln",
+        "stats2:TERM-se"
        ],
        "predict": "セットを 100 倍にしたとき、理論とのずれの目安が何分の1になるか",
        "operate": "実験のセット数",
@@ -11752,16 +11762,17 @@
        "id": "stats2:binom-C-03",
        "title": "同じ実験を繰り返すと同じ結果になる？",
        "finds": "標本変動",
-       "concept": "stats2:TERM-binom"
+       "concept": "stats2:TERM-binom",
+       "retired": true
       },
       {
        "id": "stats2:binom-C-04",
        "title": "珍しい結果を何セット試せば観察できる？",
        "finds": "少なくとも1回発生する確率",
-       "concept": "stats2:TERM-binom",
+       "concept": "stats2:TERM-complement",
        "related": [
-        "stats2:TERM-complement",
-        "stats2:TERM-indep"
+        "stats2:TERM-indep",
+        "stats2:TERM-binom"
        ]
       }
      ]
@@ -11807,6 +11818,7 @@
        "title": "成功回数と成功割合では何が違う？",
        "finds": "個数と割合の分散の違い",
        "concept": "stats2:TERM-binom",
+       "retired": true,
        "related": [
         "stats2:TERM-var"
        ]
@@ -11833,7 +11845,8 @@
        "finds": "独立性の重要性",
        "concept": "stats2:TERM-binom",
        "related": [
-        "stats2:TERM-indep"
+        "stats2:TERM-indep",
+        "stats2:TERM-var"
        ],
        "predict": "前の結果に引きずられるとき、二項分布と比べた山の広がり",
        "operate": "起き方（前の結果に引きずられる）",
@@ -11844,10 +11857,7 @@
        "id": "stats2:binom-E-03",
        "title": "戻さずに抽出するとどうなる？",
        "finds": "超幾何分布との違い",
-       "concept": "stats2:TERM-binom",
-       "related": [
-        "stats2:TERM-hyper"
-       ],
+       "concept": "stats2:REL-binom-hyper-contrast",
        "predict": "戻さずに取るとき、二項分布と比べた山の広がり",
        "operate": "起き方（箱から戻さずに取る）",
        "judge": "戻さずに取ると超幾何分布になり、散らばりが小さくなることを、箱の大きさを変えて説明できる",
@@ -11871,35 +11881,39 @@
      "items": [
       {
        "id": "stats2:binom-F-01",
-       "title": "購入人数を確率から予測できる？",
-       "finds": "二項モデルによる人数の予測",
+       "title": "購入人数はどのくらいの範囲に収まる？",
+       "finds": "平均と散らばりから人数の範囲を見積もる",
        "concept": "stats2:TERM-binom",
        "related": [
-        "stats2:TERM-expect"
+        "stats2:TERM-expect",
+        "stats2:TERM-sd"
        ]
       },
       {
        "id": "stats2:binom-F-02",
-       "title": "不良品が一定数以上出る確率は？",
-       "finds": "閾値とリスク評価",
-       "concept": "stats2:TERM-binom"
+       "title": "不良品が一定数以上になる確率を 5% 以下にするには？",
+       "finds": "確率の基準から閾値を決める",
+       "concept": "stats2:TERM-binom",
+       "related": [
+        "stats2:TERM-dist"
+       ]
       },
       {
        "id": "stats2:binom-F-03",
        "title": "観測した成功回数から成功確率を推定する",
        "finds": "母比率の推定",
-       "concept": "stats2:TERM-binom",
+       "concept": "stats2:TERM-sample-prop",
        "related": [
-        "stats2:TERM-sample-prop"
+        "stats2:TERM-binom"
        ]
       },
       {
        "id": "stats2:binom-F-04",
        "title": "観測結果は偶然だけで説明できる？",
        "finds": "二項検定と p 値",
-       "concept": "stats2:TERM-binom",
+       "concept": "stats2:TERM-test",
        "related": [
-        "stats2:TERM-test"
+        "stats2:TERM-binom"
        ]
       }
      ]
@@ -11986,7 +12000,7 @@
       "kind": "fatigue",
       "drop": 0.3
      },
-     "text": "最初は確率が高く、回を追って下がる（疲れ・集中が切れる）。各回は独立のまま、確率だけが回ごとに違う。理論の平均は np のままでも、山は二項分布より狭くなる（2 回以上で、p が 0 でも 1 でもないとき。確率は最初 p＋d、最後 p−d で、d は下がる幅と p・1−p の小さい方）。分散は各回の pᵢ(1−pᵢ) の合計で、確率がばらつくほど小さい。前の結果に引きずられる・日や時間で確率が違う（山が広がる）とは、崩れ方で向きが逆になる"
+     "text": "最初は確率が高く、回を追って下がる（疲れ・集中が切れる）。各回は独立のまま、確率だけが回ごとに違う。理論の平均は np のままでも、山は二項分布より狭くなる（2 回以上で、p が 0 でも 1 でもないとき。確率は最初 p＋d、最後 p−d で、d は下がる幅と p・1−p の小さい方）。分散は各回の pᵢ(1−pᵢ) の合計で、確率がばらつくほど小さい。差は小さいので、少ない回数の実験では、いつも狭く見えるとは限らない（セットを増やすと見えてくる）。日や時間で確率が違う（山が広がる）とは向きが逆になる：確率のずれがセットの中で共通（日による）なら山は広がり、回ごとに違って各回が独立（疲れ）なら狭くなる"
     }
    ]
   },

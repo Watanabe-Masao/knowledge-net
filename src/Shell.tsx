@@ -132,13 +132,15 @@ export function LearnPage({ net, focus = null }: { net: Network; focus?: Focus |
   );
 }
 
-type Item = { id: string; title: string; open?: string; concept?: string; related?: string[] };
-const itemsOf = (x: ExperimentData): Item[] => (x.model === "binom" ? (x.catalog ?? []).flatMap((g) => g.items) : []);
-const conceptsOf = (it: Item) => [it.concept, ...(it.related ?? [])].filter((c): c is string => !!c);
+type Item = { id: string; title: string; open?: string; concept?: string; related?: string[]; retired?: boolean };
+/** 主が関係（REL-…）なら、その両端の概念として数える（stats2-course issue 169）。概念ならそれ自身 */
+type Ends = (id: string) => string[];
+const itemsOf = (x: ExperimentData): Item[] => (x.model === "binom" ? (x.catalog ?? []).flatMap((g) => g.items).filter((it) => !it.retired) : []);   // 使わない印の問いは数えない
+const conceptsOf = (it: Item, ends: Ends = (id) => [id]) => [...new Set([it.concept, ...(it.related ?? [])].filter((c): c is string => !!c).flatMap(ends))];
 
 /** 実験室のつなぐ概念：つなぐ概念（links）と、テーマ体系の問いの主概念・関連概念（stats2-course #163。問いの側に書き、ここで引く） */
-export function labConcepts(x: ExperimentData): string[] {
-  return [...new Set([...(x.links.concepts ?? []), ...itemsOf(x).flatMap(conceptsOf)])];
+export function labConcepts(x: ExperimentData, ends: Ends = (id) => [id]): string[] {
+  return [...new Set([...(x.links.concepts ?? []), ...itemsOf(x).flatMap((it) => conceptsOf(it, ends))])];
 }
 
 /** 実験室のタブ（stats2-course issue 163）。役割を2つに分ける：
@@ -148,13 +150,14 @@ export function labConcepts(x: ExperimentData): string[] {
  *  何も選ばなければ実験室のカードだけを並べる */
 export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (id: string, question?: string | null) => void; focus?: Focus | null }) {
   const all = [...net.experiments.values()];
-  const concepts = [...new Set(all.flatMap(labConcepts))].filter((id) => net.concepts.has(id));
+  const ends: Ends = (id) => { const r = net.relations.find((x) => x.id === id); return r ? [r.from, r.to] : [id]; };
+  const concepts = [...new Set(all.flatMap((x) => labConcepts(x, ends)))].filter((id) => net.concepts.has(id));
   const [picked, setPicked] = useState<string[]>(() => (focus && concepts.includes(focus.id) ? [focus.id] : []));
   const toggle = (id: string) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
-  const nm = (id: string) => net.concepts.get(id)?.name ?? id;
-  const hits = (x: ExperimentData) => itemsOf(x).filter((it) => picked.every((c) => conceptsOf(it).includes(c)));
+  const nm = (id: string) => { const r = net.relations.find((x) => x.id === id); return r ? `${net.concepts.get(r.from)?.name ?? r.from}と${net.concepts.get(r.to)?.name ?? r.to}のつながり` : net.concepts.get(id)?.name ?? id; };
+  const hits = (x: ExperimentData) => itemsOf(x).filter((it) => picked.every((c) => conceptsOf(it, ends).includes(c)));
   // 選んだ概念をすべて使う問いがある実験室（問いのない実験室は、つなぐ概念にすべて入っていれば出す）
-  const xs = all.filter((x) => !picked.length || (itemsOf(x).length ? hits(x).length > 0 : picked.every((c) => labConcepts(x).includes(c))));
+  const xs = all.filter((x) => !picked.length || (itemsOf(x).length ? hits(x).length > 0 : picked.every((c) => labConcepts(x, ends).includes(c))));
   // 実験室のカードの見出し：主な概念の一言（short。地図と同じ文。なければ定義）。問いの1つを代表にしない（渡辺さん 2026-11-02）
   const lead = (x: ExperimentData) => { const c = net.concepts.get(x.links.concepts?.[0] ?? ""); return c?.short ?? c?.definition ?? x.question; };   // つなぐ概念の最初＝この実験室の主な概念
   const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1");
@@ -163,7 +166,7 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
   const rule = `${picked.map(nm).join("・")}を${picked.length > 1 ? "すべて" : ""}使う問い（主概念か関連概念に入っている問い）`;
   const total = all.reduce((t, x) => t + hits(x).length, 0);
   // その概念を使う問いの数（作成中を含む）。問いのない実験室だけでつながる概念は「実験室」
-  const countOf = (id: string) => { const n = all.reduce((t, x) => t + itemsOf(x).filter((it) => conceptsOf(it).includes(id)).length, 0); return n ? `${n} 問` : "実験室"; };
+  const countOf = (id: string) => { const n = all.reduce((t, x) => t + itemsOf(x).filter((it) => conceptsOf(it, ends).includes(id)).length, 0); return n ? `${n} 問` : "実験室"; };
   // 地図と同じ分類ごと（データに出てくる順）。名前で探すと、合う概念だけ
   const cats = [...new Set(concepts.map((id) => net.concepts.get(id)?.category ?? "その他"))]
     .map((cat): [string, string[]] => [cat, concepts.filter((id) => (net.concepts.get(id)?.category ?? "その他") === cat && (!query || nm(id).includes(query.trim()) || (net.concepts.get(id)?.en ?? "").toLowerCase().includes(query.trim().toLowerCase())))])
