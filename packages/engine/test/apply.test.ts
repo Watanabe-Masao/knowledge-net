@@ -12,15 +12,15 @@ const close = (a: number, b: number, tol = 1e-9) => expect(Math.abs(a - b)).toBe
 
 describe("原本の10の課題（手計算の値と照らす）", () => {
   it("A-01 逆算：20回で平均6回 → p＝0.3", () => close(solveApply({ method: "mean-to-p", n: 20, mean: 6 }).answer, 0.3));
-  it("A-02 設計：p＝0.3 で割合の標準偏差を 0.05 以下 → n＝84（83 では超える）", () => {
-    const r = solveApply({ method: "min-n-share-sd", p: 0.3, sd: 0.05 });
-    expect(r.answer).toBe(84);
-    expect(Math.sqrt(0.21 / 83)).toBeGreaterThan(0.05);
+  it("A-02 設計：p＝0.3 で割合の標準偏差を 0.08 以下 → n＝33（32 では超える）", () => {
+    const r = solveApply({ method: "min-n-share-sd", p: 0.3, sd: 0.08 });
+    expect(r.answer).toBe(33);
+    expect(Math.sqrt(0.21 / 32)).toBeGreaterThan(0.08);
   });
-  it("B-01 反証：10回中3回は 100回中30回より約3倍起きやすい（answer 0）", () => {
-    const r = solveApply({ method: "compare-eq", a: { n: 10, p: 0.3, k: 3 }, b: { n: 100, p: 0.3, k: 30 } });
+  it("B-01 反証：10回中3回は 30回中9回より約1.7倍起きやすい（answer 0）", () => {
+    const r = solveApply({ method: "compare-eq", a: { n: 10, p: 0.3, k: 3 }, b: { n: 30, p: 0.3, k: 9 } });
     close(r.facts.a!, 120 * 0.3 ** 3 * 0.7 ** 7);
-    close(r.facts.b!, pmf(100, 0.3, 30));
+    close(r.facts.b!, pmf(30, 0.3, 9));
     expect(r.answer).toBe(0);
   });
   it("B-02 評価：3回以上と3回より多いの差は P(X＝3)", () => close(solveApply({ method: "boundary", n: 10, p: 0.3, k: 3 }).answer, 120 * 0.027 * 0.7 ** 7));
@@ -44,11 +44,12 @@ describe("原本の10の課題（手計算の値と照らす）", () => {
     expect(ratio(0.06)).toBeGreaterThan(1.1);
     close(solveApply({ method: "max-strength", mechanism: { kind: "streak", n: 10, p: 0.5, carry: 0 }, param: "carry", min: 0, max: 0.6, step: 0.01, ratio: 1.1 }).answer, 0.05);
   });
-  it("E-03 変換：10個取って分散が二項分布の0.9倍以上 → 箱は91個（90個では足りない）", () => {
+  it("E-03 変換：10個取って分散が二項分布の0.8倍以上 → 箱は46個（45個では足りない）。0.9倍なら91個", () => {
+    expect(solveApply({ method: "min-total", n: 10, ratio: 0.8 }).answer).toBe(46);
+    expect((45 - 10) / (45 - 1)).toBeLessThan(0.8);
     expect(solveApply({ method: "min-total", n: 10, ratio: 0.9 }).answer).toBe(91);
-    expect((90 - 10) / (90 - 1)).toBeLessThan(0.9);
   });
-  it("E-04 逆算：n＝10・p＝0.3 で分散 3.0 → d＝0.1", () => close(solveApply({ method: "solve-spread", n: 10, p: 0.3, variance: 3.0 }).answer, 0.1));
+  it("E-04 逆算：n＝10・p＝0.5 で分散 3.4 → d＝0.1（2.5＋90d²＝3.4）", () => close(solveApply({ method: "solve-spread", n: 10, p: 0.5, variance: 3.4 }).answer, 0.1));
 });
 
 describe("境目と止まる条件", () => {
