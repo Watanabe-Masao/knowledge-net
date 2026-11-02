@@ -156,6 +156,7 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
   const toggle = (id: string) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
   const nm = (id: string) => { const r = net.relations.find((x) => x.id === id); return r ? `${net.concepts.get(r.from)?.name ?? r.from}と${net.concepts.get(r.to)?.name ?? r.to}のつながり` : net.concepts.get(id)?.name ?? id; };
   const hits = (x: ExperimentData) => itemsOf(x).filter((it) => picked.every((c) => conceptsOf(it, ends).includes(c)));
+  const isMain = (it: Item, c: string) => !!it.concept && ends(it.concept).includes(c);   // 主が関係なら、その両端のどちらかが c
   // 選んだ概念をすべて使う問いがある実験室（問いのない実験室は、つなぐ概念にすべて入っていれば出す）
   const xs = all.filter((x) => !picked.length || (itemsOf(x).length ? hits(x).length > 0 : picked.every((c) => labConcepts(x, ends).includes(c))));
   // 実験室のカードの見出し：主な概念の一言（short。地図と同じ文。なければ定義）。問いの1つを代表にしない（渡辺さん 2026-11-02）
@@ -217,14 +218,22 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
               {/* 概念で選んだ問いを先に、実験室の入口（目的から選ぶ A〜F・自分で条件を決めて比べる）はその下に（渡辺さん 2026-11-02） */}
               {hs.length ? <>
                 <p className={s.qHead}>{x.title}の問い</p>
-                <ul className={s.qList} data-testid={`lab-q-${x.id}`}>
-                  {hs.map((it) => {
-                    const roles = <small>主：{it.concept ? nm(it.concept) : "—"}{(() => { const r = (it.related ?? []).filter((id) => net.concepts.has(id)); return r.length ? `｜関連：${r.map(nm).join("・")}` : ""; })()}</small>;
-                    return <li key={it.id}>{it.open
-                      ? <button type="button" className={s.qRow} onClick={() => onOpen(x.id, it.id)} data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span></button>
-                      : <div className={`${s.qRow} ${s.qDraft}`} aria-disabled="true" data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span><span className={s.qTag}>作成中</span></div>}</li>;
-                  })}
-                </ul>
+                {/* 概念を1つだけ選んだとき（概念のページから来たときも）は、その概念が主の問いと関連の問いに分ける（stats2-course #163・#171。主が関係ならその両端の概念の主） */}
+                {(picked.length === 1
+                  ? ([["主となる問い", hs.filter((it) => isMain(it, picked[0]!)), "main"], ["関連する問い", hs.filter((it) => !isMain(it, picked[0]!)), "related"]] as const)
+                  : ([["", hs, "all"]] as const)).filter(([, list]) => list.length).map(([head, list, key]) => (
+                  <div key={key}>
+                    {head ? <p className={s.qSub} data-testid={`lab-q-${x.id}-${key}-head`}>{head}<span>{list.length} 問</span></p> : null}
+                    <ul className={s.qList} data-testid={key === "all" ? `lab-q-${x.id}` : `lab-q-${x.id}-${key}`}>
+                      {list.map((it) => {
+                        const roles = <small>主：{it.concept ? nm(it.concept) : "—"}{(() => { const r = (it.related ?? []).filter((id) => net.concepts.has(id)); return r.length ? `｜関連：${r.map(nm).join("・")}` : ""; })()}</small>;
+                        return <li key={it.id}>{it.open
+                          ? <button type="button" className={s.qRow} onClick={() => onOpen(x.id, it.id)} data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span></button>
+                          : <div className={`${s.qRow} ${s.qDraft}`} aria-disabled="true" data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span><span className={s.qTag}>作成中</span></div>}</li>;
+                      })}
+                    </ul>
+                  </div>
+                ))}
               </> : null}
               <button type="button" className={s.labCard} onClick={() => onOpen(x.id)} data-testid={`open-${x.id}`}>
                 <span className={s.labTag}>{x.title}</span>
