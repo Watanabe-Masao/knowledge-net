@@ -2,7 +2,7 @@
 // タブは URL の ?t= に持つ（探索は付けない）。一覧は教材の JSON だけから作る（教材の原本は読まない）。
 // 個人の記録（解いた・お気に入り）は持たない。単元と問題は Notion のページへのリンク。
 import { useState, type ReactNode } from "react";
-import { Muted } from "@math-lab/ui";
+import { Button, Muted, Sheet } from "@math-lab/ui";
 import type { ExperimentData, Network } from "./data";
 import s from "./Shell.module.css";
 
@@ -158,17 +158,53 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
   // 実験室のカードの見出し：主な概念の一言（short。地図と同じ文。なければ定義）。問いの1つを代表にしない（渡辺さん 2026-11-02）
   const lead = (x: ExperimentData) => { const c = net.concepts.get(x.links.concepts?.[0] ?? ""); return c?.short ?? c?.definition ?? x.question; };   // つなぐ概念の最初＝この実験室の主な概念
   const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1");
+  const [sheet, setSheet] = useState(false);
+  const [query, setQuery] = useState("");
+  const rule = `${picked.map(nm).join("・")}を${picked.length > 1 ? "すべて" : ""}使う問い（主概念か関連概念に入っている問い）`;
+  const total = all.reduce((t, x) => t + hits(x).length, 0);
+  // その概念を使う問いの数（作成中を含む）。問いのない実験室だけでつながる概念は「実験室」
+  const countOf = (id: string) => { const n = all.reduce((t, x) => t + itemsOf(x).filter((it) => conceptsOf(it).includes(id)).length, 0); return n ? `${n} 問` : "実験室"; };
+  // 地図と同じ分類ごと（データに出てくる順）。名前で探すと、合う概念だけ
+  const cats = [...new Set(concepts.map((id) => net.concepts.get(id)?.category ?? "その他"))]
+    .map((cat): [string, string[]] => [cat, concepts.filter((id) => (net.concepts.get(id)?.category ?? "その他") === cat && (!query || nm(id).includes(query.trim()) || (net.concepts.get(id)?.en ?? "").toLowerCase().includes(query.trim().toLowerCase())))])
+    .filter(([, ids]) => ids.length);
   return (
     <section className={s.page} data-testid="page-lab">
       <h2 className={s.pageTitle}>実験室</h2>
       <Muted>予想してから、自分で起こして確かめる。</Muted>
       {concepts.length ? <>
-        <h3 className={s.subTitle}>概念から問いを探す</h3>
-        <div className={`${s.chips} ${s.chipsWrap}`} role="group" aria-label="概念（いくつでも選べる）" data-testid="lab-concepts">
-          <button type="button" aria-pressed={!picked.length} onClick={() => setPicked([])}>選ばない</button>
-          {concepts.map((id) => <button key={id} type="button" aria-pressed={picked.includes(id)} onClick={() => toggle(id)} data-testid={`lab-c-${id}`}>{nm(id)}</button>)}
-        </div>
-        <Muted as="p" data-testid="lab-rule">{picked.length ? `${picked.map(nm).join("・")}を${picked.length > 1 ? "すべて" : ""}使う問い（主概念か関連概念に入っている問い）` : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて A〜F から選ぶ。"}</Muted>
+        {/* 概念は下から出る面で選ぶ（いくつでも。渡辺さん 2026-11-02）。上には選んだ概念の札だけを出す */}
+        <button type="button" className={s.conceptPick} aria-haspopup="dialog" onClick={() => { setQuery(""); setSheet(true); }} data-testid="lab-concept-pick">
+          <span>概念で探す{picked.length ? <b>：{picked.map(nm).join("・")}</b> : null}</span><i aria-hidden="true">▾</i>
+        </button>
+        {picked.length ? <div className={s.picked} data-testid="lab-picked">{picked.map((id) => (
+          <button key={id} type="button" onClick={() => toggle(id)} aria-label={`${nm(id)} を外す`} data-testid={`lab-sel-${id}`}>{nm(id)}<span aria-hidden="true">✕</span></button>
+        ))}</div> : null}
+        <Muted as="p" data-testid="lab-rule">{picked.length ? rule : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて A〜F から選ぶ。"}</Muted>
+        {sheet ? (
+          <Sheet label="概念で探す" title="概念で探す" onClose={() => setSheet(false)} data-testid="lab-concept-sheet">
+            <input className={s.conceptSearch} type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="名前で探す" aria-label="概念を名前で探す" data-testid="lab-concept-search" />
+            {cats.map(([cat, ids]) => (
+              <section key={cat} className={s.conceptCat} aria-label={cat}>
+                <h4>{cat}</h4>
+                <ul>{ids.map((id) => (
+                  <li key={id}><label data-testid={`lab-c-${id}`}>
+                    <input type="checkbox" checked={picked.includes(id)} onChange={() => toggle(id)} />
+                    <span>{nm(id)}</span><small>{countOf(id)}</small>
+                  </label></li>
+                ))}</ul>
+              </section>
+            ))}
+            {!cats.length ? <Muted>「{query}」に合う概念はない。</Muted> : null}
+            <div className={s.sheetFoot}>
+              <Muted as="p" data-testid="lab-sheet-rule">{picked.length ? `${rule}：${total} 問` : "何も選ばないときは、実験室だけを並べる"}</Muted>
+              <div>
+                <Button onClick={() => setPicked([])} disabled={!picked.length} data-testid="lab-clear">すべて外す</Button>
+                <Button variant="primary" onClick={() => setSheet(false)} data-testid="lab-show">{picked.length ? `${total} 問を見る` : "閉じる"}</Button>
+              </div>
+            </div>
+          </Sheet>
+        ) : null}
       </> : null}
       <ul className={s.cards}>
         {xs.map((x) => {

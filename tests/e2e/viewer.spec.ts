@@ -1003,10 +1003,19 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(lab.locator("[data-testid^=open-]")).toHaveCount(1);
   // 概念＝知識との関連から問いを探す入口（#163）。いくつでも選べ、選んだ概念を「すべて」主か関連に持つ問いを並べる（かつ）。
   // 故障：「または」で絞って問いが増える・主と関連の取り違え・作成中を押せる・問いを押しても入口のまま。見つけ方：数と並びを手で数えた値と照らす
-  await expect(lab.getByTestId("lab-c-stats2:TERM-binom")).toHaveAttribute("aria-pressed", "true");
+  // 概念は下から出る面で選ぶ（渡辺さん 2026-11-02）。上には選んだ概念の札だけ。故障：面で選んでも絞れない・数が一覧とずれる・札で外せない
+  await expect(lab.getByTestId("lab-sel-stats2:TERM-binom")).toBeVisible();
+  await expect(lab.getByTestId("lab-concept-pick")).toContainText("概念で探す：二項分布");
   await expect(lab.getByTestId("lab-rule")).toContainText("二項分布を使う問い");
   await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p").locator("li")).toHaveCount(24);   // D-03 は主が期待値でも、関連に二項分布がある
-  await lab.getByTestId("lab-c-stats2:TERM-expect").click();
+  await lab.getByTestId("lab-concept-pick").click();
+  const sh = page.getByTestId("lab-concept-sheet");
+  await expect(sh.getByTestId("lab-c-stats2:TERM-expect")).toContainText("期待値");
+  await expect(sh.getByTestId("lab-c-stats2:TERM-hyper")).toContainText("1 問");   // その概念を使う問いの数
+  await sh.getByTestId("lab-c-stats2:TERM-expect").click();
+  await expect(sh.getByTestId("lab-sheet-rule")).toContainText("二項分布・期待値をすべて使う問い（主概念か関連概念に入っている問い）：3 問");
+  await sh.getByTestId("lab-show").click();   // 「3 問を見る」で閉じる
+  await expect(sh).toHaveCount(0);
   await expect(lab.getByTestId("lab-rule")).toContainText("二項分布・期待値をすべて使う問い");
   expect(await lab.getByTestId("lab-q-stats2:EXP-binom-p").locator("[data-testid^=lab-open-]").evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")!.replace("lab-open-stats2:binom-", "")))).toEqual(["D-01", "D-03", "F-01"]);
   await expect(lab.getByTestId("lab-open-stats2:binom-D-03")).toContainText("主：期待値｜関連：分散・確率分布・二項分布");
@@ -1017,9 +1026,14 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(lab.getByTestId("open-stats2:EXP-binom-p").locator("b")).toHaveText(SHORT);
   // 問いが先、実験室の入口（目的から選ぶ・自分で条件を決めて比べる）はその下（渡辺さん 2026-11-02）
   expect(await lab.locator("[data-testid=lab-q-stats2\\:EXP-binom-p], [data-testid=open-stats2\\:EXP-binom-p]").evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(["lab-q-stats2:EXP-binom-p", "open-stats2:EXP-binom-p"]);
-  await lab.getByTestId("lab-c-stats2:TERM-binom").click();
-  await lab.getByTestId("lab-c-stats2:TERM-expect").click();
-  await lab.getByTestId("lab-c-stats2:TERM-hyper").click();
+  await lab.getByTestId("lab-sel-stats2:TERM-expect").click();   // 札の ✕ で外す
+  await expect(lab.getByTestId("lab-sel-stats2:TERM-expect")).toHaveCount(0);
+  await lab.getByTestId("lab-concept-pick").click();
+  await sh.getByTestId("lab-clear").click();   // すべて外す
+  await sh.getByTestId("lab-concept-search").fill("超幾何");   // 名前で探す
+  await expect(sh.locator("[data-testid^=lab-c-]")).toHaveCount(1);
+  await sh.getByTestId("lab-c-stats2:TERM-hyper").click();
+  await sh.getByTestId("lab-show").click();
   await lab.getByTestId("lab-open-stats2:binom-E-03").click();   // 押すとその問いを直接開く（戻さずに取るを選んだ状態）
   await expect(page.getByTestId("exp-bnd-urn")).toHaveAttribute("aria-pressed", "true");
   expect(page.url()).toContain("q=stats2%3Abinom-E-03");
