@@ -657,12 +657,26 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x.getByTestId("q-run-stat")).toContainText("理論 前 5・後 8");
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.getByTestId("exp-workspace").getByTestId("ws-result")).toContainText("P(X=8)");
-  await x.getByRole("button", { name: "p を自由に変える" }).click();
+  await x.getByRole("button", { name: "応用の課題へ" }).click();   // 理由の段のボタンは課題へ（前の「p を自由に変える」の名残を外した。渡辺さん 2026-11-03）
   // 応用の課題（stats2-course #171）：練習（p→中心）と別の考え方（中心→p の逆算）。答えは画面が engine で求め、% で照らす。発見メモ（ChatGPT へ）は出さない
   const ap = x.getByTestId("exp-apply");
   await expect(ap).toHaveAttribute("data-kind", "逆算");
   await expect(ap).toContainText("平均を 6 回にしたい");
   await expect(x.getByTestId("exp-send")).toHaveCount(0);
+  // 検証の帯（渡辺さん 2026-11-03）：課題の条件（n＝20）で始まり、下の道具も同じ条件になる。p を 1% 刻みで正確に動かせ、課題が問う量（平均）を答えと同じ形で出す。
+  // 故障：道具の条件が課題と違う（n＝10 のまま）・刻みの外で答えにたどり着けない・桁のずれ。見つけ方：手で求めた 20×0.5＝10、20×0.3＝6
+  await expect(ap.getByTestId("exp-apply-var-p")).toHaveValue("50");
+  await expect(ap.getByTestId("exp-apply-read-0")).toHaveText("10");
+  await expect(ap.getByTestId("exp-apply-goal")).toHaveAttribute("data-ok", "false");
+  await expect(x.getByTestId("q-chip-n")).toContainText("n 20 回");
+  await ap.getByTestId("exp-apply-var-p").fill("30.4");   // 刻みの上にそろう（30%）
+  await expect(ap.getByTestId("exp-apply-read-0")).toHaveText("6");
+  await expect(ap.getByTestId("exp-apply-goal")).toHaveAttribute("data-ok", "true");
+  await expect(x.getByTestId("q-chip-p")).toContainText("p 30%");
+  await ap.getByTestId("exp-apply-dec-p").click();
+  await expect(ap.getByTestId("exp-apply-read-0")).toHaveText("5.8");
+  await ap.getByTestId("exp-apply-setup").click();
+  await expect(ap.getByTestId("exp-apply-var-p")).toHaveValue("50");
   await ap.getByTestId("exp-apply-input").fill("25");
   await ap.getByTestId("exp-apply-check").click();
   await expect(ap.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "false");
@@ -671,9 +685,10 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await ap.getByTestId("exp-apply-input").fill("30");
   await ap.getByTestId("exp-apply-check").click();
   await expect(ap.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "true");
-  await x.getByTestId("q-chip-p").click();
-  await x.getByTestId("exp-app-p").fill("0.3");
-  await expect(x).toContainText("中心 n×p＝3");
+  await ap.getByTestId("exp-apply-at").click();   // 答えの値で確かめる：帯と下の道具が答えの条件になる
+  await expect(ap.getByTestId("exp-apply-var-p")).toHaveValue("30");
+  await expect(ap.getByTestId("exp-apply-goal")).toHaveAttribute("data-ok", "true");
+  await expect(x).toContainText("中心 n×p＝6");
   await x.getByTestId("exp-keep").click();
   await x.getByTestId("exp-to-menu").click();
   await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");   // 戻ると前に選んだまとまりのまま
@@ -693,7 +708,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);   // 長い行の名前でも横にはみ出さない
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.getByTestId("exp-cx-text")).toContainText("山は二項分布より狭くなる");
-  await x.getByRole("button", { name: "崩す強さを変える" }).click();
+  await x.getByRole("button", { name: "応用の課題へ" }).click();
   // 応用（反証）：平均が np でも二項分布と言えるか。選ぶ形の答え
   await expect(x.getByTestId("exp-apply")).toHaveAttribute("data-kind", "反証");
   await x.getByTestId("exp-apply").getByRole("radio", { name: "言えない" }).click();
@@ -1304,13 +1319,13 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await x.getByTestId("exp-workspace").getByTestId("ws-slider-n").fill("10");
   expect(Number(await sd.getAttribute("data-value"))).toBeCloseTo(Math.sqrt(2.5), 6);
   // 応用の答えのあとの解き方（何を求めるか → 使う式 → 数を入れる → 解く → 境目の前後）。なぜ 33 回かを、32 回と 33 回の値で言う
-  await x.getByRole("button", { name: "n を自由に変える" }).click();
+  await x.getByRole("button", { name: "応用の課題へ" }).click();
   await x.getByTestId("exp-apply-input").fill("33");
   await x.getByTestId("exp-apply-check").click();
   const steps = x.getByTestId("exp-apply-steps").locator("li");
   await expect(steps).toHaveCount(5);
   await expect(steps.first()).toContainText("成功の割合");
-  await expect(steps.last()).toContainText("32 回では 0.08101");
+  await expect(steps.last()).toContainText("32 回では 0.081（0.08 を超える）、33 回で 0.0798");
   await expect(x.getByTestId("exp-apply-steps").locator(".katex-error")).toHaveCount(0);
   await expect(x.getByTestId("exp-apply-why")).toContainText("4倍");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -1328,13 +1343,16 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("q-cmp")).toBeVisible();
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.getByTestId("exp-sum-total")).toHaveText("2.82%");
-  await x.getByRole("button", { name: /どこから珍しい/ }).click();
+  await x.getByRole("button", { name: "応用の課題へ" }).click();
   await x.getByTestId("q-chip-op").click();
   await x.getByRole("radiogroup", { name: "数え方" }).getByRole("radio", { name: "以上" }).click();
   await x.getByTestId("q-chip-k").click();
+  // 応用の課題（10 回とも成功・p＝50%・1000 人）の条件に下の道具がそろう。8 回以上＝56/1024＝5.47%、5% を切る境目は 9 回以上（11/1024）
+  await expect(x.getByTestId("q-chip-p")).toContainText("p 50%");
+  await expect(x.getByTestId("exp-apply").getByTestId("exp-apply-read-1")).toHaveText("0.98");   // 1000×1/1024（答えと同じ形）
   await x.getByTestId("exp-app-k").fill("8");
-  await expect(x.getByTestId("exp-app-prob")).toHaveText("38.3%");
-  await expect(x.getByTestId("exp-app-cut")).toHaveText("10 回以上");
+  await expect(x.getByTestId("exp-app-prob")).toHaveText("5.47%");
+  await expect(x.getByTestId("exp-app-cut")).toHaveText("9 回以上");
   await x.getByTestId("exp-app-go").click();
   await expect(x.getByTestId("exp-question")).toContainText("8 回以上");
   await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();   // 前の予想は残らない

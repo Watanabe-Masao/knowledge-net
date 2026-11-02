@@ -7,9 +7,9 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import katex from "katex";
-import { solveApply, type ApplySolve } from "@math-lab/engine";
+import { applyCheck, solveApply, type ApplySolve } from "@math-lab/engine";
 
-type Apply = { solve: ApplySolve; answer: { type: "number" | "choice"; options?: string[]; tol?: object } };
+type Apply = { solve: ApplySolve; answer: { type: "number" | "choice"; options?: string[]; tol?: object; percent?: boolean } };
 const applies = (file: string) => {
   const d = JSON.parse(readFileSync(file, "utf8"));
   return (d.experiments ?? []).flatMap((e: { catalog?: { items: { id: string; apply?: Apply }[] }[] }) =>
@@ -20,6 +20,11 @@ const problem = (ap: Apply): string | undefined => {
     const r = solveApply(ap.solve);
     if (!Number.isFinite(r.answer)) return `答えが数でない：${r.answer}`;
     if (ap.answer.type === "choice" && !(Number.isInteger(r.answer) && r.answer >= 0 && r.answer < (ap.answer.options?.length ?? 0))) return `答えの番号 ${r.answer} が選び肢の外`;
+    // 検証の帯と答えの形（渡辺さん 2026-11-03）：原本の「% で入れる」と engine の答えの形（%）が食い違わない。選ぶ形の課題に数の形がない
+    const c = applyCheck(ap.solve);
+    if (ap.answer.type === "number" && (c.answerFormat?.kind === "pct") !== !!ap.answer.percent) return `原本の percent と engine の答えの形が違う（${c.answerFormat?.kind}）`;
+    if ((ap.answer.type === "choice") !== (c.answerFormat === null)) return "選ぶ形と数の形が engine と原本で違う";
+    if (c.goal && c.at && !c.goal.ok(c.at)) return "帯を答えの値にそろえても条件を満たさない";
     // 解き方の段：段がある・式（TeX）が KaTeX で読める（読めないと答えのあとの説明が赤い文字になる）・文に NaN や undefined が出ない
     if (!r.steps.length) return "解き方の段がない";
     for (const st of r.steps) {
