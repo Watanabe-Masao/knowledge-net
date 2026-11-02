@@ -1303,6 +1303,17 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-workspace")).toContainText("±標準偏差 3.16");
   await x.getByTestId("exp-workspace").getByTestId("ws-slider-n").fill("10");
   expect(Number(await sd.getAttribute("data-value"))).toBeCloseTo(Math.sqrt(2.5), 6);
+  // 応用の答えのあとの解き方（何を求めるか → 使う式 → 数を入れる → 解く → 境目の前後）。なぜ 33 回かを、32 回と 33 回の値で言う
+  await x.getByRole("button", { name: "n を自由に変える" }).click();
+  await x.getByTestId("exp-apply-input").fill("33");
+  await x.getByTestId("exp-apply-check").click();
+  const steps = x.getByTestId("exp-apply-steps").locator("li");
+  await expect(steps).toHaveCount(5);
+  await expect(steps.first()).toContainText("成功の割合");
+  await expect(steps.last()).toContainText("32 回では 0.08101");
+  await expect(x.getByTestId("exp-apply-steps").locator(".katex-error")).toHaveCount(0);
+  await expect(x.getByTestId("exp-apply-why")).toContainText("4倍");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await x.getByRole("button", { name: "戻る" }).click();
   // 確率の値（自分で選ぶ）
   await openQ(x, "B-04");
