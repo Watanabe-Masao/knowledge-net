@@ -44,7 +44,7 @@ export function TheoryRows({ pmf, inEvent, mark }: { pmf: number[]; inEvent?: (k
     <div className={s.rowsHead} aria-hidden="true"><span>成功</span><span /><span /><span>確率</span></div>
     <div className={s.rows} role="list" aria-label="成功の回数ごとの理論の確率" data-testid="q-theory">
       {pmf.map((v, k) => (
-        <div key={k} role="listitem" className={k === mark ? s.mark : inEvent?.(k) ? s.in : undefined} data-mark={k === mark ? "answer" : undefined}><span>{k} 回</span><span className={s.bar}><i style={{ width: `${(v / max) * 100}%` }} /></span><span /><span>{pctSig(v)}</span></div>
+        <div key={k} role="listitem" className={k === mark ? s.mark : inEvent?.(k) ? s.in : undefined} data-mark={k === mark ? "answer" : undefined}><span>{k} 回</span><span className={s.bar}><i style={{ width: `${(v / max) * 100}%` }} /></span><span /><span>{v > 0 && v < 1e-5 ? "<0.001%" : pctSig(v)}</span></div>
       ))}
     </div>
   </>;
