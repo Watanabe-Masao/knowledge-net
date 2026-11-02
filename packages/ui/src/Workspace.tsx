@@ -290,6 +290,13 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
     return [...m.values()].sort((p, q) => p.v - q.v);
   }, [distX, a, b]);
   const dist = useMemo(() => bars.map((g) => ({ x: g.v, y: g.y })), [bars]);   // 実験はこの分布（変換後の値）から引く
+  // ±標準偏差の帯（stats2-course issue 171）：理論の分布から σ＝√Σ(v−μ)²P(v) を求める。式で決まる分布も表で決まる分布も、変換（aX＋b）のあとも同じ求め方
+  const sdValue = useMemo(() => {
+    const tot = bars.reduce((t, g) => t + g.y, 0);
+    if (!(tot > 0)) return undefined;
+    const mu = bars.reduce((t, g) => t + g.v * g.y, 0) / tot;
+    return Math.sqrt(bars.reduce((t, g) => t + (g.v - mu) ** 2 * g.y, 0) / tot);
+  }, [bars]);
   // ---- 実験（#102）：理論の分布から種つき乱数で1回ずつ引き、結果を同じ図に積み上げる。条件（n・p）を変えたら記録を分ける ----
   const [seed, setSeed] = useState(() => seed0 ?? (Date.now() % 100000));
   const rng = useRef(createRandom(seed));
@@ -545,6 +552,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
             <span><i className={s.keyBar} />理論</span>
             {rec.values.length > 0 && <span><i className={s.keyDot} />実験 {rec.values.length} 回</span>}
             {meanValue !== undefined && <span><i className={s.keyMean} />期待値 {fmt(meanValue, 2)}</span>}
+            {meanValue !== undefined && sdValue !== undefined && sdValue > 0 && <span><i className={s.keySd} />±標準偏差 {fmt(sdValue, 2)}</span>}
           </span>
         </figcaption>
         <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className={s.svg} role="img" data-testid="ws-chart">
@@ -554,6 +562,10 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
               <text x={W - 2} y={yPos(t) + 3.5} className={s.yTick} textAnchor="end">{pct(t)}</text>
             </g>
           ))}
+          {meanValue !== undefined && sdValue !== undefined && sdValue > 0 && (() => {
+            const x0 = Math.max(LEFT, xPos(meanValue - sdValue)), x1 = Math.min(W - RIGHT, xPos(meanValue + sdValue));
+            return <rect x={x0} y={TOP - 6} width={Math.max(0, x1 - x0)} height={BASE - TOP + 6} className={s.sdBand} data-testid="ws-sd" data-value={sdValue} data-x0={x0} data-x1={x1} />;
+          })()}
           {bars.map((g, i) => {
             const on = g.v === cur, y = yPos(ys[i] ?? 0), drag = isTable && g.rows.length === 1;
             return (
