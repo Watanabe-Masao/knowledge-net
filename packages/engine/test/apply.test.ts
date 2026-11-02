@@ -104,6 +104,17 @@ const TASKS: ApplySolve[] = [
   { method: "max-strength", mechanism: { kind: "streak", n: 10, p: 0.5, carry: 0 }, param: "carry", min: 0.05, max: 0.6, step: 0.05, ratio: 1.1 },
   { method: "min-total", n: 10, ratio: 0.8, step: 2 }, { method: "solve-spread", n: 10, p: 0.5, variance: 3.4 }];
 const onGrid = (x: number, v: { min: number; max: number; step: number }) => x >= v.min - 1e-9 && x <= v.max + 1e-9 && Math.abs((x - v.min) / v.step - Math.round((x - v.min) / v.step)) < 1e-6;
+describe("解き方は 大元の公式 → 値を入れる → 計算の過程 → 答え（渡辺さん 2026-11-03）", () => {
+  // 確かめる対象：結果だけを並べず、公式・代入・途中の値が段にあること。想定する故障：「P(X≧3)＝61.7%」のように途中のない段に戻る。見つけ方：B-02 で手計算の途中の値（₁₀C₃＝120・0.3³＝0.027・0.7⁷）が段に出るか
+  it("B-02（境目）：公式・代入・₁₀C₃＝120・0.3³＝0.027・掛け算が段に出る", () => {
+    const all = solveApply({ method: "boundary", n: 10, p: 0.3, k: 3 }).steps.map((x) => `${x.title}|${x.tex ?? ""}|${x.text ?? ""}`).join("\n");
+    for (const want of ["大元の公式", "{}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}", "{}_{10}\\mathrm{C}_{3}\\times0.3^{3}\\times0.7^{7}", "\\dfrac{10\\times9\\times8}{3\\times2\\times1}=120", "0.3^{3}&=0.027", "120\\times0.027\\times0.08235", "26.7\\%"]) expect(all).toContain(want);
+  });
+  it("全部の課題に「大元の公式」の段がある", () => {
+    for (const t of TASKS) expect(solveApply(t).steps.some((x) => x.title.includes("大元の公式")), t.method).toBe(true);
+  });
+});
+
 describe("グラフを問いに合わせる", () => {
   for (const t of TASKS) it(`${t.method}：答えの量が道具の刻みの上・境目が合う・ずれた答えは落とす`, () => {
     const c = applyCheck(t), ans = solveApply(t).answer;
