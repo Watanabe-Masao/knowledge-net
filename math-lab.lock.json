@@ -1,7 +1,8 @@
 {
- "ref": "b57ccf68d494469c289a297b4d4769d564fe98b4",
+ "ref": "3e34797621e418627898526822fc2e9a9d474384",
  "files": [
   "packages/engine/src/apply.ts",
+  "packages/engine/src/applyFormat.ts",
   "packages/engine/src/cards.ts",
   "packages/engine/src/experiment.ts",
   "packages/engine/src/formula/domain.ts",
