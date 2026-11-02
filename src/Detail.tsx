@@ -123,7 +123,9 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
       {tab === "about" && <div className={st.pane} data-testid="tab-about">
         <div ref={leadRef}>
           {c.en ? <Muted as="div" className={st.en}>{c.en}</Muted> : null}
-          {c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
+          {/* 一言（short）と定義（definition）。両方あれば一言を先に。一言は実験室の入口・地図の吹き出しと同じ文（stats2-course issue 163） */}
+          {c.short && c.definition ? <><p className={st.short} data-testid="concept-short">{c.short}</p><p className={st.definition}><span className={st.defLabel}>定義</span>{c.definition}</p></>
+            : c.definition ? <p className={st.definition}>{c.definition}</p> : c.short ? <p className={st.definition}>{c.short}</p> : null}
           {c.status === "skeleton" && <p className={st.skeleton} data-testid="skeleton-note">定義だけ：今は定義1文と分類まで。原理・条件・例・式は、単元を進めるときに足す</p>}
         </div>
         <Media figures={c.figures} labs={c.labs} context="concept" open={!c.workspace} />

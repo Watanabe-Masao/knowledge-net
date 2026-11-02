@@ -25,6 +25,9 @@
 .wrong { color: var(--ink); font-weight: 600; }
 .derivation { border-top: 1px solid var(--line); margin-top: var(--sp-3); }
 .definition { margin: var(--sp-2) 0 0; font-size: var(--fs-body); line-height: 1.7; }
+.short { margin: var(--sp-2) 0 0; font-size: 16px; font-weight: 600; line-height: 1.6; }
+.short + .definition { color: var(--ink-2); }
+.defLabel { font-size: var(--fs-tag); color: var(--ink-3); margin-right: 8px; }
 .tabs { margin: var(--sp-2) 0 var(--sp-1); }
 .tabs > * { width: 100%; }
 .n { font-size: var(--fs-tag); color: var(--ink-3); margin-left: 2px; }

@@ -896,7 +896,7 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   // 実験室：問いから選んで開く
   await bar.getByRole("link", { name: "実験室" }).click();
   await expect(page).toHaveURL(/t=lab/);
-  await page.getByTestId("page-lab").getByRole("button", { name: /成功確率を上げると/ }).click();
+  await page.getByTestId("page-lab").getByRole("button", { name: /二項分布 実験室.*目的から問いを選ぶ/ }).click();
   await expect(page).toHaveURL(/x=stats2%3AEXP-binom-p|x=stats2:EXP-binom-p/);
   await page.goBack();
   await expect(page.getByTestId("page-lab")).toBeVisible();
@@ -981,6 +981,7 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(bar.getByTestId("badge-learn")).toHaveText("U14");
   await expect(bar.getByTestId("badge-problems")).toHaveText("17");
   await expect(bar.getByTestId("badge-lab")).toHaveText("1");
+  await expect(page.getByTestId("concept-short")).toHaveText("同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布");   // 概念のページの一言（定義の前）
   // 問題集：二項分布の問題だけ（17問）。札を押すと全部に戻る
   await bar.getByRole("link", { name: /^問題集/ }).click();
   const pp = page.getByTestId("page-problems");
@@ -1008,6 +1009,11 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(lab.getByTestId("lab-open-stats2:binom-D-03")).toContainText("主：期待値｜関連：分散・確率分布・二項分布");
   await expect(lab.getByTestId("lab-open-stats2:binom-D-01")).toContainText("作成中");
   await expect(lab.locator("[data-testid^=open-]")).toHaveCount(1);   // 期待値の値の表の実験室は二項分布を使わない
+  // 実験室のカードの見出しは、問いの1つではなく主な概念の一言（地図・概念のページと同じ文）。故障：問いの文を出す・概念の一言とずれる
+  const SHORT = "同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布";
+  await expect(lab.getByTestId("open-stats2:EXP-binom-p").locator("b")).toHaveText(SHORT);
+  // 問いが先、実験室の入口（目的から選ぶ・自分で条件を決めて比べる）はその下（渡辺さん 2026-11-02）
+  expect(await lab.locator("[data-testid=lab-q-stats2\\:EXP-binom-p], [data-testid=open-stats2\\:EXP-binom-p]").evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(["lab-q-stats2:EXP-binom-p", "open-stats2:EXP-binom-p"]);
   await lab.getByTestId("lab-c-stats2:TERM-binom").click();
   await lab.getByTestId("lab-c-stats2:TERM-expect").click();
   await lab.getByTestId("lab-c-stats2:TERM-hyper").click();
@@ -1067,7 +1073,7 @@ test("点を長押しすると、名前・分類・定義1文の札が出る", a
   const tip = page.getByTestId("node-tip");
   await expect(tip).toContainText("二項分布");
   await expect(tip).toContainText("確率分布");
-  await expect(tip).toContainText("成功確率");
+  await expect(tip).toContainText("成功・失敗をくり返したとき");   // 一言（short）。概念のページ・実験室の入口と同じ文
   // 長押しは見るだけ：離したあとの tap で選ばない（URL に概念が付かない）
   await page.evaluate(() => { (window as any).kn.getElementById("stats2:TERM-binom").emit("tap"); });
   await expect(page).not.toHaveURL(/c=stats2/);

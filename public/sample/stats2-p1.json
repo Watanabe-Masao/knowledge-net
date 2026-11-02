@@ -5960,7 +5960,8 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
-   ]
+   ],
+   "short": "同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布"
   },
   {
    "id": "stats2:TERM-poisson",
