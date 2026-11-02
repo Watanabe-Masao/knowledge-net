@@ -57,8 +57,8 @@ describe("解き方の段（答えのあとに出す）", () => {
   it("最小の数を求める課題は、1つ手前と答えの値を別の値として言う", () => {
     const last = (r: ReturnType<typeof solveApply>) => r.steps[r.steps.length - 1]!.text ?? "";
     const a = last(solveApply({ method: "min-n-share-sd", p: 0.3, sd: 0.08 }));
-    expect(a).toContain("32 回では 0.08101");
-    expect(a).toContain("33 回で 0.07977");
+    expect(a).toContain("32 回では 0.081（");
+    expect(a).toContain("33 回で 0.0798（");
     const c = last(solveApply({ method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01 }));
     const [x, y] = [...c.matchAll(/±([\d.]+)%/g)].map((m) => Number(m[1]));
     expect(x).toBeGreaterThan(1);
@@ -86,5 +86,55 @@ describe("境目と止まる条件", () => {
     expect(() => solveApply({ method: "boundary", n: 10, p: 0.3, k: 11 })).toThrow(/k は/);
     expect(() => solveApply({ method: "solve-spread", n: 10, p: 0.3, variance: 1 })).toThrow(/小さい/);
     expect(() => solveApply({ method: "max-strength", mechanism: { kind: "bernoulli", n: 10, p: 0.5 }, param: "carry", min: 0, max: 1, step: 0.1, ratio: 1.1 })).toThrow(/強さ/);
+  });
+});
+
+// 検証の帯（applyCheck。渡辺さん 2026-11-03「答えとスライダーの実験は必ず検証できる形式に」「小数点の扱い等は必ず一致」）。
+// 確かめる対象：原本の10の課題すべてで、①課題の条件・答えの値が帯の刻みの上にある（－／＋で必ずたどり着ける）
+// ②帯を答えの値にそろえると条件を満たし、1刻み手前（最小）・先（最大）・前後（ちょうど）では満たさない ③帯の値と答えが同じ形（桁）で出る
+// ④答え合わせは同じ形で丸めて照らす（1目盛りずれた値は落とす）。想定する故障：刻みの外の答え（スライダーで届かない）・境目の取り違え・桁のずれ。
+// 見つけ方：帯の定義だけを使って確かめる（答えの求め方 solveApply とは別の道。goal は条件の式そのもの）
+import { INT, applyCheck, answerMatches, formatApply, type ApplySolve } from "../src";
+const TASKS: ApplySolve[] = [
+  { method: "mean-to-p", n: 20, mean: 6 }, { method: "min-n-share-sd", p: 0.3, sd: 0.08 },
+  { method: "compare-eq", a: { n: 10, p: 0.3, k: 3 }, b: { n: 30, p: 0.3, k: 9 } }, { method: "boundary", n: 10, p: 0.3, k: 3 },
+  { method: "expected-observers", n: 10, p: 0.5, event: { op: "ge", k: 10 }, people: 1000 }, { method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01 },
+  { method: "binom-judge", mechanism: { kind: "fatigue", n: 10, p: 0.5, drop: 0.3 } },
+  { method: "max-strength", mechanism: { kind: "streak", n: 10, p: 0.5, carry: 0 }, param: "carry", min: 0, max: 0.6, step: 0.01, ratio: 1.1 },
+  { method: "min-total", n: 10, ratio: 0.8 }, { method: "solve-spread", n: 10, p: 0.5, variance: 3.4 }];
+const onGrid = (x: number, v: { min: number; max: number; step: number }) => x >= v.min - 1e-9 && x <= v.max + 1e-9 && Math.abs((x - v.min) / v.step - Math.round((x - v.min) / v.step)) < 1e-6;
+describe("検証の帯", () => {
+  for (const t of TASKS) it(`${t.method}：帯で答えにたどり着け、境目が合い、桁がそろう`, () => {
+    const c = applyCheck(t), ans = solveApply(t).answer;
+    for (const v of c.vars) {
+      expect(onGrid(c.setup[v.key]!, v), `課題の条件 ${v.key}`).toBe(true);
+      if (c.at) expect(onGrid(c.at[v.key]!, v), `答えの値 ${v.key}`).toBe(true);
+    }
+    for (const r of c.reads) expect(Number.isFinite(r.value(c.at ?? c.setup))).toBe(true);
+    if (c.answerFormat && c.at && c.vars.length) {
+      const v = c.vars[0]!;
+      if (["mean-to-p", "min-n-share-sd", "sets-for-error", "max-strength", "min-total", "solve-spread"].includes(t.method)) {
+        expect(formatApply(c.at[v.key]!, v.format)).toBe(formatApply(ans, c.answerFormat));   // 帯の値と答えが同じ文字
+      }
+    }
+    if (c.goal && c.at) {
+      const v = c.vars[0]!, at = c.at[v.key]!, move = (d: number) => ({ ...c.at!, [v.key]: Number((at + d * v.step).toFixed(10)) });
+      expect(c.goal.ok(c.at)).toBe(true);
+      if (c.goal.kind !== "max" && at - v.step >= v.min) expect(c.goal.ok(move(-1)), "1刻み手前").toBe(false);
+      if (c.goal.kind !== "min" && at + v.step <= v.max) expect(c.goal.ok(move(1)), "1刻み先").toBe(false);
+    }
+    if (c.answerFormat) {
+      expect(answerMatches(ans, ans, c.answerFormat)).toBe(true);
+      const unit = c.answerFormat.kind === "int" ? 1 : 10 ** -c.answerFormat.digits / (c.answerFormat.kind === "pct" ? 100 : 1);
+      expect(answerMatches(ans + unit, ans, c.answerFormat), "1目盛りずれた答えは落とす").toBe(false);
+    }
+  });
+  it("数の形：% と小数は桁で丸めて末尾の 0 を落とし、整数は3桁区切り", () => {
+    expect(formatApply(0.266828, { kind: "pct", digits: 1 })).toBe("26.7%");
+    expect(formatApply(0.3, { kind: "pct", digits: 0 })).toBe("30%");
+    expect(formatApply(0.0810093, { kind: "num", digits: 4 })).toBe("0.081");
+    expect(formatApply(9105, INT)).toBe("9,105");
+    expect(answerMatches(0.2668, 0.266828, { kind: "pct", digits: 1 })).toBe(true);   // 26.68% と入れても 26.7% で一致
+    expect(answerMatches(0.266, 0.266828, { kind: "pct", digits: 1 })).toBe(false);   // 26.6%（p＝31% で読んだ値）は落とす
   });
 });

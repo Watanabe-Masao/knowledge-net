@@ -3,8 +3,8 @@
 // - どの問いも 予測 → 実験 → 観察 → 理由 → 応用 の5段。観察は、数の比べ表・分布の比べ・移り変わりの図を同じ部品で出す
 // - 予想の答えは定義に書かず、理論（engine の modelPmf・mechanismMoments）から求める
 // - 応用は課題を1つ解く（別の考え方。apply）。下の操作の帯は課題を解く道具。最後に「この条件をカードに残す」
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { mechanismMoments, modelPmf, runningMean, runningSd, runningShare, solveApply, summarize, type ApplySolve, type CardMechanism, type Mechanism } from "@math-lab/engine";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { answerMatches, applyCheck, formatApply, mechanismMoments, modelPmf, runningMean, runningSd, runningShare, solveApply, summarize, type ApplySolve, type ApplyState, type ApplyVar, type CardMechanism, type Mechanism } from "@math-lab/engine";
 import { haptic } from "./motion";
 import { LabShell, peak, tex, useRuns, usePairRuns, useStages } from "./labParts";
 import { CompareRows, CompareTable, DistRows, Dock, Field, PairRows, RunChart, ScaleChoice, Seg, TheoryRows, fmtN, oneIn, pc, pctSig, pShort, qs, r2, scaleChoices, type CmpRow } from "./QuestionParts";
@@ -120,42 +120,71 @@ export type ApplySpec = {
   kind: "逆算" | "設計" | "反証" | "評価" | "変換" | "モデル選択"; task: string; solve: ApplySolve; why: string;
   answer: { type: "number"; unit?: string; percent?: boolean; tol: { abs?: number; rel?: number } } | { type: "choice"; options: string[] };
 };
-const fmt4 = (x: number) => String(Number(x.toPrecision(4)));
-export function ApplyTask({ spec }: { spec: ApplySpec }) {
-  const res = useMemo(() => { try { return solveApply(spec.solve); } catch (e) { return e as Error; } }, [spec]);
+export function ApplyTask({ spec, sync }: { spec: ApplySpec; sync?: (v: ApplyState) => void }) {
+  const res = useMemo(() => { try { return { r: solveApply(spec.solve), c: applyCheck(spec.solve) }; } catch (e) { return e as Error; } }, [spec]);
   const [val, setVal] = useState(""), [pick, setPick] = useState<string>(""), [done, setDone] = useState(false);
+  const [st, setSt] = useState<ApplyState>(() => (res instanceof Error ? {} : res.c.setup));
+  // 帯の値を下の道具（実験室の応用の帯）にも渡す（同じキー：n・p・k・強さ）。道具の図・表も同じ条件になる
+  useEffect(() => { if (!(res instanceof Error)) sync?.(st); }, [st]);   // eslint-disable-line react-hooks/exhaustive-deps
   if (res instanceof Error) return <Card title="応用の課題"><p className={qs.note} role="alert">課題の条件がおかしい：{res.message}</p></Card>;
-  const a = spec.answer, scale = a.type === "number" && a.percent ? 100 : 1, ans = res.answer * scale;
-  const shown = a.type === "choice" ? a.options[res.answer] ?? "—" : `${fmt4(ans)}${a.unit ?? ""}`;
-  const x = Number(val.replace(/[,，]/g, ""));
-  const ok = a.type === "choice" ? pick === String(res.answer)
-    : val.trim() !== "" && Number.isFinite(x) && Math.abs(x - ans) <= Math.max(a.tol.abs ?? 0, (a.tol.rel ?? 0) * Math.abs(ans)) + 1e-9;
+  const { r, c } = res, a = spec.answer, fmt = c.answerFormat;
+  const pctIn = fmt?.kind === "pct";   // % の課題は % の値で入れ、0〜1 に直して照らす
+  const shown = a.type === "choice" ? a.options[r.answer] ?? "—" : `${formatApply(r.answer, fmt!)}${fmt!.kind === "pct" ? "" : a.unit ?? ""}`;
+  const x = Number(val.replace(/[,，]/g, "")), xin = pctIn ? x / 100 : x;
+  const ok = a.type === "choice" ? pick === String(r.answer) : val.trim() !== "" && answerMatches(xin, r.answer, fmt!, a.tol);
   const ready = a.type === "choice" ? pick !== "" : val.trim() !== "" && Number.isFinite(x);
+  // 刻みの上にそろえる（－／＋と入力のどちらでも、課題の条件と答えの値に必ずたどり着ける）
+  const snap = (v: ApplyVar, y: number) => Number(Math.min(v.max, Math.max(v.min, v.min + Math.round((y - v.min) / v.step) * v.step)).toFixed(10));
+  const setVar = (v: ApplyVar, y: number) => { if (Number.isFinite(y)) setSt((o) => ({ ...o, [v.key]: snap(v, y) })); };
+  const shownVar = (v: ApplyVar, y: number) => (v.format.kind === "pct" ? Number((y * 100).toFixed(10)) : y);
+  const met = c.goal ? c.goal.ok(st) : undefined;
   return <section className={s.card} data-testid="exp-apply" data-kind={spec.kind}>
     <p className={s.h}>応用の課題<span className={s.applyKind}>{spec.kind}</span></p>
     <p className={s.applyTask}>{spec.task}</p>
+    {/* 検証の帯：課題が問う量を、答えと同じ桁で出す。動かすと下の道具も同じ条件になる */}
+    <div className={s.applyCheck} data-testid="exp-apply-band">
+      {c.vars.map((v) => (
+        <div key={v.key} className={s.applyVar}>
+          <span>{v.label}</span>
+          <div className={s.applyStep}>
+            <button type="button" aria-label={`${v.label}を1つ減らす`} onClick={() => setVar(v, (st[v.key] ?? v.min) - v.step)} data-testid={`exp-apply-dec-${v.key}`}>−</button>
+            <input type="number" inputMode="decimal" step="any" value={shownVar(v, st[v.key] ?? v.min)} aria-label={v.label}
+              onChange={(e) => { const y = Number(e.target.value); setVar(v, v.format.kind === "pct" ? y / 100 : y); }} data-testid={`exp-apply-var-${v.key}`} />
+            {v.format.kind === "pct" && <i>%</i>}
+            <button type="button" aria-label={`${v.label}を1つ増やす`} onClick={() => setVar(v, (st[v.key] ?? v.min) + v.step)} data-testid={`exp-apply-inc-${v.key}`}>＋</button>
+          </div>
+        </div>
+      ))}
+      <dl className={s.applyReads}>
+        {c.reads.map((rd, i) => <div key={i}><dt>{rd.label}</dt><dd data-testid={`exp-apply-read-${i}`}>{formatApply(rd.value(st), rd.format)}</dd></div>)}
+      </dl>
+      {c.goal && <p className={met ? s.applyMet : s.applyUnmet} data-testid="exp-apply-goal" data-ok={String(met)}>{met ? "✓" : "✗"} {c.goal.text}</p>}
+      <div className={s.applyLinks}>
+        <button type="button" className={s.link} onClick={() => { haptic(); setSt(c.setup); }} data-testid="exp-apply-setup">課題の条件にそろえる</button>
+        {done && c.at && <button type="button" className={s.link} onClick={() => { haptic(); setSt(c.at!); }} data-testid="exp-apply-at">答えの値で確かめる</button>}
+      </div>
+    </div>
     {!done && (a.type === "choice"
       ? <Seg name="答え" items={a.options.map((o, i) => [String(i), o] as [string, string])} value={pick} onChange={setPick} />
-      : <label className={s.applyIn}><input type="number" inputMode="decimal" step="any" value={val} onChange={(e) => setVal(e.target.value)} aria-label="答え" data-testid="exp-apply-input" />{a.unit && <span>{a.unit}</span>}</label>)}
+      : <label className={s.applyIn}><input type="number" inputMode="decimal" step="any" value={val} onChange={(e) => setVal(e.target.value)} aria-label="答え" data-testid="exp-apply-input" />{(pctIn ? "%" : a.unit) && <span>{pctIn ? "%" : a.unit}</span>}</label>)}
     {!done ? <button type="button" className={s.primary} disabled={!ready} onClick={() => { haptic(); setDone(true); }} data-testid="exp-apply-check">答え合わせ</button>
       : <>
         <div className={ok ? s.ok : s.ng} data-testid="exp-apply-verdict" data-ok={String(ok)}>
           <b>{ok ? "✓ 合っている" : "✗ ちがう"}</b>
-          <span className={s.bigNum}>{shown}</span>
+          <span className={s.bigNum} data-testid="exp-apply-answer">{shown}</span>
           <button type="button" className={s.link} onClick={() => { setDone(false); setVal(""); setPick(""); }} data-testid="exp-apply-retry">もう一度</button>
         </div>
-        {/* 解き方の段（engine が理論から作る。数は求めた値だけ）→ つまり（原本の一言） */}
+        {/* 解き方の段（engine が理論から作る。数は帯・答えと同じ形）→ つまり（原本の一言） */}
         <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
         <ol className={s.applySteps} data-testid="exp-apply-steps">
-          {res.steps.map((st, i) => <li key={i}>
-            <b>{st.title}</b>
-            {st.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(st.tex) }} />}
-            {st.text && <p>{st.text}</p>}
+          {r.steps.map((stp, i) => <li key={i}>
+            <b>{stp.title}</b>
+            {stp.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(stp.tex) }} />}
+            {stp.text && <p>{stp.text}</p>}
           </li>)}
         </ol>
         <p className={s.applyGist} data-testid="exp-apply-why"><b>つまり</b>{spec.why}</p>
       </>}
-    {!done && <p className={qs.muted}>下の帯で条件を動かして確かめてから答えてよい。</p>}
   </section>;
 }
 
@@ -235,11 +264,11 @@ export function ShiftQ(props: QProps) {
       </Card>
       {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる</p>{props.workspace(next, k1)}</section>}
     </>;
-    cta = <button type="button" className={s.primary} onClick={() => go(4)}>p を自由に変える</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "p を自由に変える"}</button>;
   } else {
     const fa = pmfOf(app), fb = pmfOf({ n: app.n, p: start.p });
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} />}
+      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}) }))} />}
       <Card title={`中心 n×p＝${r2(app.n * app.p)}`} sub={`頂点 ${peak(fa)} 回`}><PairRows labels={fa.map((_, k) => `${k} 回`)} a={fb} b={fa} names={[`p＝${pc(start.p)}`, `p＝${pc(app.p)}`]} pk={peak(fa)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={def.question} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
@@ -306,11 +335,11 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
     </Card>
     {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる<span>n を動かすと ±標準偏差の帯の幅が √n 倍</span></p>{props.workspace({ n: n1, p: q.set.p }, Math.round(n1 * q.set.p))}</section>}
     </>;
-    cta = <button type="button" className={s.primary} onClick={() => go(4)}>n を自由に変える</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "n を自由に変える"}</button>;
   } else {
     const sdc = Math.sqrt(app.n * app.p * (1 - app.p));
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} />}
+      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}) }))} />}
       <Card title={`n＝${app.n}・p＝${pc(app.p)}`}><div className={s.tiles}><div>回数の標準偏差<b>{r2(sdc)}</b><i>√(np(1−p))</i></div><div>割合の標準偏差<b>{pShort(sdc / app.n)}</b><i>√(p(1−p)/n)</i></div></div></Card>
       <Card title="理論の確率"><TheoryRows pmf={pmfOf(app)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
@@ -416,14 +445,14 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
       </Card>
       {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる<span>k を動かすと棒1本の確率</span></p>{props.workspace(cond, ks[0] ?? 0)}</section>}
     </>;
-    cta = <button type="button" className={s.primary} onClick={() => { setApp({ ...cond, ...e0 }); go(4); }}>{free ? "どこから珍しい？ を探す" : "k を自由に変える"}</button>;
+    cta = <button type="button" className={s.primary} onClick={() => { setApp({ ...cond, ...e0 }); go(4); }}>{props.apply ? "応用の課題へ" : free ? "どこから珍しい？ を探す" : "k を自由に変える"}</button>;
   } else {
     const fa = pmfOf(app), e: Ev = { op: free ? app.op : "ge", k: Math.min(app.k, app.n) }, P = probOf(fa, e);
     const ks = fa.map((_, k) => k);
     const cut = e.op === "ge" ? ks.find((k) => probOf(fa, { op: "ge", k }) < 0.05) : e.op === "le" ? [...ks].reverse().find((k) => probOf(fa, { op: "le", k }) < 0.05) : undefined;
     const eq = probOf(fa, { op: "eq", k: e.k }), ge1 = probOf(fa, { op: "ge", k: e.k + 1 });
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} />}
+      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}), ...(v.k !== undefined ? { k: v.k } : {}) }))} />}
       {free ? <Card title={evText(e)} sub={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">
         <div className={s.tiles}><div>確率<b data-testid="exp-app-prob">{pctSig(P)}</b><i>{oneIn(P)}</i></div><div>5% を切る境目<b data-testid="exp-app-cut">{e.op === "eq" ? "—" : cut === undefined ? "なし" : evText({ op: e.op, k: cut })}</b><i>{e.op === "eq" ? "ちょうどでは決めない" : cut === undefined ? "どこまで行っても 5% 以上" : "ここから先が「珍しい」"}</i></div></div>
         <p className={qs.note}>{e.op === "eq" ? `ちょうど k 回の確率は、n が大きいほどどの k でも小さくなる（今はいちばん高い棒でも ${pctSig(Math.max(...fa))}）。だから珍しさは「以上」「以下」のように、それより極端な結果をまとめて測る。` : `${P < 0.05 ? "この結果は 5% より起きにくい。" : "この結果は 5% 以上の確率で起きる。"}5% の境目は、検定で「偶然とは言いにくい」と判断する目安になる。`}</p>
@@ -499,11 +528,11 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
       <p className={qs.note}>1セットごとに「当てはまる・当てはまらない」の 0 か 1。割合はその平均なので、分散は P(1−P)÷N、ずれの目安は √N に反比例する（試行回数を増やす問いの「割合の標準偏差」と同じ形）。</p>
       <p className={qs.note}>「どんな分布でも同じように近づくか？」は、大数の法則の実験室で確かめる。</p>
     </Card>;
-    cta = <button type="button" className={s.primary} onClick={() => go(4)}>条件を自由に変える</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "条件を自由に変える"}</button>;
   } else {
     const Pa = probOf(pmfOf(app), { op: ev.op, k: Math.min(app.k, app.n) }), sea = (n: number) => 2 * Math.sqrt((Pa * (1 - Pa)) / n);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} />}
+      {props.apply && <ApplyTask spec={props.apply} sync={(v) => setApp((o) => ({ ...o, ...(v.n !== undefined ? { n: v.n } : {}), ...(v.p !== undefined ? { p: v.p } : {}), ...(v.k !== undefined ? { k: v.k } : {}) }))} />}
       <Card title={`${app.n} 回中 ${evText({ op: ev.op, k: Math.min(app.k, app.n) })}`} sub={`理論 ${pctSig(Pa)}`}>
         <table className={qs.table}><thead><tr><th>セット</th><th>ずれの目安</th></tr></thead><tbody>{[100, 1000, 10000, 100000].map((t) => <tr key={t}><td>{t.toLocaleString()}</td><td>±{pShort(sea(t))}</td></tr>)}</tbody></table>
         <p className={qs.note}>{Pa < 0.05 || Pa > 0.95 ? "理論の確率が 0 や 1 に近いと、ずれの目安も小さい。ただし珍しい結果は、そもそも起きた回数が少ない。" : "セットを 100 倍にするたびに、目安は 10分の1。"}</p>
@@ -584,11 +613,11 @@ export function BreakQ(props: QProps & { initial?: string }) {
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ{["広く", "変わらず", "狭く"][ans]}なる？ 理由を考える</button>;
   } else if (stage === 3) {
     body = <Card title={`崩した条件：${cx.breaks}`}><p className={qs.note} data-testid="exp-cx-text">{cx.text}</p><p className={qs.note}>二項分布の式（分散 np(1−p)）を使えるのは、各回が独立で、毎回同じ確率のときだけ。</p>{cx.concept && props.conceptLink?.(cx.concept)}</Card>;
-    cta = <button type="button" className={s.primary} onClick={() => go(4)}>崩す強さを変える</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "崩す強さを変える"}</button>;
   } else {
     const ma = mechOfCx(cx, cond, x), ba = baseOf(ma, cond), vma = mechanismMoments(ma).variance, vba = ba.n * ba.p * (1 - ba.p);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} />}
+      {props.apply && <ApplyTask spec={props.apply} sync={(v) => { const y = v[st[4]]; if (y !== undefined) setX(y); }} />}
       <Card title={cx.name} sub={`${st[0]} ${x}`} testid="exp-app">
         <div className={s.tiles}><div>分散（崩した）<b>{r2(vma)}</b><i>理論</i></div><div>分散（二項分布）<b>{r2(vba)}</b><i>n×p×(1−p)</i></div></div>
         <p className={qs.note}>{Math.abs(vma - vba) <= 1e-9 * Math.max(1, vba) ? "この強さでは差が出ない。" : `崩した方が ${vma > vba ? "広い" : "狭い"}（${r2(vma / vba)} 倍）。`}{ma.kind === "urn" ? "箱が大きいほど、戻さなくても二項分布に近づく。" : "強さが 0 なら二項分布と同じ。"}</p>
