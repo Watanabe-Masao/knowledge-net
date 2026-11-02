@@ -2,13 +2,13 @@
 // - 実験の定義（ExperimentDef）はデータ。画面は読むだけ（テーマ・使えない場面・次の問いは定義を足すだけで増える）
 // - 予想するまで結果を見せない。予想の答えは定義に書かず、理論のモデルから求める
 // - 起き方（engine の Mechanism）と理論のモデルを分ける：反例は、成り立つ条件を1つ崩した起き方で、二項の理論とのずれを見る
-// - 発見メモは ChatGPT に渡す（公開サイトは個人の記録を持たない。ChatGPT が Notion の学習記録へ書く）
+// - 公開サイトは個人の記録を持たない。記録カードはその端末と URL だけ（外部と学習履歴への接続は今はしない。stats2-course issue 171）
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { modelPmf, type CardMechanism } from "@math-lab/engine";
 import { LabShell, peak, r2, tex } from "./labParts";
 import { TableLab, type TableDef } from "./ExperimentTable";
-import { BreakQ, ConvQ, ProbQ, QuestionMenu, ShiftQ, SpreadQ, type MenuGroup, type MenuItem } from "./ExperimentQuestion";
-import { CompareStage, copyHere, hereUrl, useCards } from "./Compare";
+import { BreakQ, ConvQ, ProbQ, QuestionMenu, ShiftQ, SpreadQ, type ApplySpec, type MenuGroup, type MenuItem } from "./ExperimentQuestion";
+import { CompareStage, copyHere, useCards } from "./Compare";
 import { LabInfo } from "./LabInfo";
 import type { FormulaData } from "./Formula";
 import { Workspace, type WorkspaceData } from "./Workspace";
@@ -43,7 +43,7 @@ export type BinomDef = {
    *  （shift＝最初の問い・questions の id・break:反例の id・compare）。open のない問いは「作成中」として並べるだけ。
    *  retired は使わない印（重複などで外した問い。id は残し、入口には並べない）。concept は主（概念か関係 REL-…）、related（関連概念）は問いの側で持ち、サイトが概念で問いを絞るのに使う。predict・operate・judge は問いごとの予測・操作・理解判定。
    *  開く先（実験の仕組み）は共有してよいが、open は問いごとに1つ（同じ画面を開くだけで別の問いにしない） */
-  catalog?: { id: string; title: string; items: { id: string; title: string; finds?: string; predict?: string; operate?: string; judge?: string; open?: string; concept?: string; related?: string[]; retired?: boolean }[] }[];
+  catalog?: { id: string; title: string; items: { id: string; title: string; finds?: string; predict?: string; operate?: string; judge?: string; open?: string; concept?: string; related?: string[]; retired?: boolean; apply?: ApplySpec }[] }[];
 };
 
 export type Props = {
@@ -55,8 +55,6 @@ export type Props = {
   seed?: number;
   onConcept?: (id: string) => void;
   conceptName?: (id: string) => string;
-  /** 発見メモを送る（既定：ChatGPT を開いて文を渡す） */
-  onSendMemo?: (text: string) => void;
   /** 戻る（概念のページへ） */
   onBack?: () => void;
   /** 概念の式（記号を定義の式で開く。E → Σ k P(X＝k) など） */
@@ -94,15 +92,11 @@ function BinomEntry(props: Props & { def: BinomDef }) {
       formula={ws ? <Workspace only="formula" formula={ws.formula} vary={ws.vary} over={ws.over} initial={{ n: def.start.n, p: def.start.p, [ws.over]: peak(modelPmf({ kind: "binom", ...def.start })) }} definitions={props.definitions} onConcept={props.onConcept} conceptName={props.conceptName} experiment={false} />
         : props.mainFormula?.tex && <div className={s.math} dangerouslySetInnerHTML={{ __html: tex(props.mainFormula.tex) }} />} />
   );
-  const send = (t: string) => {
-    if (props.onSendMemo) { props.onSendMemo(t); return; }
-    try { void navigator.clipboard?.writeText(t); } catch { /* コピーできない環境では URL だけで渡す */ }
-    window.open(`https://chatgpt.com/?q=${encodeURIComponent(t)}`, "_blank", "noopener");
-  };
   const common = {
-    def, seed: props.seed, onBack: menu, onMenu: menu, onInfo: () => setInfo(true), onMemo: send,
+    def, seed: props.seed, onBack: menu, onMenu: menu, onInfo: () => setInfo(true),
     onKeep: (m: CardMechanism) => deck.add({ mechanism: m, sets: 100, seed: Date.now() % 100000 }),
     workspace: ws ? (c: { n: number; p: number }, k: number) => <Workspace key={`${c.n}-${c.p}-${k}`} formula={ws.formula} mean={ws.mean} vary={ws.vary} over={ws.over} initial={{ n: c.n, p: c.p, [ws.over]: k }} definitions={props.definitions} onConcept={props.onConcept} conceptName={props.conceptName} experiment={false} /> : undefined,
+    apply: pick ? def.catalog?.flatMap((g) => g.items).find((it) => it.open === pick && !it.retired)?.apply : undefined,
     conceptLink: (id: string) => props.onConcept && <button type="button" className={s.link} onClick={() => props.onConcept!(id)}>{name(id)} を見る</button>,
   };
   if (pick === null) {
@@ -124,7 +118,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
   }
   if (pick === "shift") return <ShiftQ {...common}>{infoSheet}</ShiftQ>;
   if (pick === "break" || pick.startsWith("break:")) return <BreakQ key={pick} {...common} initial={pick.slice(6) || undefined}>{infoSheet}</BreakQ>;
-  if (pick === "compare") return <BinomCompare def={def} deck={deck} onBack={menu} onInfo={() => setInfo(true)} onMemo={send}>{infoSheet}</BinomCompare>;
+  if (pick === "compare") return <BinomCompare def={def} deck={deck} onBack={menu} onInfo={() => setInfo(true)}>{infoSheet}</BinomCompare>;
   const q = def.questions?.find((x) => x.id === pick);
   if (!q) return null;
   if (q.form === "spread") return <SpreadQ {...common} q={q}>{infoSheet}</SpreadQ>;
@@ -135,9 +129,8 @@ function BinomEntry(props: Props & { def: BinomDef }) {
 const KINDS: [CardMechanism["kind"], string][] = [["bernoulli", "条件どおり（二項分布）"], ["streak", "前の結果に引きずられる"], ["mix", "日によって確率が違う"], ["fatigue", "疲れて確率が下がる"], ["urn", "箱から戻さずに取る"]];
 const STR: Record<string, [string, number, number, number]> = { streak: ["引きずる強さ", 0.05, 0.6, 0.05], mix: ["ずれ幅 d", 0.05, 0.4, 0.05], fatigue: ["下がる幅 d", 0.05, 0.4, 0.05], urn: ["箱の数", 12, 60, 2] };
 /** 比べる（実験室に1か所）：起き方・n・p・強さを決めてカードに残し、4つまで重ねる */
-function BinomCompare({ def, deck, onBack, onInfo, onMemo, children }: { def: BinomDef; deck: ReturnType<typeof useCards>; onBack: () => void; onInfo: () => void; onMemo: (t: string) => void; children?: ReactNode }) {
+function BinomCompare({ def, deck, onBack, onInfo, children }: { def: BinomDef; deck: ReturnType<typeof useCards>; onBack: () => void; onInfo: () => void; children?: ReactNode }) {
   const [d, setD] = useState<{ kind: CardMechanism["kind"]; n: number; p: number; x: number }>({ kind: "bernoulli", n: def.start.n, p: def.start.p, x: 0.3 });
-  const [memo, setMemo] = useState("");
   const draft: CardMechanism = d.kind === "streak" ? { kind: "streak", n: d.n, p: d.p, carry: d.x } : d.kind === "mix" ? { kind: "mix", n: d.n, p: d.p, spread: d.x }
     : d.kind === "fatigue" ? { kind: "fatigue", n: d.n, p: d.p, drop: d.x } : d.kind === "urn" ? (() => { const total = Math.max(d.n, Math.round(d.x)); return { kind: "urn", n: d.n, total, success: Math.round(d.p * total) } as CardMechanism; })()
     : { kind: "bernoulli", n: d.n, p: d.p };
@@ -163,11 +156,6 @@ function BinomCompare({ def, deck, onBack, onInfo, onMemo, children }: { def: Bi
         })}
         {sg && <label className={s.peak}><span>{sg[0]}</span><b>{d.x}</b><input type="range" min={sg[1]} max={sg[2]} step={sg[3]} value={d.x} onChange={(e) => setD({ ...d, x: Number(e.target.value) })} style={{ "--fill": `${((d.x - sg[1]) / (sg[2] - sg[1])) * 100}%` } as CSSProperties} aria-label={sg[0]} data-testid="cmp-x" /></label>}
       </div>} />
-    <section className={s.card}>
-      <p className={s.h}>発見メモ<span>ChatGPT に渡して学習記録へ</span></p>
-      <textarea className={s.memo} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="気づいたこと・考えたこと（例：n を2倍にすると散らばりも2倍。疲れると山は狭くなる）" aria-label="発見メモ" />
-      <button type="button" className={s.secondary} onClick={() => onMemo(["【学習記録】実験室", `実験：${def.title}（${def.id}）`, "比べる", `比べた条件：${deck.cards.map((c) => `${describe(c.mechanism)}（${c.sets} セット・種 ${c.seed}）`).join("、") || "—"}`, `再現の URL：${hereUrl()}`, `メモ：${memo || "—"}`, `日時：${new Date().toISOString()}`, "→ この内容を Notion の学習記録（学習ログ）に記録してください。"].join("\n"))} data-testid="exp-send">メモを ChatGPT に送る</button>
-    </section>
   </>;
   return <LabShell title={def.title} question="自分で条件を決めて実験し、カードに残して重ねる" qLabel="比べる" stepper={false} stage={0} reached={0} go={() => {}} onBack={onBack} onInfo={onInfo} body={body} cta={null}>{children}</LabShell>;
 }

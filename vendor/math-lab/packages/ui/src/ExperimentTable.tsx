@@ -5,7 +5,7 @@
 // - 理由：E(X)＝Σ x p(x) を、今の表の値で項に開いて計算する
 // - 応用：反例を実験する（成り立つ条件「和が有限」を崩した表：平均が落ち着かない）。答えは表（モデル）から求める
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { createRandom, emptySetRecord, expand, modelMoments, modelPmf, runSets, summarize, supportOf, toTex, type Card, type CardMechanism, type FormulaNode, type SetRecord } from "@math-lab/engine";
+import { createRandom, emptySetRecord, expand, modelMoments, modelPmf, runSets, summarize, supportOf, toTex, type CardMechanism, type FormulaNode, type SetRecord } from "@math-lab/engine";
 import { nudge } from "./nudge";
 import { useRunner } from "./runner";
 import { haptic, reduced, useTween } from "./motion";
@@ -13,7 +13,7 @@ import { LabInfo } from "./LabInfo";
 import { TableWorkspace } from "./Workspace";
 import type { FormulaData } from "./Formula";
 import { Bars, LabShell, Replay, num3, r2, tex, usePairRuns, useStages } from "./labParts";
-import { CompareStage, copyHere, hereUrl, useCards } from "./Compare";
+import { CompareStage, copyHere, useCards } from "./Compare";
 import type { Props } from "./Experiment";
 import s from "./Experiment.module.css";
 
@@ -99,16 +99,15 @@ function TableCounter({ cx, unit, onConcept, name }: { cx: NonNullable<TableDef[
 }
 
 /** 比べる（issue 122）：テーマの値の表で、重みを自分で決めたカードを並べる。テーマが変わると別の組（URL は「テーマ:カード」） */
-function TableCompare({ def, theme, labels, unit, cards0, seed, sets, onCards, onDeck }: {
+function TableCompare({ def, theme, labels, unit, cards0, seed, sets, onCards }: {
   def: TableDef; theme: TableTheme; labels: string[]; unit: string; cards0?: string; seed: number; sets: number;
-  onCards?: (encoded: string) => void; onDeck: (cards: Card[]) => void;
+  onCards?: (encoded: string) => void;
 }) {
   const deck = useCards({
     storeKey: `math-lab:cards:${def.id}:${theme.id}`, initial: cards0, values: theme.values, onCards: (e) => onCards?.(e ? `${theme.id}:${e}` : ""),
     start: () => [{ mechanism: tbl(theme.values, theme.start), sets, seed }, { mechanism: tbl(theme.values, theme.compare), sets, seed: seed + 1 }].filter((c) => c.sets > 0),
   });
   useEffect(() => { deck.ensure(); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { onDeck(deck.cards); }, [deck.cards]);   // eslint-disable-line react-hooks/exhaustive-deps
   const [w, setW] = useState(theme.compare);
   const describe = (m: CardMechanism) => (m.kind === "table" ? `重み ${m.weights.map((x) => num3(x)).join("：")}` : "");
   const max = Math.max(10, ...theme.start, ...theme.compare) * 2;
@@ -126,11 +125,10 @@ function TableCompare({ def, theme, labels, unit, cards0, seed, sets, onCards, o
   );
 }
 
-export function TableLab({ def, reasonFormula, onConcept, conceptName, definitions, onSendMemo, onBack, cards: cards0, onCards }: Props & { def: TableDef }) {
+export function TableLab({ def, reasonFormula, onConcept, conceptName, definitions, onBack, cards: cards0, onCards }: Props & { def: TableDef }) {
   const { stage, reached, go } = useStages(cards0 ? 5 : 0);
   const [cmpTheme, cmpCards] = cards0?.includes(":") ? [cards0.slice(0, cards0.indexOf(":")), cards0.slice(cards0.indexOf(":") + 1)] : [undefined, undefined];
   const [theme, setTheme] = useState(def.themes.find((t) => t.id === cmpTheme) ?? def.themes[0]!);
-  const [deckCards, setDeckCards] = useState<Card[]>([]);
   const unit = theme.unit ?? "";
   const startT = tbl(theme.values, theme.start), nextT = tbl(theme.values, theme.compare);
   const support = useMemo(() => supportOf(nextT), [theme]);   // eslint-disable-line react-hooks/exhaustive-deps
@@ -154,7 +152,6 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
   const last = rec.ks.slice(-8), lastB = recB.ks.slice(-8);
   const [sheet, setSheet] = useState<"info" | null>(null);
   const [cxId, setCxId] = useState<string | null>(null);
-  const [memo, setMemo] = useState("");
   const name = (id: string) => conceptName?.(id) ?? id;
   const chips = (ids: string[]) => <div className={s.chips}>{ids.map((id) => <button key={id} type="button" className={s.chip} onClick={() => onConcept?.(id)}>{name(id)}</button>)}</div>;
   const labelOf = (v: number) => labels[support.indexOf(v)] ?? `${v}${unit}`;
@@ -170,19 +167,6 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
   const num = (v: number) => String(Number(v.toPrecision(4)));
   const lhs = reasonFormula?.tree ? toTex((reasonFormula.tree as { args: FormulaNode[] }).args[0]!, { symbols: reasonFormula.symbols }) : "E(X)";
 
-  const memoText = () => [
-    "【学習記録】実験室", `実験：${def.title}（${def.id}）`, `問い：${def.question}`, `テーマ：${theme.name}（${theme.change}）`,
-    `予想：平均は${pred.dir !== undefined ? DIRS[pred.dir] : "—"}（${r2(pred.value)}${unit}）`,
-    `結果：各 ${rec.sets} 回・平均 前 ${r2(sumB.mean)} → 後 ${r2(sum.mean)}${unit}（期待値 ${r2(mStart)} → ${r2(mNext)}${unit}）・種 ${seed}`,
-    ...(deckCards.length ? [`比べた表（${theme.values.map((v, i) => labels[support.indexOf(v)] ?? theme.labels?.[i] ?? v).join("・")} の重み）：${deckCards.map((c) => `${c.mechanism.kind === "table" ? c.mechanism.weights.join("：") : ""}（${c.sets} 回・種 ${c.seed}）`).join("、")}`, `再現の URL：${hereUrl()}`] : []),
-    `メモ：${memo || "—"}`, `日時：${new Date().toISOString()}`, "→ この内容を Notion の学習記録（学習ログ）に記録してください。",
-  ].join("\n");
-  const send = () => {
-    const t = memoText();
-    if (onSendMemo) { onSendMemo(t); return; }
-    try { void navigator.clipboard?.writeText(t); } catch { /* コピーできない環境では URL だけで渡す */ }
-    window.open(`https://chatgpt.com/?q=${encodeURIComponent(t)}`, "_blank", "noopener");
-  };
 
   const themeChips = (
     <div className={s.themes} role="radiogroup" aria-label="テーマ">
@@ -287,15 +271,10 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>別の条件で試す</button>;
   } else if (stage === 5) {
     body = <>
-      <TableCompare key={theme.id} def={def} theme={theme} labels={labels} unit={unit} cards0={cmpTheme === theme.id ? cmpCards : undefined} seed={seed} sets={rec.sets} onCards={onCards} onDeck={setDeckCards} />
-      <section className={s.card}>
-        <p className={s.h}>発見メモ<span>ChatGPT に渡して学習記録へ</span></p>
-        <textarea className={s.memo} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="気づいたこと・考えたこと（例：重い値の重みを増やすほど平均はそちらへ。重みを全部2倍にしても平均は変わらない）" aria-label="発見メモ" />
-        <p className={s.muted}>比べた表と、同じ結果に戻れる URL もメモに入る。</p>
-      </section>
+      <TableCompare key={theme.id} def={def} theme={theme} labels={labels} unit={unit} cards0={cmpTheme === theme.id ? cmpCards : undefined} seed={seed} sets={rec.sets} onCards={onCards} />
       {def.links.concepts?.length ? <section className={s.card}><p className={s.h}>つながる概念</p>{chips(def.links.concepts)}</section> : null}
     </>;
-    cta = <button type="button" className={s.primary} onClick={send} data-testid="exp-send">メモを ChatGPT に送る</button>;
+    cta = null;
   } else {
     const cx = cxId ? def.counterexamples?.find((x) => x.id === cxId) : undefined;
     body = <>

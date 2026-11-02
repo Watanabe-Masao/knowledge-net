@@ -2,9 +2,9 @@
 // - 入口「何を確かめたい？」：問い（位置・広がり・確率の値・理論と実測・前提崩し）と「自分で条件を決めて比べる」を並べる
 // - どの問いも 予測 → 実験 → 観察 → 理由 → 応用 の5段。観察は、数の比べ表・分布の比べ・移り変わりの図を同じ部品で出す
 // - 予想の答えは定義に書かず、理論（engine の modelPmf・mechanismMoments）から求める
-// - 応用は下の操作の帯で条件を動かす。最後に「この条件をカードに残す」と発見メモ
+// - 応用は課題を1つ解く（別の考え方。apply）。下の操作の帯は課題を解く道具。最後に「この条件をカードに残す」
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
-import { mechanismMoments, modelPmf, runningMean, runningSd, runningShare, summarize, type CardMechanism, type Mechanism } from "@math-lab/engine";
+import { mechanismMoments, modelPmf, runningMean, runningSd, runningShare, solveApply, summarize, type ApplySolve, type CardMechanism, type Mechanism } from "@math-lab/engine";
 import { haptic } from "./motion";
 import { LabShell, peak, useRuns, usePairRuns, useStages } from "./labParts";
 import { CompareRows, CompareTable, DistRows, Dock, Field, PairRows, RunChart, ScaleChoice, Seg, TheoryRows, fmtN, oneIn, pc, pctSig, pShort, qs, r2, scaleChoices, type CmpRow } from "./QuestionParts";
@@ -77,12 +77,12 @@ export type QProps = {
   def: BinomDef; seed?: number; onBack?: () => void; onMenu: () => void; onInfo?: () => void;
   /** 応用で「この条件をカードに残す」 */
   onKeep: (m: CardMechanism, from: string) => void;
-  /** 発見メモを送る */
-  onMemo: (text: string) => void;
   /** 理由の段に置く作業台（二項分布の式。今の条件と k で始める） */
   workspace?: (c: Cond, k: number) => ReactNode;
   /** 概念へのリンク（反例の概念など） */
   conceptLink?: (id: string) => ReactNode;
+  /** 応用の課題（テーマ体系の問いの apply。stats2-course issue 171） */
+  apply?: ApplySpec;
   children?: ReactNode;
 };
 function Lane({ tag, last, n, theme, testid, cls }: { tag: string; last: number[] | null; n: number; theme: ExperimentTheme; testid: string; cls?: string }) {
@@ -114,18 +114,48 @@ function Verdict({ ok, edge, head, big, children, testid = "exp-verdict" }: { ok
 function Card({ title, sub, children, testid }: { title: string; sub?: string; children: ReactNode; testid?: string }) {
   return <section className={s.card} data-testid={testid}><p className={s.h}>{title}{sub && <span>{sub}</span>}</p>{children}</section>;
 }
-/** 応用の最後：この条件をカードに残す・発見メモ */
-function AppExtra({ m, from, onKeep, onMemo, desc }: { m: CardMechanism; from: string; onKeep: QProps["onKeep"]; onMemo: QProps["onMemo"]; desc: string }) {
-  const [memo, setMemo] = useState(""), [kept, setKept] = useState(false);
+/** 応用の課題（stats2-course issue 171・issue 169 の3）：予測〜理由で練習したのとは別の考え方（逆算・設計・反証・評価・変換）を求める。
+ *  答えは定義に書かず、engine の solveApply が solve から求める。下の操作の帯（自由に動かす）は、課題を解く道具として残す */
+export type ApplySpec = {
+  kind: "逆算" | "設計" | "反証" | "評価" | "変換" | "モデル選択"; task: string; solve: ApplySolve; why: string;
+  answer: { type: "number"; unit?: string; percent?: boolean; tol: { abs?: number; rel?: number } } | { type: "choice"; options: string[] };
+};
+const fmt4 = (x: number) => String(Number(x.toPrecision(4)));
+export function ApplyTask({ spec }: { spec: ApplySpec }) {
+  const res = useMemo(() => { try { return solveApply(spec.solve); } catch (e) { return e as Error; } }, [spec]);
+  const [val, setVal] = useState(""), [pick, setPick] = useState<string>(""), [done, setDone] = useState(false);
+  if (res instanceof Error) return <Card title="応用の課題"><p className={qs.note} role="alert">課題の条件がおかしい：{res.message}</p></Card>;
+  const a = spec.answer, scale = a.type === "number" && a.percent ? 100 : 1, ans = res.answer * scale;
+  const shown = a.type === "choice" ? a.options[res.answer] ?? "—" : `${fmt4(ans)}${a.unit ?? ""}`;
+  const x = Number(val.replace(/[,，]/g, ""));
+  const ok = a.type === "choice" ? pick === String(res.answer)
+    : val.trim() !== "" && Number.isFinite(x) && Math.abs(x - ans) <= Math.max(a.tol.abs ?? 0, (a.tol.rel ?? 0) * Math.abs(ans)) + 1e-9;
+  const ready = a.type === "choice" ? pick !== "" : val.trim() !== "" && Number.isFinite(x);
+  return <section className={s.card} data-testid="exp-apply" data-kind={spec.kind}>
+    <p className={s.h}>応用の課題<span className={s.applyKind}>{spec.kind}</span></p>
+    <p className={s.applyTask}>{spec.task}</p>
+    {!done && (a.type === "choice"
+      ? <Seg name="答え" items={a.options.map((o, i) => [String(i), o] as [string, string])} value={pick} onChange={setPick} />
+      : <label className={s.applyIn}><input type="number" inputMode="decimal" step="any" value={val} onChange={(e) => setVal(e.target.value)} aria-label="答え" data-testid="exp-apply-input" />{a.unit && <span>{a.unit}</span>}</label>)}
+    {!done ? <button type="button" className={s.primary} disabled={!ready} onClick={() => { haptic(); setDone(true); }} data-testid="exp-apply-check">答え合わせ</button>
+      : <div className={ok ? s.ok : s.ng} data-testid="exp-apply-verdict" data-ok={String(ok)}>
+          <b>{ok ? "✓ 合っている" : "✗ ちがう"}</b>
+          <span className={s.bigNum}>{shown}</span>
+          <span className={s.shape} style={{ display: "block" }}>{spec.why}</span>
+          <button type="button" className={s.link} onClick={() => { setDone(false); setVal(""); setPick(""); }} data-testid="exp-apply-retry">もう一度</button>
+        </div>}
+    {!done && <p className={qs.muted}>下の帯で条件を動かして確かめてから答えてよい。</p>}
+  </section>;
+}
+
+/** 応用の最後：この条件をカードに残す */
+function AppExtra({ m, from, onKeep, desc }: { m: CardMechanism; from: string; onKeep: QProps["onKeep"]; desc: string }) {
+  const [kept, setKept] = useState(false);
   return <>
     <Card title="記録して比べる">
       <p className={qs.muted}>今の条件（{desc}）で 100 セット起こしてカードに残す。カードは入口の「自分で条件を決めて比べる」で重ねて見る。</p>
       <button type="button" className={s.secondary} onClick={() => { haptic(); onKeep(m, from); setKept(true); }} data-testid="exp-keep">この条件をカードに残す</button>
       {kept && <p className={qs.muted} role="status">カードに残した。入口の「自分で条件を決めて比べる」で見る</p>}
-    </Card>
-    <Card title="発見メモ" sub="ChatGPT に渡して学習記録へ">
-      <textarea className={s.memo} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="気づいたこと・考えたこと" aria-label="発見メモ" />
-      <button type="button" className={s.secondary} onClick={() => onMemo([`【学習記録】実験室`, `問い：${from}`, `条件：${desc}`, `メモ：${memo || "—"}`, `日時：${new Date().toISOString()}`, "→ この内容を Notion の学習記録（学習ログ）に記録してください。"].join("\n"))} data-testid="exp-send">メモを ChatGPT に送る</button>
     </Card>
   </>;
 }
@@ -198,8 +228,9 @@ export function ShiftQ(props: QProps) {
   } else {
     const fa = pmfOf(app), fb = pmfOf({ n: app.n, p: start.p });
     body = <>
+      {props.apply && <ApplyTask spec={props.apply} />}
       <Card title={`中心 n×p＝${r2(app.n * app.p)}`} sub={`頂点 ${peak(fa)} 回`}><PairRows labels={fa.map((_, k) => `${k} 回`)} a={fb} b={fa} names={[`p＝${pc(start.p)}`, `p＝${pc(app.p)}`]} pk={peak(fa)} /></Card>
-      <AppExtra m={{ kind: "bernoulli", ...app }} from={def.question} onKeep={props.onKeep} onMemo={props.onMemo} desc={descOf({ kind: "bernoulli", ...app })} />
+      <AppExtra m={{ kind: "bernoulli", ...app }} from={def.question} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
     cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n })} />
@@ -266,9 +297,10 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
   } else {
     const sdc = Math.sqrt(app.n * app.p * (1 - app.p));
     body = <>
+      {props.apply && <ApplyTask spec={props.apply} />}
       <Card title={`n＝${app.n}・p＝${pc(app.p)}`}><div className={s.tiles}><div>回数の標準偏差<b>{r2(sdc)}</b><i>√(np(1−p))</i></div><div>割合の標準偏差<b>{pShort(sdc / app.n)}</b><i>√(p(1−p)/n)</i></div></div></Card>
       <Card title="理論の確率"><TheoryRows pmf={pmfOf(app)} /></Card>
-      <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} onMemo={props.onMemo} desc={descOf({ kind: "bernoulli", ...app })} />
+      <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
     cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={Math.max(def.vary.n.max, n1)} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n })} />
@@ -378,6 +410,7 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
     const cut = e.op === "ge" ? ks.find((k) => probOf(fa, { op: "ge", k }) < 0.05) : e.op === "le" ? [...ks].reverse().find((k) => probOf(fa, { op: "le", k }) < 0.05) : undefined;
     const eq = probOf(fa, { op: "eq", k: e.k }), ge1 = probOf(fa, { op: "ge", k: e.k + 1 });
     body = <>
+      {props.apply && <ApplyTask spec={props.apply} />}
       {free ? <Card title={evText(e)} sub={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">
         <div className={s.tiles}><div>確率<b data-testid="exp-app-prob">{pctSig(P)}</b><i>{oneIn(P)}</i></div><div>5% を切る境目<b data-testid="exp-app-cut">{e.op === "eq" ? "—" : cut === undefined ? "なし" : evText({ op: e.op, k: cut })}</b><i>{e.op === "eq" ? "ちょうどでは決めない" : cut === undefined ? "どこまで行っても 5% 以上" : "ここから先が「珍しい」"}</i></div></div>
         <p className={qs.note}>{e.op === "eq" ? `ちょうど k 回の確率は、n が大きいほどどの k でも小さくなる（今はいちばん高い棒でも ${pctSig(Math.max(...fa))}）。だから珍しさは「以上」「以下」のように、それより極端な結果をまとめて測る。` : `${P < 0.05 ? "この結果は 5% より起きにくい。" : "この結果は 5% 以上の確率で起きる。"}5% の境目は、検定で「偶然とは言いにくい」と判断する目安になる。`}</p>
@@ -385,7 +418,7 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
         <div className={s.tiles}><div>ちょうど {e.k} 回<b>{pctSig(eq)}</b><i>棒1本</i></div><div>{e.k} 回以上<b>{pctSig(P)}</b><i>＝ちょうど {e.k} 回＋{e.k + 1} 回以上（{pctSig(ge1)}）</i></div></div>
       </Card>}
       <Card title="理論の確率"><TheoryRows pmf={fa} inEvent={inEv(e)} /></Card>
-      <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} onMemo={props.onMemo} desc={`${descOf({ kind: "bernoulli", n: app.n, p: app.p })}・${evText(e)}`} />
+      <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={`${descOf({ kind: "bernoulli", n: app.n, p: app.p })}・${evText(e)}`} />
     </>;
     const chips: [string, string][] = [["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ...(free ? [["op", { eq: "ちょうど", ge: "以上", le: "以下" }[app.op]] as [string, string]] : []), ["k", `k ${e.k} 回`]];
     cta = <Dock chips={chips} sel={sel} onSel={setSel} action={free
@@ -457,11 +490,12 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
   } else {
     const Pa = probOf(pmfOf(app), { op: ev.op, k: Math.min(app.k, app.n) }), sea = (n: number) => 2 * Math.sqrt((Pa * (1 - Pa)) / n);
     body = <>
+      {props.apply && <ApplyTask spec={props.apply} />}
       <Card title={`${app.n} 回中 ${evText({ op: ev.op, k: Math.min(app.k, app.n) })}`} sub={`理論 ${pctSig(Pa)}`}>
         <table className={qs.table}><thead><tr><th>セット</th><th>ずれの目安</th></tr></thead><tbody>{[100, 1000, 10000, 100000].map((t) => <tr key={t}><td>{t.toLocaleString()}</td><td>±{pShort(sea(t))}</td></tr>)}</tbody></table>
         <p className={qs.note}>{Pa < 0.05 || Pa > 0.95 ? "理論の確率が 0 や 1 に近いと、ずれの目安も小さい。ただし珍しい結果は、そもそも起きた回数が少ない。" : "セットを 100 倍にするたびに、目安は 10分の1。"}</p>
       </Card>
-      <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} onMemo={props.onMemo} desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })} />
+      <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })} />
     </>;
     cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["k", `k ${Math.min(app.k, app.n)} 回`]]} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n, k: Math.min(app.k, n) })} />
@@ -541,12 +575,13 @@ export function BreakQ(props: QProps & { initial?: string }) {
   } else {
     const ma = mechOfCx(cx, cond, x), ba = baseOf(ma, cond), vma = mechanismMoments(ma).variance, vba = ba.n * ba.p * (1 - ba.p);
     body = <>
+      {props.apply && <ApplyTask spec={props.apply} />}
       <Card title={cx.name} sub={`${st[0]} ${x}`} testid="exp-app">
         <div className={s.tiles}><div>分散（崩した）<b>{r2(vma)}</b><i>理論</i></div><div>分散（二項分布）<b>{r2(vba)}</b><i>n×p×(1−p)</i></div></div>
         <p className={qs.note}>{Math.abs(vma - vba) <= 1e-9 * Math.max(1, vba) ? "この強さでは差が出ない。" : `崩した方が ${vma > vba ? "広い" : "狭い"}（${r2(vma / vba)} 倍）。`}{ma.kind === "urn" ? "箱が大きいほど、戻さなくても二項分布に近づく。" : "強さが 0 なら二項分布と同じ。"}</p>
       </Card>
       <Card title="理論の確率（二項分布）"><TheoryRows pmf={pmfOf(ba)} /></Card>
-      <AppExtra m={ma as CardMechanism} from={`前提崩し：${cx.name}`} onKeep={props.onKeep} onMemo={props.onMemo} desc={`${cx.name}・n＝${cond.n}・p＝${pc(ba.p)}・${st[0]} ${x}`} />
+      <AppExtra m={ma as CardMechanism} from={`前提崩し：${cx.name}`} onKeep={props.onKeep} desc={`${cx.name}・n＝${cond.n}・p＝${pc(ba.p)}・${st[0]} ${x}`} />
     </>;
     cta = <Dock chips={[["s", st[0]]]} sel="s" onSel={() => {}} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
       <Field id="exp-app-s" label={st[0]} value={x} min={st[1]} max={st[2]} step={st[3]} show={(v) => (ma.kind === "urn" ? `${v} 個` : String(v))} onChange={setX} />

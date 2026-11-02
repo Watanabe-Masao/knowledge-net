@@ -658,6 +658,19 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.getByTestId("exp-workspace").getByTestId("ws-result")).toContainText("P(X=8)");
   await x.getByRole("button", { name: "p を自由に変える" }).click();
+  // 応用の課題（stats2-course #171）：練習（p→中心）と別の考え方（中心→p の逆算）。答えは画面が engine で求め、% で照らす。発見メモ（ChatGPT へ）は出さない
+  const ap = x.getByTestId("exp-apply");
+  await expect(ap).toHaveAttribute("data-kind", "逆算");
+  await expect(ap).toContainText("平均を 6 回にしたい");
+  await expect(x.getByTestId("exp-send")).toHaveCount(0);
+  await ap.getByTestId("exp-apply-input").fill("25");
+  await ap.getByTestId("exp-apply-check").click();
+  await expect(ap.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "false");
+  await expect(ap.getByTestId("exp-apply-verdict")).toContainText("30%");
+  await ap.getByTestId("exp-apply-retry").click();
+  await ap.getByTestId("exp-apply-input").fill("30");
+  await ap.getByTestId("exp-apply-check").click();
+  await expect(ap.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "true");
   await x.getByTestId("q-chip-p").click();
   await x.getByTestId("exp-app-p").fill("0.3");
   await expect(x).toContainText("中心 n×p＝3");
@@ -680,6 +693,13 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);   // 長い行の名前でも横にはみ出さない
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.getByTestId("exp-cx-text")).toContainText("山は二項分布より狭くなる");
+  await x.getByRole("button", { name: "崩す強さを変える" }).click();
+  // 応用（反証）：平均が np でも二項分布と言えるか。選ぶ形の答え
+  await expect(x.getByTestId("exp-apply")).toHaveAttribute("data-kind", "反証");
+  await x.getByTestId("exp-apply").getByRole("radio", { name: "言えない" }).click();
+  await x.getByTestId("exp-apply-check").click();
+  await expect(x.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "true");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await x.getByRole("button", { name: "戻る" }).click();
   await openQ(x, "E-03");   // 戻さずに抽出するとどうなる？ → 戻さずに取るで開く
   await expect(x.getByTestId("exp-bnd-urn")).toHaveAttribute("aria-pressed", "true");
