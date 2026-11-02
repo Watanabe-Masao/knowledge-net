@@ -1028,7 +1028,13 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(lab.getByTestId("lab-concept-pick")).toContainText("概念で探す：二項分布");
   await expect(lab.getByTestId("lab-rule")).toContainText("二項分布を使う問い");
   // 24 問のうち、使わない印の2問（C-03・D-04）は並べない。主が関係の問い（E-03：二項分布と超幾何分布の対比、C-01）も両端の概念から引く（#169）
-  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p").locator("li")).toHaveCount(22);
+  // 概念を1つだけ選ぶと、その概念が主の問いと関連の問いに分ける（#163・#171）。主が関係（E-03：二項分布と超幾何分布の対比）は両端の概念の主。
+  // 故障：主と関連の取り違え・関係の主を関連に入れる・分けたときに問いが落ちる。見つけ方：見本の JSON から手で数えた 15 問と 7 問の並び
+  const ids = (key: string) => lab.getByTestId(`lab-q-stats2:EXP-binom-p-${key}`).locator("[data-testid^=lab-open-]").evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")!.replace("lab-open-stats2:binom-", "")));
+  expect(await ids("main")).toEqual(["A-01", "A-02", "A-03", "A-04", "B-01", "B-04", "C-02", "D-01", "D-02", "E-01", "E-02", "E-03", "E-04", "F-01", "F-02"]);
+  expect(await ids("related")).toEqual(["B-02", "B-03", "C-01", "C-04", "D-03", "F-03", "F-04"]);
+  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-main-head")).toContainText("主となる問い15 問");
+  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-related-head")).toContainText("関連する問い7 問");
   await expect(lab.getByTestId("lab-open-stats2:binom-C-03")).toHaveCount(0);
   await expect(lab.getByTestId("lab-open-stats2:binom-E-03")).toContainText("主：二項分布と超幾何分布のつながり");
   await lab.getByTestId("lab-concept-pick").click();
