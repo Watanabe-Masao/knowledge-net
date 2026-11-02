@@ -142,7 +142,7 @@ const W0 = "src=sample/stats2-w0.json";
 /** 実験室の入口で問いを開く：上の選択でまとまり（A〜F）を選び、その中の問い（A-01 など）を押す（stats2-course #163） */
 async function openQ(x: import("@playwright/test").Locator, key: string) {
   await x.getByTestId("exp-group-pick").click();
-  await x.getByTestId(`exp-group-${key[0]}`).click();
+  await x.getByTestId(`exp-group-${key === "compare" ? "compare" : key[0]}`).click();   // 比べるは A〜F の後ろのまとまり
   await x.getByTestId(`exp-q-${key}`).click();
 }
 /** 概念の中身の切り替え（概要・式・実験・つながり・教材）を選ぶ */
@@ -626,13 +626,13 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");
   await expect(x.getByTestId("exp-group-pick")).toContainText("2／4");
   await x.getByTestId("exp-group-pick").click();
-  await expect(x.getByTestId("exp-group-list").getByRole("option")).toHaveText([/A分布の形と仕組み2／4/, /B事象と確率計算3／4/, /C理論と実験1／4/, /D期待値・分散との接続0／4/, /E前提条件と反例4／4/, /F応用・発展0／4/]);
+  await expect(x.getByTestId("exp-group-list").getByRole("option")).toHaveText([/A分布の形と仕組み2／4/, /B事象と確率計算3／4/, /C理論と実験1／4/, /D期待値・分散との接続0／4/, /E前提条件と反例4／4/, /F応用・発展0／4/, /自分で条件を決めて比べるカード 0 枚/]);
   await x.getByTestId("exp-group-A").click();
   await expect(x.getByTestId("exp-group-list")).toHaveCount(0);
   expect(await x.getByTestId("exp-items-A").locator("[data-testid^=exp-q-]").evaluateAll((els) => els.map((e) => [e.getAttribute("data-testid"), e.tagName]))).toEqual([["exp-q-A-01", "BUTTON"], ["exp-q-A-02", "BUTTON"], ["exp-q-A-03", "DIV"], ["exp-q-A-04", "DIV"]]);
   await expect(x.getByTestId("exp-q-A-03")).toContainText("作成中");
   await expect(x.getByTestId("exp-q-A-01")).toContainText("位置");
-  await expect(x.getByTestId("exp-q-compare")).toContainText("比べる");
+  await expect(x.getByTestId("exp-q-compare")).toHaveCount(0);   // 比べるは選択の最後のまとまり。A の下に重ねて出さない（渡辺さん 2026-11-02）
   // 位置
   await x.getByTestId("exp-q-A-01").click();
   await expect(x.getByRole("list", { name: "段" }).getByRole("button")).toHaveText([/予測/, /実験/, /観察/, /理由/, /応用/]);
@@ -663,7 +663,10 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x).toContainText("中心 n×p＝3");
   await x.getByTestId("exp-keep").click();
   await x.getByTestId("exp-to-menu").click();
-  await expect(x.getByTestId("exp-q-compare")).toContainText("記録カード 1 枚");
+  await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");   // 戻ると前に選んだまとまりのまま
+  await x.getByTestId("exp-group-pick").click();
+  await expect(x.getByTestId("exp-group-compare")).toContainText("カード 1 枚");
+  await x.getByTestId("exp-group-A").click();
   // 前提崩し：疲れて下がる（狭くなる）・戻さずに取る
   await openQ(x, "E-01");   // 成功確率が毎回違っても二項分布になる？ → 疲れて下がるで開く
   await expect(x.getByTestId("exp-bnd-fatigue")).toHaveAttribute("aria-pressed", "true");
@@ -770,7 +773,7 @@ test("比べる（実験室に1か所）：起き方も選んでカードに残�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
-  await x.getByTestId("exp-q-compare").click();
+  await openQ(x, "compare");
   await x.getByTestId("cmp-save-100").click();   // 条件どおり n＝10・p＝0.5
   await x.getByTestId("cmp-kind").selectOption("streak");
   await x.getByTestId("cmp-save-100").click();
