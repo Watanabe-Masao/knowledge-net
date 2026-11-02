@@ -285,14 +285,16 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ逆の向き？ 理由を考える</button>;
   } else if (stage === 3) {
-    body = <Card title="回数は √n 倍、割合は 1/√n 倍">
+    body = <><Card title="回数は √n 倍、割合は 1/√n 倍">
       <table className={qs.table}><thead><tr><th /><th>n＝{n0}</th><th>n＝{n1}</th></tr></thead><tbody>
         <tr><td>回数の分散 np(1−p)</td><td>{r2(sd(n0) ** 2)}</td><td>{r2(sd(n1) ** 2)}</td></tr>
         <tr><td>回数の標準偏差</td><td>{r2(sd(n0))}</td><td>{r2(sd(n1))}</td></tr>
         <tr><td>割合の標準偏差 √(p(1−p)/n)</td><td>{pShort(sd(n0) / n0)}</td><td>{pShort(sd(n1) / n1)}</td></tr>
       </tbody></table>
       <p className={qs.note}>分散は n に比例するので、標準偏差は √n に比例する。割合は回数を n で割るので、標準偏差は √n÷n＝1/√n に比例する。たくさん集めると割合が落ち着くのはこのため。</p>
-    </Card>;
+    </Card>
+    {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる<span>n を動かすと ±標準偏差の帯の幅が √n 倍</span></p>{props.workspace({ n: n1, p: q.set.p }, Math.round(n1 * q.set.p))}</section>}
+    </>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>n を自由に変える</button>;
   } else {
     const sdc = Math.sqrt(app.n * app.p * (1 - app.p));
