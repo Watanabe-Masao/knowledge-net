@@ -103,6 +103,8 @@
 .keyBar { width: 9px; height: 11px; border-radius: 2px 2px 0 0; background: var(--data-1); opacity: .55; }
 .keyDot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
 .keyMean { width: 0; height: 12px; border-left: 1.5px dashed var(--ink-2); }
+.keySd { width: 14px; height: 10px; border-radius: 2px; background: var(--accent-soft); }
+.sdBand { fill: var(--accent-soft); pointer-events: none; }   /* ±標準偏差の帯：棒の下に敷く（棒と点が上に重なる） */
 .svg { width: 100%; height: auto; display: block; touch-action: manipulation; overflow: visible; }
 .hit { fill: transparent; cursor: pointer; }
 .grid { stroke: var(--line); stroke-width: 1; }

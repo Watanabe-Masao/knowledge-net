@@ -196,17 +196,19 @@ export default function App() {
   const xdef = exp ? net.experiments.get(exp) : undefined;
   if (xdef) {
     const formulaOf = (id?: string, i = 0) => { const f = id ? net.concepts.get(id)?.formulas?.[i] : undefined; return f ? { ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) } : undefined; };
+    // 概念の作業台（式で決まる分布の workspace）。理由の段は問いの主概念 → 関連概念の順でこれを引く（stats2-course #171）
+    const wsOf = (cid?: string) => {
+      const w = cid ? net.concepts.get(cid)?.workspace : undefined, f = w ? formulaOf(cid, w.formula) : undefined;
+      return w && f?.tree ? { formula: f, mean: w.mean !== undefined ? formulaOf(cid, w.mean) : undefined, vary: w.vary, over: w.over } : undefined;
+    };
     return (
       <main className={st.app}>
         <Experiment key={`${xdef.id}-${q ?? ""}`} def={xdef} open={(xdef.model === "binom" && q ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open : undefined)} cards={cards ?? undefined} onCards={(e) => setCards(e || null)} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
           onConcept={(id) => net.concepts.has(id) && setSel(id)} conceptName={(id) => name(net, id)}
           onBack={() => (history.length > 1 ? history.back() : setExp(null))}
           definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map((f) => formulaOf(id, (net.concepts.get(id)?.formulas ?? []).indexOf(f))!)}
-          workspace={(() => {   // 理由の段に、つなぐ概念の作業台を置く（概念のページと同じもの）
-            const cid = xdef.reason?.concept ?? xdef.links.concepts?.[0], c = cid ? net.concepts.get(cid) : undefined, w = c?.workspace;
-            const f = w ? formulaOf(cid, w.formula) : undefined;
-            return w && f?.tree ? { formula: f, mean: w.mean !== undefined ? formulaOf(cid, w.mean) : undefined, vary: w.vary, over: w.over } : undefined;
-          })()} />
+          workspace={wsOf(xdef.reason?.concept ?? xdef.links.concepts?.[0])}
+          workspaceOf={wsOf} />
       </main>
     );
   }
