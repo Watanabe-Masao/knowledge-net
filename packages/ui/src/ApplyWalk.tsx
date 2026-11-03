@@ -357,29 +357,38 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   const compact = open && !review && here?.t === "tool";
   const sheet = open && createPortal(<>
     {!compact && <div className={s.wScrim} onClick={() => setOpen(false)} />}
-    <div className={compact ? `${s.wSheet} ${s.wSheetCompact}` : s.wSheet} role="dialog" aria-label="解き方" data-testid="exp-walk-sheet-box" data-compact={String(compact)}>
+    {compact
+      // 道具で確かめる段：後ろの道具を使うので、やることと進むボタンだけの細いカードにする（渡辺さん 2026-11-03「スッキリしない」）
+      ? <div className={`${s.wSheet} ${s.wSheetCompact}`} role="dialog" aria-label="解き方" data-testid="exp-walk-sheet-box" data-compact="true">
+        <div className={s.wcHead}><small className={done ? s.wcOk : undefined}>{done ? "できた" : `STEP ${cur + 1} / ${N}・${KIND[st.kind][0]}`}</small>
+          <button type="button" className={s.wClose} aria-label="閉じる" onClick={() => setOpen(false)} data-testid="exp-walk-close">×</button></div>
+        <p className={s.wcTodo} data-testid="exp-walk-todo">{todo}</p>
+        <p className={msg ? (msg.good ? s.wcGood : s.wcBad) : s.wcStatus} role="status" data-testid="exp-walk-status">{msg?.t ?? ""}</p>
+        <div className={s.wcFoot}>
+          <button type="button" className={s.wcBtn} disabled={cur === 0} onClick={() => go(cur - 1)} data-testid="exp-walk-prev">前へ</button>
+          <button type="button" className={`${s.wcBtn} ${s.wcMain}`} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを見る" : "次へ"}</button>
+        </div>
+      </div>
+      : <div className={s.wSheet} role="dialog" aria-label="解き方" data-testid="exp-walk-sheet-box" data-compact="false">
       <div className={s.wGrab} aria-hidden="true" />
       <div className={s.wHead}><b>解き方</b><button type="button" className={s.wClose} aria-label="閉じる" onClick={() => setOpen(false)} data-testid="exp-walk-close">×</button></div>
       <div className={s.wBody}>
-        {!compact && taskCard}
-        {compact ? <div className={s.wWork}>
-          <p className={done ? `${s.walkTodo} ${s.walkTodoOk}` : s.walkTodo} data-testid="exp-walk-todo"><small>{done ? "できた" : `STEP ${cur + 1} / ${N}・${KIND[st.kind][0]}`}</small><b>{todo}</b></p>
-          <p className={msg ? (msg.good ? s.wGood : s.wBad) : s.wStatus} role="status" data-testid="exp-walk-status">{msg?.t ?? ""}</p>
-        </div> : work}
+        {taskCard}
+        {work}
       </div>
       <div className={s.wFoot}>
         {review ? <button type="button" className={s.secondary} onClick={restart} data-testid="exp-walk-again">最初から組み立てる</button>
           : <><button type="button" className={s.secondary} disabled={cur === 0} onClick={() => go(cur - 1)} data-testid="exp-walk-prev">前へ</button>
             <button type="button" className={s.primary} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを見る" : "次へ"}</button></>}
       </div>
-    </div>
+    </div>}
   </>, document.body);
 
   return <div className={s.walk} data-testid="exp-walk">
     <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
     <p className={s.walkNote}>{ok ? "合っている。解き方を確かめるだけなら、まとめを見る。" : "課題の文に印を付けるところから、解き方を自分で組み立てる。どこで迷ったかが最後に分かる。"}</p>
     <div className={s.two}>
-      <button type="button" className={ok ? s.secondary : s.primary} onClick={() => { haptic(); if (started && !review) setOpen(true); else restart(); }} data-testid="exp-walk-start">{started && !review ? `続きから組み立てる（STEP ${cur + 1}）` : "解き方を組み立てる"}</button>
+      <button type="button" className={ok ? s.secondary : s.primary} onClick={() => { haptic(); if (started && !review) setOpen(true); else restart(); }} data-testid="exp-walk-start">{started && !review ? `続きから（STEP ${cur + 1}）` : "解き方を組み立てる"}</button>
       <button type="button" className={ok ? s.primary : s.secondary} onClick={() => { haptic(); setReview(true); setOpen(true); }} data-testid="exp-walk-review">まとめだけ見る</button>
     </div>
     {sheet}
