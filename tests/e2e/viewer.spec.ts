@@ -1595,21 +1595,28 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
       }
       if (st.kind === "build") {
         for (const fu of w.formulas) {
-          // 運ぶ段では見つけた情報を全部同じに押せる（要るものだけを押せるようにすると、それが答えになる）
-          const chips = sh.locator("[data-testid^=exp-walk-info-]");
-          await expect(chips.first()).toBeVisible();
-          for (const c of await chips.all()) await expect(c, "運ぶ段で押せない情報がある（要るものが見分けられる）").toBeEnabled();
-          // 枠は全部埋めてから「これで答える」。全部一致で正解、違う枠だけ入れ直す
+          // 枠を押すと、入れられる値を下から選ぶ（上の課題カードまで戻らない）。選び肢はどの枠でも同じ並び（要るものだけを出すと、それが答えになる）
+          const picker = page.getByTestId("exp-walk-picker");
+          const put = async (sym: string, src: string) => { await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); await picker.getByTestId(`exp-walk-pick-${src}`).click(); await expect(picker).toHaveCount(0); };
           const syms = [...new Set(SYMS[fu.ref]!)];
+          const listOf = async (sym: string) => { await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); const ids = await picker.locator("[data-testid^=exp-walk-pick-]").evaluateAll((es) => es.map((e) => e.getAttribute("data-testid"))); await picker.getByTestId("exp-walk-picker-close").click(); return ids; };
+          // 値を選ぶ欄には、見出しと値の札だけを出す。記号の意味を書くと、どの値を入れるかの答えになる（故障：SYM_MEAN を欄に出す）
+          await sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[0]}`).click();
+          await expect(picker.locator("p"), "値を選ぶ欄に説明の文がある（記号の意味は答えになる）").toHaveCount(0);
+          await picker.getByTestId("exp-walk-picker-close").click();
+          const first = await listOf(syms[0]!);
+          expect(first.length, "枠に入れる値の選び肢が、その公式の記号の数より少ない（要るものだけを出している）").toBeGreaterThanOrEqual(new Set(Object.values(fu.bind)).size);
+          if (syms.length > 1) expect(await listOf(syms[1]!), "枠ごとに選び肢が違う（要るものが分かる）").toEqual(first);
+          // 枠は全部埋めてから「これで答える」。全部一致で正解、違う枠だけ入れ直す
           const swap = fu === w.formulas[0] && syms.length > 1 && fu.bind[syms[0]!] !== fu.bind[syms[1]!];
-          for (const [si, sym] of syms.entries()) { await sh.getByTestId(`exp-walk-info-${swap && si === 0 ? fu.bind[syms[1]!] : fu.bind[sym]}`).click(); await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); }
+          for (const [si, sym] of syms.entries()) await put(sym, swap && si === 0 ? fu.bind[syms[1]!]! : fu.bind[sym]!);
           if (swap) {
             await expect(status, "埋め終わる前に判定した").not.toContainText("違う");
             await answer();
             await expect(status).toContainText("違う");
             await expect(sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[0]}`)).toContainText("入れ直す");
-            await expect(sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[1]}`), "合っていた枠まで消した").not.toContainText("ここへ");
-            await sh.getByTestId(`exp-walk-info-${fu.bind[syms[0]!]}`).click(); await sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[0]}`).click();
+            await expect(sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[1]}`), "合っていた枠まで消した").not.toContainText("選ぶ");
+            await put(syms[0]!, fu.bind[syms[0]!]!);
           }
           await answer();
           while (await sh.getByTestId("exp-walk-calc").count()) {

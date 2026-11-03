@@ -313,7 +313,18 @@
 .wInfo small { grid-column: 2; font-size: 11px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wInfo b { grid-column: 2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.35; }
 .wInfo:not(:disabled) { cursor: pointer; box-shadow: inset 0 0 0 2px var(--accent); }
-.wInfo.wOn { background: var(--accent); color: var(--accent-ink); } .wInfo.wOn small, .wInfo.wOn i { color: var(--accent-ink); }
+.wInfo.wStatic { box-shadow: none; cursor: default; }
+/* 枠に入れる値を選ぶ（解き方のシートの上に重ねる下からの欄） */
+.pkScrim { position: fixed; inset: 0; z-index: 9; background: var(--scrim); animation: fade var(--dur-sheet) var(--ease-sheet); }
+.pkPanel { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-height: 70vh; overflow-y: auto; display: grid; gap: 8px; padding: 4px 12px calc(14px + env(safe-area-inset-bottom)) 16px; background: var(--raised); border-radius: var(--r-l) var(--r-l) 0 0; box-shadow: var(--shadow-raised); animation: rise var(--dur-sheet) var(--ease-sheet); }
+.pkHead { display: flex; align-items: center; justify-content: space-between; margin-right: -8px; }
+.pkHead b { font-size: 15px; } .pkHead i { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 19px; color: var(--accent); padding: 0 2px; }
+.pkList { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pkItem { all: unset; box-sizing: border-box; min-height: 56px; padding: 8px 12px; border-radius: var(--r-m); background: var(--mark); display: grid; align-content: center; gap: 1px; cursor: pointer; }
+.pkItem small { font-size: 11.5px; color: var(--ink-2); } .pkItem b { font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.pkItem:active { transform: scale(var(--press-scale)); }
+.pkOn { box-shadow: inset 0 0 0 2px var(--accent); }
+@media (prefers-reduced-motion: reduce) { .pkScrim, .pkPanel { animation: none; } }
 .walkHead { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: .04em; }
 .walkDots { display: flex; gap: 4px; }
 .walkDots i { width: 14px; height: 4px; border-radius: 2px; background: var(--line-strong); }
