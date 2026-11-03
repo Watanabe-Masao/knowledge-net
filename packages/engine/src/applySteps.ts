@@ -190,7 +190,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         { title: "大元の公式（期待値の線形性）", tex: al(["E(W)&=a\\,p+b\\,(1-p)", "E(W_1+\\cdots+W_n)&=E(W_1)+\\cdots+E(W_n)=n\\,E(W)"]), text: "1回の値 W は、成功なら a、失敗なら b。合計の期待値は、1回の期待値を足したもの（独立でなくても成り立つ）。" },
         { title: "値を入れる", tex: al([`E(W)&=${s.a}\\times${s.p}+(${s.b})\\times${f(1 - s.p)}`]) },
         { title: "計算する", tex: al([`E(W)&=${f(s.a * s.p)}+(${f(s.b * (1 - s.p))})=${f(ew)}`, `n\\,E(W)&=${s.n}\\times${f(ew)}=${tx(answer, NUM2)}`]) },
-        { title: "別の見方で確かめる", tex: al([`E(X)&=np=${f(s.n * s.p)}\\;(\\text{成功の回数})`, `a\\,E(X)+b\\,(n-E(X))&=${tx(s.a * s.n * s.p + s.b * (s.n - s.n * s.p), NUM2)}`]), text: "成功の回数の平均 np を使っても同じ。期待値は線形なので、値を付け替えても平均から計算できる。" },
+        { title: "別の見方で確かめる", tex: al([`E(X)&=np=${f(s.n * s.p)}`, `aE(X)+b(n-E(X))&=${s.a}\\times${f(s.n * s.p)}+(${s.b})\\times${f(s.n - s.n * s.p)}`, `&=${tx(s.a * s.n * s.p + s.b * (s.n - s.n * s.p), NUM2)}`]), text: "E(X) は成功の回数の平均。成功の回数の平均 np を使っても同じ。期待値は線形なので、値を付け替えても平均から計算できる。" },
       ];
     }
     case "compare-var": {
