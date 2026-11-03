@@ -182,11 +182,17 @@ export type ApplyCheck = {
   answerFormat: ApplyFormat | null;
   at: ApplyState; mark: ApplyMark; vars: ApplyVar[];
   goal?: { ok: (s: ApplyState) => boolean; kind: "min" | "max" | "exact" };
+  /** 解き方を組み立てる（stats2-course #181）の確かめる段で、道具を合わせる先（順に）。ふつうは at の1つ、2つを比べる課題は両方 */
+  targets: ApplyState[];
 };
 const OPS = { eq: 0, ge: 1, le: 2, gt: 1 } as const;   // 道具の「数え方」（ちょうど・以上・以下）。より多い は k＋1 以上として合わせる
 
 /** 課題の「グラフを問いに合わせる」先と、色を付ける所を作る（答えは solveApply と同じ求め方） */
 export function applyCheck(s: ApplySolve): ApplyCheck {
+  const c = check0(s);
+  return { ...c, targets: s.method === "compare-var" ? [{ n: s.a.n, p: s.a.p }, { n: s.b.n, p: s.b.p }] : [c.at] };
+}
+function check0(s: ApplySolve): Omit<ApplyCheck, "targets"> {
   const ans = solveApply(s).answer;
   switch (s.method) {
     case "mean-to-p":

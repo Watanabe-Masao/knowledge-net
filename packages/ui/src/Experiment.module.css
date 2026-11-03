@@ -267,3 +267,52 @@
 .tileMark { color: var(--good); font-weight: 700; }
 .titleMark { box-shadow: inset 0 -2px 0 var(--good); }
 
+/* 解き方を組み立てる（stats2-course #181）。課題の文は組み立ての間 2 行にたたむ */
+.applyTaskClamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13.5px; color: var(--ink-2); }
+.walk { display: grid; gap: 8px; margin-top: 4px; animation: enter var(--dur-sheet) var(--ease-sheet); }
+.walkNote { margin: 0; font-size: 12.5px; color: var(--ink-3); line-height: 1.55; }
+.walkHead { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: .04em; }
+.walkDots { display: flex; gap: 4px; }
+.walkDots i { width: 16px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+.walkDots i.walkDotDone { background: var(--good); } .walkDots i.walkDotCur { background: var(--accent); }
+.walkTitle { margin: 0; font-size: 16px; font-weight: 600; }
+.walkTodo { margin: 0; padding: 2px 0 2px 10px; border-left: 3px solid var(--accent-line); display: grid; }
+.walkTodo small { font-size: 11px; font-weight: 600; color: var(--accent); }
+.walkTodo b { font-size: 14.5px; font-weight: 600; line-height: 1.5; }
+.walkTodoOk { border-left-color: var(--good); } .walkTodoOk small { color: var(--good); }
+.walkAsk { margin: 0; font-size: 14.5px; font-weight: 600; line-height: 1.5; }
+.walkSheet { margin: 0; font-size: 15px; line-height: 2.5; background: var(--surface-2); border-radius: var(--r-m); padding: 8px 10px; }
+.wSeg { all: unset; position: relative; border-radius: var(--r-s); cursor: pointer; }
+.wSeg:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.wSegQ { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+.wSegNum { background: var(--mark); font-weight: 700; padding: 1px 3px; }
+.wSegOn { background: var(--accent); color: var(--accent-ink); padding: 1px 3px; }
+.wLab { position: absolute; left: 0; top: -1.3em; font-size: 10.5px; line-height: 1; font-weight: 700; color: var(--accent); white-space: nowrap; }
+.wPills, .wKnown { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.wPills button { all: unset; box-sizing: border-box; min-height: var(--tap); padding: 0 16px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); color: var(--ink-2); font-size: 14px; display: inline-flex; align-items: center; cursor: pointer; }
+.wPills button:active, .wKnown button:active, .wChoices button:active { transform: scale(var(--press-scale)); }
+.wKnown small { width: 100%; font-size: 11px; color: var(--ink-3); }
+.wKnown button { all: unset; box-sizing: border-box; min-height: 40px; padding: 0 12px; border-radius: var(--r-pill); background: var(--mark); font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.wKnown button:disabled { cursor: default; }
+.wKnown button:not(:disabled) { box-shadow: 0 0 0 2px var(--accent); }
+.wKnown button i { font-weight: 400; color: var(--accent); }
+.wKnown button.wOn { background: var(--accent); color: var(--accent-ink); } .wKnown button.wOn i { color: var(--accent-ink); }
+.wKnown button.wUsed { opacity: .45; }
+.wChoices { display: grid; gap: 8px; }
+.wChoices button { all: unset; box-sizing: border-box; min-height: var(--tap); padding: 9px 12px; border-radius: var(--r-m); border: 1.5px solid var(--line-strong); background: var(--surface); font-size: 14px; line-height: 1.45; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.wChoices button em { margin-left: auto; font-style: normal; font-weight: 700; }
+.wChoices button:disabled { opacity: .35; cursor: default; }
+.wChoices button.wMath { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 16.5px; }
+.wChoices button.wRight { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.wChoices button.wWrong { border-color: var(--bad); color: var(--bad); }
+.wEqs { display: grid; gap: 8px; }
+.wEq { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 22px; display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.wSlot, .wSlotReady, .wSlotFull { all: unset; box-sizing: border-box; min-width: 52px; min-height: 48px; padding: 4px 8px; border-radius: var(--r-l); border: 2px dashed var(--ink-3); display: inline-flex; align-items: center; justify-content: center; font-style: italic; cursor: pointer; }
+.wSlotReady { border-color: var(--accent); background: var(--accent-soft); }
+.wSlotFull { border: 2px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-style: normal; animation: enter var(--dur) var(--ease); }
+.wStatus, .wGood, .wBad { margin: 0; min-height: 20px; font-size: 13px; line-height: 1.5; }
+.wGood { color: var(--good); } .wBad { color: var(--bad); }
+.wSum { border: 1px solid var(--accent-line); border-radius: var(--r-m); padding: 9px 12px; display: grid; gap: 2px; animation: enter var(--dur-sheet) var(--ease-sheet); }
+.wSum small { font-size: 11.5px; color: var(--ink-3); }
+.wSum p { margin: 0; font-size: 14px; line-height: 1.6; }
+.walkMiss { margin-left: 8px; font-size: 11.5px; font-weight: 600; color: var(--bad); }

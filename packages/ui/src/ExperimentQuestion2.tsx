@@ -107,7 +107,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
   } else {
     const fa = pmfOf(app), mkS = fitS.mark(app);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p! }); fitS.setFit({ at, mark }); }} />}
+      {props.apply && <ApplyTask spec={props.apply} state={app} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p! }); fitS.setFit({ at, mark }); }} />}
       <Card title="理論の確率" sub={`n＝${app.n}・p＝${pc(app.p)}`}><TheoryRows pmf={fa} mark={mkS.bar} inEvent={(k) => k === peak(fa)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
@@ -192,7 +192,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
     const e = { op: ev.op, k: Math.min(app.k, app.n) }, Pa = probOf(pmfOf(app), e), sa = Math.sqrt((Pa * (1 - Pa)) / app.m);
     const mkS = fitS.mark({ n: app.n, p: app.p, k: app.k, m: app.m });
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, k: at.k!, m: at.m! }); setSel("m"); fitS.setFit({ at, mark }); }} />}
+      {props.apply && <ApplyTask spec={props.apply} state={app} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, k: at.k!, m: at.m! }); setSel("m"); fitS.setFit({ at, mark }); }} />}
       <Card title={`${app.n} 回中 ${evText(e)}・${app.m.toLocaleString()} 回`} sub={`理論 ${pctSig(Pa)}`} testid="exp-app">
         <div className={s.tiles}>
           <div>理論の確率<b>{pctSig(Pa)}</b><i>P</i></div>
@@ -272,7 +272,7 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
     const per = app.a * app.p + app.b * (1 - app.p), tot = app.n * per;
     const mkS = fitS.mark(app);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, a: at.a!, b: at.b! }); fitS.setFit({ at, mark }); }} />}
+      {props.apply && <ApplyTask spec={props.apply} state={app} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, a: at.a!, b: at.b! }); fitS.setFit({ at, mark }); }} />}
       <Card title="成功・失敗に値を付ける" sub={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">
         <table className={qs.table}><thead><tr><th>量</th><th>式</th><th>値</th></tr></thead><tbody>
           <tr><td>成功回数の平均</td><td>np</td><td>{r2(app.n * app.p)}</td></tr>
@@ -353,7 +353,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
   } else {
     const V = app.n * app.p * (1 - app.p), mkS = fitS.mark(app);
     body = <>
-      {props.apply && <ApplyTask spec={props.apply} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p! }); fitS.setFit({ at, mark }); }} />}
+      {props.apply && <ApplyTask spec={props.apply} state={app} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p! }); fitS.setFit({ at, mark }); }} />}
       <Card title={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">
         <div className={s.tiles}><div {...MK(mkS.read === "variance")}>分散 np(1−p)<b data-testid="exp-app-var">{formatApply(V, NUM2)}</b><i>{app.n}×{formatApply(app.p, NUM2)}×{formatApply(1 - app.p, NUM2)}</i></div><div>標準偏差<b>{formatApply(Math.sqrt(V), NUM2)}</b><i>√分散</i></div></div>
       </Card>
