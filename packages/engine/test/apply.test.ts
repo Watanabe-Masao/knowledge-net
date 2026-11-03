@@ -169,4 +169,19 @@ describe("確かめる段の合わせる先", () => {
     expect(c.targets).toEqual([c.at]);
     expect(applyCheck({ method: "compare-var", a: { n: 10, p: 0.6 }, b: { n: 20, p: 0.3 } }).targets).toEqual([{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }]);
   });
+  // 最小・最大を求める課題は境目の前後。想定する故障：刻みの向きの取り違え（最小で1刻み上を見せる）・刻みの大きさの取り違え。
+  // 見つけ方：答えでは goal が成り立ち、1刻み外では成り立たないことを、課題ごとの goal（engine とは別の条件の式）で確かめる
+  it.each<[string, ApplySolve]>([
+    ["A-02 最小の n", { method: "min-n-share-sd", p: 0.3, sd: 0.08 }],
+    ["C-02 最小のセット数", { method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01, unit: 100 }],
+    ["E-02 最大の強さ", { method: "max-strength", mechanism: { kind: "streak", n: 10, p: 0.5, carry: 0 }, param: "carry", min: 0.05, max: 0.6, step: 0.05, ratio: 1.2 }],
+    ["E-03 最小の玉の数", { method: "min-total", n: 10, ratio: 0.8, step: 2 }],
+  ])("%s：答えでは条件を満たし、1刻み外では満たさない", (_, sv) => {
+    const c = applyCheck(sv);
+    expect(c.probe).toBe("boundary");
+    expect(c.targets).toHaveLength(2);
+    expect(c.goal!.ok(c.targets[0]!)).toBe(true);
+    expect(c.goal!.ok(c.targets[1]!)).toBe(false);
+  });
+  it("ちょうどの値を求める課題（E-04）は答えの1つ", () => expect(applyCheck({ method: "solve-spread", n: 10, p: 0.5, variance: 3.4 }).probe).toBe("one"));
 });
