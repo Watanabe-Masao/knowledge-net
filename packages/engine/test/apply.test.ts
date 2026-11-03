@@ -68,6 +68,24 @@ describe("解き方の段（答えのあとに出す）", () => {
   });
 });
 
+describe("作成中から作った4問（A-03・C-01・D-01・D-02）の答え（手計算の値と照らす）", () => {
+  it("A-03 評価：p＝0.8・10回で最も起こりやすいのは 8 回（並びの数は 5 回が最多）", () => {
+    const P = (k: number) => comb(10, k) * 0.8 ** k * 0.2 ** (10 - k);
+    expect(P(8)).toBeGreaterThan(P(7)); expect(P(8)).toBeGreaterThan(P(9));
+    expect(solveApply({ method: "mode", n: 10, p: 0.8 }).answer).toBe(8);
+  });
+  it("C-01 反証：理論 20%・100 回中 27 回は ±2SE（12%〜28%）の中で言えない、29 回なら外で言える", () => {
+    expect(Math.sqrt(0.2 * 0.8 / 100)).toBeCloseTo(0.04, 12);
+    expect(solveApply({ method: "within-band", P: 0.2, m: 100, x: 27 }).answer).toBe(1);
+    expect(solveApply({ method: "within-band", P: 0.2, m: 100, x: 29 }).answer).toBe(0);
+  });
+  it("D-01 変換：成功 200 円・失敗 −50 円・p＝0.3・10 回の合計の期待値は 10×(60−35)＝250 円", () => close(solveApply({ method: "linear-sum", n: 10, p: 0.3, a: 200, b: -50 }).answer, 250));
+  it("D-02 評価：A（n10・p0.6）の分散 2.4 と B（n20・p0.3）の 4.2 で、B が大きい", () => {
+    const r = solveApply({ method: "compare-var", a: { n: 10, p: 0.6 }, b: { n: 20, p: 0.3 } });
+    close(r.facts.va!, 2.4); close(r.facts.vb!, 4.2); expect(r.answer).toBe(2);
+  });
+});
+
 describe("境目と止まる条件", () => {
   it("最小の n・N は、1つ手前では条件を満たさない（いろいろな p と sd）", () => {
     for (const p of [0.01, 0.1, 0.3, 0.5, 0.9]) for (const sd of [0.2, 0.05, 0.013]) {
@@ -102,7 +120,8 @@ const TASKS: ApplySolve[] = [
   { method: "expected-observers", n: 10, p: 0.5, event: { op: "ge", k: 10 }, people: 1000 }, { method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01, unit: 100 },
   { method: "binom-judge", mechanism: { kind: "fatigue", n: 10, p: 0.5, drop: 0.3 } },
   { method: "max-strength", mechanism: { kind: "streak", n: 10, p: 0.5, carry: 0 }, param: "carry", min: 0.05, max: 0.6, step: 0.05, ratio: 1.1 },
-  { method: "min-total", n: 10, ratio: 0.8, step: 2 }, { method: "solve-spread", n: 10, p: 0.5, variance: 3.4 }];
+  { method: "min-total", n: 10, ratio: 0.8, step: 2 }, { method: "solve-spread", n: 10, p: 0.5, variance: 3.4 },
+  { method: "mode", n: 10, p: 0.8 }, { method: "within-band", P: 0.2, m: 100, x: 27 }, { method: "linear-sum", n: 10, p: 0.3, a: 200, b: -50 }, { method: "compare-var", a: { n: 10, p: 0.6 }, b: { n: 20, p: 0.3 } }];
 const onGrid = (x: number, v: { min: number; max: number; step: number }) => x >= v.min - 1e-9 && x <= v.max + 1e-9 && Math.abs((x - v.min) / v.step - Math.round((x - v.min) / v.step)) < 1e-6;
 describe("解き方は 大元の公式 → 値を入れる → 計算の過程 → 答え（渡辺さん 2026-11-03）", () => {
   // 確かめる対象：結果だけを並べず、公式・代入・途中の値が段にあること。想定する故障：「P(X≧3)＝61.7%」のように途中のない段に戻る。見つけ方：B-02 で手計算の途中の値（₁₀C₃＝120・0.3³＝0.027・0.7⁷）が段に出るか
