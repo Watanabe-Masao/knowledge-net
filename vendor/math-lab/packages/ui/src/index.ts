@@ -13,3 +13,4 @@ export { Lightbox } from "./Lightbox";
 export { FullView } from "./FullView";
 export { Experiment, type ExperimentDef, type ExperimentTheme, type BinomDef } from "./Experiment";
 export { type TableDef, type TableTheme } from "./ExperimentTable";
+export { walkProblems, type ApplyWalkSpec } from "./ApplyWalk";
