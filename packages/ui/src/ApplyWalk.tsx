@@ -30,11 +30,24 @@ const SHOW: Record<string, (v: number) => string> = { n: (v) => `n ${v} 回`, p:
 const showAt = (t: ApplyState) => Object.entries(t).filter(([k]) => SHOW[k]).map(([k, v]) => SHOW[k]!(v!)).join("・");
 const same = (t: ApplyState, cur: ApplyState) => Object.entries(t).every(([k, v]) => cur[k] === undefined || Math.abs(cur[k]! - v!) < 1e-9);
 
-/** solve の値（a.n のように . でたどる） */
+/** solve の値（a.n のように . でたどる）。文に出る数が solve の数の足し引き・掛け算のときは式で書ける
+ *  （例：最初の確率 mechanism.p+mechanism.drop・平均 mechanism.n*mechanism.p。掛け算が先） */
 export const solveValue = (sv: ApplySolve, path: string): number | undefined => {
-  let v: unknown = sv;
-  for (const k of path.split(".")) v = v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined;
-  return typeof v === "number" ? v : undefined;
+  const one = (t: string): number | undefined => {
+    if (/^-?[0-9]+(\.[0-9]+)?$/.test(t)) return Number(t);
+    let v: unknown = sv;
+    for (const k of t.split(".")) v = v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined;
+    return typeof v === "number" ? v : undefined;
+  };
+  const terms = path.replace(/\s+/g, "").split(/(?=[+-])/);
+  let sum = 0;
+  for (const term of terms) {
+    const sign = term.startsWith("-") ? -1 : 1, body = term.replace(/^[+-]/, "");
+    let prod = 1;
+    for (const f of body.split("*")) { const x = one(f); if (x === undefined) return undefined; prod *= x; }
+    sum += sign * prod;
+  }
+  return sum;
 };
 const infoValues = (w: ApplyWalkSpec, sv: ApplySolve) => Object.fromEntries(Object.entries(w.info).flatMap(([k, v]) => { const x = v.of ? solveValue(sv, v.of) : undefined; return x === undefined ? [] : [[k, x]]; }));
 
@@ -114,7 +127,8 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   const say = (t: string, good = false) => { setMsg({ t, good }); if (good) haptic(); };
   const missHere = () => setMiss((m) => m.map((x, i) => (i === cur ? x + 1 : x)));
   const seg = (k: string) => walk.segments.find((g) => g.key === k);
-  const symOf = (src: string) => walk.info[src]?.sym ?? WALK_FORMULAS[walk.formulas.find((f) => f.id === src)?.ref ?? ""]?.out ?? src;
+  /** 式の穴と枠に出す記号：情報なら情報の記号（N 人など）、前の公式の値なら穴の記号（V − B が V − V にならないように） */
+  const holeSym = (src: string, sym: string) => walk.info[src]?.sym ?? sym;
   const slotKey = (f: number, sym: string) => `${walk.formulas[f]!.id}.${sym}`;
   const subDone = (c: number, i: number): boolean => {
     const x = subs[c]![i]!;
@@ -224,7 +238,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
     if (!wrong.length) { say("全部の枠が合っている。式の中の同じ記号すべてに入る。", true); return; }
     missHere();
     const sy = wrong[0]!, a = valOf(put[slotKey(f, sy)]!), b = valOf(fu.bind[sy]!);
-    say(`${wrong.length === syms.length ? "全部" : `${wrong.length} つ`}の枠が違う（✗ の枠を入れ直す）。${SYM_MEAN[sy] ?? ""}${a !== undefined && b !== undefined && Math.abs(a - b) < 1e-12 ? "値が同じでも、意味が違う。" : ""}`);
+    say(`${wrong.length === syms.length ? "全部" : `${wrong.length} つ`}の枠が違う（✗ の枠を入れ直す）。${WALK_FORMULAS[fu.ref]!.mean?.[sy] ?? SYM_MEAN[sy] ?? ""}${a !== undefined && b !== undefined && Math.abs(a - b) < 1e-12 ? "値が同じでも、意味が違う。" : ""}`);
   };
   const go = (c: number) => { setCur(c); setSub(c < cur ? subs[c]!.length - 1 : 0); setMsg(null); setArm(null); setPick([]); setFull(false); };
   const restart = () => {
@@ -274,8 +288,8 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
     return def.tex.replace(/@([A-Za-z])/g, (_, sym: string) => {
       const src = fu.bind[sym];
       if (!src) return sym;
-      if (isFilled(sym)) { const v = vals[src] ?? computed.find((c) => c.id === src)?.value; return `{\\mathbf{${v === undefined ? "?" : r4(v)}}}`; }
-      return `{${symOf(src)}}`;
+      if (isFilled(sym)) { const v = vals[src] ?? computed.find((c) => c.id === src)?.value; return v === undefined ? "{?}" : v < 0 ? `{(\\mathbf{${r4(v)}})}` : `{\\mathbf{${r4(v)}}}`; }   // 負の数は括弧に入れる（+ −50 にしない）
+      return `{${holeSym(src, sym)}}`;
     });
   }
 
@@ -317,7 +331,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
         {!bindDone && <div className={s.wSlots}>{def.syms.filter((sy, i, a) => a.indexOf(sy) === i).map((sy) => {
           const k = slotKey(f, sy), src = fu.bind[sy]!;
           const shownSrc = filled[k] ? src : put[k];
-          return <button key={sy} type="button" className={[filled[k] ? s.wSlotFull : put[k] ? s.wSlotPut : arm ? s.wSlotReady : s.wSlot, bad[k] && !put[k] ? s.wSlotBad : ""].filter(Boolean).join(" ")} onClick={() => putSlot(f, sy)} data-testid={`exp-walk-slot-${fu.id}-${sy}`}><i>{symOf(src)}</i><span>{shownSrc ? r4(valOf(shownSrc)!) : bad[k] ? "✗ 入れ直す" : "ここへ"}</span></button>;
+          return <button key={sy} type="button" className={[filled[k] ? s.wSlotFull : put[k] ? s.wSlotPut : arm ? s.wSlotReady : s.wSlot, bad[k] && !put[k] ? s.wSlotBad : ""].filter(Boolean).join(" ")} onClick={() => putSlot(f, sy)} data-testid={`exp-walk-slot-${fu.id}-${sy}`}><i>{holeSym(src, sy)}</i><span>{shownSrc ? r4(valOf(shownSrc)!) : bad[k] ? "✗ 入れ直す" : "ここへ"}</span></button>;
         })}</div>}
         {!bindDone && here?.t === "bind" && here.f === f && <button type="button" className={s.secondary} disabled={!def.syms.every((sy) => filled[slotKey(f, sy)] || put[slotKey(f, sy)])} onClick={() => answerBind(f)} data-testid="exp-walk-answer">これで答える</button>}
         {bindDone && shown > 0 && <ol className={s.wCalc}>{c.rows.slice(0, shown).map((row, i) => {
@@ -328,7 +342,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
           </li>;
         })}</ol>}
         {bindDone && shown < c.rows.length && <button type="button" className={s.secondary} disabled={!rowQuizOk(cur, f, shown)} onClick={() => { haptic(); setCalc({ ...calc, [f]: shown + 1 }); setMsg(null); }} data-testid="exp-walk-calc">{shown === 0 ? "計算する" : shown + 1 < c.rows.length ? "次の計算へ" : `${fu.word ?? def.outWord}を出す`}</button>}
-        {bindDone && shown >= c.rows.length && rowQuizOk(cur, f, shown) && used && <div className={s.wMade}><span>出てきた値</span>{chip(fu.id, def.out, `≈ ${r4(c.value)}`, fu.word ?? def.outWord)}</div>}
+        {bindDone && shown >= c.rows.length && rowQuizOk(cur, f, shown) && used && <div className={s.wMade}><span>出てきた値</span>{chip(fu.id, def.out, `${Math.abs(c.value - Number(r4(c.value))) > 1e-12 ? "≈" : "="} ${r4(c.value)}`, fu.word ?? def.outWord)}</div>}
       </div>;
     })}
     {here?.t === "quiz" && <>
