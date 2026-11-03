@@ -143,7 +143,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
 }
 
 const KINDS: [CardMechanism["kind"], string][] = [["bernoulli", "条件どおり（二項分布）"], ["streak", "前の結果に引きずられる"], ["mix", "日によって確率が違う"], ["fatigue", "疲れて確率が下がる"], ["urn", "箱から戻さずに取る"]];
-const STR: Record<string, [string, number, number, number]> = { streak: ["引きずる強さ", 0.05, 0.6, 0.05], mix: ["ずれ幅 d", 0.05, 0.4, 0.05], fatigue: ["下がる幅 d", 0.05, 0.4, 0.05], urn: ["箱の数", 12, 60, 2] };
+const STR: Record<string, [string, number, number, number]> = { streak: ["引きずる強さ", 0.05, 0.6, 0.05], mix: ["ずれ幅 d", 0.05, 0.4, 0.05], fatigue: ["下がる幅 d", 0.05, 0.4, 0.05], urn: ["箱の中の玉の数", 12, 60, 2] };
 /** 比べる（実験室に1か所）：起き方・n・p・強さを決めてカードに残し、4つまで重ねる */
 function BinomCompare({ def, deck, onBack, onInfo, children }: { def: BinomDef; deck: ReturnType<typeof useCards>; onBack: () => void; onInfo: () => void; children?: ReactNode }) {
   const [d, setD] = useState<{ kind: CardMechanism["kind"]; n: number; p: number; x: number }>({ kind: "bernoulli", n: def.start.n, p: def.start.p, x: 0.3 });

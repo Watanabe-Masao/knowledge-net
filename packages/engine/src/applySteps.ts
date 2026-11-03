@@ -147,7 +147,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
     case "min-total": {
       const st = s.step ?? 1, N = answer, fpc = (x: number) => (x - s.n) / (x - 1);
       return [
-        { title: "何を求めるか", text: `箱から戻さずに ${s.n} 個取ると、分散は戻して取るとき（二項分布）より小さくなる。小さくなっても ${f(s.ratio)} 倍以上にとどまる、いちばん少ない箱の数 N${st > 1 ? `（${st} 個単位）` : ""}。` },
+        { title: "何を求めるか", text: `箱から戻さずに ${s.n} 個取ると、分散は戻して取るとき（二項分布）より小さくなる。小さくなっても ${f(s.ratio)} 倍以上にとどまる、いちばん少ない箱の中の玉の数 N${st > 1 ? `（${st} 個単位）` : ""}。` },
         { title: "大元の公式（有限母集団修正）", tex: al(["V_{\\text{戻さない}}&=nP(1-P)\\cdot\\dfrac{N-n}{N-1}", "\\dfrac{V_{\\text{戻さない}}}{V_{\\text{戻す}}}&=\\dfrac{N-n}{N-1}"]), text: "戻さないと取るたびに箱の中身が変わり、その分だけ分散が縮む。" },
         { title: "値を入れる", tex: al([`\\dfrac{N-${s.n}}{N-1}&\\ge ${f(s.ratio)}`]) },
         { title: "計算する", tex: al([`N-${s.n}&\\ge ${f(s.ratio)}(N-1)`, `N-${f(s.ratio)}N&\\ge ${s.n}-${f(s.ratio)}`, `${f(1 - s.ratio)}N&\\ge ${f(s.n - s.ratio)}`, `N&\\ge ${f((s.n - s.ratio) / (1 - s.ratio), 6)}`]), text: "両辺に N−1 を掛け、N を左にまとめて解く。" },
