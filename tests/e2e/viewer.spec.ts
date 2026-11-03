@@ -1389,7 +1389,6 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-verdict-1")).toContainText("62.3%");
   await expect(x.getByTestId("exp-compare-note")).toContainText("その 39%");
   await x.getByRole("button", { name: /理由を考える/ }).click();
-  await expect(x.getByTestId("exp-workspace")).toBeVisible();   // 主（確率分布）に作業台がないので、関連（二項分布）の作業台
   await x.getByRole("button", { name: "戻る" }).click();
   // 理論と実測
   await openQ(x, "C-02");
@@ -1401,7 +1400,6 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
   await expect(x.getByTestId("exp-conv-table").locator("tbody tr")).toHaveCount(4);   // 10・100・1000・10000 セット
   await x.getByRole("button", { name: /理由を考える/ }).click();
-  await expect(x.getByTestId("exp-workspace")).toHaveCount(0);   // 理論と実測は、式が理由の中心の形でないので作業台を出さない
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
 });
@@ -1437,22 +1435,23 @@ test("並び・ばらつきの問い：並びの数と分散の最大を理論�
 // 応用の課題の全部（stats2-course #171、渡辺さん 2026-11-03「問いを見て値を自分で合わせられるか・グラフを読み取れるか。間違えたら入れ間違いか読み違いかを分からせる」）。
 // 確かめる対象：公開中の14問すべてで、答え合わせのあとの「グラフを問いに合わせる」が、つまみを問いの値にし（つまみの刻みの上にある＝自分でも合わせられる）、
 // 答えの出ている所に色を付け、そこに答えと同じ文字が出ること。想定する故障：道具で合わせられない値（刻みの外・つまみがない）・答えと道具の桁のずれ・色が付かない。
-// 見つけ方：合わせたあとのつまみの値（range の value は刻みに丸められる）を問いの値と照らし、色の付いた所の文字に答えの文字が入っているかを見る
-const APPLY_CASES: { key: string; chip?: [string, string, number]; answerIn: boolean }[] = [
-  { key: "A-01", chip: ["p", "exp-app-p", 0.3], answerIn: true },
-  { key: "A-02", chip: ["n", "exp-app-n", 33], answerIn: true },
-  { key: "B-01", answerIn: false },   // 選ぶ形：色は「ちょうど 3 回」の欄と 3 回の行
-  { key: "B-02", answerIn: true },     // 「ちょうど 3 回」の欄に 26.7%
-  { key: "B-04", answerIn: false },    // 人数の平均は道具に出ない（1人の確率を読んで ×1000 を考える）
-  { key: "C-02", chip: ["N", "exp-app-N", 9200], answerIn: true },
-  { key: "E-01", answerIn: false },
-  { key: "E-02", chip: ["s", "exp-app-s", 0.05], answerIn: true },
-  { key: "E-03", chip: ["s", "exp-app-s", 46], answerIn: true },
-  { key: "E-04", chip: ["s", "exp-app-s", 0.1], answerIn: true },
-  { key: "A-03", answerIn: true },      // いちばん高い棒（8 回の行）
-  { key: "C-01", chip: ["m", "exp-app-m", 100], answerIn: false },   // 選ぶ形：色は ±2SE の幅（12%〜28%）
-  { key: "D-01", chip: ["a", "exp-app-a", 200], answerIn: true },     // 合計の値の平均に 250
-  { key: "D-02", answerIn: false },     // 選ぶ形：色は A の分散（2.4）。B は自分で合わせて比べる
+// 見つけ方：合わせたあとのつまみの値（range の value は刻みに丸められる）を問いの値と照らし、色の付いた所の文字に答えの文字が入っているかを見る。
+// あわせて、全部の形の段ごと（実験・観察・理由・応用）に、390px で横にはみ出さないこと・理由の段の作業台の有無を確かめる（形を足したときの抜けを1か所で見つける。R1 の残り）
+const APPLY_CASES: { key: string; ws: boolean; chip?: [string, string, number]; answerIn: boolean }[] = [
+  { key: "A-01", ws: true, chip: ["p", "exp-app-p", 0.3], answerIn: true },
+  { key: "A-02", ws: true, chip: ["n", "exp-app-n", 33], answerIn: true },
+  { key: "B-01", ws: true, answerIn: false },   // 選ぶ形：色は「ちょうど 3 回」の欄と 3 回の行
+  { key: "B-02", ws: true,   /* 主（確率分布）に作業台がないので、関連（二項分布）の作業台 */ answerIn: true },     // 「ちょうど 3 回」の欄に 26.7%
+  { key: "B-04", ws: true, answerIn: false },    // 人数の平均は道具に出ない（1人の確率を読んで ×1000 を考える）
+  { key: "C-02", ws: false,   /* 理論と実測は式が理由の中心の形でないので出さない（くり返しも同じ） */ chip: ["N", "exp-app-N", 9200], answerIn: true },
+  { key: "E-01", ws: false, answerIn: false },
+  { key: "E-02", ws: false, chip: ["s", "exp-app-s", 0.05], answerIn: true },
+  { key: "E-03", ws: false, chip: ["s", "exp-app-s", 46], answerIn: true },
+  { key: "E-04", ws: false, chip: ["s", "exp-app-s", 0.1], answerIn: true },
+  { key: "A-03", ws: true, answerIn: true },      // いちばん高い棒（8 回の行）
+  { key: "C-01", ws: false, chip: ["m", "exp-app-m", 100], answerIn: false },   // 選ぶ形：色は ±2SE の幅（12%〜28%）
+  { key: "D-01", ws: true, chip: ["a", "exp-app-a", 200], answerIn: true },     // 合計の値の平均に 250
+  { key: "D-02", ws: true, answerIn: false },     // 選ぶ形：色は A の分散（2.4）。B は自分で合わせて比べる
 ];
 test("応用の課題：全部の問いで、グラフを問いに合わせると答えの所に答えと同じ文字が出る", async ({ page }) => {
   test.setTimeout(240000);
@@ -1467,8 +1466,14 @@ test("応用の課題：全部の問いで、グラフを問いに合わせる�
     await x.getByRole("button", { name: "この予想で実験する" }).click();
     await x.getByTestId((await x.getByTestId("exp-run-100").count()) ? "exp-run-100" : "exp-run-big").click();   // 理論と実測は大きい回数だけ
     await expect(x.getByTestId("exp-to-observe")).toBeEnabled({ timeout: 15000 });
+    const wide = async (where: string) => expect(await page.evaluate(() => document.documentElement.scrollWidth), `${c.key} の${where}で横にはみ出す`).toBeLessThanOrEqual(390);
+    await wide("実験");
     await x.getByTestId("exp-to-observe").click();
+    await wide("観察");
     await x.getByRole("button", { name: /理由を考える/ }).click();
+    await wide("理由");
+    // 理由の段の作業台：問いの主概念（なければ関連概念）の作業台を、式が理由の中心の形にだけ出す（#171）。故障：新しい形で出し忘れる・出すべきでない形に出る
+    await expect(x.getByTestId("exp-workspace"), `${c.key} の理由の段の作業台`).toHaveCount(c.ws ? 1 : 0);
     await x.getByRole("button", { name: "応用の課題へ" }).click();
     const ap = x.getByTestId("exp-apply");
     if (await ap.getByTestId("exp-apply-input").count()) await ap.getByTestId("exp-apply-input").fill("0");
