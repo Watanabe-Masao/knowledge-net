@@ -127,7 +127,6 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   const say = (t: string, good = false) => { setMsg({ t, good }); if (good) haptic(); };
   const missHere = () => setMiss((m) => m.map((x, i) => (i === cur ? x + 1 : x)));
   const seg = (k: string) => walk.segments.find((g) => g.key === k);
-  const symOf = (src: string) => walk.info[src]?.sym ?? WALK_FORMULAS[walk.formulas.find((f) => f.id === src)?.ref ?? ""]?.out ?? src;
   /** 式の穴と枠に出す記号：情報なら情報の記号（N 人など）、前の公式の値なら穴の記号（V − B が V − V にならないように） */
   const holeSym = (src: string, sym: string) => walk.info[src]?.sym ?? sym;
   const slotKey = (f: number, sym: string) => `${walk.formulas[f]!.id}.${sym}`;
