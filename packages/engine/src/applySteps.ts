@@ -168,7 +168,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
       const fm = pmf(s.n, s.p), half = Math.floor(s.n / 2), show = [...new Set([half, answer - 1, answer, answer + 1].filter((k) => k >= 0 && k <= s.n))].sort((x, y) => x - y);
       return [
         { title: "何を求めるか", text: `成功確率 ${fa(s.p, PCT0)} で ${s.n} 回。いちばん起こりやすい成功の回数（確率がいちばん大きい棒）。` },
-        { title: "大元の公式", tex: al(["P(X=k)&={}_{n}\\mathrm{C}_{k}\\times p^{k}(1-p)^{n-k}", "&=(\\text{並びの数})\\times(\\text{1つの並びの確率})"]), text: "並びの数 ₙCₖ は真ん中（k＝n÷2）でいちばん多い。1つの並びの確率 pᵏ(1−p)ⁿ⁻ᵏ は、p が大きいと k が大きいほど大きい。その掛け算で決まる。" },
+        { title: "大元の公式", tex: al(["P(X=k)&={}_{n}\\mathrm{C}_{k}\\times p^{k}(1-p)^{n-k}"]), text: "P＝並びの数×1つの並びの確率。並びの数 ₙCₖ は真ん中（k＝n÷2）でいちばん多い。1つの並びの確率 pᵏ(1−p)ⁿ⁻ᵏ は、p が大きいと k が大きいほど大きい。その掛け算で決まる。" },
         { title: `値を入れて計算する（n＝${s.n}・p＝${s.p}）`, tex: al(show.flatMap((k) => [`P(X=${k})&=${C(s.n, k)}\\times${s.p}^{${k}}\\times${f(1 - s.p)}^{${s.n - k}}`, `&=${fa(comb(s.n, k), INT).replace(/,/g, "{,}")}\\times${f(s.p ** k * (1 - s.p) ** (s.n - k))}=${tx(fm[k]!, SIG3)}`])), text: `並びの数は ${half} 回がいちばん多い（${fa(comb(s.n, half), INT)} 通り）が、1つの並びの確率は ${answer} 回の方がずっと大きい。` },
         { title: "答え", text: `${answer} 回。確かめ：となりの棒より大きい（${show.filter((k) => k !== answer && Math.abs(k - answer) === 1).map((k) => `${k} 回 ${fa(fm[k]!, SIG3)}`).join("・")}、${answer} 回 ${fa(fm[answer]!, SIG3)}）。目安は (n＋1)p＝${f((s.n + 1) * s.p)} の整数の部分。` },
       ];
