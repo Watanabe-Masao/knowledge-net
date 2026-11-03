@@ -1531,7 +1531,21 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
     await ap.getByTestId("exp-walk-start").click();
     const sh = page.getByTestId("exp-walk-sheet-box"), next = sh.getByTestId("exp-walk-next");
     const seg = (pred: (g: WalkData["segments"][number]) => boolean) => sh.getByTestId(`exp-walk-seg-${w.segments.findIndex(pred)}`).click();
-    const pick = async (q: WalkQ) => { await sh.getByTestId(`exp-walk-choice-${q.ok}`).click(); };
+    // 選び肢は「選ぶ → これで答える」。選び直しは迷いに数えない（押し間違い）。正しく答えても次の問いへは自分で進む（答えた問いがすぐ消えない）
+    const firstChoose = w.steps.findIndex((x) => (x.choose ?? []).length > 0);
+    const pick = async (q: WalkQ, i: number, j: number, more: boolean) => {
+      if (i === firstChoose && j === 0) await sh.getByTestId(`exp-walk-choice-${q.ok === 0 ? 1 : 0}`).click();   // わざと選び直す
+      await sh.getByTestId(`exp-walk-choice-${q.ok}`).click();
+      await sh.getByTestId("exp-walk-answer").click();
+      if (more) {
+        await expect(sh.getByTestId(`exp-walk-choice-${q.ok}`), "答えた問いがすぐ次に替わる").toContainText("✓");
+        await sh.getByTestId("exp-walk-subnext").click();
+      }
+    };
+    const rowq = async (st: WalkData["steps"][number], fid: string) => {
+      const k = Object.keys(st.rowQuiz ?? {}).find((r) => r.startsWith(`${fid}.`))!;
+      await sh.getByTestId(`exp-walk-rowq-${st.rowQuiz![k]!.ok}`).click(); await sh.getByTestId("exp-walk-answer").click();
+    };
     for (const [i, st] of w.steps.entries()) {
       if (st.kind === "ask") {
         await seg((g) => g.role === "text");   // わざと1回間違える
@@ -1542,17 +1556,21 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
       if (st.collect) { for (const k of st.collect.need) await seg((g) => g.key === k); await sh.getByTestId("exp-walk-enough").click(); }
       if (st.kind === "build") {
         for (const fu of w.formulas) {
+          // 運ぶ段では見つけた情報を全部同じに押せる（要るものだけを押せるようにすると、それが答えになる）
+          const chips = sh.locator("[data-testid^=exp-walk-info-]");
+          await expect(chips.first()).toBeVisible();
+          for (const c of await chips.all()) await expect(c, "運ぶ段で押せない情報がある（要るものが見分けられる）").toBeEnabled();
           for (const sym of [...new Set(SYMS[fu.ref]!)]) { await sh.getByTestId(`exp-walk-info-${fu.bind[sym]}`).click(); await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); }
           while (await sh.getByTestId("exp-walk-calc").count()) {
             const rq = sh.getByTestId("exp-walk-rowq-0");
-            if (await rq.count()) { const k = Object.keys(st.rowQuiz ?? {}).find((r) => r.startsWith(`${fu.id}.`))!; await sh.getByTestId(`exp-walk-rowq-${st.rowQuiz![k]!.ok}`).click(); }
+            if (await rq.count()) await rowq(st, fu.id);
             await sh.getByTestId("exp-walk-calc").click();
           }
           const rq = sh.getByTestId("exp-walk-rowq-0");
-          if (await rq.count()) { const k = Object.keys(st.rowQuiz ?? {}).find((r) => r.startsWith(`${fu.id}.`))!; await sh.getByTestId(`exp-walk-rowq-${st.rowQuiz![k]!.ok}`).click(); }
+          if (await rq.count()) await rowq(st, fu.id);
         }
       }
-      for (const q of st.choose ?? []) await pick(q);
+      for (const [j, q] of (st.choose ?? []).entries()) await pick(q, i, j, j < st.choose!.length - 1);
       if (st.kind === "probe") {
         await expect(sh).toHaveAttribute("data-compact", "true");   // 道具で確かめる段はシートが縮み、後ろの道具を使う
         for (const t of targets) for (const [k, v] of Object.entries(t)) { await x.getByTestId(`q-chip-${k}`).click(); await x.getByTestId(`exp-app-${k}`).fill(String(v)); await x.getByTestId(`q-chip-${k}`).click(); }
@@ -1566,6 +1584,7 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
     await expect(rev).toHaveCount(w.steps.length);
     await expect(rev.first()).toContainText("1 回迷った");
     await expect(rev.nth(1)).not.toContainText("迷った");
+    if (firstChoose >= 0) await expect(rev.nth(firstChoose), "選び直しを迷いに数えた").not.toContainText("迷った");
     await sh.getByTestId("exp-walk-close").click();
     await x.getByRole("button", { name: "戻る" }).click();
   }
