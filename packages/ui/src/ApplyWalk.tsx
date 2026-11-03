@@ -388,7 +388,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
     <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
     <p className={s.walkNote}>{ok ? "合っている。解き方を確かめるだけなら、まとめを見る。" : "課題の文に印を付けるところから、解き方を自分で組み立てる。どこで迷ったかが最後に分かる。"}</p>
     <div className={s.two}>
-      <button type="button" className={ok ? s.secondary : s.primary} onClick={() => { haptic(); if (started && !review) setOpen(true); else restart(); }} data-testid="exp-walk-start">{started && !review ? `続きから（STEP ${cur + 1}）` : "解き方を組み立てる"}</button>
+      <button type="button" className={ok ? s.secondary : s.primary} onClick={() => { haptic(); if (started && !review) setOpen(true); else restart(); }} data-testid="exp-walk-start">{started && !review ? "続きから組み立てる" : "解き方を組み立てる"}</button>
       <button type="button" className={ok ? s.primary : s.secondary} onClick={() => { haptic(); setReview(true); setOpen(true); }} data-testid="exp-walk-review">まとめだけ見る</button>
     </div>
     {sheet}

@@ -186,12 +186,21 @@ export function Dock({ chips, sel, onSel, children, action, mark, idle = 2000 }:
   };
   const arm = () => { stop(); if (!down.current) timer.current = setTimeout(() => setOpen(false), idle); };
   useEffect(() => () => { stop(); if (out.current) clearTimeout(out.current); }, []);
+  // 帯の上の端を --dock-gap（画面の下からの距離）に出す。道具で確かめる段のシートは、つまみが出ても帯の上に乗る（重ならない）
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = root.current, de = document.documentElement;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const put = () => { for (const [k, v] of Object.entries({ "--dock-gap": `${Math.max(0, window.innerHeight - el.getBoundingClientRect().top)}px` })) de.style.setProperty(k, v); };
+    const ro = new ResizeObserver(put); ro.observe(el); window.addEventListener("resize", put); put();
+    return () => { ro.disconnect(); window.removeEventListener("resize", put); de.style.removeProperty("--dock-gap"); };
+  }, []);
   const tap = (k: string) => {
     haptic();
     if (open && sel === k) { stop(); setOpen(false); return; }
     onSel(k); setOpen(true); arm();
   };
-  return <div className={s.dock}>
+  return <div className={s.dock} ref={root}>
     {(open || closing) && <div className={open ? s.dockCtl : `${s.dockCtl} ${s.dockOut}`} id="q-dock-ctl" data-testid={open ? "q-dock-ctl" : undefined} aria-hidden={!open || undefined} inert={!open || undefined}
       onPointerDown={() => { down.current = true; stop(); }} onPointerUp={() => { down.current = false; arm(); }} onPointerCancel={() => { down.current = false; arm(); }}
       onInput={arm} onKeyDown={(e) => { if (e.key === "Escape") { stop(); setOpen(false); } else arm(); }}>{children}</div>}

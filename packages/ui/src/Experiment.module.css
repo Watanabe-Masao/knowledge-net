@@ -275,8 +275,9 @@
 @keyframes fade { from { opacity: 0; } }
 .wSheet { position: fixed; left: 0; right: 0; bottom: 0; top: calc(env(safe-area-inset-top) + 44px); z-index: 8; display: flex; flex-direction: column; background: var(--bg); border-radius: var(--r-l) var(--r-l) 0 0; box-shadow: var(--shadow-raised); animation: rise var(--dur-sheet) var(--ease-sheet); }
 @keyframes rise { from { transform: translateY(40%); opacity: .4; } }
-.wSheetCompact { top: auto; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 5; max-height: 220px; border-radius: var(--r-l); margin: 0 8px; box-shadow: var(--shadow-raised); padding: 2px 12px 10px 14px; gap: 4px; background: var(--raised); border: 1px solid var(--line); }
-.wcHead { display: flex; align-items: center; justify-content: space-between; margin-right: -10px; }
+.wSheetCompact { top: auto; bottom: calc(var(--dock-gap, calc(76px + env(safe-area-inset-bottom))) + 8px); transition: bottom var(--dur-sheet) var(--ease-sheet); z-index: 5; max-height: 220px; border-radius: var(--r-l); margin: 0 8px; box-shadow: var(--shadow-raised); padding: 2px 12px 10px 14px; gap: 4px; background: var(--raised); border: 1px solid var(--line); }
+.wcHead { display: flex; align-items: center; justify-content: space-between; margin: 0 -10px -6px 0; }
+.wcHead .wClose { height: 36px; margin: -4px 0; }
 .wcHead small { font-size: 11px; font-weight: 600; color: var(--accent); }
 .wcHead small.wcOk { color: var(--good); }
 .wcTodo { margin: 0; font-size: 14.5px; font-weight: 600; line-height: 1.5; }
