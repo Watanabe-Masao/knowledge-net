@@ -182,17 +182,27 @@ export type ApplyCheck = {
   answerFormat: ApplyFormat | null;
   at: ApplyState; mark: ApplyMark; vars: ApplyVar[];
   goal?: { ok: (s: ApplyState) => boolean; kind: "min" | "max" | "exact" };
-  /** 解き方を組み立てる（stats2-course #181）の確かめる段で、道具を合わせる先（順に）。ふつうは at の1つ、2つを比べる課題は両方 */
+  /** 解き方を組み立てる（stats2-course #181）の確かめる段で、道具を合わせる先（順に）。ふつうは at の1つ、2つを比べる課題は両方、
+   *  最小・最大を求める課題は答えと1刻み外（境目の前後。答えでは条件を満たし、1刻み外では満たさない） */
   targets: ApplyState[];
+  /** 合わせる先の種類：one＝答えの1つ・compare＝2つを比べる・boundary＝境目の前後 */
+  probe: "one" | "compare" | "boundary";
 };
 const OPS = { eq: 0, ge: 1, le: 2, gt: 1 } as const;   // 道具の「数え方」（ちょうど・以上・以下）。より多い は k＋1 以上として合わせる
 
 /** 課題の「グラフを問いに合わせる」先と、色を付ける所を作る（答えは solveApply と同じ求め方） */
 export function applyCheck(s: ApplySolve): ApplyCheck {
   const c = check0(s);
-  return { ...c, targets: s.method === "compare-var" ? [{ n: s.a.n, p: s.a.p }, { n: s.b.n, p: s.b.p }] : [c.at] };
+  if (s.method === "compare-var") return { ...c, targets: [{ n: s.a.n, p: s.a.p }, { n: s.b.n, p: s.b.p }], probe: "compare" };
+  const g = c.goal, v = c.vars[0];
+  if (g && v && (g.kind === "min" || g.kind === "max")) {
+    // 最小なら1刻み下、最大なら1刻み上。道具の範囲の外なら答えの1つだけ
+    const x = Number((c.at[v.key]! + (g.kind === "min" ? -v.step : v.step)).toFixed(10));
+    if (x >= v.min - 1e-12 && x <= v.max + 1e-12) return { ...c, targets: [c.at, { ...c.at, [v.key]: x }], probe: "boundary" };
+  }
+  return { ...c, targets: [c.at], probe: "one" };
 }
-function check0(s: ApplySolve): Omit<ApplyCheck, "targets"> {
+function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
   const ans = solveApply(s).answer;
   switch (s.method) {
     case "mean-to-p":

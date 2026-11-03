@@ -1531,8 +1531,10 @@ const SYMS: Record<string, string[]> = {   // engine の WALK_FORMULAS の記号
 };
 // 確かめる段（probe）で道具を合わせる先。probe のない課題は []（応用の全部の課題を最後まで組み立てる）
 const WALK_TARGETS: Record<string, Record<string, number>[]> = {
-  "A-01": [{ n: 20, p: 0.3 }], "A-02": [{ p: 0.3, n: 33 }], "A-03": [{ n: 13, p: 0.8 }], "B-01": [{ n: 10, p: 0.3, k: 3 }], "B-02": [{ n: 10, p: 0.3, k: 3 }],
-  "B-04": [], "C-01": [], "C-02": [], "D-01": [], "D-02": [{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }], "E-01": [], "E-02": [], "E-03": [], "E-04": [],
+  // 最小・最大を求める課題（A-02・C-02・E-02・E-03）は境目の前後：答えと1刻み外
+  "A-01": [{ n: 20, p: 0.3 }], "A-02": [{ p: 0.3, n: 33 }, { p: 0.3, n: 32 }], "A-03": [{ n: 13, p: 0.8 }], "B-01": [{ n: 10, p: 0.3, k: 3 }], "B-02": [{ n: 10, p: 0.3, k: 3 }],
+  "B-04": [], "C-01": [{ n: 1, p: 0.2, k: 1, m: 100 }], "C-02": [{ n: 10, p: 0.3, k: 4, N: 9200 }, { N: 9100 }], "D-01": [{ n: 10, p: 0.3, a: 200, b: -50 }],
+  "D-02": [{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }], "E-01": [{ s: 0.3 }], "E-02": [{ s: 0.1 }, { s: 0.15 }], "E-03": [{ s: 46 }, { s: 44 }], "E-04": [{ s: 0.1 }],
 };
 test("応用の解き方を組み立てる：原本どおりに押すと最後まで進み、迷った段がまとめに出る", async ({ page }) => {
   test.setTimeout(240000);
@@ -1631,8 +1633,27 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
       for (const [j, q] of (st.choose ?? []).entries()) await pick(q, i, j, j < st.choose!.length - 1);
       if (st.kind === "probe") {
         await expect(sh).toHaveAttribute("data-compact", "true");   // 道具で確かめる段はシートが縮み、後ろの道具を使う
-        for (const t of targets) for (const [k, v] of Object.entries(t)) { await x.getByTestId(`q-chip-${k}`).click(); await x.getByTestId(`exp-app-${k}`).fill(String(v)); await x.getByTestId(`q-chip-${k}`).click(); }
-        await expect(x.locator("[data-mark=answer]").first()).toBeVisible();
+        const setTo = async (t: Record<string, number>) => { for (const [k, v] of Object.entries(t)) { await x.getByTestId(`q-chip-${k}`).click(); await x.getByTestId(`exp-app-${k}`).fill(String(v)); await x.getByTestId(`q-chip-${k}`).click(); } };
+        // 段に入った時点で合わせる先の値になっている道具（E-01 の d＝0.3・B-01 の問いの値）は、一度動かすまで数えない。故障：何もしないまま確かめが済む
+        if (["E-01", "B-01"].includes(key)) await expect(sh.getByTestId("exp-walk-status"), `${key} で入った時点の値を数えた`).toContainText("いったん動かして");
+        if (await sh.getByTestId("exp-walk-status").textContent().then((t) => t?.includes("いったん動かして"))) {
+          const [k0, v0] = Object.entries(targets[0]!)[0]!;
+          await x.getByTestId(`q-chip-${k0}`).click();
+          const el = x.getByTestId(`exp-app-${k0}`), lo = await el.getAttribute("min"), hi = await el.getAttribute("max");
+          await el.fill(Number(lo) !== v0 ? lo! : hi!);
+          await x.getByTestId(`q-chip-${k0}`).click();
+        }
+        // 境目の前後は順に：1刻み外を先に通っても数えない。故障：引く途中で 1刻み外 に当たり「次は答え」と答えを言う
+        if (targets.length === 2 && key !== "D-02") {
+          await setTo(targets[1]!);
+          await expect(sh.getByTestId("exp-walk-status"), `${key} で1刻み外を先に数えた`).not.toContainText("条件を満たした");
+        }
+        // 境目の前後（2つの先）は、両方に合わせて初めて進める。故障：答えの1つだけで済み、1刻み外を見ずに終わる
+        for (const [ti, t] of targets.entries()) {
+          await setTo(t);
+          if (ti < targets.length - 1) await expect(next, `${key} は合わせる先の片方だけで進める`).toBeDisabled();
+        }
+        await expect(x.locator("[data-mark=answer]").first(), `${key} で答えの所に色が付かない`).toBeVisible();
       }
       await expect(next, `${key} の段 ${i + 1}（${st.kind}）が済まない`).toBeEnabled();
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `${key} の段 ${i + 1} で横にはみ出す`).toBeLessThanOrEqual(390);
