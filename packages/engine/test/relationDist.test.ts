@@ -2,7 +2,7 @@
 // 図は「二項分布を変えると何になるか」を見せるので、ここが間違うと関係の主張（極限・近似）を図が逆に見せてしまう。
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { modelPmf, negbinomPmf, normalDensity, poissonPmf } from "../src";
+import { modelPmf, negbinomPmf, normalCdf, normalDensity, normalQuantile, poissonPmf } from "../src";
 
 describe("ポアソン分布の確率", () => {
   // 対象：poissonPmf の値。想定する故障：指数の符号・k! の取り違え（log の階乗の添字ずれ）。
@@ -65,4 +65,18 @@ describe("r 回目の成功までの回数（幾何・負の二項）", () => {
       expect(sum).toBeCloseTo(1, 8); expect(m).toBeCloseTo(r / p, 6); expect(v / (r * (1 - p) / p ** 2)).toBeCloseTo(1, 5);
     }));
   });
+});
+
+describe("標準正規分布の累積と逆関数", () => {
+  // 対象：normalCdf・normalQuantile（連続の分布の面積と上位 p% の値）。想定する故障：√2 の抜け（Φ(1) が 0.92 になる）・負の側の対称の誤り・逆関数の枝の取り違え。
+  // 見つけ方：表の値（Φ(1)＝0.841345、Φ(1.96)＝0.975002、Φ(−1.645)＝0.049985）と、Φ⁻¹(Φ(z))＝z（3つの枝をまたぐ z）。
+  it("表の値", () => {
+    expect(normalCdf(0)).toBeCloseTo(0.5, 7); expect(normalCdf(1)).toBeCloseTo(0.841345, 6);
+    expect(normalCdf(1.96)).toBeCloseTo(0.975002, 6); expect(normalCdf(-1.645)).toBeCloseTo(0.049985, 6);
+    expect(normalQuantile(0.975)).toBeCloseTo(1.959964, 5); expect(normalQuantile(0.05)).toBeCloseTo(-1.644854, 5);
+  });
+  it("性質：Φ⁻¹(Φ(z))＝z（−3.5〜3.5。Φ の近似の誤差 1.5×10⁻⁷ が裾で密度に割られて大きくなるので 0.0005 まで）", () => {
+    fc.assert(fc.property(fc.double({ min: -3.5, max: 3.5, noNaN: true }), (z) => { expect(normalQuantile(normalCdf(z))).toBeCloseTo(z, 3); }));
+  });
+  it("q が 0〜1 の外だと理由を言って止まる", () => { expect(() => normalQuantile(1)).toThrow(/q/); });
 });

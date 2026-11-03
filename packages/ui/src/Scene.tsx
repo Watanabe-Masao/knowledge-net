@@ -9,25 +9,11 @@ import { Dock, Field, Seg } from "./QuestionParts";
 import { haptic, reduced } from "./motion";
 import s from "./Scene.module.css";
 
-export type SceneState = Record<string, number | string | undefined>;
-export type TourStep = { title: string; text: string; states: SceneState[]; focus?: string; gist?: boolean; ms?: number };
-/** 教材の build が出す場面の定義（型の改訂27：ラボへの参照の play） */
-export type ScenePlay = { mode: string; modes?: string[]; set?: SceneState; task?: string; kmax?: number; decimals?: number; steps?: TourStep[] };
-
-type Stat = { key: string; label: string; value: string };
-type Drawn = { series: number[][]; names: string[]; labels: (string | number)[]; curve?: (i: number) => number; curveName?: string; hi?: number; hiIn?: (i: number) => boolean; stats: Stat[]; label: string };
-type FieldDef = { key: string; label: string; min: number | ((st: SceneState) => number); max: number | ((st: SceneState) => number); step: number; show?: (v: number) => string };
-type ModeDef = { name: string; draw: (st: SceneState, o: { kmax?: number; dec: number }) => Drawn; fields: FieldDef[]; defaults: SceneState; kinds?: boolean;
-  /** 切り替え（重ねる曲線など） */ toggles?: { key: string; name: string; items: [string, string][] }[];
-  /** つまみのない状態の項目（教材の版が渡す。approx の lam・only） */ extra?: string[] };
-
-const num = (st: SceneState, k: string, d = 0) => { const v = Number(st[k]); return Number.isFinite(v) ? v : d; };
-const fmt = (v: number, dec: number) => (Number.isFinite(v) ? String(Number(v.toFixed(dec))) : "—");
-const pctS = (v: number) => `${Number((v * 100).toFixed(1))}%`;
-const KIND: Record<string, string> = { eq: "ちょうど", le: "以下", ge: "以上" };
-const inKind = (kind: string, k: number) => (i: number) => (kind === "le" ? i <= k : kind === "ge" ? i >= k : i === k);
-const pad = (f: number[], n: number) => Array.from({ length: n + 1 }, (_, i) => f[i] ?? 0);
-const sum = (f: number[], pred: (i: number) => boolean) => f.reduce((a, v, i) => a + (pred(i) ? v : 0), 0);
+import { fmt, getAt, inKind, KIND, num, pad, pctS, setAt, sum, type FieldDef, type ModeDef, type SceneState } from "./sceneCore";
+import { MODES2 } from "./SceneModes2";
+import { SceneView } from "./SceneViews";
+export type { SceneState, TourStep, ScenePlay } from "./sceneCore";
+import type { ScenePlay, TourStep } from "./sceneCore";
 
 /** p を λ÷n にする（np＝λ を保つ版）。lam がなければ p のまま */
 const pOf = (st: SceneState) => (st.lam !== undefined && st.lam !== "" ? num(st, "lam") / Math.max(1, num(st, "n", 1)) : num(st, "p"));
@@ -164,10 +150,16 @@ export const MODES: Record<string, ModeDef> = {
   },
 };
 
-/** モードが受け取る状態の項目（教材の版の set・段の状態はこの中だけ。知らない項目は黙って捨てずにテストで止める） */
-export const sceneKeys = (mode: string): string[] => {
+Object.assign(MODES, MODES2);   // 離散の分布でない場面（値の表・同時分布・z得点・連続の分布・並び）
+
+/** モードのつまみ（状態で数が変わるものは、その状態で） */
+export const fieldsOf = (d: ModeDef, st: SceneState): FieldDef[] => (typeof d.fields === "function" ? d.fields(st) : d.fields);
+
+/** モードが受け取る状態の項目（教材の版の set・段の状態はこの中だけ。知らない項目は黙って捨てずにテストで止める）。
+ *  値の表の確率（p.0 など）は配列の項目 p として数える */
+export const sceneKeys = (mode: string, st: SceneState = {}): string[] => {
   const d = MODES[mode];
-  return d ? ["mode", ...d.fields.map((f) => f.key), ...(d.toggles ?? []).map((t) => t.key), ...(d.kinds ? ["kind"] : []), ...(d.extra ?? [])] : [];
+  return d ? ["mode", ...new Set(fieldsOf(d, { ...d.defaults, ...st }).map((f) => f.key.split(".")[0]!)), ...(d.toggles ?? []).map((t) => t.key), ...(d.kinds ? ["kind"] : []), ...(d.extra ?? [])] : [];
 };
 
 /** 状態から図の数を出す（画面と同じ計算。テストで使う） */
@@ -180,15 +172,16 @@ export function Scene({ mode, state, kmax, decimals = 3, focus }: { mode: string
   const def = MODES[mode];
   const d = useMemo(() => def?.draw(state, { kmax, dec: decimals }), [def, state, kmax, decimals]);
   if (!def || !d) return null;
-  const two = d.series.length > 1;
+  const two = (d.series?.length ?? 0) > 1;
   return (
     <div className={s.scene} data-testid="scene" data-mode={mode}>
-      <div className={s.legend}>
-        {d.names.map((nm, i) => <span key={nm}><i className={i ? s.sw2 : s.sw1} />{nm}</span>)}
+      {(d.names?.length || d.curveName) && <div className={s.legend}>
+        {d.names?.map((nm, i) => <span key={nm}><i className={i ? s.sw2 : s.sw1} />{nm}</span>)}
         {d.curveName && <span><i className={s.swLine} />{d.curveName}</span>}
-      </div>
-      {two ? <Bars series={d.series} labels={d.labels} height={150} label={d.label} />
-        : <Bars theory={d.series[0]} labels={d.labels} hi={d.hi} hiIn={d.hiIn} curve={d.curve} height={150} label={d.label} />}
+      </div>}
+      {d.view ? <SceneView view={d.view} />
+        : two ? <Bars series={d.series!} labels={d.labels} height={150} label={d.label} />
+        : <Bars theory={d.series![0]} labels={d.labels} at={d.at} marker={d.marker} hi={d.hi} hiIn={d.hiIn} curve={d.curve} height={150} label={d.label} />}
       <dl className={s.stats} data-testid="scene-stats">
         {d.stats.map((x) => <div key={x.key} className={focus === x.key ? s.on : undefined} data-key={x.key} data-focus={focus === x.key || undefined}><dt>{x.label}</dt><dd>{x.value}</dd></div>)}
       </dl>
@@ -254,26 +247,27 @@ export function Explore({ play }: { play: ScenePlay }) {
   const [st, setSt] = useState<Record<string, SceneState>>(() => ({ [play.mode]: { ...MODES[play.mode]?.defaults, ...play.set } }));
   const def = MODES[mode]!;
   const cur = st[mode] ?? def.defaults;
-  const [sel, setSel] = useState(def.fields[0]!.key);
+  const fields = fieldsOf(def, cur);
+  const [sel, setSel] = useState(fields[0]!.key);
   const val = (f: FieldDef, k: "min" | "max") => { const v = f[k]; return typeof v === "function" ? v(cur) : v; };
   const set = (k: string, v: number | string) => setSt((o) => {
-    const next: SceneState = { ...(o[mode] ?? def.defaults), [k]: v };
+    let next: SceneState = setAt({ ...(o[mode] ?? def.defaults) }, k, v);
     if (k === "p" || k === "n") delete next.lam;   // 自分で p を動かしたら np＝λ を保つ版をやめる
-    for (const f of def.fields) { const hi = typeof f.max === "function" ? f.max(next) : f.max; if (Number(next[f.key]) > hi) next[f.key] = hi; }
+    for (const f of fieldsOf(def, next)) { const hi = typeof f.max === "function" ? f.max(next) : f.max; if (getAt(next, f.key) > hi) next = setAt(next, f.key, hi); }
     return { ...o, [mode]: next };
   });
-  const f = def.fields.find((x) => x.key === sel) ?? def.fields[0]!;
+  const f = fields.find((x) => x.key === sel) ?? fields[0]!;
   const show = (x: FieldDef, v: number) => (x.show ? x.show(v) : String(Number(v.toFixed(4))));
-  const value = (x: FieldDef) => (x.key === "p" ? pOf(cur) : num(cur, x.key));
+  const value = (x: FieldDef) => (x.key === "p" && mode === "approx" ? pOf(cur) : getAt(cur, x.key));
   return (
     <section className={s.explore} data-testid="explore" aria-label="触る">
-      {modes.length > 1 && <Seg name="モード" items={modes.map((m) => [m, MODES[m]!.name] as [string, string])} value={mode} onChange={(m) => { setMode(m); setSt((o) => (o[m] ? o : { ...o, [m]: { ...MODES[m]!.defaults } })); setSel(MODES[m]!.fields[0]!.key); }} />}
+      {modes.length > 1 && <Seg name="モード" items={modes.map((m) => [m, MODES[m]!.name] as [string, string])} value={mode} onChange={(m) => { setMode(m); setSt((o) => (o[m] ? o : { ...o, [m]: { ...MODES[m]!.defaults } })); setSel(fieldsOf(MODES[m]!, MODES[m]!.defaults)[0]!.key); }} />}
       {play.task && <p className={s.task}><Rich text={play.task} /></p>}
       <Scene mode={mode} state={cur} decimals={play.decimals} />
       {def.toggles?.map((t) => <Seg key={t.key} name={t.name} items={t.items} value={String(cur[t.key] ?? t.items[0]![0])} onChange={(v) => set(t.key, v)} />)}
       {def.kinds && <Seg name="数える範囲" items={[["eq", "ちょうど"], ["le", "以下"], ["ge", "以上"]]} value={String(cur.kind ?? "eq") as "eq" | "le" | "ge"} onChange={(v) => set("kind", v)} />}
-      <Dock chips={def.fields.map((x) => [x.key, `${x.label.split(" ")[0]} ${show(x, value(x))}`])} sel={sel} onSel={setSel}>
-        <Field id={`scene-${f.key}`} label={f.label} value={value(f)} min={val(f, "min")} max={val(f, "max")} step={f.step} show={(v) => show(f, v)} onChange={(v) => set(f.key, v)} />
+      <Dock chips={fields.map((x) => [x.key, `${x.label.split(" ")[0]} ${show(x, value(x))}`])} sel={sel} onSel={setSel}>
+        <Field id={`scene-${f.key.replace(".", "-")}`} label={f.label} value={value(f)} min={val(f, "min")} max={val(f, "max")} step={f.step} show={(v) => show(f, v)} onChange={(v) => set(f.key, v)} />
       </Dock>
     </section>
   );

@@ -27,3 +27,32 @@
 .navMain { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .task { margin: 0; font-size: var(--fs-small); color: var(--ink-2); line-height: 1.6; }
 @media (prefers-reduced-motion: reduce) { .stats div { transition: none; } }
+/* 棒でない図（SceneViews） */
+.svg { display: block; width: 100%; height: auto; overflow: visible; }
+.area { fill: var(--data-1); fill-opacity: .35; }
+.curve { fill: none; stroke: var(--data-1); stroke-width: 2; stroke-linejoin: round; }
+.base { stroke: var(--line-strong); stroke-width: 1; }
+.tick { font-size: 10.5px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+.tickStrong { font-size: 11.5px; fill: var(--ink-2); font-weight: 600; }
+.dot1 { fill: var(--data-1); stroke: var(--surface); stroke-width: 2; }
+.dot2 { fill: var(--data-2); stroke: var(--surface); stroke-width: 2; }
+.joint { display: grid; grid-template-columns: auto repeat(2, minmax(0, 1fr)) auto; gap: 4px; align-items: center; font-size: var(--fs-small); }
+.jhead { font-size: var(--fs-tag); color: var(--ink-2); text-align: center; }
+.jsum { font-size: var(--fs-tag); color: var(--ink-3); text-align: center; font-variant-numeric: tabular-nums; }
+.jcell { position: relative; aspect-ratio: 1.6; max-width: 100%; border-radius: var(--r-s); box-shadow: inset 0 0 0 1px var(--line); display: grid; place-items: center; align-content: center; overflow: hidden; }
+.jfill { position: absolute; inset: 0; background: var(--data-1); opacity: .28; transform-origin: center; transition: transform var(--dur) var(--ease); }
+.jcell b { position: relative; font-size: 15px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.jcell small { position: relative; font-size: var(--fs-tag); color: var(--ink-2); }
+.paths { display: flex; flex-wrap: wrap; gap: 6px; }
+.seq { display: inline-flex; gap: 1px; padding: 4px 6px; border-radius: var(--r-s); box-shadow: inset 0 0 0 1px var(--line); font-size: 14px; }
+.seq i { font-style: normal; }
+.win, .lose { display: inline-block; }
+.lose { opacity: .55; }
+.seqMore { font-size: var(--fs-tag); color: var(--ink-3); align-self: center; }
+.lengths { display: grid; gap: 8px; }
+.lrow { display: grid; grid-template-columns: minmax(0, 9em) minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: var(--fs-small); color: var(--ink-2); }
+.lrow b { font-variant-numeric: tabular-nums; color: var(--ink); }
+.ltrack { height: 12px; border-radius: 6px; background: var(--surface-2); overflow: hidden; }
+.lbar { display: block; height: 100%; background: var(--data-1); transition: width var(--dur) var(--ease); }
+.lbarWrong { display: block; height: 100%; background: var(--bad); opacity: .55; transition: width var(--dur) var(--ease); }
+@media (prefers-reduced-motion: reduce) { .jfill, .lbar, .lbarWrong { transition: none; } }
