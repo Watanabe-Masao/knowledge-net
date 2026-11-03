@@ -16,18 +16,18 @@ type Op = "eq" | "ge" | "le";
 type Ev = { op: Op; k: number };
 export type BinomQuestion = NonNullable<BinomDef["questions"]>[number];
 export const STAGES_Q = ["予測", "実験", "観察", "理由", "応用"] as const;
-export const FORM_NAMES = { shift: "位置", spread: "広がり", prob: "確率の値", conv: "理論と実測", break: "前提崩し", compare: "比べる" } as const;
+export const FORM_NAMES = { shift: "位置", spread: "広がり", prob: "確率の値", conv: "理論と実測", paths: "並び", repeat: "くり返し", mean: "平均", var: "ばらつき", break: "前提崩し", compare: "比べる" } as const;
 /** id：開く入口、key：一覧の中の印（テーマ体系の B01 など。同じ入口を2つの問いが開くことがある）、draft：作成中（押せない） */
 export type MenuItem = { id: string; key?: string; form: keyof typeof FORM_NAMES; title: string; sub?: string; draft?: boolean };
 /** note：数の代わりに出す一言（比べるの「カード 6 枚」など）。id が1文字（A〜F）のときだけ印として出す */
 export type MenuGroup = { id: string; title: string; items: MenuItem[]; note?: string };
 const SPREAD3 = ["広くなる", "変わらない", "狭くなる"] as const;
-const pmfOf = (c: Cond) => modelPmf({ kind: "binom", ...c });
-const meanOf = (f: number[]) => f.reduce((t, v, k) => t + k * v, 0);
-const sdOf = (f: number[]) => { const m = meanOf(f); return Math.sqrt(f.reduce((t, v, k) => t + (k - m) ** 2 * v, 0)); };
+export const pmfOf = (c: Cond) => modelPmf({ kind: "binom", ...c });
+export const meanOf = (f: number[]) => f.reduce((t, v, k) => t + k * v, 0);
+export const sdOf = (f: number[]) => { const m = meanOf(f); return Math.sqrt(f.reduce((t, v, k) => t + (k - m) ** 2 * v, 0)); };
 export const evText = (e: Ev, unit = "回") => (e.op === "eq" ? `ちょうど ${e.k} ${unit}` : e.op === "ge" ? `${e.k} ${unit}以上` : `${e.k} ${unit}以下`);
-const inEv = (e: Ev) => (k: number) => (e.op === "eq" ? k === e.k : e.op === "ge" ? k >= e.k : k <= e.k);
-const probOf = (f: number[], e: Ev) => f.reduce((t, v, k) => t + (inEv(e)(k) ? v : 0), 0);
+export const inEv = (e: Ev) => (k: number) => (e.op === "eq" ? k === e.k : e.op === "ge" ? k >= e.k : k <= e.k);
+export const probOf = (f: number[], e: Ev) => f.reduce((t, v, k) => t + (inEv(e)(k) ? v : 0), 0);
 const sumK = (ks: number[]) => ks.reduce((a, b) => a + b, 0);
 
 /** 入口：何を確かめたい？ groups（テーマ体系）があれば、まとまり（A〜F）を上の選択で1つ選んで、その問いを並べる。extra は下に（テーマ体系では、比べるはまとまりの1つとして選択の最後に置き、2か所に出さない） */
@@ -85,7 +85,7 @@ export type QProps = {
   apply?: ApplySpec;
   children?: ReactNode;
 };
-function Lane({ tag, last, n, theme, testid, cls }: { tag: string; last: number[] | null; n: number; theme: ExperimentTheme; testid: string; cls?: string }) {
+export function Lane({ tag, last, n, theme, testid, cls }: { tag: string; last: number[] | null; n: number; theme: ExperimentTheme; testid: string; cls?: string }) {
   const k = last ? sumK(last) : undefined, unit = theme.unit ?? "回";
   return <div className={`${s.lane} ${cls ?? ""}`}>
     <div className={s.laneHead}><b>{tag}</b>{k === undefined ? <span className={s.muted}>まだ</span> : <span>{theme.success} <em>{k}</em> {unit}（{n} {unit}中）</span>}</div>
@@ -94,7 +94,7 @@ function Lane({ tag, last, n, theme, testid, cls }: { tag: string; last: number[
     </div>
   </div>;
 }
-function RunButtons({ run, sets, need, go, big = 1000 }: { run: (c: number, per?: number) => void; sets: number; need: number; go: () => void; big?: number }) {
+export function RunButtons({ run, sets, need, go, big = 1000 }: { run: (c: number, per?: number) => void; sets: number; need: number; go: () => void; big?: number }) {
   return <>
     <div className={s.two} style={{ gridTemplateColumns: "1fr 1fr 1.3fr" }}>
       <button type="button" className={s.secondary} onClick={() => run(1)} data-testid="exp-run-1">1セット</button>
@@ -104,14 +104,14 @@ function RunButtons({ run, sets, need, go, big = 1000 }: { run: (c: number, per?
     <button type="button" className={s.next} disabled={sets < need} onClick={go} data-testid="exp-to-observe">{sets < need ? `あと ${need - sets} セットで観察できる` : "観察する →"}</button>
   </>;
 }
-function Verdict({ ok, edge, head, big, children, testid = "exp-verdict" }: { ok: boolean; edge?: boolean; head?: string; big?: string; children: ReactNode; testid?: string }) {
+export function Verdict({ ok, edge, head, big, children, testid = "exp-verdict" }: { ok: boolean; edge?: boolean; head?: string; big?: string; children: ReactNode; testid?: string }) {
   return <div className={ok ? s.ok : s.ng} data-testid={testid} data-ok={String(ok)}>
     <b>{edge ? "△ ほぼ境目" : ok ? "✓ 予想どおり" : "✗ 予想と違った"}{head ? `　${head}` : ""}</b>
     {big && <span className={s.bigNum}>{big}</span>}
     <span className={s.shape} style={{ display: "block" }}>{children}</span>
   </div>;
 }
-function Card({ title, sub, children, testid, mark }: { title: string; sub?: string; children: ReactNode; testid?: string; mark?: boolean }) {
+export function Card({ title, sub, children, testid, mark }: { title: string; sub?: string; children: ReactNode; testid?: string; mark?: boolean }) {
   return <section className={s.card} data-testid={testid}><p className={s.h}><span className={mark ? s.titleMark : undefined} data-mark={mark ? "answer" : undefined}>{title}</span>{sub && <span>{sub}</span>}</p>{children}</section>;
 }
 /** 応用の課題（stats2-course issue 171・issue 169 の3）：予測〜理由で練習したのとは別の考え方（逆算・設計・反証・評価・変換）を求める。
@@ -163,15 +163,15 @@ export function ApplyTask({ spec, onFit }: { spec: ApplySpec; onFit?: (at: Apply
 }
 
 /** グラフを問いに合わせた状態（stats2-course #171）。つまみが合わせた値のままの間だけ、答えの所に色を付ける（自分で動かすと消える） */
-function useFit() {
+export function useFit() {
   const [fit, setFit] = useState<{ at: ApplyState; mark: ApplyMark } | null>(null);
   const on = (cur: ApplyState) => !!fit && Object.entries(fit.at).every(([k, v]) => cur[k] === undefined || Math.abs(cur[k]! - v) < 1e-9);
   return { fit, setFit, mark: (cur: ApplyState): ApplyMark => (fit && on(cur) ? fit.mark : {}) };
 }
-const MK = (on: boolean) => (on ? { className: s.tileMark, "data-mark": "answer" } : {});
+export const MK = (on: boolean) => (on ? { className: s.tileMark, "data-mark": "answer" } : {});
 
 /** 応用の最後：この条件をカードに残す */
-function AppExtra({ m, from, onKeep, desc }: { m: CardMechanism; from: string; onKeep: QProps["onKeep"]; desc: string }) {
+export function AppExtra({ m, from, onKeep, desc }: { m: CardMechanism; from: string; onKeep: QProps["onKeep"]; desc: string }) {
   const [kept, setKept] = useState(false);
   return <>
     <Card title="記録して比べる">
@@ -181,7 +181,7 @@ function AppExtra({ m, from, onKeep, desc }: { m: CardMechanism; from: string; o
     </Card>
   </>;
 }
-const descOf = (m: CardMechanism) => (m.kind === "bernoulli" ? `n＝${m.n}・p＝${pc(m.p)}` : "");
+export const descOf = (m: CardMechanism) => (m.kind === "bernoulli" ? `n＝${m.n}・p＝${pc(m.p)}` : "");
 
 // ---------------- 位置：成功確率を変えると分布はどう動く？ ----------------
 export function ShiftQ(props: QProps) {

@@ -28,7 +28,15 @@ export type ApplySolve =
   /** 変換：戻さずに n 個取るとき、分散が二項分布の ratio 倍以上（有限母集団修正 (N−n)/(N−1)≧ratio）になる最小の箱の数 N */
   | { method: "min-total"; n: number; ratio: number; step?: number }
   /** 逆算：混ざる起き方の分散 variance から、ずれ幅 d を求める（V＝np(1−p)＋n(n−1)d²） */
-  | { method: "solve-spread"; n: number; p: number; variance: number };
+  | { method: "solve-spread"; n: number; p: number; variance: number }
+  /** 評価：いちばん起こりやすい成功回数（最頻値。並びの数と1つの並びの確率の綱引き） */
+  | { method: "mode"; n: number; p: number }
+  /** 反証：理論の確率 P で m 回中 x 回だったとき、理論が間違いと言えるか（±2SE の帯の外か）。answer は 0＝言える（帯の外）・1＝言えない（帯の中） */
+  | { method: "within-band"; P: number; m: number; x: number }
+  /** 変換：成功で a、失敗で b の値をとるとき、n 回の合計の期待値 n{ap＋b(1−p)}（期待値の線形性） */
+  | { method: "linear-sum"; n: number; p: number; a: number; b: number }
+  /** 評価：2つの二項分布の分散 np(1−p) を比べる。answer は 0＝a が大きい・1＝ほぼ同じ（比 0.9〜1.1）・2＝b が大きい */
+  | { method: "compare-var"; a: { n: number; p: number }; b: { n: number; p: number } };
 
 /** 解き方の1段：題（何をする段か）・式（TeX）・文 */
 export type ApplyStep = { title: string; tex?: string; text?: string };
@@ -136,6 +144,28 @@ function solveCore(s: ApplySolve): ApplyResult {
       if (d > Math.min(s.p, 1 - s.p) + EPS) throw new RangeError(`d＝${d} は min(p, 1−p) を超える`);
       return { answer: d, facts: { binomVariance: bv }, steps: [] };
     }
+    case "mode": {
+      checkNP(s.n, s.p);
+      const fm = modelPmf({ kind: "binom", n: s.n, p: s.p });
+      let best = 0;
+      fm.forEach((x, k) => { if (x > fm[best]! + EPS) best = k; });
+      return { answer: best, facts: { prob: fm[best]! }, steps: [] };
+    }
+    case "within-band": {
+      checkNP(1, s.P);
+      if (!(Number.isInteger(s.m) && s.m >= 1 && Number.isInteger(s.x) && s.x >= 0 && s.x <= s.m)) throw new RangeError(`m は1以上・x は 0〜m の整数：${s.m}・${s.x}`);
+      const se = Math.sqrt((s.P * (1 - s.P)) / s.m), z = se > 0 ? Math.abs(s.x / s.m - s.P) / se : Infinity;
+      return { answer: z <= 2 + EPS ? 1 : 0, facts: { se, z }, steps: [] };
+    }
+    case "linear-sum":
+      checkNP(s.n, s.p);
+      if (!(Number.isFinite(s.a) && Number.isFinite(s.b))) throw new RangeError("a・b は数");
+      return { answer: s.n * (s.a * s.p + s.b * (1 - s.p)), facts: {}, steps: [] };
+    case "compare-var": {
+      checkNP(s.a.n, s.a.p); checkNP(s.b.n, s.b.p);
+      const va = s.a.n * s.a.p * (1 - s.a.p), vb = s.b.n * s.b.p * (1 - s.b.p), r = va / vb;
+      return { answer: r > 1.1 ? 0 : r < 1 / 1.1 ? 2 : 1, facts: { va, vb, ratio: r }, steps: [] };
+    }
   }
 }
 
@@ -197,5 +227,13 @@ export function applyCheck(s: ApplySolve): ApplyCheck {
       return { answerFormat: NUM2, at: { s: ans }, mark: { chip: "s", read: "variance" }, vars: [{ key: "s", min: 0.05, max: 0.4, step: 0.05 }],
         goal: { ok: (v) => Math.abs(V(v) - s.variance) < 1e-9, kind: "exact" } };
     }
+    case "mode":
+      return { answerFormat: INT, at: { n: s.n, p: s.p }, mark: { bar: ans }, vars: [] };
+    case "within-band":
+      return { answerFormat: null, at: { n: 1, p: s.P, k: 1, m: s.m }, mark: { read: "band" }, vars: [] };
+    case "linear-sum":
+      return { answerFormat: NUM2, at: { n: s.n, p: s.p, a: s.a, b: s.b }, mark: { read: "sum" }, vars: [{ key: "a", min: -500, max: 500, step: 50 }, { key: "b", min: -500, max: 500, step: 50 }] };
+    case "compare-var":
+      return { answerFormat: null, at: { n: s.a.n, p: s.a.p }, mark: { read: "variance" }, vars: [] };
   }
 }
