@@ -255,7 +255,7 @@ export function ShiftQ(props: QProps) {
       <Card title={`中心 n×p＝${r2(app.n * app.p)}`} sub={`頂点 ${peak(fa)} 回`} mark={mkS.read === "center"}><PairRows labels={fa.map((_, k) => `${k} 回`)} a={fb} b={fa} names={[`p＝${pc(start.p)}`, `p＝${pc(app.p)}`]} pk={peak(fa)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={def.question} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n })} />
         : <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(p) => setApp({ ...app, p })} />}
     </Dock>;
@@ -328,7 +328,7 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
       <Card title="理論の確率"><TheoryRows pmf={pmfOf(app)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={Math.max(def.vary.n.max, n1)} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n })} />
         : <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(pp) => setApp({ ...app, p: pp })} />}
     </Dock>;
@@ -451,7 +451,7 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
     const chips: [string, string][] = [["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ...(free ? [["op", { eq: "ちょうど", ge: "以上", le: "以下" }[app.op]] as [string, string]] : []), ["k", `k ${e.k} 回`]];
     cta = <Dock chips={chips} mark={mkS.chip} sel={sel} onSel={setSel} action={free
       ? <button type="button" className={s.primary} data-testid="exp-app-go" onClick={() => props.onNew({ ...q, id: `${q.id}-own`, set: { n: app.n, p: app.p }, events: [e] })}>この条件で予想から</button>
-      : <button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+      : null}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n, k: Math.min(app.k, n) })} />
         : sel === "p" ? <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(p) => setApp({ ...app, p })} />
         : sel === "op" ? <Seg name="数え方" items={[["eq", "ちょうど"], ["ge", "以上"], ["le", "以下"]]} value={app.op} onChange={(op) => setApp({ ...app, op })} />
@@ -529,7 +529,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
       </Card>
       <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["k", `k ${Math.min(app.k, app.n)} 回`], ["N", `N ${formatApply(app.N, INT)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["k", `k ${Math.min(app.k, app.n)} 回`], ["N", `N ${formatApply(app.N, INT)}`]]} mark={mkS.chip} sel={sel} onSel={setSel}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n, k: Math.min(app.k, n) })} />
         : sel === "p" ? <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(p) => setApp({ ...app, p })} />
         : sel === "N" ? <Field id="exp-app-N" label="セット数 N" value={app.N} min={100} max={100000} step={100} show={(v) => `${formatApply(v, INT)} セット`} onChange={(N) => setApp({ ...app, N })} />
@@ -618,7 +618,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
       <Card title="理論の確率（二項分布）"><TheoryRows pmf={pmfOf(ba)} /></Card>
       <AppExtra m={ma as CardMechanism} from={`前提崩し：${cx.name}`} onKeep={props.onKeep} desc={`${cx.name}・n＝${cond.n}・p＝${pc(ba.p)}・${st[0]} ${x}`} />
     </>;
-    cta = <Dock chips={[["s", `${st[0]} ${showX(x)}`]]} mark={mkS.chip} sel="s" onSel={() => {}} action={<button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>}>
+    cta = <Dock chips={[["s", `${st[0]} ${showX(x)}`]]} mark={mkS.chip} sel="s" onSel={() => {}}>
       <Field id="exp-app-s" label={st[0]} value={x} min={st[1]} max={st[2]} step={st[3]} show={showX} onChange={setX} />
     </Dock>;
   }

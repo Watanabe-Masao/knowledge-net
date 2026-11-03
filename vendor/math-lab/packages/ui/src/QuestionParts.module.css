@@ -36,10 +36,13 @@
 .fillB { fill: var(--ink-3); } .fillA { fill: var(--data-1); }
 .textB { fill: var(--ink-3) !important; } .textA { fill: var(--data-1) !important; }
 .chips { display: grid; gap: 6px; }
-.chips button { all: unset; box-sizing: border-box; text-align: center; min-height: 34px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); font-size: 13px; font-variant-numeric: tabular-nums; cursor: pointer; color: var(--ink-2); }
-.chips button[aria-checked="true"], .chips button[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.chips button { all: unset; box-sizing: border-box; text-align: center; min-height: 44px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer; color: var(--ink-2); }
+.chips button[aria-checked="true"], .chips button[aria-selected="true"], .chips button[aria-expanded="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .chips button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.dockCtl { min-height: 56px; display: grid; align-content: center; }
+.dock { display: grid; gap: 8px; }
+.dockCtl { min-height: 56px; display: grid; align-content: center; animation: dockIn var(--dur-sheet) var(--ease-sheet); }
+@keyframes dockIn { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .dockCtl { animation: none; } }
 .field { display: grid; }
 .field label { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink-2); }
 .field label b { font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }

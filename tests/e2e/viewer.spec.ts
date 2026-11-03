@@ -683,8 +683,26 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await x.getByTestId("q-chip-p").click();
   await x.getByTestId("exp-app-p").fill("0.31");   // 自分で動かすと色は消える
   await expect(x.locator("[data-mark=answer]")).toHaveCount(0);
+  // 操作の帯をたたむ（渡辺さん 2026-11-03：iPhone の流儀）。確かめる対象：ふだんは札だけ・同じ札で閉じる・2秒触らないと閉じる・押さえている間は閉じない。
+  // 想定する故障：微調整の途中（指を置いたまま）で閉じる・閉じたまま戻らない・同じ札で閉じない。見つけ方：実際の時間で待ち、つまみの欄の有無を見る
+  const ctl = x.getByTestId("q-dock-ctl");
+  await expect(ctl).toBeVisible();
+  await x.getByTestId("q-chip-p").click();   // 同じ札でたたむ
+  await expect(ctl).toHaveCount(0);
+  await expect(x.getByTestId("exp-to-menu")).toHaveCount(0);   // 別の問いへは上の「戻る」と同じ機能なので帯に置かない
+  await x.getByTestId("q-chip-n").click();
+  await expect(x.getByTestId("q-chip-n")).toHaveAttribute("aria-expanded", "true");
+  await expect(ctl).toHaveCount(0, { timeout: 4000 });   // 触らないまま 2 秒でたたむ
+  await x.getByTestId("q-chip-p").click();
+  const bx = (await x.getByTestId("exp-app-p").boundingBox())!;
+  await page.mouse.move(bx.x + bx.width / 2, bx.y + bx.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(2600);
+  await expect(ctl).toBeVisible();   // 押さえている間は閉じない
+  await page.mouse.up();
+  await expect(ctl).toHaveCount(0, { timeout: 4000 });
   await x.getByTestId("exp-keep").click();
-  await x.getByTestId("exp-to-menu").click();
+  await x.getByRole("button", { name: "戻る" }).click();
   await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");   // 戻ると前に選んだまとまりのまま
   await x.getByTestId("exp-group-pick").click();
   await expect(x.getByTestId("exp-group-compare")).toContainText("カード 1 枚");
