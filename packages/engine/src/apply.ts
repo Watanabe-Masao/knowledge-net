@@ -25,7 +25,7 @@ export type ApplySolve =
   | { method: "binom-judge"; mechanism: Mechanism }
   /** 評価：起き方の強さ（param）を min〜max の step 刻みで動かし、分散が二項分布の ratio 倍以内に収まる最大の強さ */
   | { method: "max-strength"; mechanism: Mechanism; param: "carry" | "spread" | "drop"; min: number; max: number; step: number; ratio: number }
-  /** 変換：戻さずに n 個取るとき、分散が二項分布の ratio 倍以上（有限母集団修正 (N−n)/(N−1)≧ratio）になる最小の箱の数 N */
+  /** 変換：戻さずに n 個取るとき、分散が二項分布の ratio 倍以上（有限母集団修正 (N−n)/(N−1)≧ratio）になる最小の箱の中の玉の数 N */
   | { method: "min-total"; n: number; ratio: number; step?: number }
   /** 逆算：混ざる起き方の分散 variance から、ずれ幅 d を求める（V＝np(1−p)＋n(n−1)d²） */
   | { method: "solve-spread"; n: number; p: number; variance: number }
@@ -131,7 +131,7 @@ function solveCore(s: ApplySolve): ApplyResult {
       const st = s.step ?? 1;
       if (!(Number.isInteger(st) && st >= 1)) throw new RangeError(`step は1以上の整数：${st}`);
       let N = s.n;
-      while ((N - s.n) / (N - 1) < s.ratio - EPS || N % st !== 0) N++;   // 箱の数は st 個刻み（実験室の道具の刻み）
+      while ((N - s.n) / (N - 1) < s.ratio - EPS || N % st !== 0) N++;   // 箱の中の玉の数は st 個刻み（実験室の道具の刻み）
       const fpc = (x: number) => (x - s.n) / (x - 1);
       return { answer: N, facts: { fpc: fpc(N), share: s.n / N }, steps: [] };
     }

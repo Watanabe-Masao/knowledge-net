@@ -55,6 +55,8 @@ describe("応用の課題ごとの解き方（solveApply と照らす）", () =>
     ["C-02", [{ id: "q", ref: "binom.ge", bind: { k: "k", n: "n", p: "p" } }, { id: "N", ref: "sets.n", bind: { P: "q", e: "e", u: "u" } }], { k: 4, n: 10, p: 0.3, e: 0.01, u: 100 }, { method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01, unit: 100 }],
     ["D-01", [{ id: "E", ref: "binom.mean", bind: { n: "n", p: "p" } }, { id: "Y", ref: "lin.sum", bind: { a: "a", E: "E", b: "b", n: "n" } }], { n: 10, p: 0.3, a: 200, b: -50 }, { method: "linear-sum", n: 10, p: 0.3, a: 200, b: -50 }],
     ["E-02", [{ id: "c", ref: "streak.max", bind: { n: "n", r: "r", h: "h" } }], { n: 10, r: 1.1, h: 0.05 }, { method: "max-strength", mechanism: { kind: "streak", n: 10, p: 0.5, carry: 0 }, param: "carry", min: 0.05, max: 0.6, step: 0.05, ratio: 1.1 }],
+    ["E-02 倍率 1.2（答えがいちばん小さい刻みと違う）", [{ id: "c", ref: "streak.max", bind: { n: "n", r: "r", h: "h" } }], { n: 10, r: 1.2, h: 0.05 }, { method: "max-strength", mechanism: { kind: "streak", n: 10, p: 0.5, carry: 0 }, param: "carry", min: 0.05, max: 0.6, step: 0.05, ratio: 1.2 }],
+    ["A-03 13 回（平均の四捨五入と違う）", [{ id: "k", ref: "binom.mode", bind: { n: "n", p: "p" } }], { n: 13, p: 0.8 }, { method: "mode", n: 13, p: 0.8 }],
     ["E-03", [{ id: "N", ref: "fpc.N", bind: { n: "n", r: "r", u: "u" } }], { n: 10, r: 0.8, u: 2 }, { method: "min-total", n: 10, ratio: 0.8, step: 2 }],
     ["E-04", [{ id: "bv", ref: "binom.var", bind: { n: "n", p: "p" } }, { id: "d", ref: "mix.d", bind: { V: "v", B: "bv", n: "n" } }], { n: 10, p: 0.5, v: 3.4 }, { method: "solve-spread", n: 10, p: 0.5, variance: 3.4 }],
   ];
