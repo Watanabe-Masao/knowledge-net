@@ -25,9 +25,9 @@ const seriesHeights = (panel: ReturnType<Page["getByTestId"]>) => panel.getByTes
 test("対比：つまり → 同じ所・違う所・だから → 2つの分布を並べた図（数は engine から）", async ({ page }) => {
   const panel = await open(page, /二項分布 と 超幾何分布 を比べる/);
   await expect(panel.getByTestId("rel-stages").locator("dt")).toHaveText(["同じ所", "違う所", "だから"]);
-  const ys = [];
-  for (const id of ["gist", "rel-stages", "rel-chart"]) ys.push((await panel.getByTestId(id).boundingBox())!.y);
-  expect(ys).toEqual([...ys].sort((a, b) => a - b));
+  // 面が上がる動きの途中で別々に測るとずれるので、同じ時点の位置を一度に測り、落ち着くまで待つ
+  await expect.poll(() => panel.evaluate((el) => ["gist", "rel-stages", "rel-chart"].map((id) => el.querySelector(`[data-testid=${id}]`)!.getBoundingClientRect().top))
+    .then((ys) => ys.every((y, i) => !i || y > ys[i - 1]!))).toBe(true);
   const [bin, hyp] = await seriesHeights(panel);
   expect(hyp![3]! / bin![3]!).toBeCloseTo(0.37152 / 0.26683, 2);
   await expect(panel.getByTestId(/^media-panel-/).getByRole("radio", { name: /図/ })).toHaveCount(0);   // 画像の図は重ねない
