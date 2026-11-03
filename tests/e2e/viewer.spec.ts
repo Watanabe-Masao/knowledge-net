@@ -1465,10 +1465,10 @@ const APPLY_CASES: { key: string; ws: boolean; chip?: [string, string, number]; 
   { key: "B-04", ws: true, answerIn: false },    // 人数の平均は道具に出ない（1人の確率を読んで ×1000 を考える）
   { key: "C-02", ws: false,   /* 理論と実測は式が理由の中心の形でないので出さない（くり返しも同じ） */ chip: ["N", "exp-app-N", 9200], answerIn: true },
   { key: "E-01", ws: false, answerIn: false },
-  { key: "E-02", ws: false, chip: ["s", "exp-app-s", 0.05], answerIn: true },
+  { key: "E-02", ws: false, chip: ["s", "exp-app-s", 0.1], answerIn: true },
   { key: "E-03", ws: false, chip: ["s", "exp-app-s", 46], answerIn: true },
   { key: "E-04", ws: false, chip: ["s", "exp-app-s", 0.1], answerIn: true },
-  { key: "A-03", ws: true, answerIn: true },      // いちばん高い棒（8 回の行）
+  { key: "A-03", ws: true, answerIn: true },      // いちばん高い棒（13 回・80% で 11 回の行。平均 10.4 の四捨五入とは違う）
   { key: "C-01", ws: false, chip: ["m", "exp-app-m", 100], answerIn: false },   // 選ぶ形：色は ±2SE の幅（12%〜28%）
   { key: "D-01", ws: true, chip: ["a", "exp-app-a", 200], answerIn: true },     // 合計の値の平均に 250
   { key: "D-02", ws: true, answerIn: false },     // 選ぶ形：色は A の分散（2.4）。B は自分で合わせて比べる
@@ -1531,7 +1531,7 @@ const SYMS: Record<string, string[]> = {   // engine の WALK_FORMULAS の記号
 };
 // 確かめる段（probe）で道具を合わせる先。probe のない課題は []（応用の全部の課題を最後まで組み立てる）
 const WALK_TARGETS: Record<string, Record<string, number>[]> = {
-  "A-01": [{ n: 20, p: 0.3 }], "A-02": [{ p: 0.3, n: 33 }], "A-03": [{ n: 10, p: 0.8 }], "B-01": [{ n: 10, p: 0.3, k: 3 }], "B-02": [{ n: 10, p: 0.3, k: 3 }],
+  "A-01": [{ n: 20, p: 0.3 }], "A-02": [{ p: 0.3, n: 33 }], "A-03": [{ n: 13, p: 0.8 }], "B-01": [{ n: 10, p: 0.3, k: 3 }], "B-02": [{ n: 10, p: 0.3, k: 3 }],
   "B-04": [], "C-01": [], "C-02": [], "D-01": [], "D-02": [{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }], "E-01": [], "E-02": [], "E-03": [], "E-04": [],
 };
 test("応用の解き方を組み立てる：原本どおりに押すと最後まで進み、迷った段がまとめに出る", async ({ page }) => {

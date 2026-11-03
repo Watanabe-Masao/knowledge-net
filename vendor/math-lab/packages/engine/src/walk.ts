@@ -125,7 +125,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
       return [
         { key: "share", title: "起きた割合", tex: `${r4(x!)}\\div${r4(m!)}${approx(sh)}${r4(sh)}`, why: "起きた回数を試した回数で割る。" },
         { key: "diff", title: "理論とのずれ", tex: `|${r4(sh)}-${r4(P!)}|${approx(d)}${r4(d)}`, why: "理論の確率からどれだけ離れたか（向きは問わない）。" },
-        { key: "z", title: "標準誤差の何個分か", tex: `${r4(d)}\\div${r4(S!)}${approx(z)}${r4(z)}`, why: "ずれを、たまたまでも起きるずれの目安（標準誤差）で測る。2 個分（±2SE）までなら、たまたまでもよく起きる。" },
+        { key: "z", title: "標準誤差の何個分か", tex: `${r4(d)}\\div${r4(S!)}${approx(z)}${r4(z)}`, why: "ずれを、たまたまでも起きるずれの目安（標準誤差）で測る。" },
       ];
     },
   },
@@ -142,6 +142,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
   },
   "sets.n": {
     tex: "N\\ge\\dfrac{4\\times @P(1-@P)}{@e^{2}}\\ (@u\\text{ 単位})", syms: ["P", "e", "u"], out: "N", outWord: "要るセット数", pick: "2SE = 2√(P(1 − P)/N)",
+    mean: { P: "P は1セットでその事象が起きる確率（1回の成功確率ではない）。" },
     value: ({ P, e, u }) => { const v = P! * (1 - P!); let N = Math.max(1, Math.floor((4 * v) / (e! * e!)) - 1); while (2 * Math.sqrt(v / N) > e! + EPS) N++; return Math.ceil(N / u!) * u!; },
     rows: ({ P, e, u }) => {
       const v = P! * (1 - P!), q = (4 * v) / (e! * e!), N = WALK_FORMULAS["sets.n"]!.value({ P, e, u } as Record<string, number>);
@@ -172,7 +173,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
       const ps = Array.from({ length: n! }, (_, i) => F! + ((L! - F!) * i) / (n! - 1)), v = WALK_FORMULAS["fatigue.var"]!.value({ n, F, L } as Record<string, number>);
       return [
         { key: "ps", title: "回ごとの確率", tex: `p_i=${ps.slice(0, 3).map(r4).join(",\\ ")},\\ \\ldots,\\ ${r4(ps[ps.length - 1]!)}`, why: `最初 ${r4(F!)} から最後 ${r4(L!)} へ、同じ幅で下がる。平均の確率は (${r4(F!)}＋${r4(L!)})÷2。` },
-        { key: "sum", title: "分散", tex: `${ps.slice(0, 2).map((q) => `${r4(q)}\\times${r4(1 - q)}`).join("+")}+\\cdots${approx(v)}${r4(v)}`, why: "各回は独立なので、1回ごとの分散 pᵢ(1−pᵢ) を足せる。確率が回によって違うと、1回ごとの p(1−p) は二項分布の 0.25 より小さくなる回がある。" },
+        { key: "sum", title: "分散", tex: `${ps.slice(0, 2).map((q) => `${r4(q)}\\times${r4(1 - q)}`).join("+")}+\\cdots${approx(v)}${r4(v)}`, why: "各回は独立なので、1回ごとの分散 pᵢ(1−pᵢ) を足せる。確率の平均を p̄ とすると Σpᵢ(1−pᵢ) ＝ np̄(1−p̄) − Σ(pᵢ−p̄)²。確率が回ごとに違うほど、二項分布より小さくなる。" },
       ];
     },
   },
@@ -180,22 +181,26 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
     tex: "1+\\dfrac{2}{@n}\\sum_{j=1}^{@n-1}(@n-j)c^{j}\\le @r\\quad(c=@h,\\ 2\\times @h,\\ \\ldots)", syms: ["n", "r", "h"], out: "c", outWord: "許される強さ", pick: "比 = 1 + (2/n) Σ (n − j)cʲ",
     value: ({ n, r, h }) => { let best = Number.NaN; for (let i = 1; i <= 100; i++) { const c = Number((h! * i).toFixed(10)); if (c > 1) break; const q = streakRatio(n!, c); if (q <= r! + EPS && q >= 1 / r! - EPS) best = c; else break; } if (Number.isNaN(best)) throw new Error("いちばん弱い強さでも倍率を超える"); return best; },
     rows: ({ n, r, h }) => {
-      const best = WALK_FORMULAS["streak.max"]!.value({ n, r, h } as Record<string, number>), nx = Number((best + h!).toFixed(10));
-      return [
-        { key: "ok", title: `c＝${r4(best)} のとき`, tex: `\\text{比}${approx(streakRatio(n!, best))}${r4(streakRatio(n!, best))}\\le ${r4(r!)}`, why: "隣どうしの相関が c、2つ離れると c²…と積み重なり、分散が二項分布より大きくなる。まだ許す倍率の中。" },
-        { key: "ng", title: `c＝${r4(nx)} のとき`, tex: `\\text{比}${approx(streakRatio(n!, nx))}${r4(streakRatio(n!, nx))}>${r4(r!)}`, why: "1つ上の刻みでは許す倍率を超える。" },
-        { key: "best", title: "許される強さ", tex: `c=${r4(best)}`, why: "刻みの中で、倍率を超えない最大の強さ。" },
-      ];
+      // 刻み h から順に試し、倍率を超える所までを1行ずつ見せる（探す過程。答えを最初の行で言わない）
+      const best = WALK_FORMULAS["streak.max"]!.value({ n, r, h } as Record<string, number>), out: WalkRow[] = [];
+      for (let i = 1; i <= 100; i++) {
+        const c = Number((h! * i).toFixed(10)), q = streakRatio(n!, c), ok = q <= r! + EPS;
+        out.push({ key: `c${i}`, title: `c＝${r4(c)} を試す`, tex: `\\text{比}${approx(q)}${r4(q)}${ok ? "\\le" : ">"}${r4(r!)}`, why: ok ? (i === 1 ? "隣どうしの相関が c、2つ離れると c²…と積み重なり、分散が二項分布より大きくなる。まだ許す倍率の中。" : "まだ許す倍率の中。次の刻みも試す。") : "許す倍率を超えた。ここで探すのをやめる。" });
+        if (!ok || c >= 1) break;
+      }
+      out.push({ key: "best", title: "許される強さ", tex: `c=${r4(best)}`, why: "倍率を超えなかった刻みのうち、いちばん大きい強さ。" });
+      return out;
     },
   },
   "fpc.N": {
-    tex: "\\dfrac{N-@n}{N-1}\\ge @r\\quad(@u\\text{ 個単位})", syms: ["n", "r", "u"], out: "N", outWord: "最低の箱の数", pick: "V = np(1 − p) × (N − n)/(N − 1)",
+    tex: "\\dfrac{N-@n}{N-1}\\ge @r\\quad(@u\\text{ 個単位})", syms: ["n", "r", "u"], out: "N", outWord: "最低の玉の数", pick: "V = np(1 − p) × (N − n)/(N − 1)",
     value: ({ n, r, u }) => { let N = n!; while ((N - n!) / (N - 1) < r! - EPS || N % u! !== 0) N++; return N; },
     rows: ({ n, r, u }) => {
       const q = (n! - r!) / (1 - r!), N = WALK_FORMULAS["fpc.N"]!.value({ n, r, u } as Record<string, number>);
       return [
+        { key: "ratio", title: "分散の比", tex: `\\dfrac{np(1-p)\\times\\frac{N-${r4(n!)}}{N-1}}{np(1-p)}=\\dfrac{N-${r4(n!)}}{N-1}`, why: "戻さずに取るときの分散を、戻して取るとき（二項分布）の分散で割る。np(1−p) は打ち消し合い、(N−n)/(N−1) だけが残る。これが r 以上になればよい。" },
         { key: "solve", title: "N の境目", tex: `N\\ge\\dfrac{${r4(n!)}-${r4(r!)}}{1-${r4(r!)}}${approx(q)}${r4(q)}`, why: "(N−n)/(N−1) ≧ r の両辺に N−1 を掛けて、N について解く。" },
-        { key: "ceil", title: "最低の箱の数", tex: `N=${N}`, why: `${r4(q)} 以上で、${u} 個単位で数えた最小の数。戻さずに取ると、分散は (N−n)/(N−1) 倍に減る（有限母集団の修正）。` },
+        { key: "ceil", title: "最低の玉の数", tex: `N=${N}`, why: `${r4(q)} 以上で、${u} 個単位で数えた最小の数。戻さずに取ると、分散は (N−n)/(N−1) 倍に減る（有限母集団の修正）。` },
       ];
     },
   },
@@ -207,7 +212,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
       const x = V! - B!, den = n! * (n! - 1), q = x / den, d = Math.sqrt(Math.max(0, q));
       return [
         { key: "extra", title: "増えた分散", tex: `${r4(V!)}-${r4(B!)}${approx(x)}${r4(x)}`, why: "日によって確率が変わると、二項分布の分散に n(n−1)d² が足される。" },
-        { key: "den", title: "掛かる数", tex: `${r4(n!)}\\times(${r4(n!)}-1)=${r4(den)}`, why: "1日のうちの回どうしが、同じ日の確率を共にするぶん（n(n−1) 組）。" },
+        { key: "den", title: "掛かる数", tex: `${r4(n!)}\\times(${r4(n!)}-1)=${r4(den)}`, why: "同じ日の回どうしが、同じ日の確率を共にするぶん（順番を付けた n(n−1) 組）。" },
         { key: "sq", title: "d の2乗", tex: `${r4(x)}\\div${r4(den)}${approx(q)}${r4(q)}`, why: "n(n−1)d² ＝ 増えた分散 を d² について解く。" },
         { key: "d", title: "ずれ幅", tex: `\\sqrt{${r4(q)}}${approx(d)}${r4(d)}`, why: "d は正の数なので、平方根を取る。" },
       ];

@@ -549,7 +549,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
 // ---------------- 前提崩し：成り立つ条件を崩してみる ----------------
 type Cx = NonNullable<BinomDef["counterexamples"]>[number];
 const STRENGTH: Record<string, [string, number, number, number, keyof Cx["mechanism"]]> = {
-  streak: ["引きずる強さ", 0.05, 0.6, 0.05, "carry"], mix: ["ずれ幅 d", 0.05, 0.4, 0.05, "spread"], fatigue: ["下がる幅 d", 0.05, 0.4, 0.05, "drop"], urn: ["箱の数", 12, 60, 2, "total"],
+  streak: ["引きずる強さ", 0.05, 0.6, 0.05, "carry"], mix: ["ずれ幅 d", 0.05, 0.4, 0.05, "spread"], fatigue: ["下がる幅 d", 0.05, 0.4, 0.05, "drop"], urn: ["箱の中の玉の数", 12, 60, 2, "total"],
 };
 /** 反例の定義から起き方を作る（比べる二項分布は、戻さずに取るだけ箱の当たりの割合にそろえる） */
 export function mechOfCx(cx: Cx, c: Cond, x?: number): Mechanism {
