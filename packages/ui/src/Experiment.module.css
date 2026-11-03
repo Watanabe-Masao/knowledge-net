@@ -291,6 +291,7 @@
 .wSeg:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .wSegQ { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
 .wSegNum { background: var(--mark); font-weight: 700; padding: 1px 3px; }
+.wSegPick { background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent); }
 .wSegX { text-decoration: line-through; text-decoration-color: var(--bad); color: var(--ink-3); }
 .wLab { position: absolute; left: 0; top: -1.3em; font-size: 10.5px; line-height: 1; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .wBrief { margin: 0; display: flex; gap: 8px; align-items: baseline; font-size: 14px; line-height: 1.5; }
@@ -320,12 +321,16 @@
 .wBlock { display: grid; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
 .wBlockTitle { margin: 0; font-size: 12px; color: var(--ink-3); }
 .wSlots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.wSlot, .wSlotReady, .wSlotFull { all: unset; box-sizing: border-box; min-width: 84px; min-height: var(--tap); padding: 4px 10px; border-radius: var(--r-m); border: 1.5px dashed var(--line-strong); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-.wSlot i, .wSlotReady i, .wSlotFull i { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 18px; }
-.wSlot span, .wSlotReady span, .wSlotFull span { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.wSlot, .wSlotReady, .wSlotFull, .wSlotPut { all: unset; box-sizing: border-box; min-width: 84px; min-height: var(--tap); padding: 4px 10px; border-radius: var(--r-m); border: 1.5px dashed var(--line-strong); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.wSlot i, .wSlotReady i, .wSlotFull i, .wSlotPut i { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 18px; }
+.wSlot span, .wSlotReady span, .wSlotFull span, .wSlotPut span { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .wSlotReady { border-color: var(--accent); background: var(--accent-soft); }
 .wSlotFull { border: 1.5px solid var(--accent); background: var(--accent-soft); }
 .wSlotFull span { color: var(--accent); font-weight: 600; }
+.wSlotPut { border: 1.5px solid var(--line-strong); background: var(--surface); }
+.wSlotPut span { color: var(--ink); font-weight: 600; }
+.wSlotBad { border-color: var(--bad); } .wSlotBad span { color: var(--bad); }
+.wSlots + button { margin-top: 10px; width: 100%; }
 .wCalc { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .wCalc li { border-left: 3px solid var(--accent-line); padding: 2px 0 2px 10px; display: grid; gap: 2px; min-width: 0; }
 .wCalc li b { font-size: 12.5px; color: var(--ink-2); }
