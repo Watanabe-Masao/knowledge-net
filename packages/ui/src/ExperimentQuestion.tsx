@@ -126,7 +126,7 @@ export type ApplySpec = {
 /** state：下の道具の今の値（解き方の確かめる段で、問いの値になったかを見る） */
 export function ApplyTask({ spec, onFit, state }: { spec: ApplySpec; onFit?: (at: ApplyState, mark: ApplyMark) => void; state?: ApplyState }) {
   const res = useMemo(() => { try { return { r: solveApply(spec.solve), c: applyCheck(spec.solve) }; } catch (e) { return e as Error; } }, [spec]);
-  const [val, setVal] = useState(""), [pick, setPick] = useState<string>(""), [done, setDone] = useState(false), [walking, setWalking] = useState(false);
+  const [val, setVal] = useState(""), [pick, setPick] = useState<string>(""), [done, setDone] = useState(false);
   if (res instanceof Error) return <Card title="応用の課題"><p className={qs.note} role="alert">課題の条件がおかしい：{res.message}</p></Card>;
   const { r, c } = res, a = spec.answer, fmt = c.answerFormat;
   const pctIn = fmt?.kind === "pct" || fmt?.kind === "sig";   // % の課題は % の値で入れ、0〜1 に直して照らす
@@ -136,7 +136,7 @@ export function ApplyTask({ spec, onFit, state }: { spec: ApplySpec; onFit?: (at
   const ready = a.type === "choice" ? pick !== "" : val.trim() !== "" && Number.isFinite(x);
   return <section className={s.card} data-testid="exp-apply" data-kind={spec.kind}>
     <p className={s.h}>応用の課題<span className={s.applyKind}>{spec.kind}</span></p>
-    <p className={walking ? `${s.applyTask} ${s.applyTaskClamp}` : s.applyTask} data-testid="exp-apply-task">{spec.task}</p>
+    <p className={s.applyTask} data-testid="exp-apply-task">{spec.task}</p>
     {!done && <p className={qs.muted}>下のつまみを課題の値に合わせ、図や表から読み取って答える。</p>}
     {!done && (a.type === "choice"
       ? <Seg name="答え" items={a.options.map((o, i) => [String(i), o] as [string, string])} value={pick} onChange={setPick} />
@@ -147,13 +147,13 @@ export function ApplyTask({ spec, onFit, state }: { spec: ApplySpec; onFit?: (at
           <b>{ok ? "✓ 合っている" : "✗ ちがう"}</b>
           <span className={s.bigNum} data-testid="exp-apply-answer">{shown}</span>
           <div className={s.applyLinks}>
-            <button type="button" className={s.link} onClick={() => { setDone(false); setVal(""); setPick(""); setWalking(false); }} data-testid="exp-apply-retry">もう一度</button>
+            <button type="button" className={s.link} onClick={() => { setDone(false); setVal(""); setPick(""); }} data-testid="exp-apply-retry">もう一度</button>
             {onFit && <button type="button" className={s.link} onClick={() => { haptic(); onFit(c.at, c.mark); }} data-testid="exp-apply-fit">グラフを問いに合わせる</button>}
           </div>
           {onFit && <p className={qs.muted}>つまみが問いの値になり、答えの出ている所に色が付く。自分の値・読んだ所と比べる（入れ間違いか、読み違いか）。</p>}
         </div>
         {/* 解き方：原本に walk があれば自分で組み立てる（#181）。なければ engine が作る段の一覧 → つまり（原本の一言） */}
-        {spec.walk ? <ApplyWalk walk={spec.walk} solve={spec.solve} steps={r.steps} check={c} state={state} ok={ok} why={spec.why} onFit={onFit} onMode={setWalking} />
+        {spec.walk ? <ApplyWalk walk={spec.walk} solve={spec.solve} steps={r.steps} check={c} state={state} ok={ok} why={spec.why} answerText={shown} onFit={onFit} />
           : <>
             <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
             <ol className={s.applySteps} data-testid="exp-apply-steps">
