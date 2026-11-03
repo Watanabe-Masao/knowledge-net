@@ -222,11 +222,11 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   /** 式の形に、入れた値か記号を入れる（入れた値は太字） */
   function fillTex(fu: ApplyWalkSpec["formulas"][number], isFilled: (sym: string) => boolean) {
     const def = WALK_FORMULAS[fu.ref]!;
-    return def.tex.replace(/\{([A-Za-z])\}/g, (_, sym: string) => {
+    return def.tex.replace(/@([A-Za-z])/g, (_, sym: string) => {
       const src = fu.bind[sym];
       if (!src) return sym;
-      if (isFilled(sym)) { const v = vals[src] ?? computed.find((c) => c.id === src)?.value; return `\\mathbf{${v === undefined ? "?" : r4(v)}}`; }
-      return symOf(src).replace(/^([A-Za-z])$/, "$1");
+      if (isFilled(sym)) { const v = vals[src] ?? computed.find((c) => c.id === src)?.value; return `{\\mathbf{${v === undefined ? "?" : r4(v)}}}`; }
+      return `{${symOf(src)}}`;
     });
   }
 

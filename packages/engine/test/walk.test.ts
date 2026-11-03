@@ -30,3 +30,15 @@ describe("解き方の公式の部品", () => {
     expect(() => walkCompute([{ id: "x", ref: "binom.mode", bind: {} }], {})).toThrow(/知らない/);
   });
 });
+
+// 式の形の穴（@n）：TeX の括弧（\mathrm{C} など）を穴と取り違えない。故障：\mathrm{C} の C を穴として置き換え、式が赤い文字になる（実際に起きた）
+describe("式の形の穴", () => {
+  it("どの公式も、穴は記号の @ だけで、記号の数がそろう", async () => {
+    const { WALK_FORMULAS } = await import("../src");
+    for (const def of Object.values(WALK_FORMULAS)) {
+      const holes = [...new Set([...def.tex.matchAll(/@([A-Za-z])/g)].map((m) => m[1]))].sort();
+      expect(holes).toEqual([...def.syms].sort());
+      expect(def.tex).not.toMatch(/\{[nkpE]\}/);   // 古い形 {n} の穴が残っていない
+    }
+  });
+});

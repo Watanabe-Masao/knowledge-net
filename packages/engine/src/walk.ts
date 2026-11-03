@@ -6,7 +6,7 @@ import { NUM4, formatApply } from "./applyFormat";
 /** 計算の1行：key は原本が選ぶ問いを付ける所（例：fail に「0.3⁰ はいくつ？」） */
 export type WalkRow = { key: string; title: string; tex: string; why: string };
 export type WalkFormulaDef = {
-  /** 式の形（TeX）。{n} のような穴に、当てはめた値か記号が入る */
+  /** 式の形（TeX）。@n のような穴に、当てはめた値か記号が入る（{} は TeX の括弧と紛れるので使わない） */
   tex: string;
   /** 穴の記号（式の中の順） */
   syms: string[];
@@ -29,7 +29,7 @@ const C = (n: number | string, k: number | string) => `{}_{${n}}\\mathrm{C}_{${k
 
 export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
   "binom.pmf": {
-    tex: "P(X={k})={}_{{n}}\\mathrm{C}_{{k}}\\,{p}^{{k}}(1-{p})^{{n}-{k}}", syms: ["n", "k", "p"], out: "P", outWord: "ちょうど k 回の確率",
+    tex: "P(X=@k)={}_{@n}\\mathrm{C}_{@k}\\,@p^{@k}(1-@p)^{@n-@k}", syms: ["n", "k", "p"], out: "P", outWord: "ちょうど k 回の確率",
     pick: "P(X = k) = ₙCₖ pᵏ(1 − p)ⁿ⁻ᵏ",
     value: ({ n, k, p }) => comb(n!, k!) * p! ** k! * (1 - p!) ** (n! - k!),
     rows: ({ n, k, p }) => {
@@ -43,17 +43,17 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
     },
   },
   "binom.mean": {
-    tex: "E(X)={n}\\times{p}", syms: ["n", "p"], out: "E", outWord: "平均（期待値）", pick: "E(X) = np",
+    tex: "E(X)=@n\\times @p", syms: ["n", "p"], out: "E", outWord: "平均（期待値）", pick: "E(X) = np",
     value: ({ n, p }) => n! * p!,
     rows: ({ n, p }) => [{ key: "prod", title: "平均", tex: `${r4(n!)}\\times${r4(p!)}${approx(n! * p!)}${r4(n! * p!)}`, why: "1つずつの期待値 p を n 個分足し合わせた平均。1つずつの結果が独立でなくても成り立つ。" }],
   },
   "binom.mean-p": {
-    tex: "{E}={n}\\times p", syms: ["E", "n"], out: "p", outWord: "1回の成功確率", pick: "E(X) = np",
+    tex: "@E=@n\\times p", syms: ["E", "n"], out: "p", outWord: "1回の成功確率", pick: "E(X) = np",
     value: ({ E, n }) => E! / n!,
     rows: ({ E, n }) => [{ key: "div", title: "p を求める", tex: `p=${r4(E!)}\\div${r4(n!)}${approx(E! / n!)}${r4(E! / n!)}`, why: "両辺を n で割ると、p だけが残る。" }],
   },
   "binom.var": {
-    tex: "V(X)={n}\\times{p}\\times(1-{p})", syms: ["n", "p"], out: "V", outWord: "分散", pick: "V(X) = np(1 − p)",
+    tex: "V(X)=@n\\times @p\\times(1-@p)", syms: ["n", "p"], out: "V", outWord: "分散", pick: "V(X) = np(1 − p)",
     value: ({ n, p }) => n! * p! * (1 - p!),
     rows: ({ n, p }) => [
       { key: "q", title: "1回の失敗の確率", tex: `1-${r4(p!)}=${r4(1 - p!)}`, why: "1回ごとに成功か失敗のどちらか。失敗の確率は 1 − p。" },
