@@ -170,6 +170,8 @@ export function ApplyWalk({ walk, solve, steps, check, state, ok, why, onFit, on
   else if (here?.type === "quiz") todo = here.q.todo ?? here.q.ask ?? "選ぶ";
   else if (here?.type === "slots") todo = here.todo ?? "下の数を押してから、式の枠を押す";
   else if (here?.type === "tool") todo = walk.check?.todo ?? `下のチップを ${check.targets.map(showAt).join(" → ")} に合わせ、色の付いた所を読む`;
+  // 式の枠は、その段の間ずっと出す（全部入れたあとに続く問い〔then〕でも、入れた式を見ながら答える）
+  const eqSub = subs[cur]!.find((x): x is Extract<Sub, { type: "slots" }> => x.type === "slots");
   const known = cur > 0 ? walk.segs.filter((g) => g.key && keys.includes(g.key)) : [];
   return <div className={s.walk} data-testid="exp-walk">
     <div className={s.walkHead}><span>解き方　STEP {cur + 1} / {steps.length}</span><span className={s.walkDots} aria-hidden="true">{steps.map((_, i) => <i key={i} className={i < cur || (i === cur && done) ? s.walkDotDone : i === cur ? s.walkDotCur : undefined} />)}</span></div>
@@ -195,7 +197,7 @@ export function ApplyWalk({ walk, solve, steps, check, state, ok, why, onFit, on
         return <button key={j} type="button" disabled={right && j !== here.q.ok} className={[here.q.math ? s.wMath : "", picked ? (j === here.q.ok ? s.wRight : s.wWrong) : ""].filter(Boolean).join(" ") || undefined} onClick={() => choose(here.q, j)} data-testid={`exp-walk-choice-${j}`}><span>{o}</span><em>{picked ? (j === here.q.ok ? "✓" : "✗") : ""}</em></button>;
       })}</div>
     </>}
-    {here?.type === "slots" && <div className={s.wEqs}>{here.lines.map((ln, i) => <div key={i} className={s.wEq}>{ln.map((t, j) => typeof t === "string" ? <span key={j}>{t}</span>
+    {eqSub && <div className={s.wEqs}>{eqSub.lines.map((ln, i) => <div key={i} className={s.wEq}>{ln.map((t, j) => typeof t === "string" ? <span key={j}>{t}</span>
       : <button key={j} type="button" className={filled[t.slot] ? s.wSlotFull : arm ? s.wSlotReady : s.wSlot} onClick={() => put(t.slot)} data-testid={`exp-walk-slot-${t.slot}`}>{filled[t.slot] ? valueOf(t.slot) : t.ph ?? walk.tags.vars[t.slot]?.sym ?? t.slot}</button>)}</div>)}</div>}
     <p className={msg ? (msg.good ? s.wGood : s.wBad) : s.wStatus} role="status" data-testid="exp-walk-status">{msg?.t ?? ""}</p>
     {done && <div className={s.wSum} data-testid="exp-walk-sum"><small>この段のまとめ</small>{st.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(st.tex) }} />}{st.text && <p>{st.text}</p>}</div>}
