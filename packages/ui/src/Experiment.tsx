@@ -10,6 +10,7 @@ import { TableLab, type TableDef } from "./ExperimentTable";
 import { BreakQ, ConvQ, ProbQ, QuestionMenu, ShiftQ, SpreadQ, type ApplySpec, type MenuGroup, type MenuItem } from "./ExperimentQuestion";
 import { CompareStage, copyHere, useCards } from "./Compare";
 import { LabInfo } from "./LabInfo";
+import { MeanQ, PathsQ, RepeatQ, VarQ } from "./ExperimentQuestion2";
 import type { FormulaData } from "./Formula";
 import { Workspace, type WorkspaceData } from "./Workspace";
 import s from "./Experiment.module.css";
@@ -36,6 +37,10 @@ export type BinomDef = {
     | { id: string; form: "prob"; title: string; question: string; set: Cond; events: { op: "eq" | "ge" | "le"; k: number }[]; free?: boolean }
     | { id: string; form: "spread"; title: string; question: string; set: Cond; to: { n: number } }
     | { id: string; form: "conv"; title: string; question: string; set: Cond; events: { op: "eq" | "ge" | "le"; k: number }[] }
+    | { id: string; form: "paths"; title: string; question: string; set: Cond; ks: [number, number] }
+    | { id: string; form: "repeat"; title: string; question: string; set: Cond; events: { op: "eq" | "ge" | "le"; k: number }[]; sets: number }
+    | { id: string; form: "mean"; title: string; question: string; set: Cond }
+    | { id: string; form: "var"; title: string; question: string; set: Cond; ps: number[] }
   )[];
   /** 確率の値の問いの予想の目盛り（大きい順の境目） */
   prob_scale?: number[];
@@ -130,6 +135,10 @@ function BinomEntry(props: Props & { def: BinomDef }) {
   if (!q) return null;
   if (q.form === "spread") return <SpreadQ {...common} q={q}>{infoSheet}</SpreadQ>;
   if (q.form === "conv") return <ConvQ {...common} q={q}>{infoSheet}</ConvQ>;
+  if (q.form === "paths") return <PathsQ {...common} q={q}>{infoSheet}</PathsQ>;
+  if (q.form === "repeat") return <RepeatQ {...common} q={q}>{infoSheet}</RepeatQ>;
+  if (q.form === "mean") return <MeanQ {...common} q={q}>{infoSheet}</MeanQ>;
+  if (q.form === "var") return <VarQ {...common} q={q}>{infoSheet}</VarQ>;
   return <ProbQ {...common} q={q}>{infoSheet}</ProbQ>;
 }
 
