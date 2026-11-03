@@ -342,7 +342,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
           </li>;
         })}</ol>}
         {bindDone && shown < c.rows.length && <button type="button" className={s.secondary} disabled={!rowQuizOk(cur, f, shown)} onClick={() => { haptic(); setCalc({ ...calc, [f]: shown + 1 }); setMsg(null); }} data-testid="exp-walk-calc">{shown === 0 ? "計算する" : shown + 1 < c.rows.length ? "次の計算へ" : `${fu.word ?? def.outWord}を出す`}</button>}
-        {bindDone && shown >= c.rows.length && rowQuizOk(cur, f, shown) && used && <div className={s.wMade}><span>出てきた値</span>{chip(fu.id, def.out, `≈ ${r4(c.value)}`, fu.word ?? def.outWord)}</div>}
+        {bindDone && shown >= c.rows.length && rowQuizOk(cur, f, shown) && used && <div className={s.wMade}><span>出てきた値</span>{chip(fu.id, def.out, `${Math.abs(c.value - Number(r4(c.value))) > 1e-12 ? "≈" : "="} ${r4(c.value)}`, fu.word ?? def.outWord)}</div>}
       </div>;
     })}
     {here?.t === "quiz" && <>

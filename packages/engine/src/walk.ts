@@ -141,7 +141,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
     },
   },
   "sets.n": {
-    tex: "N\\ge\\dfrac{4\\times @P(1-@P)}{@e^{2}}\\quad(@u\\text{ セット単位})", syms: ["P", "e", "u"], out: "N", outWord: "要るセット数", pick: "2SE = 2√(P(1 − P)/N)",
+    tex: "N\\ge\\dfrac{4\\times @P(1-@P)}{@e^{2}}\\ (@u\\text{ 単位})", syms: ["P", "e", "u"], out: "N", outWord: "要るセット数", pick: "2SE = 2√(P(1 − P)/N)",
     value: ({ P, e, u }) => { const v = P! * (1 - P!); let N = Math.max(1, Math.floor((4 * v) / (e! * e!)) - 1); while (2 * Math.sqrt(v / N) > e! + EPS) N++; return Math.ceil(N / u!) * u!; },
     rows: ({ P, e, u }) => {
       const v = P! * (1 - P!), q = (4 * v) / (e! * e!), N = WALK_FORMULAS["sets.n"]!.value({ P, e, u } as Record<string, number>);
