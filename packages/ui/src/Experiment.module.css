@@ -159,6 +159,7 @@
 @media (prefers-reduced-motion: reduce) { .drawNew { animation: none; } .runDot { transition: none; } }
 /* 前の条件の実験（#121）：前の理論の点線と同じ色 */
 .barBefore { fill: var(--data-2); fill-opacity: .55; }
+.curve { fill: none; stroke: var(--data-2); stroke-width: 2; stroke-linejoin: round; }
 .kBarB { width: 9px; height: 10px; border-radius: 2px 2px 0 0; background: var(--data-2); opacity: .55; }
 .bandB { fill: var(--data-2); fill-opacity: .1; }
 .meanLineB { stroke: var(--data-2); stroke-dasharray: 4 3; stroke-opacity: .8; }
