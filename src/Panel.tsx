@@ -1,5 +1,5 @@
 // 線（関係・導出）の説明パネル。画面の下から開く。閉じても選んだ概念はそのまま。
-import RelationCard from "./Relation";
+import { RelationOpen } from "./Relation";
 import { Button, Muted, Row, Sheet } from "@math-lab/ui";
 import { name } from "./Detail";
 import { type Network } from "./data";
@@ -21,7 +21,7 @@ export default function Panel({ net, edgeId, onClose, onSelect }: Props) {
   return (
     <Sheet label="関係の説明" data-testid="edge-panel" onClose={onClose} title={found.rel ? "つながり" : "導出"}>
       {found.rel ? <>
-        <RelationCard net={net} r={found.rel} context={`panel-${found.rel.id}`} open as="plain" />
+        <RelationOpen net={net} r={found.rel} context={`panel-${found.rel.id}`} />
         <Row>{[found.rel.from, found.rel.to].map((c) => <Button key={c} onClick={() => onSelect(c)}>{name(net, c)} へ</Button>)}</Row>
       </> : <>
         <h4>{found.der!.statement}</h4>

@@ -3,9 +3,10 @@
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
 // 手触り：切り替えと前後の図は change() で、変わる所（この欄）だけを短くつなぐ。
 import { useRef, useState } from "react";
-import { Badge, Badges as BadgeRow, Button, Lightbox, Segmented, change } from "@math-lab/ui";
+import { Badge, Badges as BadgeRow, Bars, Button, Lightbox, Segmented, change } from "@math-lab/ui";
+import { modelPmf, normalDensity, poissonPmf } from "@math-lab/engine";
 import s from "./Relation.module.css";
-import { KINDS, MODES, PREMISES, type FigRef, type LabRef, type Network, type Relation } from "./data";
+import { KINDS, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
 const KIND_VAR: Record<string, string> = {
   前提: "--k-pre", 導出: "--k-der", 一般化: "--k-gen", 特殊化: "--k-gen", 変換: "--k-conv", 対比: "--k-con", 統合: "--k-int", 応用: "--k-app",
@@ -122,6 +123,90 @@ export default function RelationCard({ net, r, onTitle, context, open = false, a
       <p className={s.desc}>{r.description}</p>
       {r.conditions?.length ? <ul className={s.conds} aria-label="条件">{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul> : null}
       <Media figures={r.figures} labs={r.labs} context={context} open={open} />
+    </article>
+  );
+}
+
+// ---- 関係を開いたときの面（stats2-course #188 04）----
+// 並び：つまり → 段（対比は 同じ所・違う所・だから／変換は 元の形・変える操作・行き着く形）→ 図（その場で描く）→ 成り立つ条件 → 解説・触る。
+// 段と図がない関係（前提・応用など）は、関係の説明を「なぜ前に要るか」などの1段で出す。文・図・条件は教材の関係の1か所から。
+
+const STAGE_LABEL: Record<string, [string, string][]> = {
+  対比: [["same", "同じ所"], ["differ", "違う所"], ["so", "だから"]],
+  変換: [["origin", "元の形"], ["operation", "変える操作"], ["result", "行き着く形"]],
+};
+const ALONE_LABEL: Record<string, string> = { 前提: "なぜ前に要るか", 応用: "どう使うか" };
+
+/** 図に出す分布の確率（k＝0 から）。数は engine から */
+export function distPmf(d: ChartDist, kmax: number): number[] {
+  const f = d.model === "binom" ? modelPmf({ kind: "binom", n: d.n!, p: d.p! })
+    : d.model === "hyper" ? modelPmf({ kind: "hyper", n: d.n!, total: d.total!, success: d.success! })
+    : poissonPmf(d.lambda!, kmax);
+  return Array.from({ length: kmax + 1 }, (_, k) => f[k] ?? 0);
+}
+const meanOf = (f: number[]) => f.reduce((a, v, k) => a + k * v, 0);
+/** 横軸の端：どれかの系列が 0.2% 以上の所まで（上限のある分布の切れ目が見えるように、上限のない分布の裾を少し残す） */
+const lastShown = (fs: number[][]) => { let m = 0; fs.forEach((f) => f.forEach((v, k) => { if (v >= 0.002) m = Math.max(m, k); })); return m; };
+
+function RelChart({ r }: { r: Relation }) {
+  const c = r.chart!;
+  if (c.kind === "pair") {
+    const big = Math.max(c.a.n ?? 0, c.b.n ?? 0, ...[c.a, c.b].map((d) => (d.model === "poisson" ? Math.ceil(d.lambda! + 6 * Math.sqrt(d.lambda!) + 4) : 0)));
+    const a0 = distPmf(c.a, big), b0 = distPmf(c.b, big), end = lastShown([a0, b0]);
+    const a = a0.slice(0, end + 1), b = b0.slice(0, end + 1);
+    return (
+      <section className={s.block} data-testid="rel-chart" data-kind="pair">
+        <div className={s.legend}>
+          <span><i className={s.sw1} />{c.a.label}</span><span><i className={s.sw2} />{c.b.label}</span>
+        </div>
+        <Bars series={[a, b]} height={140} label={`${c.a.label}と${c.b.label}の確率を値ごとに並べた棒。平均は ${Number(meanOf(a).toFixed(2))} と ${Number(meanOf(b).toFixed(2))}`} />
+        {c.note && <p className={s.note}>{c.note}</p>}
+      </section>
+    );
+  }
+  const f = modelPmf({ kind: "binom", n: c.n, p: c.p }), mu = c.n * c.p, sd = Math.sqrt(c.n * c.p * (1 - c.p));
+  let from = 0; while (from < c.n && f[from]! < 0.002) from++;
+  let to = c.n; while (to > from && f[to]! < 0.002) to--;
+  const shown = f.slice(from, to + 1);
+  return (
+    <section className={s.block} data-testid="rel-chart" data-kind="normal">
+      <div className={s.legend}>
+        <span><i className={s.sw1} />二項分布 n＝{c.n}・p＝{c.p}</span><span><i className={s.swLine} />正規分布（平均 {Number(mu.toFixed(2))}・標準偏差 {Number(sd.toFixed(2))}）</span>
+      </div>
+      <Bars theory={shown} labels={shown.map((_, i) => i + from)} curve={sd > 0 ? (k) => normalDensity(k + from, mu, sd) : undefined} height={140}
+        label={`二項分布 n＝${c.n}・p＝${c.p} の棒に、平均 ${Number(mu.toFixed(2))}・標準偏差 ${Number(sd.toFixed(2))} の正規分布の曲線を重ねた図`} />
+      {c.note && <p className={s.note}>{c.note}</p>}
+    </section>
+  );
+}
+
+/** 関係を開いたときの面の中身（線の説明パネル） */
+export function RelationOpen({ net, r, context }: { net: Network; r: Relation; context: string }) {
+  const p = relationParts(net, r);
+  const rows = (STAGE_LABEL[r.type] ?? []).filter(([k]) => r.stages?.[k as keyof NonNullable<Relation["stages"]>]);
+  return (
+    <article className={s.open} data-testid={`rel-${r.id}`}>
+      <div className={s.head}>
+        <Badges net={net} r={r} />
+        <b className={s.title}>{p.text}</b>
+      </div>
+      {r.gist && <section className={s.block} data-testid="gist"><span className={s.lab}>つまり</span><p className={s.gistText}>{r.gist}</p></section>}
+      {rows.length ? (
+        <dl className={s.stages} data-testid="rel-stages">
+          {rows.map(([k, label]) => <div key={k} className={s.stage}><dt>{label}</dt><dd>{r.stages![k as keyof NonNullable<Relation["stages"]>]}</dd></div>)}
+        </dl>
+      ) : (
+        <section className={s.block}>{ALONE_LABEL[r.type] && <span className={s.lab}>{ALONE_LABEL[r.type]}</span>}<p className={s.desc0}>{r.description}</p></section>
+      )}
+      {r.chart && <RelChart r={r} />}
+      {r.conditions?.length ? (
+        <section className={s.block} data-testid="rel-conds"><span className={s.lab}>成り立つ条件{r.mode ? `（${short(MODES[r.mode])}）` : ""}</span>
+          <ul className={s.condList}>{r.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
+        </section>
+      ) : null}
+      {rows.length ? <details className={s.moreDesc}><summary>関係の説明</summary><p className={s.desc}>{r.description}</p></details> : null}
+      {/* 図をその場で描く関係は、画像の図を重ねて出さない（同じことを2か所に出さない） */}
+      <Media figures={r.chart ? undefined : r.figures} labs={r.labs} context={context} open />
     </article>
   );
 }
