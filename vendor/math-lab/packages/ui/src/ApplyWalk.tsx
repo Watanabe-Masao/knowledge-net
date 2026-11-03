@@ -119,7 +119,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   // 文の印・集める・記号の枠も同じ：押すのは仮の選び（pick・put）、判定は「これで答える」で1回（全部一致で正解）
   const [pend, setPend] = useState<Record<string, number>>({});
   const [pick, setPick] = useState<number[]>([]), [put, setPut] = useState<Record<string, string>>({}), [bad, setBad] = useState<Record<string, boolean>>({});
-  const [sel, setSel] = useState<Record<string, number>>({}), [filled, setFilled] = useState<Record<string, boolean>>({}), [arm, setArm] = useState<string | null>(null);
+  const [sel, setSel] = useState<Record<string, number>>({}), [filled, setFilled] = useState<Record<string, boolean>>({}), [slotAsk, setSlotAsk] = useState<{ f: number; sym: string } | null>(null);
   const [calc, setCalc] = useState<Record<number, number>>({}), [seen, setSeen] = useState<boolean[]>([]), [enough, setEnough] = useState<Record<number, boolean>>({});
   const [full, setFull] = useState(false), [miss, setMiss] = useState<number[]>(() => walk.steps.map(() => 0));
   const [msg, setMsg] = useState<{ t: string; good: boolean } | null>(null);
@@ -146,7 +146,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   }
   const stepDone = (c: number) => subs[c]!.every((_, i) => subDone(c, i));
   const done = open && !review && stepDone(cur);
-  useEffect(() => { if (open && !review && here?.t !== "quiz" && sub < subs[cur]!.length - 1 && subDone(cur, sub)) { setSub(sub + 1); setArm(null); setPick([]); } });   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (open && !review && here?.t !== "quiz" && sub < subs[cur]!.length - 1 && subDone(cur, sub)) { setSub(sub + 1); setSlotAsk(null); setPick([]); } });   // eslint-disable-line react-hooks/exhaustive-deps
   // 確かめる段：下の道具が問いの値になったら記録し、答えの所に色を付ける
   useEffect(() => {
     if (!open || review || here?.t !== "tool" || !state) return;
@@ -224,8 +224,13 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   const putSlot = (f: number, sym: string) => {
     const key = slotKey(f, sym);
     if (filled[key]) return;
-    if (!arm) { if (put[key]) { const nx = { ...put }; delete nx[key]; setPut(nx); setMsg(null); } else say("先に、見つけた情報（または出てきた値）を押す。"); return; }
-    setPut({ ...put, [key]: arm }); setBad({ ...bad, [key]: false }); setArm(null); setMsg(null);
+    haptic(); setSlotAsk({ f, sym }); setMsg(null);   // 枠を押すと、入れられる値を下から選ぶ（上の課題カードまで戻らない。渡辺さん 2026-11-03）
+  };
+  const choosePut = (src: string | null) => {
+    if (!slotAsk) return;
+    const key = slotKey(slotAsk.f, slotAsk.sym), np = { ...put };
+    if (src) np[key] = src; else delete np[key];
+    setPut(np); setBad({ ...bad, [key]: false }); setSlotAsk(null); if (src) haptic();
   };
   const answerBind = (f: number) => {
     const fu = walk.formulas[f]!, syms = [...new Set(WALK_FORMULAS[fu.ref]!.syms)];
@@ -240,7 +245,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
     const sy = wrong[0]!, a = valOf(put[slotKey(f, sy)]!), b = valOf(fu.bind[sy]!);
     say(`${wrong.length === syms.length ? "全部" : `${wrong.length} つ`}の枠が違う（✗ の枠を入れ直す）。${WALK_FORMULAS[fu.ref]!.mean?.[sy] ?? SYM_MEAN[sy] ?? ""}${a !== undefined && b !== undefined && Math.abs(a - b) < 1e-12 ? "値が同じでも、意味が違う。" : ""}`);
   };
-  const go = (c: number) => { setCur(c); setSub(c < cur ? subs[c]!.length - 1 : 0); setMsg(null); setArm(null); setPick([]); setFull(false); };
+  const go = (c: number) => { setCur(c); setSub(c < cur ? subs[c]!.length - 1 : 0); setMsg(null); setSlotAsk(null); setPick([]); setFull(false); };
   const restart = () => {
     setCur(0); setSub(0); setMarked({}); setStruck({}); setSel({}); setPend({}); setPick([]); setPut({}); setBad({}); setFilled({}); setCalc({}); setSeen([]); setEnough({}); setMiss(walk.steps.map(() => 0));
     setMsg(null); setReview(false); setStarted(true); setOpen(true);
@@ -250,16 +255,17 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   const ask = walk.segments.find((g) => g.role === "ask")!;
   const sheetMarks = subs[cur]?.some((x) => x.t === "mark" || x.t === "collect");
   const showFull = !review && (sheetMarks || full);
-  const bindNow = here?.t === "bind" ? here.f : null;
   const bound = (k: string) => walk.formulas.some((fu, f) => Object.entries(fu.bind).some(([sy, src]) => src === k && filled[slotKey(f, sy)]));
   const foundKeys = Object.keys(walk.info).filter((k) => marked[k] && walk.info[k]!.of);
-  const chip = (k: string, label: string, value: string, word: string) => {
-    // 運ぶ段では、見つけた情報と出てきた値を全部同じに押せる（どれが要るかを枠の色で教えない。渡辺さん 2026-11-03）
-    const can = bindNow !== null;
-    return <button key={k} type="button" disabled={!can} className={[s.wInfo, arm === k ? s.wOn : ""].filter(Boolean).join(" ")} onClick={() => { setArm(k); say("入れる記号の枠を押す。", true); }} data-testid={`exp-walk-info-${k}`}>
-      {bound(k) && !can && <i>{label}</i>}<small>{word}</small><b>{value}</b>
-    </button>;
-  };
+  /** 見つけた情報・出てきた値の札（見るだけ。入れるのは枠を押して選ぶ） */
+  const chip = (k: string, label: string, value: string, word: string) => <div key={k} className={`${s.wInfo} ${s.wStatic}`} data-testid={`exp-walk-info-${k}`}>
+    {bound(k) && <i>{label}</i>}<small>{word}</small><b>{value}</b>
+  </div>;
+  /** 枠に入れられる値：見つけた情報と、前の公式で出てきた値の全部（どの枠でも同じ並び。要るものだけを出すと答えになる） */
+  const candidates = (f: number) => [
+    ...foundKeys.map((k) => ({ k, word: walk.info[k]!.word, value: seg(k)?.text ?? r4(vals[k]!) })),
+    ...walk.formulas.slice(0, f).map((fu, g) => ({ k: fu.id, word: fu.word ?? WALK_FORMULAS[fu.ref]!.outWord, value: `${Math.abs(computed[g]!.value - Number(r4(computed[g]!.value))) > 1e-12 ? "≈" : "="} ${r4(computed[g]!.value)}` })),
+  ];
   const taskCard = <section className={s.wTask} data-testid="exp-walk-task">
     <div className={s.wTaskHead}><span>応用の課題</span>{!sheetMarks && !review && <button type="button" className={s.link} onClick={() => setFull(!full)} data-testid="exp-walk-full">{full ? "要点だけ見る" : "全文を見る"}</button>}</div>
     {showFull ? <p className={s.walkSheet} data-testid="exp-walk-sheet">{walk.segments.map((g, i) => {
@@ -298,7 +304,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   else if (here?.t === "mark") todo = (st.todo ?? (st.kind === "ask" ? "課題の文で、聞かれている所を押す" : "課題の文で、それが書いてある所を押す")) + "。選んだら「これで答える」";
   else if (here?.t === "collect") todo = st.todo ?? "必要な情報を課題の文から全部押し、「これで答える」";
   else if (here?.t === "quiz") todo = subDone(cur, sub) ? "合っている。「次の問いへ」で続ける" : here.q.todo ?? "選んで「これで答える」";
-  else if (here?.t === "bind") todo = `見つけた情報を、${walk.formulas[here.f]!.word ?? "式"}の記号の枠へ運ぶ。全部埋めたら「これで答える」`;
+  else if (here?.t === "bind") todo = `${walk.formulas[here.f]!.word ?? "式"}の記号の枠を押し、入れる値を選ぶ。全部埋めたら「これで答える」`;
   else if (here?.t === "calc") todo = "計算を1つずつ進め、何を計算しているかを確かめる";
   else if (here?.t === "tool") todo = st.todo ?? `下のチップを ${check.targets.map(showAt).join(" → ")} に合わせ、色の付いた所を読む`;
 
@@ -331,7 +337,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
         {!bindDone && <div className={s.wSlots}>{def.syms.filter((sy, i, a) => a.indexOf(sy) === i).map((sy) => {
           const k = slotKey(f, sy), src = fu.bind[sy]!;
           const shownSrc = filled[k] ? src : put[k];
-          return <button key={sy} type="button" className={[filled[k] ? s.wSlotFull : put[k] ? s.wSlotPut : arm ? s.wSlotReady : s.wSlot, bad[k] && !put[k] ? s.wSlotBad : ""].filter(Boolean).join(" ")} onClick={() => putSlot(f, sy)} data-testid={`exp-walk-slot-${fu.id}-${sy}`}><i>{holeSym(src, sy)}</i><span>{shownSrc ? r4(valOf(shownSrc)!) : bad[k] ? "✗ 入れ直す" : "ここへ"}</span></button>;
+          return <button key={sy} type="button" className={[filled[k] ? s.wSlotFull : put[k] ? s.wSlotPut : s.wSlot, bad[k] && !put[k] ? s.wSlotBad : ""].filter(Boolean).join(" ")} aria-haspopup="dialog" onClick={() => putSlot(f, sy)} data-testid={`exp-walk-slot-${fu.id}-${sy}`}><i>{holeSym(src, sy)}</i><span>{shownSrc ? r4(valOf(shownSrc)!) : bad[k] ? "✗ 入れ直す" : "選ぶ"}</span></button>;
         })}</div>}
         {!bindDone && here?.t === "bind" && here.f === f && <button type="button" className={s.secondary} disabled={!def.syms.every((sy) => filled[slotKey(f, sy)] || put[slotKey(f, sy)])} onClick={() => answerBind(f)} data-testid="exp-walk-answer">これで答える</button>}
         {bindDone && shown > 0 && <ol className={s.wCalc}>{c.rows.slice(0, shown).map((row, i) => {
@@ -357,29 +363,51 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   const compact = open && !review && here?.t === "tool";
   const sheet = open && createPortal(<>
     {!compact && <div className={s.wScrim} onClick={() => setOpen(false)} />}
-    <div className={compact ? `${s.wSheet} ${s.wSheetCompact}` : s.wSheet} role="dialog" aria-label="解き方" data-testid="exp-walk-sheet-box" data-compact={String(compact)}>
+    {compact
+      // 道具で確かめる段：後ろの道具を使うので、やることと進むボタンだけの細いカードにする（渡辺さん 2026-11-03「スッキリしない」）
+      ? <div className={`${s.wSheet} ${s.wSheetCompact}`} role="dialog" aria-label="解き方" data-testid="exp-walk-sheet-box" data-compact="true">
+        <div className={s.wcHead}><small className={done ? s.wcOk : undefined}>{done ? "できた" : `STEP ${cur + 1} / ${N}・${KIND[st.kind][0]}`}</small>
+          <button type="button" className={s.wClose} aria-label="閉じる" onClick={() => setOpen(false)} data-testid="exp-walk-close">×</button></div>
+        <p className={s.wcTodo} data-testid="exp-walk-todo">{todo}</p>
+        <p className={msg ? (msg.good ? s.wcGood : s.wcBad) : s.wcStatus} role="status" data-testid="exp-walk-status">{msg?.t ?? ""}</p>
+        <div className={s.wcFoot}>
+          <button type="button" className={s.wcBtn} disabled={cur === 0} onClick={() => go(cur - 1)} data-testid="exp-walk-prev">前へ</button>
+          <button type="button" className={`${s.wcBtn} ${s.wcMain}`} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを見る" : "次へ"}</button>
+        </div>
+      </div>
+      : <div className={s.wSheet} role="dialog" aria-label="解き方" data-testid="exp-walk-sheet-box" data-compact="false">
       <div className={s.wGrab} aria-hidden="true" />
       <div className={s.wHead}><b>解き方</b><button type="button" className={s.wClose} aria-label="閉じる" onClick={() => setOpen(false)} data-testid="exp-walk-close">×</button></div>
       <div className={s.wBody}>
-        {!compact && taskCard}
-        {compact ? <div className={s.wWork}>
-          <p className={done ? `${s.walkTodo} ${s.walkTodoOk}` : s.walkTodo} data-testid="exp-walk-todo"><small>{done ? "できた" : `STEP ${cur + 1} / ${N}・${KIND[st.kind][0]}`}</small><b>{todo}</b></p>
-          <p className={msg ? (msg.good ? s.wGood : s.wBad) : s.wStatus} role="status" data-testid="exp-walk-status">{msg?.t ?? ""}</p>
-        </div> : work}
+        {taskCard}
+        {work}
       </div>
       <div className={s.wFoot}>
         {review ? <button type="button" className={s.secondary} onClick={restart} data-testid="exp-walk-again">最初から組み立てる</button>
           : <><button type="button" className={s.secondary} disabled={cur === 0} onClick={() => go(cur - 1)} data-testid="exp-walk-prev">前へ</button>
             <button type="button" className={s.primary} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを見る" : "次へ"}</button></>}
       </div>
-    </div>
+    </div>}
+    {slotAsk && <>
+      <div className={s.pkScrim} onClick={() => setSlotAsk(null)} />
+      <div className={s.pkPanel} role="dialog" aria-label="入れる値を選ぶ" data-testid="exp-walk-picker" onKeyDown={(e) => { if (e.key === "Escape") setSlotAsk(null); }}>
+        <div className={s.pkHead}><b>「<i>{holeSym(walk.formulas[slotAsk.f]!.bind[slotAsk.sym]!, slotAsk.sym)}</i>」に入れる値</b>
+          <button type="button" className={s.wClose} aria-label="閉じる" onClick={() => setSlotAsk(null)} data-testid="exp-walk-picker-close">×</button></div>
+        {/* 記号の意味はここに書かない（書くと、どの値を入れるかの答えになる。渡辺さん 2026-11-03）。意味は違う値を入れて答えたときにだけ返す */}
+        <div className={s.pkList}>{candidates(slotAsk.f).map((c) => {
+          const on = put[slotKey(slotAsk.f, slotAsk.sym)] === c.k;
+          return <button key={c.k} type="button" autoFocus={on} aria-pressed={on} className={on ? `${s.pkItem} ${s.pkOn}` : s.pkItem} onClick={() => choosePut(c.k)} data-testid={`exp-walk-pick-${c.k}`}><small>{c.word}</small><b>{c.value}</b></button>;
+        })}</div>
+        {put[slotKey(slotAsk.f, slotAsk.sym)] && <button type="button" className={s.link} onClick={() => choosePut(null)} data-testid="exp-walk-pick-clear">枠を空にする</button>}
+      </div>
+    </>}
   </>, document.body);
 
   return <div className={s.walk} data-testid="exp-walk">
     <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
     <p className={s.walkNote}>{ok ? "合っている。解き方を確かめるだけなら、まとめを見る。" : "課題の文に印を付けるところから、解き方を自分で組み立てる。どこで迷ったかが最後に分かる。"}</p>
     <div className={s.two}>
-      <button type="button" className={ok ? s.secondary : s.primary} onClick={() => { haptic(); if (started && !review) setOpen(true); else restart(); }} data-testid="exp-walk-start">{started && !review ? `続きから組み立てる（STEP ${cur + 1}）` : "解き方を組み立てる"}</button>
+      <button type="button" className={ok ? s.secondary : s.primary} onClick={() => { haptic(); if (started && !review) setOpen(true); else restart(); }} data-testid="exp-walk-start">{started && !review ? "続きから" : "解き方を組み立てる"}</button>
       <button type="button" className={ok ? s.primary : s.secondary} onClick={() => { haptic(); setReview(true); setOpen(true); }} data-testid="exp-walk-review">まとめだけ見る</button>
     </div>
     {sheet}
