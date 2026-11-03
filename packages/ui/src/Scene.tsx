@@ -72,10 +72,11 @@ export const MODES: Record<string, ModeDef> = {
       const q = K / N, h = modelPmf({ kind: "hyper", n, total: N, success: K }), b = modelPmf({ kind: "binom", n, p: q });
       const fpc = N > 1 ? (N - n) / (N - 1) : 0, vb = n * q * (1 - q);
       return {
-        series: [h, b], names: [`戻さない（超幾何 N＝${N}・K＝${K}）`, `戻す（二項 p＝${fmt(q, 3)}）`], labels: h.map((_, i) => i), hi: k,
+        // 色は関係の図と同じ並び（1つ目＝戻す二項、2つ目＝戻さない超幾何）
+        series: [b, h], names: [`戻す（二項 p＝${fmt(q, 3)}）`, `戻さない（超幾何 N＝${N}・K＝${K}）`], labels: h.map((_, i) => i), hi: k,
         stats: [
           { key: "mean", label: "平均 nK/N", value: fmt(n * q, dec) },
-          { key: "var", label: "分散 戻さない／戻す", value: `${fmt(vb * fpc, dec)}／${fmt(vb, dec)}` },
+          { key: "var", label: "分散 戻す／戻さない", value: `${fmt(vb, dec)}／${fmt(vb * fpc, dec)}` },
           { key: "fpc", label: "補正 (N−n)/(N−1)", value: fmt(fpc, dec) },
         ],
         label: `N＝${N} 個のうち当たり ${K} 個から ${n} 個取るとき、戻さない（超幾何分布）と戻す（二項分布）の確率を並べた棒。分散は ${fmt(fpc, dec)} 倍`,
