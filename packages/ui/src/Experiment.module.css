@@ -341,7 +341,7 @@
 .wChoices button.wMath { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 16.5px; }
 .wChoices button.wRight { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
 .wChoices button.wWrong { border-color: var(--bad); color: var(--bad); }
-.wChoices button.wPick { border-color: var(--accent); }
+.wChoices button.wPick { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
 .wChoices + button { margin-top: 10px; width: 100%; }
 .wPills button:active, .wInfo:active, .wChoices button:active, .wSlot:active { transform: scale(var(--press-scale)); }
 .wStatus, .wGood, .wBad { margin: 0; min-height: 20px; font-size: 13px; line-height: 1.5; }
