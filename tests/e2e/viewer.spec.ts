@@ -1531,6 +1531,8 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
     await ap.getByTestId("exp-walk-start").click();
     const sh = page.getByTestId("exp-walk-sheet-box"), next = sh.getByTestId("exp-walk-next");
     const seg = (pred: (g: WalkData["segments"][number]) => boolean) => sh.getByTestId(`exp-walk-seg-${w.segments.findIndex(pred)}`).click();
+    const answer = () => sh.getByTestId("exp-walk-answer").click();
+    const status = sh.getByTestId("exp-walk-status");
     // 選び肢は「選ぶ → これで答える」。選び直しは迷いに数えない（押し間違い）。正しく答えても次の問いへは自分で進む（答えた問いがすぐ消えない）
     const firstChoose = w.steps.findIndex((x) => (x.choose ?? []).length > 0);
     const pick = async (q: WalkQ, i: number, j: number, more: boolean) => {
@@ -1548,19 +1550,39 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
     };
     for (const [i, st] of w.steps.entries()) {
       if (st.kind === "ask") {
-        await seg((g) => g.role === "text");   // わざと1回間違える
-        await expect(sh.getByTestId("exp-walk-status")).toContainText("説明");
-        await seg((g) => g.role === "ask");
+        // 文の印も「選ぶ → これで答える」。選んだだけでは判定しない（押し間違いを迷いに数えない）
+        await seg((g) => g.role === "text");
+        await expect(status, "選んだだけで判定した").toHaveText("");
+        await answer();   // わざと1回間違える
+        await expect(status).toContainText("説明");
+        await seg((g) => g.role === "ask"); await answer();
       }
-      if (st.mark) await seg((g) => g.key === st.mark);
-      if (st.collect) { for (const k of st.collect.need) await seg((g) => g.key === k); await sh.getByTestId("exp-walk-enough").click(); }
+      if (st.mark) { await seg((g) => g.key === st.mark); await answer(); }
+      if (st.collect) {
+        const noise = w.segments.findIndex((g) => g.role === "noise");
+        if (noise >= 0) { await sh.getByTestId(`exp-walk-seg-${noise}`).click(); await sh.getByTestId(`exp-walk-seg-${noise}`).click(); }   // 選んで外す：迷いに数えない
+        for (const k of st.collect.need) await seg((g) => g.key === k);
+        await answer();
+      }
       if (st.kind === "build") {
         for (const fu of w.formulas) {
           // 運ぶ段では見つけた情報を全部同じに押せる（要るものだけを押せるようにすると、それが答えになる）
           const chips = sh.locator("[data-testid^=exp-walk-info-]");
           await expect(chips.first()).toBeVisible();
           for (const c of await chips.all()) await expect(c, "運ぶ段で押せない情報がある（要るものが見分けられる）").toBeEnabled();
-          for (const sym of [...new Set(SYMS[fu.ref]!)]) { await sh.getByTestId(`exp-walk-info-${fu.bind[sym]}`).click(); await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); }
+          // 枠は全部埋めてから「これで答える」。全部一致で正解、違う枠だけ入れ直す
+          const syms = [...new Set(SYMS[fu.ref]!)];
+          const swap = fu === w.formulas[0] && syms.length > 1 && fu.bind[syms[0]!] !== fu.bind[syms[1]!];
+          for (const [si, sym] of syms.entries()) { await sh.getByTestId(`exp-walk-info-${swap && si === 0 ? fu.bind[syms[1]!] : fu.bind[sym]}`).click(); await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); }
+          if (swap) {
+            await expect(status, "埋め終わる前に判定した").not.toContainText("違う");
+            await answer();
+            await expect(status).toContainText("違う");
+            await expect(sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[0]}`)).toContainText("入れ直す");
+            await expect(sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[1]}`), "合っていた枠まで消した").not.toContainText("ここへ");
+            await sh.getByTestId(`exp-walk-info-${fu.bind[syms[0]!]}`).click(); await sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[0]}`).click();
+          }
+          await answer();
           while (await sh.getByTestId("exp-walk-calc").count()) {
             const rq = sh.getByTestId("exp-walk-rowq-0");
             if (await rq.count()) await rowq(st, fu.id);
@@ -1584,6 +1606,8 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
     await expect(rev).toHaveCount(w.steps.length);
     await expect(rev.first()).toContainText("1 回迷った");
     await expect(rev.nth(1)).not.toContainText("迷った");
+    const infoStep = w.steps.findIndex((x) => x.collect);
+    if (infoStep >= 0) await expect(rev.nth(infoStep), "選んで外した所を迷いに数えた").not.toContainText("迷った");
     if (firstChoose >= 0) await expect(rev.nth(firstChoose), "選び直しを迷いに数えた").not.toContainText("迷った");
     await sh.getByTestId("exp-walk-close").click();
     await x.getByRole("button", { name: "戻る" }).click();
