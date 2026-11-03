@@ -305,20 +305,24 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await figs.getByRole("button", { name: "次の図" }).click();
   await expect(figs).toContainText("2／2");
   await expect(figs.locator("img")).toHaveAttribute("src", /tour-2\.svg$/);
+  // 解説・触るは旧版のラボの iframe ではなく JS の部品（#192）
   await sw.getByRole("radio", { name: /解説/ }).click();
   await expect(figs).toHaveCount(0);
-  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=rel-expo-tour&embed=1/);
-  await sw.getByRole("radio", { name: /触る/ }).click();
-  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=s5-free&embed=1/);
-  await panel.getByTestId(/^labs-panel-/).getByRole("button", { name: "閉じる" }).click();
+  await expect(panel.getByTestId("tour")).toBeVisible();
   await expect(panel.locator("iframe")).toHaveCount(0);
+  await sw.getByRole("radio", { name: /触る/ }).click();
+  await expect(panel.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pois");
+  await sw.getByRole("radio", { name: /解説/ }).click();
+  await panel.getByTestId("tour-prev").click();   // 1段目の「やめる」で閉じる
+  await expect(panel.getByTestId("tour")).toHaveCount(0);
   // 選んだ形（触る）を覚え、別の線も同じ形で開く
   await sw.getByRole("radio", { name: /触る/ }).click();
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
   await tab(page, /つながり/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると 正規分布/ }).click();
-  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=s5-norm&embed=1/);
+  await expect(panel.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pmf");
+  await expect(panel.getByTestId("explore").getByTestId("exp-curve")).toBeVisible();   // s5-norm は正規分布の曲線を重ねた版
 });
 
 test("つながりは「💡 つまり」を説明より先に出す（対比・変換）", async ({ page }) => {

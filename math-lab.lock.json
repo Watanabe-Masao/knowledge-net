@@ -1,5 +1,5 @@
 {
- "ref": "fca93cbee8cf1a5abf149c1a87c277a5f147fab5",
+ "ref": "0184fd209a265051142adbaf628504cd4ab9351b",
  "files": [
   "packages/engine/src/apply.ts",
   "packages/engine/src/applyFormat.ts",
@@ -43,6 +43,8 @@
   "packages/ui/src/QuestionParts.tsx",
   "packages/ui/src/Scene.module.css",
   "packages/ui/src/Scene.tsx",
+  "packages/ui/src/SceneModes2.ts",
+  "packages/ui/src/SceneViews.tsx",
   "packages/ui/src/Segmented.module.css",
   "packages/ui/src/Segmented.tsx",
   "packages/ui/src/Sheet.module.css",
@@ -56,6 +58,7 @@
   "packages/ui/src/motion.ts",
   "packages/ui/src/nudge.ts",
   "packages/ui/src/runner.ts",
+  "packages/ui/src/sceneCore.ts",
   "packages/ui/src/tokens.css",
   "packages/ui/tokens.json"
  ]

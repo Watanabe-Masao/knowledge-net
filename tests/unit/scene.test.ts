@@ -18,9 +18,10 @@ const all = plays("public/sample/stats2-w0.json");
 const native = all.filter(([, p]) => sceneSupported(p));
 
 describe("解説・触るの場面", () => {
-  it("見本の版の半分以上を部品で描ける（描けないモードは旧版のラボのまま。#192 の残り）", () => {
+  // ネットワークから開くラボは全部、旧版のラボの iframe ではなく部品で描く（#192 の決定）。描けないモードを足した版が来たら止める
+  it("見本の全部の版を部品で描ける", () => {
     expect(all.length).toBeGreaterThan(30);
-    expect(native.length).toBeGreaterThanOrEqual(19);
+    expect(all.filter(([, p]) => !sceneSupported(p)).map(([id, p]) => `${id}：${[p.mode, ...(p.modes ?? [])].join(",")}`)).toEqual([]);
   });
   it.each(native)("%s：状態の項目はモードが受け取るものだけで、図の数が有限", (_, play) => {
     const states = [play.set ?? {}, ...(play.steps ?? []).flatMap((s) => s.states)];
@@ -29,7 +30,7 @@ describe("解説・触るの場面", () => {
       const extra = Object.keys(st).filter((k) => !sceneKeys(mode).includes(k));
       expect(extra, `${mode} が受け取らない項目`).toEqual([]);
       const d = drawScene(mode, st, play.kmax, play.decimals)!;
-      for (const f of d.series) for (const v of f) { expect(v).toBeGreaterThanOrEqual(0); expect(v).toBeLessThanOrEqual(1 + 1e-12); }
+      for (const f of d.series ?? []) for (const v of f) { expect(v).toBeGreaterThanOrEqual(0); expect(v).toBeLessThanOrEqual(1 + 1e-12); }
       for (const x of d.stats) expect(x.value, x.label).not.toMatch(/NaN|—|Infinity/);
     }
   });
