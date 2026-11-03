@@ -30,11 +30,24 @@ const SHOW: Record<string, (v: number) => string> = { n: (v) => `n ${v} 回`, p:
 const showAt = (t: ApplyState) => Object.entries(t).filter(([k]) => SHOW[k]).map(([k, v]) => SHOW[k]!(v!)).join("・");
 const same = (t: ApplyState, cur: ApplyState) => Object.entries(t).every(([k, v]) => cur[k] === undefined || Math.abs(cur[k]! - v!) < 1e-9);
 
-/** solve の値（a.n のように . でたどる） */
+/** solve の値（a.n のように . でたどる）。文に出る数が solve の数の足し引き・掛け算のときは式で書ける
+ *  （例：最初の確率 mechanism.p+mechanism.drop・平均 mechanism.n*mechanism.p。掛け算が先） */
 export const solveValue = (sv: ApplySolve, path: string): number | undefined => {
-  let v: unknown = sv;
-  for (const k of path.split(".")) v = v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined;
-  return typeof v === "number" ? v : undefined;
+  const one = (t: string): number | undefined => {
+    if (/^-?[0-9]+(\.[0-9]+)?$/.test(t)) return Number(t);
+    let v: unknown = sv;
+    for (const k of t.split(".")) v = v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined;
+    return typeof v === "number" ? v : undefined;
+  };
+  const terms = path.replace(/\s+/g, "").split(/(?=[+-])/);
+  let sum = 0;
+  for (const term of terms) {
+    const sign = term.startsWith("-") ? -1 : 1, body = term.replace(/^[+-]/, "");
+    let prod = 1;
+    for (const f of body.split("*")) { const x = one(f); if (x === undefined) return undefined; prod *= x; }
+    sum += sign * prod;
+  }
+  return sum;
 };
 const infoValues = (w: ApplyWalkSpec, sv: ApplySolve) => Object.fromEntries(Object.entries(w.info).flatMap(([k, v]) => { const x = v.of ? solveValue(sv, v.of) : undefined; return x === undefined ? [] : [[k, x]]; }));
 
@@ -224,7 +237,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
     if (!wrong.length) { say("全部の枠が合っている。式の中の同じ記号すべてに入る。", true); return; }
     missHere();
     const sy = wrong[0]!, a = valOf(put[slotKey(f, sy)]!), b = valOf(fu.bind[sy]!);
-    say(`${wrong.length === syms.length ? "全部" : `${wrong.length} つ`}の枠が違う（✗ の枠を入れ直す）。${SYM_MEAN[sy] ?? ""}${a !== undefined && b !== undefined && Math.abs(a - b) < 1e-12 ? "値が同じでも、意味が違う。" : ""}`);
+    say(`${wrong.length === syms.length ? "全部" : `${wrong.length} つ`}の枠が違う（✗ の枠を入れ直す）。${WALK_FORMULAS[fu.ref]!.mean?.[sy] ?? SYM_MEAN[sy] ?? ""}${a !== undefined && b !== undefined && Math.abs(a - b) < 1e-12 ? "値が同じでも、意味が違う。" : ""}`);
   };
   const go = (c: number) => { setCur(c); setSub(c < cur ? subs[c]!.length - 1 : 0); setMsg(null); setArm(null); setPick([]); setFull(false); };
   const restart = () => {
