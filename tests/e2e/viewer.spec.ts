@@ -1341,13 +1341,18 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await x.getByRole("button", { name: "応用の課題へ" }).click();
   await x.getByTestId("exp-apply-input").fill("33");
   await x.getByTestId("exp-apply-check").click();
-  const steps = x.getByTestId("exp-apply-steps").locator("li");
+  // 解き方を組み立てる（walk）のある課題では、engine の解き方の一覧はシートの「まとめだけ見る」の「式で見る」に入る
+  await x.getByTestId("exp-walk-review").click();
+  const sheet = page.getByTestId("exp-walk-sheet-box"), det = sheet.locator("details");
+  await det.locator("summary").click();
+  const steps = det.locator("ol > li");
   await expect(steps).toHaveCount(5);
   await expect(steps.first()).toContainText("成功の割合");
   await expect(steps.last()).toContainText("32 回では 8.1%（8% を超える）、33 回で 7.98%");
-  await expect(x.getByTestId("exp-apply-steps").locator(".katex-error")).toHaveCount(0);
-  await expect(x.getByTestId("exp-apply-why")).toContainText("4倍");
+  await expect(sheet.locator(".katex-error")).toHaveCount(0);
+  await expect(sheet.getByTestId("exp-apply-why")).toContainText("4倍");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await sheet.getByTestId("exp-walk-close").click();
   await x.getByRole("button", { name: "戻る" }).click();
   // 確率の値（自分で選ぶ）
   await openQ(x, "B-04");
@@ -1503,8 +1508,17 @@ test("応用の課題：全部の問いで、グラフを問いに合わせる�
 type WalkQ = { ok: number };
 type WalkData = { segments: { text: string; role: string; key?: string }[]; formulas: { id: string; ref: string; bind: Record<string, string> }[];
   steps: { kind: string; mark?: string; collect?: { need: string[] }; choose?: WalkQ[]; rowQuiz?: Record<string, WalkQ> }[] };
-const SYMS: Record<string, string[]> = { "binom.pmf": ["n", "k", "p"], "binom.mean": ["n", "p"], "binom.mean-p": ["E", "n"], "binom.var": ["n", "p"] };
-const WALK_TARGETS: Record<string, Record<string, number>[]> = { "A-01": [{ n: 20, p: 0.3 }], "B-02": [{ n: 10, p: 0.3, k: 3 }], "D-02": [{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }], "B-04": [] };
+const SYMS: Record<string, string[]> = {   // engine の WALK_FORMULAS の記号（枠の順）
+  "binom.pmf": ["n", "k", "p"], "binom.mean": ["n", "p"], "binom.mean-p": ["E", "n"], "binom.var": ["n", "p"],
+  "share.sd-n": ["p", "s"], "binom.mode": ["n", "p"], ratio: ["A", "B"], "share.se": ["P", "m"], "share.z": ["x", "m", "P", "S"],
+  "binom.ge": ["k", "n", "p"], "sets.n": ["P", "e", "u"], "lin.sum": ["a", "E", "b", "n"], "fatigue.var": ["n", "F", "L"],
+  "streak.max": ["n", "r", "h"], "fpc.N": ["n", "r", "u"], "mix.d": ["V", "B", "n"],
+};
+// 確かめる段（probe）で道具を合わせる先。probe のない課題は []（応用の全部の課題を最後まで組み立てる）
+const WALK_TARGETS: Record<string, Record<string, number>[]> = {
+  "A-01": [{ n: 20, p: 0.3 }], "A-02": [{ p: 0.3, n: 33 }], "A-03": [{ n: 10, p: 0.8 }], "B-01": [{ n: 10, p: 0.3, k: 3 }], "B-02": [{ n: 10, p: 0.3, k: 3 }],
+  "B-04": [], "C-01": [], "C-02": [], "D-01": [], "D-02": [{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }], "E-01": [], "E-02": [], "E-03": [], "E-04": [],
+};
 test("応用の解き方を組み立てる：原本どおりに押すと最後まで進み、迷った段がまとめに出る", async ({ page }) => {
   test.setTimeout(240000);
   const errs = noErrors(page);
