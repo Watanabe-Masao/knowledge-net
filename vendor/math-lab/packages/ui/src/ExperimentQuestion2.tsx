@@ -24,7 +24,6 @@ const Predict = ({ ready, go }: { ready: boolean; go: () => void }) =>
   <button type="button" className={s.primary} disabled={!ready} onClick={go}>{ready ? "この予想で実験する" : "まず予想を選ぶ"}</button>;
 const Ws = ({ props, c, k, sub }: { props: QProps; c: Cond; k: number; sub?: string }) =>
   props.workspace ? <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる{sub && <span>{sub}</span>}</p>{props.workspace(c, k)}</section> : null;
-const ToMenu = ({ props }: { props: QProps }) => <button type="button" className={s.primary} onClick={props.onMenu} data-testid="exp-to-menu">別の問いへ</button>;
 const nField = (props: QProps, v: number, set: (n: number) => void) =>
   <Field id="exp-app-n" label="1セットの回数 n" value={v} min={props.def.vary.n.min} max={props.def.vary.n.max} step={1} show={(x) => `${x} 回`} onChange={set} />;
 const pField = (v: number, set: (p: number) => void) =>
@@ -112,7 +111,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
       <Card title="理論の確率" sub={`n＝${app.n}・p＝${pc(app.p)}`}><TheoryRows pmf={fa} mark={mkS.bar} inEvent={(k) => k === peak(fa)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<ToMenu props={props} />}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel}>
       {sel === "n" ? nField(props, app.n, (v) => setApp({ ...app, n: v })) : pField(app.p, (p) => setApp({ ...app, p }))}
     </Dock>;
   }
@@ -203,7 +202,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
       </Card>
       <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["k", `k ${e.k} 回`], ["m", `m ${app.m.toLocaleString()}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<ToMenu props={props} />}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["k", `k ${e.k} 回`], ["m", `m ${app.m.toLocaleString()}`]]} mark={mkS.chip} sel={sel} onSel={setSel}>
       {sel === "n" ? nField(props, app.n, (v) => setApp({ ...app, n: v, k: Math.min(app.k, v) }))
         : sel === "p" ? pField(app.p, (p) => setApp({ ...app, p }))
         : sel === "k" ? <Field id="exp-app-k" label={`k（${evText({ op: ev.op, k: 0 }).replace("0 ", "")}）`} value={e.k} min={0} max={app.n} step={1} show={(v) => `${v} 回`} onChange={(k) => setApp({ ...app, k })} />
@@ -284,7 +283,7 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
       </Card>
       <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["a", `a ${app.a}`], ["b", `b ${app.b}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<ToMenu props={props} />}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ["a", `a ${app.a}`], ["b", `b ${app.b}`]]} mark={mkS.chip} sel={sel} onSel={setSel}>
       {sel === "n" ? nField(props, app.n, (v) => setApp({ ...app, n: v }))
         : sel === "p" ? pField(app.p, (p) => setApp({ ...app, p }))
         : sel === "a" ? <Field id="exp-app-a" label="成功1回の値 a" value={app.a} min={-500} max={500} step={50} show={String} onChange={(a) => setApp({ ...app, a })} />
@@ -361,7 +360,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
       <Card title="理論の確率"><TheoryRows pmf={pmfOf(app)} /></Card>
       <AppExtra m={{ kind: "bernoulli", ...app }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", ...app })} />
     </>;
-    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel} action={<ToMenu props={props} />}>
+    cta = <Dock chips={[["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`]]} mark={mkS.chip} sel={sel} onSel={setSel}>
       {sel === "n" ? nField(props, app.n, (v) => setApp({ ...app, n: v })) : pField(app.p, (p) => setApp({ ...app, p }))}
     </Dock>;
   }
