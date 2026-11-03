@@ -46,7 +46,7 @@ export function checkMechanism(m: Mechanism): string | undefined {
     return undefined;
   }
   if (m.kind === "urn") {
-    if (!isCount(m.total) || !isCount(m.success)) return "箱の数と当たりの数は0以上の整数";
+    if (!isCount(m.total) || !isCount(m.success)) return "箱の中の玉の数と当たりの数は0以上の整数";
     if (m.success > m.total) return `当たり（${m.success}）は全部（${m.total}）以下`;
     if (m.n > m.total) return `戻さずに取るので、取る数（${m.n}）は全部（${m.total}）以下`;
     return undefined;
