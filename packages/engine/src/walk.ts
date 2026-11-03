@@ -141,7 +141,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
     },
   },
   "sets.n": {
-    tex: "N\\ge\\dfrac{4@P(1-@P)}{@e^{2}}\\quad(@u\\text{ セット単位})", syms: ["P", "e", "u"], out: "N", outWord: "要るセット数", pick: "2SE = 2√(P(1 − P)/N)",
+    tex: "N\\ge\\dfrac{4\\times @P(1-@P)}{@e^{2}}\\quad(@u\\text{ セット単位})", syms: ["P", "e", "u"], out: "N", outWord: "要るセット数", pick: "2SE = 2√(P(1 − P)/N)",
     value: ({ P, e, u }) => { const v = P! * (1 - P!); let N = Math.max(1, Math.floor((4 * v) / (e! * e!)) - 1); while (2 * Math.sqrt(v / N) > e! + EPS) N++; return Math.ceil(N / u!) * u!; },
     rows: ({ P, e, u }) => {
       const v = P! * (1 - P!), q = (4 * v) / (e! * e!), N = WALK_FORMULAS["sets.n"]!.value({ P, e, u } as Record<string, number>);
@@ -177,7 +177,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
     },
   },
   "streak.max": {
-    tex: "1+\\dfrac{2}{@n}\\sum_{j=1}^{@n-1}(@n-j)c^{j}\\le @r\\quad(c=@h,2@h,\\ldots)", syms: ["n", "r", "h"], out: "c", outWord: "許される強さ", pick: "比 = 1 + (2/n) Σ (n − j)cʲ",
+    tex: "1+\\dfrac{2}{@n}\\sum_{j=1}^{@n-1}(@n-j)c^{j}\\le @r\\quad(c=@h,\\ 2\\times @h,\\ \\ldots)", syms: ["n", "r", "h"], out: "c", outWord: "許される強さ", pick: "比 = 1 + (2/n) Σ (n − j)cʲ",
     value: ({ n, r, h }) => { let best = Number.NaN; for (let i = 1; i <= 100; i++) { const c = Number((h! * i).toFixed(10)); if (c > 1) break; const q = streakRatio(n!, c); if (q <= r! + EPS && q >= 1 / r! - EPS) best = c; else break; } if (Number.isNaN(best)) throw new Error("いちばん弱い強さでも倍率を超える"); return best; },
     rows: ({ n, r, h }) => {
       const best = WALK_FORMULAS["streak.max"]!.value({ n, r, h } as Record<string, number>), nx = Number((best + h!).toFixed(10));

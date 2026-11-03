@@ -128,6 +128,8 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   const missHere = () => setMiss((m) => m.map((x, i) => (i === cur ? x + 1 : x)));
   const seg = (k: string) => walk.segments.find((g) => g.key === k);
   const symOf = (src: string) => walk.info[src]?.sym ?? WALK_FORMULAS[walk.formulas.find((f) => f.id === src)?.ref ?? ""]?.out ?? src;
+  /** 式の穴と枠に出す記号：情報なら情報の記号（N 人など）、前の公式の値なら穴の記号（V − B が V − V にならないように） */
+  const holeSym = (src: string, sym: string) => walk.info[src]?.sym ?? sym;
   const slotKey = (f: number, sym: string) => `${walk.formulas[f]!.id}.${sym}`;
   const subDone = (c: number, i: number): boolean => {
     const x = subs[c]![i]!;
@@ -287,8 +289,8 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
     return def.tex.replace(/@([A-Za-z])/g, (_, sym: string) => {
       const src = fu.bind[sym];
       if (!src) return sym;
-      if (isFilled(sym)) { const v = vals[src] ?? computed.find((c) => c.id === src)?.value; return `{\\mathbf{${v === undefined ? "?" : r4(v)}}}`; }
-      return `{${symOf(src)}}`;
+      if (isFilled(sym)) { const v = vals[src] ?? computed.find((c) => c.id === src)?.value; return v === undefined ? "{?}" : v < 0 ? `{(\\mathbf{${r4(v)}})}` : `{\\mathbf{${r4(v)}}}`; }   // 負の数は括弧に入れる（+ −50 にしない）
+      return `{${holeSym(src, sym)}}`;
     });
   }
 
@@ -330,7 +332,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
         {!bindDone && <div className={s.wSlots}>{def.syms.filter((sy, i, a) => a.indexOf(sy) === i).map((sy) => {
           const k = slotKey(f, sy), src = fu.bind[sy]!;
           const shownSrc = filled[k] ? src : put[k];
-          return <button key={sy} type="button" className={[filled[k] ? s.wSlotFull : put[k] ? s.wSlotPut : arm ? s.wSlotReady : s.wSlot, bad[k] && !put[k] ? s.wSlotBad : ""].filter(Boolean).join(" ")} onClick={() => putSlot(f, sy)} data-testid={`exp-walk-slot-${fu.id}-${sy}`}><i>{symOf(src)}</i><span>{shownSrc ? r4(valOf(shownSrc)!) : bad[k] ? "✗ 入れ直す" : "ここへ"}</span></button>;
+          return <button key={sy} type="button" className={[filled[k] ? s.wSlotFull : put[k] ? s.wSlotPut : arm ? s.wSlotReady : s.wSlot, bad[k] && !put[k] ? s.wSlotBad : ""].filter(Boolean).join(" ")} onClick={() => putSlot(f, sy)} data-testid={`exp-walk-slot-${fu.id}-${sy}`}><i>{holeSym(src, sy)}</i><span>{shownSrc ? r4(valOf(shownSrc)!) : bad[k] ? "✗ 入れ直す" : "ここへ"}</span></button>;
         })}</div>}
         {!bindDone && here?.t === "bind" && here.f === f && <button type="button" className={s.secondary} disabled={!def.syms.every((sy) => filled[slotKey(f, sy)] || put[slotKey(f, sy)])} onClick={() => answerBind(f)} data-testid="exp-walk-answer">これで答える</button>}
         {bindDone && shown > 0 && <ol className={s.wCalc}>{c.rows.slice(0, shown).map((row, i) => {
