@@ -296,10 +296,10 @@
 .wBrief { margin: 0; display: flex; gap: 8px; align-items: baseline; font-size: 14px; line-height: 1.5; }
 .wBrief span { flex: none; font-size: 11px; font-weight: 600; color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
 .wInfos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.wInfo { all: unset; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 6px; min-height: var(--tap); padding: 6px 10px; border-radius: var(--r-m); background: var(--mark); font-size: 13px; cursor: default; }
-.wInfo i { font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 16px; color: var(--accent); }
-.wInfo small { font-size: 11px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wInfo b { font-variant-numeric: tabular-nums; }
+.wInfo { all: unset; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: center; column-gap: 6px; row-gap: 1px; min-height: var(--tap); padding: 6px 10px; border-radius: var(--r-m); background: var(--mark); font-size: 13px; cursor: default; }
+.wInfo i { grid-row: 1 / span 2; align-self: center; font-family: "Times New Roman", "Hiragino Mincho ProN", serif; font-size: 16px; color: var(--accent); }
+.wInfo small { grid-column: 2; font-size: 11px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wInfo b { grid-column: 2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.35; }
 .wInfo:not(:disabled) { cursor: pointer; box-shadow: inset 0 0 0 2px var(--accent); }
 .wInfo.wOn { background: var(--accent); color: var(--accent-ink); } .wInfo.wOn small, .wInfo.wOn i { color: var(--accent-ink); }
 .walkHead { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 700; color: var(--ink-3); letter-spacing: .04em; }
