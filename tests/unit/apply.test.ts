@@ -7,7 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import katex from "katex";
-import { applyCheck, solveApply, type ApplySolve } from "@math-lab/engine";
+import { WALK_FORMULAS, applyCheck, solveApply, type ApplySolve } from "@math-lab/engine";
 import { walkProblems, type ApplyWalkSpec } from "@math-lab/ui";
 
 type Apply = { task?: string; solve: ApplySolve; answer: { type: "number" | "choice"; options?: string[]; tol?: object; percent?: boolean } };
@@ -52,18 +52,28 @@ describe("応用の課題が解ける", () => {
   });
 });
 
-// 解き方を組み立てる（walk。stats2-course #181）。確かめる対象：公開の JSON の walk が、engine の解き方の段と1つずつ対応し、画面で組み立てられること。
-// 想定する故障：engine の解き方の段の数が変わったのに原本の steps を直し忘れる（題名とまとめが別の段に付く）・数の of が solve にない（式の枠に「?」）。
-// 見つけ方：全部の walk を engine で解いて walkProblems に通す。わざと段を1つ減らすと止まる。既存との違い：教材の build は文の数と solve の値・番号の範囲だけを見る
+// 解き方を組み立てる（walk。stats2-course #181・骨格設計）。確かめる対象：公開の JSON の walk が画面で組み立てられ、
+// engine の公式の部品が出す最後の値が、応用の課題の答え（solveApply）と同じこと（別の道で求めた値どうしを比べる）。
+// 想定する故障：公式の当てはめ方（bind）の取り違えで答えと違う値になる・計算の問い（rowQuiz）が engine の計算の行にない・段の順の崩れ。
+// 見つけ方：全部の walk を walkProblems に通す。わざと当てはめを入れ替えると止まる。既存との違い：教材の build は文の数と solve の値・番号の範囲だけを見る
 describe("解き方を組み立てる（walk）", () => {
   const walks = (file: string) => applies(file).filter(([, ap]) => (ap as { walk?: unknown }).walk) as [string, Apply & { walk: ApplyWalkSpec; task: string }][];
-  it("公開の JSON の全部の walk が engine の段と合う", () => {
+  const ans = (ap: Apply) => (ap.answer.type === "number" ? solveApply(ap.solve).answer : undefined);
+  it("公開の JSON の全部の walk が組み立てられ、最後の値が応用の答えと同じ", () => {
     const list = walks("public/sample/stats2-w0.json");
-    expect(list.map(([id]) => id)).toEqual(["stats2:binom-A-01", "stats2:binom-B-02", "stats2:binom-D-02"]);
-    for (const [id, ap] of list) expect([id, walkProblems(ap.walk, ap.task, ap.solve, solveApply(ap.solve).steps.length)]).toEqual([id, []]);
+    expect(list.map(([id]) => id)).toEqual(["stats2:binom-A-01", "stats2:binom-B-02", "stats2:binom-B-04", "stats2:binom-D-02"]);
+    for (const [id, ap] of list) expect([id, walkProblems(ap.walk, ap.task, ap.solve, ans(ap))]).toEqual([id, []]);
   });
-  it("段が1つ足りないと止まる", () => {
-    const [, ap] = walks("public/sample/stats2-w0.json")[0]!;
-    expect(walkProblems({ ...ap.walk, steps: ap.walk.steps.slice(1) }, ap.task, ap.solve, solveApply(ap.solve).steps.length).join()).toMatch(/段の数/);
+  it("式の形に記号を入れても値を入れても KaTeX で読める（\\mathrm{C} を穴と取り違えると赤い文字になった）", () => {
+    for (const [ref, def] of Object.entries(WALK_FORMULAS)) for (const fill of [(x: string) => `{${x}}`, () => "{\\mathbf{0.7}}"]) {
+      const t = def.tex.replace(/@([A-Za-z])/g, (_, x: string) => fill(x));
+      expect(() => katex.renderToString(t, { throwOnError: true }), ref).not.toThrow();
+      expect(t, ref).not.toMatch(/@/);
+    }
+  });
+  it("当てはめを入れ替えると答えと違って止まる", () => {
+    const [, ap] = walks("public/sample/stats2-w0.json").find(([id]) => id.endsWith("B-02"))!;
+    const swapped = { ...ap.walk, formulas: [{ ...ap.walk.formulas[0]!, bind: { n: "n", k: "k", p: "n" } }] };
+    expect(walkProblems(swapped, ap.task, ap.solve, ans(ap)).join()).toMatch(/応用の答え/);
   });
 });
