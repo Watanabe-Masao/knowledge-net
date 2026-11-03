@@ -21,7 +21,7 @@
 .q { margin: 0; padding: 8px 12px; border-radius: var(--r-m); background: var(--surface-2); font-size: 15px; font-weight: 600; line-height: 1.5; }
 .q span { display: block; font-size: var(--fs-tag); font-weight: 400; color: var(--ink-3); }
 /* 段の中身：段を替えると少し下から出る */
-.body { flex: 1; display: grid; gap: 10px; align-content: start; padding: var(--sp-2) 0 calc(150px + env(safe-area-inset-bottom)); animation: enter var(--dur-sheet) var(--ease-sheet); }
+.body { flex: 1; display: grid; gap: 10px; align-content: start; padding: var(--sp-2) 0 calc(96px + env(safe-area-inset-bottom)); animation: enter var(--dur-sheet) var(--ease-sheet); }
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } }
 .card { background: var(--raised); border: 1px solid var(--line); border-radius: var(--r-l); padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
 .h { margin: 0; font-size: 13.5px; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }

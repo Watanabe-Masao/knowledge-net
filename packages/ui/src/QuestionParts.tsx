@@ -170,13 +170,27 @@ export function RunChart({ title, ylab, fmt = r2, series, note }: { title: strin
   );
 }
 
-/** 下の操作の帯：札を押すと、その1つの操作だけが出る */
-export function Dock({ chips, sel, onSel, children, action, mark }: { chips: [string, string][]; sel: string; onSel: (k: string) => void; children: ReactNode; action: ReactNode; mark?: string }) {
-  return <div style={{ display: "grid", gap: 8 }}>
-    <div className={s.chips} style={{ gridTemplateColumns: `repeat(${chips.length}, 1fr)` }} role="tablist" aria-label="変える条件">
-      {chips.map(([k, t]) => <button key={k} type="button" role="tab" aria-selected={sel === k} onClick={() => { haptic(); onSel(k); }} data-testid={`q-chip-${k}`} className={k === mark ? s.chipMark : undefined} data-mark={k === mark ? "answer" : undefined}>{t}</button>)}
+/** 下の操作の帯（渡辺さん 2026-11-03：iPhone の流儀）：ふだんは値の出た札だけ。札を押すとその1つのつまみが札の上に出て、
+ *  触らないまま idle ミリ秒たつと自動でたたむ（つまみを押さえている間・動かしている間は消えない）。同じ札をもう一度押すか Esc でも閉じる。
+ *  移動（別の問いへ）は帯に置かない：上の「戻る」と同じ機能なので1か所にする。action は学ぶ操作（この条件で予想から など）だけ */
+export function Dock({ chips, sel, onSel, children, action, mark, idle = 2000 }: { chips: [string, string][]; sel: string; onSel: (k: string) => void; children: ReactNode; action?: ReactNode; mark?: string; idle?: number }) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null), down = useRef(false);
+  const stop = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; };
+  const arm = () => { stop(); if (!down.current) timer.current = setTimeout(() => setOpen(false), idle); };
+  useEffect(() => stop, []);
+  const tap = (k: string) => {
+    haptic();
+    if (open && sel === k) { stop(); setOpen(false); return; }
+    onSel(k); setOpen(true); arm();
+  };
+  return <div className={s.dock}>
+    {open && <div className={s.dockCtl} id="q-dock-ctl" data-testid="q-dock-ctl"
+      onPointerDown={() => { down.current = true; stop(); }} onPointerUp={() => { down.current = false; arm(); }} onPointerCancel={() => { down.current = false; arm(); }}
+      onInput={arm} onKeyDown={(e) => { if (e.key === "Escape") { stop(); setOpen(false); } else arm(); }}>{children}</div>}
+    <div className={s.chips} style={{ gridTemplateColumns: `repeat(${chips.length}, minmax(0, 1fr))` }} aria-label="変える条件">
+      {chips.map(([k, t]) => <button key={k} type="button" aria-expanded={open && sel === k} aria-controls={open && sel === k ? "q-dock-ctl" : undefined} onClick={() => tap(k)} data-testid={`q-chip-${k}`} className={k === mark ? s.chipMark : undefined} data-mark={k === mark ? "answer" : undefined}>{t}</button>)}
     </div>
-    <div className={s.dockCtl}>{children}</div>
     {action}
   </div>;
 }
