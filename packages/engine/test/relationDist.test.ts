@@ -2,7 +2,7 @@
 // 図は「二項分布を変えると何になるか」を見せるので、ここが間違うと関係の主張（極限・近似）を図が逆に見せてしまう。
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { modelPmf, normalDensity, poissonPmf } from "../src";
+import { modelPmf, negbinomPmf, normalDensity, poissonPmf } from "../src";
 
 describe("ポアソン分布の確率", () => {
   // 対象：poissonPmf の値。想定する故障：指数の符号・k! の取り違え（log の階乗の添字ずれ）。
@@ -46,4 +46,23 @@ describe("正規分布の密度", () => {
     }));
   });
   it("σ が0以下だと理由を言って止まる", () => { expect(() => normalDensity(0, 0, 0)).toThrow(/σ/); });
+});
+
+describe("r 回目の成功までの回数（幾何・負の二項）", () => {
+  // 対象：negbinomPmf。想定する故障：C(k−1, r−1) を C(k, r) にする・k＜r に確率を残す・(1−p) の指数のずれ。
+  // 見つけ方：手の値（幾何 p＝0.3 の 1・2・3 回目：0.3・0.21・0.147、r＝2 の 2・3 回目：0.09・0.126）と、
+  // 性質（合計1・平均 r/p・分散 r(1−p)/p²）。手の値は k の数え方（試行の番号か、失敗の数か）の取り違えも見つける。
+  it("手の値", () => {
+    const g = negbinomPmf(1, 0.3, 3), h = negbinomPmf(2, 0.3, 3);
+    expect(g[0]).toBe(0); expect(g[1]).toBeCloseTo(0.3, 12); expect(g[2]).toBeCloseTo(0.21, 12); expect(g[3]).toBeCloseTo(0.147, 12);
+    expect(h[1]).toBe(0); expect(h[2]).toBeCloseTo(0.09, 12); expect(h[3]).toBeCloseTo(0.126, 12);
+  });
+  it("性質：合計1・平均 r/p・分散 r(1−p)/p²", () => {
+    fc.assert(fc.property(fc.integer({ min: 1, max: 5 }), fc.double({ min: 0.1, max: 0.95, noNaN: true }), (r, p) => {
+      const kmax = Math.ceil(r / p + 40 * Math.sqrt(r * (1 - p)) / p + 20);
+      const f = negbinomPmf(r, p, kmax);
+      const sum = f.reduce((a, b) => a + b, 0), m = f.reduce((a, v, k) => a + k * v, 0), v = f.reduce((a, q, k) => a + (k - m) ** 2 * q, 0);
+      expect(sum).toBeCloseTo(1, 8); expect(m).toBeCloseTo(r / p, 6); expect(v / (r * (1 - p) / p ** 2)).toBeCloseTo(1, 5);
+    }));
+  });
 });

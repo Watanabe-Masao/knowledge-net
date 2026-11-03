@@ -1,0 +1,29 @@
+/* 場面（解説と触る。stats2-course #188 04b） */
+.scene { display: grid; gap: 6px; }
+.legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: var(--fs-tag); color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.sw1 { background: var(--data-1); }
+.sw2 { background: var(--data-2); }
+.legend .swLine { height: 2px; width: 14px; border-radius: 1px; vertical-align: 3px; background: var(--data-2); }
+.stats { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9em, 1fr)); gap: 6px; }
+.stats div { padding: 6px 10px; border-radius: var(--r-s); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow var(--dur) var(--ease), background var(--dur) var(--ease); }
+.stats dt { font-size: var(--fs-tag); color: var(--ink-3); }
+.stats dd { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.stats .on { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.tour, .explore { display: grid; gap: var(--sp-2); }
+.tourHead { display: flex; justify-content: space-between; align-items: center; }
+.count { font-size: var(--fs-tag); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); }
+.dots .dotOn { background: var(--accent); }
+.tourText { display: grid; gap: 4px; min-height: 5.2em; }
+.tourText p { margin: 0; font-size: var(--fs-body); line-height: 1.65; color: var(--ink); }
+.stepTitle { font-size: var(--fs-small); color: var(--ink-2); }
+.gistLab { font-size: var(--fs-tag); font-weight: 600; color: var(--accent); }
+.tourNav { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--sp-2); }
+.navBtn { all: unset; box-sizing: border-box; cursor: pointer; min-height: 44px; border-radius: var(--r-m); border: 1px solid var(--line-strong); text-align: center; font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.navBtn:active { transform: translateY(1px); }
+.navBtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.navMain { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.task { margin: 0; font-size: var(--fs-small); color: var(--ink-2); line-height: 1.6; }
+@media (prefers-reduced-motion: reduce) { .stats div { transition: none; } }
