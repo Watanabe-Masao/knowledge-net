@@ -16,3 +16,4 @@ export { type TableDef, type TableTheme } from "./ExperimentTable";
 export { walkProblems, type ApplyWalkSpec } from "./ApplyWalk";
 // 分布の棒（実験室と概念のページで同じ部品。数は engine の modelPmf から。stats2-course #188 01b：図はその場で描く）
 export { Bars } from "./labParts";
+export { Scene, Tour, Explore, MODES as SCENE_MODES, sceneSupported, sceneKeys, drawScene, type ScenePlay, type SceneState, type TourStep } from "./Scene";

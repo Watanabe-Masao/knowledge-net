@@ -145,6 +145,19 @@ export function poissonPmf(lambda: number, kmax: number): number[] {
   return Array.from({ length: kmax + 1 }, (_, k) => Math.exp(-lambda + k * Math.log(lambda) - lnFact(k)));
 }
 
+/** r 回目の成功が k 回目の試行で起きる確率（k＝0〜kmax。k＜r は0）。r＝1 で幾何分布、2以上で負の二項分布。
+ *  P(k)＝C(k−1, r−1) p^r (1−p)^(k−r)。平均 r/p・分散 r(1−p)/p²（stats2-course #188 04b） */
+export function negbinomPmf(r: number, p: number, kmax: number): number[] {
+  if (!isCount(r) || r < 1) throw new Error(`r は1以上の整数：${r}`);
+  if (!(p > 0 && p <= 1)) throw new Error(`p は0より大きく1以下：${p}`);
+  if (!isCount(kmax)) throw new Error(`kmax は0以上の整数：${kmax}`);
+  return Array.from({ length: kmax + 1 }, (_, k) => {
+    if (k < r) return 0;
+    if (p === 1) return k === r ? 1 : 0;
+    return Math.exp(lnComb(k - 1, r - 1) + r * Math.log(p) + (k - r) * Math.log(1 - p));
+  });
+}
+
 /** 正規分布 N(μ, σ²) の密度。二項分布の棒に重ねる曲線に使う（棒の幅1なので、密度の値が棒の高さに並ぶ）。σ は0より大きい */
 export function normalDensity(x: number, mean: number, sd: number): number {
   if (!(sd > 0)) throw new Error(`σ は0より大きい：${sd}`);

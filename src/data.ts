@@ -19,7 +19,8 @@ export type FormulaNode =
   | { op: "eq" | "add" | "sub" | "mul" | "div" | "pow" | "neg" | "sqrt" | "abs" | "sum" | "prod" | "int" | "fn";
       args: FormulaNode[]; name?: string; var?: string; lower?: FormulaNode; upper?: FormulaNode };
 /** 数理ラボへの参照（概念・関係で共通）。url は教材の build が作る。 */
-export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string; kind?: "tour" | "check" };
+export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string; kind?: "tour" | "check";
+  /** JS の部品で描く形（型の改訂27）。あれば iframe ではなく場面の部品で描く */ play?: import("@math-lab/ui").ScenePlay };
 export type FigRef = { id: string; url: string; caption?: string };
 export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode; parts?: { path: number[]; name: string; meaning: string }[] };
 export type Concept = {

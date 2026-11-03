@@ -3,7 +3,7 @@
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
 // 手触り：切り替えと前後の図は change() で、変わる所（この欄）だけを短くつなぐ。
 import { useRef, useState } from "react";
-import { Badge, Badges as BadgeRow, Bars, Button, Lightbox, Segmented, change } from "@math-lab/ui";
+import { Badge, Badges as BadgeRow, Bars, Button, Explore, Lightbox, Segmented, Tour, change, sceneSupported } from "@math-lab/ui";
 import { modelPmf, normalDensity, poissonPmf } from "@math-lab/engine";
 import s from "./Relation.module.css";
 import { KINDS, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
@@ -91,7 +91,17 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
           <div className={s.row}><Button variant="quiet" className={s.close} onClick={() => choose("")}>閉じる</Button></div>
         </div>
       )}
-      {lab && (
+      {lab && sceneSupported(lab.play) && (
+        /* JS の部品で描く（旧版のラボの iframe にしない。stats2-course #188 04b・#192）。解説は段ごと、触るは帯で動かす */
+        <div className={s.media} data-testid={`labs-${context}`} data-native="">
+          {lab.purpose && <p className={s.purpose}>{lab.purpose}</p>}
+          {value === "tour" ? <Tour key={lab.url} play={lab.play!} onDone={() => choose("")} /> : <Explore key={lab.url} play={lab.play!} />}
+          {value === "check" && checks.length > 1 && <div className={s.row}>{checks.map((c, i) => i !== ci && (
+            <Button key={c.url} variant="quiet" onClick={() => setCi(i)}>ほかの版</Button>
+          ))}</div>}
+        </div>
+      )}
+      {lab && !sceneSupported(lab.play) && (
         <div className={`${s.media} ${s.lab}`} data-testid={`labs-${context}`}>
           {lab.purpose && <p className={s.purpose}>{lab.purpose}</p>}
           <iframe key={lab.url} src={`${lab.url}${lab.url.includes("?") ? "&" : "?"}embed=1&host=kn`} title={lab.title ?? lab.id} loading="lazy" />
