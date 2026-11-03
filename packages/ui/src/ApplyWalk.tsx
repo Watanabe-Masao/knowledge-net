@@ -28,6 +28,8 @@ const ORDER: WalkKind[] = ["ask", "unit", "event", "info", "relate", "formula", 
 const r4 = (x: number) => formatApply(x, NUM4);
 const SHOW: Record<string, (v: number) => string> = { n: (v) => `n ${v} 回`, p: (v) => `p ${formatApply(v, PCT0)}`, k: (v) => `k ${v} 回`, N: (v) => `N ${v}`, m: (v) => `m ${v}`, s: (v) => `${v}`, a: (v) => `a ${v}`, b: (v) => `b ${v}` };
 const showAt = (t: ApplyState) => Object.entries(t).filter(([k]) => SHOW[k]).map(([k, v]) => SHOW[k]!(v!)).join("・");
+/** 境目の前後の2つ目は、1つ目から変えた所だけを言う（n 32 回 など） */
+const showDiff = (t: ApplyState, from: ApplyState) => showAt(Object.fromEntries(Object.entries(t).filter(([k, v]) => from[k] !== v)));
 const same = (t: ApplyState, cur: ApplyState) => Object.entries(t).every(([k, v]) => cur[k] === undefined || Math.abs(cur[k]! - v!) < 1e-9);
 
 /** solve の値（a.n のように . でたどる）。文に出る数が solve の数の足し引き・掛け算のときは式で書ける
@@ -154,7 +156,9 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
       if (!seen[j] && same(t, state)) {
         const nx = check.targets.map((_, i) => seen[i] || i === j);
         setSeen(nx); onFit?.(t, check.mark);
-        say(nx.every(Boolean) ? st.hit ?? "問いの値になった。色の付いた所が答え。" : `${showAt(t)} に合った。次は ${showAt(check.targets[nx.indexOf(false)]!)}。`, true);
+        const rest = check.targets[nx.indexOf(false)];
+        say(nx.every(Boolean) ? st.hit ?? (check.probe === "boundary" ? "答えでは条件を満たし、1刻み動かすと満たさない。式で出した値が境目だと確かめられた。" : "問いの値になった。色の付いた所が答え。")
+          : `${showAt(t)} に合った。次は ${check.probe === "boundary" && rest ? `${showDiff(rest, t)} にして、色の付いた所の数を比べる` : showAt(rest!)}。`, true);
       }
     });
   }, [open, review, here?.t, state && JSON.stringify(state)]);   // eslint-disable-line react-hooks/exhaustive-deps
@@ -284,7 +288,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
     const x = walk.steps[i]!;
     if (x.kind === "formula") return walk.formulas.map((fu) => <div key={fu.id} className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(fillTex(fu, () => false)) }} />);
     if (x.kind === "build") return computed.map((c) => <div key={c.id} className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(c.rows[c.rows.length - 1]!.tex) }} />);
-    if (x.kind === "probe") return <p>{showAt(check.targets[0]!)}にすると、答えの所に色が付く。</p>;
+    if (x.kind === "probe") return <p>{check.probe === "boundary" ? `${showAt(check.targets[0]!)}では条件を満たし、${showDiff(check.targets[1]!, check.targets[0]!)}では満たさない（境目）。` : `${showAt(check.targets[0]!)}にすると、答えの所に色が付く。`}</p>;
     return <p>{x.sum ?? ""}</p>;
   };
   const shortOf = (i: number) => { const x = walk.steps[i]!; return x.short ?? (x.kind === "formula" ? walk.formulas.map((fu) => WALK_FORMULAS[fu.ref]!.pick).join("・") : x.kind === "build" ? `≈ ${r4(computed[computed.length - 1]!.value)}` : KIND[x.kind][0]); };
@@ -306,7 +310,9 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
   else if (here?.t === "quiz") todo = subDone(cur, sub) ? "合っている。「次の問いへ」で続ける" : here.q.todo ?? "選んで「これで答える」";
   else if (here?.t === "bind") todo = `${walk.formulas[here.f]!.word ?? "式"}の記号の枠を押し、入れる値を選ぶ。全部埋めたら「これで答える」`;
   else if (here?.t === "calc") todo = "計算を1つずつ進め、何を計算しているかを確かめる";
-  else if (here?.t === "tool") todo = st.todo ?? `下のチップを ${check.targets.map(showAt).join(" → ")} に合わせ、色の付いた所を読む`;
+  else if (here?.t === "tool") todo = st.todo ?? (check.probe === "boundary"
+    ? `下のチップを ${showAt(check.targets[0]!)} に合わせて色の付いた所を読み、次に ${showDiff(check.targets[1]!, check.targets[0]!)} にして比べる（境目の前後）`
+    : `下のチップを ${check.targets.map(showAt).join(" → ")} に合わせ、色の付いた所を読む`);
 
   const work = review ? <section className={s.wWork} data-testid="exp-walk-review">
     <p className={s.walkTitle}>解き方のまとめ</p>
