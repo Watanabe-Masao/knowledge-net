@@ -1495,3 +1495,76 @@ test("応用の課題：全部の問いで、グラフを問いに合わせる�
   expect(errs).toEqual([]);
 });
 
+
+// 解き方を組み立てる（stats2-course #181）。確かめる対象：walk のある3問を、見本の JSON の原本どおりに最初から最後まで組み立てられること。
+// 想定する故障：ある手が済んでも次の手へ進まない（詰む）・式の枠に入る数が solve と違う・確かめる段で道具を合わせても進まない（2つを比べる課題の2つ目）・
+// 迷った回数がふり返りに出ない。見つけ方：原本の正解どおりに押し、最後のまとめに engine の段が5つ並ぶこと、わざと1回間違えた段に「迷った」が出ることを見る。
+// 既存との違い：応用の全問テストは答え合わせと「グラフを問いに合わせる」だけで、解き方の中は見ない
+type WalkData = { segs: { text: string; key?: string }[]; tags: { vars: Record<string, { ans: number }> }; meaning?: { ok: number }; steps: { quiz?: { ok: number }; slots?: { lines: (string | { slot: string })[][]; then?: { ok: number } } }[] };
+const WALK_CASES: { key: string; targets: Record<string, number>[]; slotText: Record<string, string> }[] = [
+  { key: "A-01", targets: [{ n: 20, p: 0.3 }], slotText: { e: "6", n: "20" } },
+  { key: "B-02", targets: [{ n: 10, p: 0.3, k: 3 }], slotText: { n: "10", k: "3", p: "0.3" } },
+  { key: "D-02", targets: [{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }], slotText: { an: "10", ap: "0.6", bn: "20", bp: "0.3" } },
+];
+test("応用の解き方を組み立てる：原本どおりに押すと最後まで進み、迷った段がふり返りに出る", async ({ page }) => {
+  test.setTimeout(180000);
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const json = JSON.parse(await (await page.request.get("./sample/stats2-w0.json")).text());
+  const items = new Map<string, { apply: { walk: WalkData } }>(json.experiments.flatMap((e: { catalog?: { items: { id: string }[] }[] }) => (e.catalog ?? []).flatMap((g) => g.items.map((it) => [it.id, it]))));
+  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  const x = page.getByTestId("experiment");
+  for (const c of WALK_CASES) {
+    const w = items.get(`stats2:binom-${c.key}`)!.apply.walk;
+    await openQ(x, c.key);
+    for (const g of await x.getByRole("radiogroup").all()) await g.getByRole("radio").first().click();
+    if (!(await x.getByRole("button", { name: "この予想で実験する" }).count())) await x.getByRole("button", { name: "増やす" }).click();
+    await x.getByRole("button", { name: "この予想で実験する" }).click();
+    await x.getByTestId((await x.getByTestId("exp-run-100").count()) ? "exp-run-100" : "exp-run-big").click();
+    await expect(x.getByTestId("exp-to-observe")).toBeEnabled({ timeout: 15000 });
+    await x.getByTestId("exp-to-observe").click();
+    await x.getByRole("button", { name: /理由を考える/ }).click();
+    await x.getByRole("button", { name: "応用の課題へ" }).click();
+    const ap = x.getByTestId("exp-apply");
+    if (await ap.getByTestId("exp-apply-input").count()) await ap.getByTestId("exp-apply-input").fill("0");
+    else await ap.getByRole("radiogroup", { name: "答え" }).getByRole("radio").first().click();
+    await ap.getByTestId("exp-apply-check").click();
+    await expect(ap.getByTestId("exp-apply-steps")).toHaveCount(0);   // 一覧は出さず、組み立てる入口
+    await ap.getByTestId("exp-walk-start").click();
+    const next = ap.getByTestId("exp-walk-next");
+    // 1段目：わざと1回間違える（求めるものの代わりに数を押す）→ 求めるもの → 数ごとに意味 → 意味の確かめ
+    const segIdx = (k?: string) => w.segs.findIndex((g) => g.key === k);
+    await ap.getByTestId(`exp-walk-seg-${segIdx(Object.keys(w.tags.vars)[0])}`).click();
+    await expect(ap.getByTestId("exp-walk-status")).toContainText("求めるものは別");
+    await ap.getByTestId(`exp-walk-seg-${segIdx("q")}`).click();
+    for (const [k, v] of Object.entries(w.tags.vars)) { await ap.getByTestId(`exp-walk-seg-${segIdx(k)}`).click(); await ap.getByTestId(`exp-walk-tag-${v.ans}`).click(); }
+    if (w.meaning) await ap.getByTestId(`exp-walk-choice-${w.meaning.ok}`).click();
+    await next.click();
+    for (const st of w.steps) {
+      if (st.quiz) await ap.getByTestId(`exp-walk-choice-${st.quiz.ok}`).click();
+      for (const t of st.slots?.lines.flat() ?? []) if (typeof t !== "string") {
+        await ap.getByTestId(`exp-walk-known-${t.slot}`).click(); await ap.getByTestId(`exp-walk-slot-${t.slot}`).click();
+        await expect(ap.getByTestId(`exp-walk-slot-${t.slot}`), `${c.key} の枠 ${t.slot} の数`).toHaveText(c.slotText[t.slot]!);
+      }
+      if (st.slots?.then) await ap.getByTestId(`exp-walk-choice-${st.slots.then.ok}`).click();
+      await expect(next, `${c.key} の段が済まない`).toBeEnabled();
+      await next.click();
+    }
+    // 最後の段：下のチップで問いの値に合わせる（2つを比べる課題は順に）
+    await expect(next).toBeDisabled();
+    for (const t of c.targets) for (const [k, v] of Object.entries(t)) {
+      await x.getByTestId(`q-chip-${k}`).click(); await x.getByTestId(`exp-app-${k}`).fill(String(v));
+      await x.getByTestId(`q-chip-${k}`).click();
+    }
+    await expect(next, `${c.key} の確かめる段が済まない`).toBeEnabled();
+    await expect(x.locator("[data-mark=answer]").first()).toBeVisible();
+    await next.click();
+    const rev = ap.getByTestId("exp-apply-steps").locator("li");
+    await expect(rev).toHaveCount(5);
+    await expect(rev.first()).toContainText("1 回迷った");
+    await expect(rev.nth(1)).not.toContainText("迷った");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), `${c.key} で横にはみ出す`).toBeLessThanOrEqual(390);
+    await x.getByRole("button", { name: "戻る" }).click();
+  }
+  expect(errs).toEqual([]);
+});

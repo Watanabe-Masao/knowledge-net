@@ -8,8 +8,9 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import katex from "katex";
 import { applyCheck, solveApply, type ApplySolve } from "@math-lab/engine";
+import { walkProblems, type ApplyWalkSpec } from "@math-lab/ui";
 
-type Apply = { solve: ApplySolve; answer: { type: "number" | "choice"; options?: string[]; tol?: object; percent?: boolean } };
+type Apply = { task?: string; solve: ApplySolve; answer: { type: "number" | "choice"; options?: string[]; tol?: object; percent?: boolean } };
 const applies = (file: string) => {
   const d = JSON.parse(readFileSync(file, "utf8"));
   return (d.experiments ?? []).flatMap((e: { catalog?: { items: { id: string; apply?: Apply }[] }[] }) =>
@@ -48,5 +49,21 @@ describe("応用の課題が解ける", () => {
     expect(problem({ ...ap, solve: { ...ap.solve, k: 99 } as ApplySolve })).toMatch(/k は/);
     const [, ch] = applies("public/sample/stats2-w0.json").find(([id]) => id === "stats2:binom-B-01")!;
     expect(problem({ ...ch, answer: { ...ch.answer, options: [] } })).toMatch(/選び肢の外/);
+  });
+});
+
+// 解き方を組み立てる（walk。stats2-course #181）。確かめる対象：公開の JSON の walk が、engine の解き方の段と1つずつ対応し、画面で組み立てられること。
+// 想定する故障：engine の解き方の段の数が変わったのに原本の steps を直し忘れる（題名とまとめが別の段に付く）・数の of が solve にない（式の枠に「?」）。
+// 見つけ方：全部の walk を engine で解いて walkProblems に通す。わざと段を1つ減らすと止まる。既存との違い：教材の build は文の数と solve の値・番号の範囲だけを見る
+describe("解き方を組み立てる（walk）", () => {
+  const walks = (file: string) => applies(file).filter(([, ap]) => (ap as { walk?: unknown }).walk) as [string, Apply & { walk: ApplyWalkSpec; task: string }][];
+  it("公開の JSON の全部の walk が engine の段と合う", () => {
+    const list = walks("public/sample/stats2-w0.json");
+    expect(list.map(([id]) => id)).toEqual(["stats2:binom-A-01", "stats2:binom-B-02", "stats2:binom-D-02"]);
+    for (const [id, ap] of list) expect([id, walkProblems(ap.walk, ap.task, ap.solve, solveApply(ap.solve).steps.length)]).toEqual([id, []]);
+  });
+  it("段が1つ足りないと止まる", () => {
+    const [, ap] = walks("public/sample/stats2-w0.json")[0]!;
+    expect(walkProblems({ ...ap.walk, steps: ap.walk.steps.slice(1) }, ap.task, ap.solve, solveApply(ap.solve).steps.length).join()).toMatch(/段の数/);
   });
 });
