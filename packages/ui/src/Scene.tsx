@@ -18,7 +18,8 @@ type Stat = { key: string; label: string; value: string };
 type Drawn = { series: number[][]; names: string[]; labels: (string | number)[]; curve?: (i: number) => number; curveName?: string; hi?: number; hiIn?: (i: number) => boolean; stats: Stat[]; label: string };
 type FieldDef = { key: string; label: string; min: number | ((st: SceneState) => number); max: number | ((st: SceneState) => number); step: number; show?: (v: number) => string };
 type ModeDef = { name: string; draw: (st: SceneState, o: { kmax?: number; dec: number }) => Drawn; fields: FieldDef[]; defaults: SceneState; kinds?: boolean;
-  /** 切り替え（重ねる曲線など） */ toggles?: { key: string; name: string; items: [string, string][] }[] };
+  /** 切り替え（重ねる曲線など） */ toggles?: { key: string; name: string; items: [string, string][] }[];
+  /** つまみのない状態の項目（教材の版が渡す。approx の lam・only） */ extra?: string[] };
 
 const num = (st: SceneState, k: string, d = 0) => { const v = Number(st[k]); return Number.isFinite(v) ? v : d; };
 const fmt = (v: number, dec: number) => (Number.isFinite(v) ? String(Number(v.toFixed(dec))) : "—");
@@ -35,6 +36,7 @@ export const MODES: Record<string, ModeDef> = {
   approx: {
     name: "二項とポアソン",
     defaults: { n: 10, p: 0.3, k: 3 },
+    extra: ["lam", "only"],
     fields: [
       { key: "n", label: "回数 n", min: 5, max: 2000, step: 5 },
       { key: "p", label: "確率 p", min: 0.001, max: 0.3, step: 0.001 },
@@ -161,6 +163,15 @@ export const MODES: Record<string, ModeDef> = {
     },
   },
 };
+
+/** モードが受け取る状態の項目（教材の版の set・段の状態はこの中だけ。知らない項目は黙って捨てずにテストで止める） */
+export const sceneKeys = (mode: string): string[] => {
+  const d = MODES[mode];
+  return d ? ["mode", ...d.fields.map((f) => f.key), ...(d.toggles ?? []).map((t) => t.key), ...(d.kinds ? ["kind"] : []), ...(d.extra ?? [])] : [];
+};
+
+/** 状態から図の数を出す（画面と同じ計算。テストで使う） */
+export const drawScene = (mode: string, st: SceneState, kmax?: number, dec = 3) => MODES[mode]?.draw(st, { kmax, dec });
 
 export const sceneSupported = (play?: ScenePlay) => !!play && [play.mode, ...(play.modes ?? [])].every((m) => m in MODES);
 
