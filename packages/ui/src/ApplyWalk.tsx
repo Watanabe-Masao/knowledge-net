@@ -393,7 +393,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, ok, w
       <div className={s.pkPanel} role="dialog" aria-label="入れる値を選ぶ" data-testid="exp-walk-picker" onKeyDown={(e) => { if (e.key === "Escape") setSlotAsk(null); }}>
         <div className={s.pkHead}><b>「<i>{holeSym(walk.formulas[slotAsk.f]!.bind[slotAsk.sym]!, slotAsk.sym)}</i>」に入れる値</b>
           <button type="button" className={s.wClose} aria-label="閉じる" onClick={() => setSlotAsk(null)} data-testid="exp-walk-picker-close">×</button></div>
-        <p className={s.pkNote}>{WALK_FORMULAS[walk.formulas[slotAsk.f]!.ref]!.mean?.[slotAsk.sym] ?? SYM_MEAN[slotAsk.sym] ?? ""}</p>
+        {/* 記号の意味はここに書かない（書くと、どの値を入れるかの答えになる。渡辺さん 2026-11-03）。意味は違う値を入れて答えたときにだけ返す */}
         <div className={s.pkList}>{candidates(slotAsk.f).map((c) => {
           const on = put[slotKey(slotAsk.f, slotAsk.sym)] === c.k;
           return <button key={c.k} type="button" autoFocus={on} aria-pressed={on} className={on ? `${s.pkItem} ${s.pkOn}` : s.pkItem} onClick={() => choosePut(c.k)} data-testid={`exp-walk-pick-${c.k}`}><small>{c.word}</small><b>{c.value}</b></button>;
