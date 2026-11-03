@@ -111,7 +111,8 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
 }) {
   const subs = useMemo(() => walkSubs(walk), [walk]);
   const showAt = (t: ApplyState) => showAt0(t, names);
-  const keyName = (k: string) => (k === "s" ? names?.s ?? "つまみ" : k);
+  /** 「n を」「引きずる強さを」：記号なら空白を挟み、言葉ならそのまま「を」を付ける */
+  const keyName = (k: string) => { const w = k === "s" ? names?.s ?? "つまみ" : k; return /^[\x00-\x7F]+$/.test(w) ? `${w} ` : w; };
   // 確かめる段の言い方：答えのつまみ（mark.chip）の値は、やることの文に書かない（「求めた値にして」と言う。渡辺さん 2026-11-03 の決まり）
   const hideKey = check.mark.chip;
   const given = (t: ApplyState) => Object.fromEntries(Object.entries(t).filter(([k]) => k !== hideKey));
@@ -172,7 +173,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
     setSeen(nx); onFit?.(t, check.mark);
     const d = stepDir();
     say(nx.every(Boolean) ? st.hit ?? (check.probe === "boundary" ? "答えでは条件を満たし、1刻み動かすと満たさない。式で出した値が境目だと確かめられた。" : "問いの値になった。色の付いた所が答え。")
-      : check.probe === "boundary" && d ? `求めた値で条件を満たした。次は ${keyName(d.k)} を1刻み${d.dir}、色の付いた所の数を比べる。` : `${showAt(t)} に合った。次は ${showAt(check.targets[j + 1]!)}。`, true);
+      : check.probe === "boundary" && d ? `求めた値で条件を満たした。次は ${keyName(d.k)}を1刻み${d.dir}、色の付いた所の数を比べる。` : `${showAt(t)} に合った。次は ${showAt(check.targets[j + 1]!)}。`, true);
   }, [open, review, here?.t, state && JSON.stringify(state)]);   // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- 操作 ----
@@ -300,7 +301,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
     const x = walk.steps[i]!;
     if (x.kind === "formula") return walk.formulas.map((fu) => <div key={fu.id} className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(fillTex(fu, () => false)) }} />);
     if (x.kind === "build") return computed.map((c) => <div key={c.id} className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(c.rows[c.rows.length - 1]!.tex) }} />);
-    if (x.kind === "probe") { const d = stepDir(); return <p>{check.probe === "boundary" && d ? `${showAt(check.targets[0]!)} では条件を満たし、${keyName(d.k)} を1刻み${d.dir.replace("して", "す")}と満たさない（境目）。` : `${showAt(check.targets[0]!)} にすると、答えの所に色が付く。`}</p>; }
+    if (x.kind === "probe") { const d = stepDir(); return <p>{check.probe === "boundary" && d ? `${showAt(check.targets[0]!)} では条件を満たし、${keyName(d.k)}を1刻み${d.dir.replace("して", "す")}と満たさない（境目）。` : `${showAt(check.targets[0]!)} にすると、答えの所に色が付く。`}</p>; }
     return <p>{x.sum ?? ""}</p>;
   };
   const shortOf = (i: number) => { const x = walk.steps[i]!; return x.short ?? (x.kind === "formula" ? walk.formulas.map((fu) => WALK_FORMULAS[fu.ref]!.pick).join("・") : x.kind === "build" ? `≈ ${r4(computed[computed.length - 1]!.value)}` : KIND[x.kind][0]); };
@@ -324,8 +325,8 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
   else if (here?.t === "calc") todo = "計算を1つずつ進め、何を計算しているかを確かめる";
   else if (here?.t === "tool") {
     const t0 = check.targets[0]!, g = showAt(given(t0)), hid = hideKey && hideKey in t0, d = stepDir();
-    const first = `${g ? `下のチップを ${g} に合わせ、` : "下のチップの"}${hid ? `${keyName(hideKey!)} を求めた値にして` : ""}`;
-    todo = st.todo ?? (check.probe === "boundary" && d ? `${first}色の付いた所を読む。次に ${keyName(d.k)} を1刻み${d.dir}比べる（境目の前後）`
+    const first = `${g ? `下のチップを ${g} に合わせ、` : "下のチップの"}${hid ? `${keyName(hideKey!)}を求めた値にして` : ""}`;
+    todo = st.todo ?? (check.probe === "boundary" && d ? `${first}色の付いた所を読む。次に ${keyName(d.k)}を1刻み${d.dir}比べる（境目の前後）`
       : check.probe === "compare" ? `下のチップを ${check.targets.map(showAt).join(" → ")} に合わせ、色の付いた所を読む`
       : hid ? `${first}、色の付いた所を読む` : `下のチップを ${showAt(t0)} に合わせ、色の付いた所を読む`);
   }
