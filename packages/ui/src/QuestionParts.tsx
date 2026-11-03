@@ -189,10 +189,13 @@ export function Dock({ chips, sel, onSel, children, action, mark, idle = 2000 }:
   // 帯の上の端を --dock-gap（画面の下からの距離）に出す。道具で確かめる段のシートは、つまみが出ても帯の上に乗る（重ならない）
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const el = root.current, de = document.documentElement;
+    const de = document.documentElement;
+    let el: HTMLElement | null = root.current;   // 帯を包む下の固定の欄（余白ごと）の上の端を測る。見つからなければ帯そのもの
+    while (el && el !== document.body && getComputedStyle(el).position !== "fixed") el = el.parentElement;
+    if (!el || el === document.body) el = root.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const put = () => { for (const [k, v] of Object.entries({ "--dock-gap": `${Math.max(0, window.innerHeight - el.getBoundingClientRect().top)}px` })) de.style.setProperty(k, v); };
-    const ro = new ResizeObserver(put); ro.observe(el); window.addEventListener("resize", put); put();
+    const box = el, put = () => { for (const [k, v] of Object.entries({ "--dock-gap": `${Math.max(0, window.innerHeight - box.getBoundingClientRect().top)}px` })) de.style.setProperty(k, v); };
+    const ro = new ResizeObserver(put); ro.observe(box); if (root.current && root.current !== box) ro.observe(root.current); window.addEventListener("resize", put); put();
     return () => { ro.disconnect(); window.removeEventListener("resize", put); de.style.removeProperty("--dock-gap"); };
   }, []);
   const tap = (k: string) => {
