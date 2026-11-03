@@ -167,7 +167,7 @@ export function ApplyWalk({ walk, solve, steps, check, state, ok, why, onFit, on
   if (done) todo = cur === steps.length - 1 ? "まとめを確かめて「まとめを見る」へ" : "まとめを確かめて「次へ」";
   else if (here?.type === "find") todo = "課題の文で、求めるものが書いてある所を押す";
   else if (here?.type === "tag") todo = `わかっている数を押し、それが何かを選ぶ（${keys.length} つ）`;
-  else if (here?.type === "quiz") todo = here.q.todo ?? here.q.ask ?? "選ぶ";
+  else if (here?.type === "quiz") todo = here.q.todo ?? "下の問いに答える";
   else if (here?.type === "slots") todo = here.todo ?? "下の数を押してから、式の枠を押す";
   else if (here?.type === "tool") todo = walk.check?.todo ?? `下のチップを ${check.targets.map(showAt).join(" → ")} に合わせ、色の付いた所を読む`;
   // 式の枠は、その段の間ずっと出す（全部入れたあとに続く問い〔then〕でも、入れた式を見ながら答える）
@@ -180,7 +180,8 @@ export function ApplyWalk({ walk, solve, steps, check, state, ok, why, onFit, on
     {cur === 0 && !done && <p className={s.walkSheet} data-testid="exp-walk-sheet">{walk.segs.map((g, i) => {
       const isNum = !!g.key && keys.includes(g.key), lab = isNum && tagged[g.key!] ? walk.tags.vars[g.key!]!.sym : g.key === "q" && found ? "求める" : "";
       const cls = [s.wSeg, g.key === "q" && found ? s.wSegQ : "", isNum && tagged[g.key!] ? s.wSegNum : "", focus === g.key ? s.wSegOn : ""].filter(Boolean).join(" ");
-      return <button key={i} type="button" className={cls} onClick={() => tapSeg(g.key)} data-key={g.key} data-testid={`exp-walk-seg-${i}`}>{lab && <span className={s.wLab}>{lab}</span>}{g.text}</button>;
+      // 文の中で折り返せるように span（button は1かたまりになり、長い区切りで行が崩れる）。押せる所なのでキーボードでも押せる
+      return <span key={i} role="button" tabIndex={0} className={cls} onClick={() => tapSeg(g.key)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); tapSeg(g.key); } }} data-key={g.key} data-testid={`exp-walk-seg-${i}`}>{lab && <span className={s.wLab}>{lab}</span>}{g.text}</span>;
     })}</p>}
     {here?.type === "tag" && focus && <>
       <p className={s.walkAsk}>「{walk.segs.find((g) => g.key === focus)?.text}」は？</p>
@@ -190,6 +191,8 @@ export function ApplyWalk({ walk, solve, steps, check, state, ok, why, onFit, on
       const can = slotKeys.includes(g.key!) && !filled[g.key!];
       return <button key={g.key} type="button" disabled={!can} className={arm === g.key ? s.wOn : slotKeys.includes(g.key!) && filled[g.key!] ? s.wUsed : undefined} onClick={() => { setArm(g.key!); say("入れる枠を押す。", true); }} data-testid={`exp-walk-known-${g.key}`}>{g.text}<i>{walk.tags.vars[g.key!]!.sym}</i></button>;
     })}</div>}
+    {eqSub && <div className={s.wEqs}>{eqSub.lines.map((ln, i) => <div key={i} className={s.wEq}>{ln.map((t, j) => typeof t === "string" ? <span key={j}>{t}</span>
+      : <button key={j} type="button" className={filled[t.slot] ? s.wSlotFull : arm ? s.wSlotReady : s.wSlot} onClick={() => put(t.slot)} data-testid={`exp-walk-slot-${t.slot}`}>{filled[t.slot] ? valueOf(t.slot) : t.ph ?? walk.tags.vars[t.slot]?.sym ?? t.slot}</button>)}</div>)}</div>}
     {here?.type === "quiz" && <>
       {here.q.ask && <p className={s.walkAsk}>{here.q.ask}</p>}
       <div className={s.wChoices}>{here.q.opts.map((o, j) => {
@@ -197,8 +200,6 @@ export function ApplyWalk({ walk, solve, steps, check, state, ok, why, onFit, on
         return <button key={j} type="button" disabled={right && j !== here.q.ok} className={[here.q.math ? s.wMath : "", picked ? (j === here.q.ok ? s.wRight : s.wWrong) : ""].filter(Boolean).join(" ") || undefined} onClick={() => choose(here.q, j)} data-testid={`exp-walk-choice-${j}`}><span>{o}</span><em>{picked ? (j === here.q.ok ? "✓" : "✗") : ""}</em></button>;
       })}</div>
     </>}
-    {eqSub && <div className={s.wEqs}>{eqSub.lines.map((ln, i) => <div key={i} className={s.wEq}>{ln.map((t, j) => typeof t === "string" ? <span key={j}>{t}</span>
-      : <button key={j} type="button" className={filled[t.slot] ? s.wSlotFull : arm ? s.wSlotReady : s.wSlot} onClick={() => put(t.slot)} data-testid={`exp-walk-slot-${t.slot}`}>{filled[t.slot] ? valueOf(t.slot) : t.ph ?? walk.tags.vars[t.slot]?.sym ?? t.slot}</button>)}</div>)}</div>}
     <p className={msg ? (msg.good ? s.wGood : s.wBad) : s.wStatus} role="status" data-testid="exp-walk-status">{msg?.t ?? ""}</p>
     {done && <div className={s.wSum} data-testid="exp-walk-sum"><small>この段のまとめ</small>{st.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(st.tex) }} />}{st.text && <p>{st.text}</p>}</div>}
     <div className={s.two}>

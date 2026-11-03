@@ -282,7 +282,7 @@
 .walkTodoOk { border-left-color: var(--good); } .walkTodoOk small { color: var(--good); }
 .walkAsk { margin: 0; font-size: 14.5px; font-weight: 600; line-height: 1.5; }
 .walkSheet { margin: 0; font-size: 15px; line-height: 2.5; background: var(--surface-2); border-radius: var(--r-m); padding: 8px 10px; }
-.wSeg { all: unset; position: relative; border-radius: var(--r-s); cursor: pointer; }
+.wSeg { position: relative; border-radius: var(--r-s); cursor: pointer; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .wSeg:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .wSegQ { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 6px; }
 .wSegNum { background: var(--mark); font-weight: 700; padding: 1px 3px; }
