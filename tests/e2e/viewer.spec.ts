@@ -701,6 +701,21 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(ctl).toBeVisible();   // 押さえている間は閉じない
   await page.mouse.up();
   await expect(ctl).toHaveCount(0, { timeout: 4000 });
+  // つまみの両端の − ＋（渡辺さん 2026-11-03）。確かめる対象：1刻みずつ動く・端で止まる・押している間はたたまない・高さを増やさない。
+  // 想定する故障：刻みの小数のずれ（0.31＋0.01＝0.32 にならない）・範囲の外へ出る・押すたびに帯がたたむ。見つけ方：札の値と、端での押せなさを見る
+  await x.getByTestId("q-chip-p").click();
+  const p0 = await x.getByTestId("exp-app-p").inputValue();
+  await x.getByTestId("exp-app-p-plus").click();
+  await expect(x.getByTestId("exp-app-p")).toHaveValue(String(Number((Number(p0) + 0.01).toFixed(2))));
+  await x.getByTestId("exp-app-p-minus").click(); await x.getByTestId("exp-app-p-minus").click();
+  await expect(x.getByTestId("exp-app-p")).toHaveValue(String(Number((Number(p0) - 0.01).toFixed(2))));
+  await expect(ctl).toBeVisible();
+  const hBtn = (await x.getByTestId("exp-app-p-plus").boundingBox())!, hIn = (await x.getByTestId("exp-app-p").boundingBox())!;
+  expect(hBtn.height, "− ＋ でつまみの欄が高くなる").toBeLessThanOrEqual(Math.max(hIn.height, 32) + 1);
+  await x.getByTestId("exp-app-p").fill("0.99");
+  await expect(x.getByTestId("exp-app-p-plus")).toBeDisabled();
+  await x.getByTestId("q-chip-p").click();
+  await expect(ctl).toHaveCount(0);
   await x.getByTestId("exp-keep").click();
   await x.getByRole("button", { name: "戻る" }).click();
   await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");   // 戻ると前に選んだまとまりのまま

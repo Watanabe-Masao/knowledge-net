@@ -42,11 +42,20 @@
 .dock { display: grid; gap: 8px; }
 .dockCtl { min-height: 56px; display: grid; align-content: center; animation: dockIn var(--dur-sheet) var(--ease-sheet); }
 @keyframes dockIn { from { opacity: 0; transform: translateY(6px); } }
-@media (prefers-reduced-motion: reduce) { .dockCtl { animation: none; } }
+/* 閉じる：上へ縮みながら薄くなる（帯の高さがいきなり変わらない） */
+.dockOut { overflow: hidden; animation: dockOut var(--dur-sheet) var(--ease-sheet) forwards; pointer-events: none; }
+@keyframes dockOut { from { opacity: 1; max-height: 96px; min-height: 56px; } to { opacity: 0; max-height: 0; min-height: 0; transform: translateY(6px); margin-bottom: -8px; } }
+@media (prefers-reduced-motion: reduce) { .dockCtl, .dockOut { animation: none; } .dockOut { display: none; } }
 .field { display: grid; }
 .field label { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink-2); }
 .field label b { font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
-.field input { width: 100%; accent-color: var(--accent); min-height: 32px; }
+.field input { width: 100%; min-width: 0; accent-color: var(--accent); min-height: 32px; margin: 0; }
+.fieldRow { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: center; gap: 6px; }
+/* − ＋：見た目は 32px（つまみと同じ高さ）、押せる範囲は前後に広げて 44px */
+.stepBtn { all: unset; position: relative; box-sizing: border-box; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 18px; line-height: 1; color: var(--ink); cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.stepBtn::before { content: ""; position: absolute; inset: -6px; }
+.stepBtn:disabled { opacity: .3; cursor: default; }
+.stepBtn:not(:disabled):active { transform: scale(var(--press-scale)); background: var(--accent-soft); }
 .seg { display: grid; background: var(--surface-2); border-radius: var(--r-m); padding: 3px; gap: 3px; }
 .seg button { all: unset; text-align: center; min-height: 34px; border-radius: 8px; font-size: 13.5px; cursor: pointer; color: var(--ink-2); }
 .seg button[aria-checked="true"] { background: var(--raised); color: var(--ink); font-weight: 600; box-shadow: var(--shadow-raised); }

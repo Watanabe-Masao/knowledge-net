@@ -174,18 +174,39 @@ export function RunChart({ title, ylab, fmt = r2, series, note }: { title: strin
  *  触らないまま idle ミリ秒たつと自動でたたむ（つまみを押さえている間・動かしている間は消えない）。同じ札をもう一度押すか Esc でも閉じる。
  *  移動（別の問いへ）は帯に置かない：上の「戻る」と同じ機能なので1か所にする。action は学ぶ操作（この条件で予想から など）だけ */
 export function Dock({ chips, sel, onSel, children, action, mark, idle = 2000 }: { chips: [string, string][]; sel: string; onSel: (k: string) => void; children: ReactNode; action?: ReactNode; mark?: string; idle?: number }) {
-  const [open, setOpen] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null), down = useRef(false);
+  // 閉じるときはいきなり消さず、つまみの欄がすっと縮んで消える（closing の間だけ出しておく。渡辺さん 2026-11-03）
+  const [open, setOpenRaw] = useState(false), [closing, setClosing] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null), down = useRef(false), out = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stop = () => { if (timer.current) clearTimeout(timer.current); timer.current = null; };
+  const setOpen = (o: boolean) => {
+    if (out.current) { clearTimeout(out.current); out.current = null; }
+    if (o) { setClosing(false); setOpenRaw(true); return; }
+    setOpenRaw(false); setClosing(true);
+    out.current = setTimeout(() => { setClosing(false); out.current = null; }, 360);   // 縮む動き（--dur-sheet 前後）のあと。動きを減らす設定でも必ず消える
+  };
   const arm = () => { stop(); if (!down.current) timer.current = setTimeout(() => setOpen(false), idle); };
-  useEffect(() => stop, []);
+  useEffect(() => () => { stop(); if (out.current) clearTimeout(out.current); }, []);
+  // 帯の上の端を --dock-gap（画面の下からの距離）に出す。道具で確かめる段のシートは、つまみが出ても帯の上に乗る（重ならない）
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const de = document.documentElement;
+    let el: HTMLElement | null = root.current;   // 帯を包む下の固定の欄（余白ごと）の上の端を測る。見つからなければ帯そのもの
+    while (el && el !== document.body && getComputedStyle(el).position !== "fixed") el = el.parentElement;
+    if (!el || el === document.body) el = root.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const box = el, put = () => { for (const [k, v] of Object.entries({ "--dock-gap": `${Math.max(0, window.innerHeight - box.getBoundingClientRect().top)}px` })) de.style.setProperty(k, v); };
+    const ro = new ResizeObserver(put); ro.observe(box); if (root.current && root.current !== box) ro.observe(root.current); window.addEventListener("resize", put); put();
+    // 下の欄が動いて出てくる間（transform）は大きさが変わらず ResizeObserver が知らせないので、動きの終わりにも測る
+    document.addEventListener("animationend", put, true); document.addEventListener("transitionend", put, true); const late = setTimeout(put, 500);
+    return () => { ro.disconnect(); window.removeEventListener("resize", put); document.removeEventListener("animationend", put, true); document.removeEventListener("transitionend", put, true); clearTimeout(late); de.style.removeProperty("--dock-gap"); };
+  }, []);
   const tap = (k: string) => {
     haptic();
     if (open && sel === k) { stop(); setOpen(false); return; }
     onSel(k); setOpen(true); arm();
   };
-  return <div className={s.dock}>
-    {open && <div className={s.dockCtl} id="q-dock-ctl" data-testid="q-dock-ctl"
+  return <div className={s.dock} ref={root}>
+    {(open || closing) && <div className={open ? s.dockCtl : `${s.dockCtl} ${s.dockOut}`} id="q-dock-ctl" data-testid={open ? "q-dock-ctl" : undefined} aria-hidden={!open || undefined} inert={!open || undefined}
       onPointerDown={() => { down.current = true; stop(); }} onPointerUp={() => { down.current = false; arm(); }} onPointerCancel={() => { down.current = false; arm(); }}
       onInput={arm} onKeyDown={(e) => { if (e.key === "Escape") { stop(); setOpen(false); } else arm(); }}>{children}</div>}
     <div className={s.chips} style={{ gridTemplateColumns: `repeat(${chips.length}, minmax(0, 1fr))` }} aria-label="変える条件">
@@ -196,10 +217,28 @@ export function Dock({ chips, sel, onSel, children, action, mark, idle = 2000 }:
 }
 
 /** つまみ（名前と値の行の下）。動かしている間も onChange する */
+/** つまみの両端の − ＋（1刻みずつ。押し続けると続けて動く）。高さはつまみと同じ（見た目は小さく、押せる範囲は 44px） */
+function StepBtn({ dir, value, min, max, step, onChange, label }: { dir: -1 | 1; value: number; min: number; max: number; step: number; onChange: (v: number) => void; label: string }) {
+  const cur = useRef(value); cur.current = value;
+  const rep = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dec = (String(step).split(".")[1] ?? "").length;
+  const at = dir < 0 ? value <= min : value >= max;
+  const once = () => { const v = Math.min(max, Math.max(min, Number((cur.current + dir * step).toFixed(dec)))); if (v !== cur.current) { cur.current = v; onChange(v); return true; } return false; };
+  const end = () => { if (rep.current) clearTimeout(rep.current); rep.current = null; };
+  const hold = (wait: number) => { rep.current = setTimeout(() => { if (once()) hold(70); }, wait); };
+  useEffect(() => end, []);
+  return <button type="button" className={s.stepBtn} disabled={at} aria-label={`${label}を${dir < 0 ? "下げる" : "上げる"}`} data-testid={`${label}-${dir < 0 ? "minus" : "plus"}`}
+    onPointerDown={(e) => { e.preventDefault(); haptic(); once(); hold(380); }} onPointerUp={end} onPointerLeave={end} onPointerCancel={end}
+    onClick={(e) => { if (e.detail === 0) once(); }}>{dir < 0 ? "−" : "＋"}</button>;
+}
 export function Field({ label, value, min, max, step, show, onChange, id }: { label: string; value: number; min: number; max: number; step: number; show: (v: number) => string; onChange: (v: number) => void; id: string }) {
   return <div className={s.field}>
     <label htmlFor={id}><span>{label}</span><b>{show(value)}</b></label>
-    <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} data-testid={id} />
+    <div className={s.fieldRow}>
+      <StepBtn dir={-1} value={value} min={min} max={max} step={step} onChange={onChange} label={id} />
+      <input id={id} type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} data-testid={id} />
+      <StepBtn dir={1} value={value} min={min} max={max} step={step} onChange={onChange} label={id} />
+    </div>
   </div>;
 }
 
