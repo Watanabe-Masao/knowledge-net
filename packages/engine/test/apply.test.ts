@@ -160,3 +160,13 @@ describe("グラフを問いに合わせる", () => {
     expect(answerMatches(0.266, 0.266828, { kind: "sig", digits: 3 })).toBe(false);   // 26.6%（p＝31% で読んだ値）は落とす
   });
 });
+
+// 解き方を組み立てる（stats2-course #181）の確かめる段：道具を合わせる先（targets）。
+// 想定する故障：2つを比べる課題で片方にしか合わせられない・ふつうの課題で「グラフを問いに合わせる」と違う所に合わせる。見つけ方：手で書いた先と照らす
+describe("確かめる段の合わせる先", () => {
+  it("ふつうは at の1つ、2つを比べる課題は A と B", () => {
+    const c = applyCheck({ method: "mean-to-p", n: 20, mean: 6 });
+    expect(c.targets).toEqual([c.at]);
+    expect(applyCheck({ method: "compare-var", a: { n: 10, p: 0.6 }, b: { n: 20, p: 0.3 } }).targets).toEqual([{ n: 10, p: 0.6 }, { n: 20, p: 0.3 }]);
+  });
+});
