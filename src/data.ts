@@ -25,6 +25,8 @@ export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: 
 export type Concept = {
   id: string; name: string; en?: string; status: "filled" | "skeleton" | "stub"; version: number;
   /** 定義1文と分類（骨格の段から。#105） */ short?: string; category?: string;
+  /** 型の改訂25（stats2-course #188）：つまり・この概念で考える問い・概要の図（分布の棒をその場で描く設定） */
+  gist?: string; question?: string; chart?: { kind: "binom"; n?: number; p?: number; note?: string };
   definition?: string; principle?: string; formulas?: Formula[];
   /** 式の作業台（#110） */ workspace?: { formula: number; vary: string[]; over: string; mean?: number; linear?: number };
   /** 型の改訂15：期待値の値の表の作業台 */ table_workspace?: import("@math-lab/ui").TableWorkspaceData;

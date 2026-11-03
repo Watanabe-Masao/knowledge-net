@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 24,
+ "schema_revision": 25,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -2234,11 +2234,12 @@
     "stats2:Q-U15-020"
    ],
    "en": "binomial distribution",
+   "short": "同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布",
    "definition": "成功確率 p の独立な試行を n 回くり返したときの、成功した回数の分布 B(n, p)。",
    "principle": "「どの k 回が成功か」の組合せ ₙCₖ と、その1通りの確率 pᵏ(1−p)ⁿ⁻ᵏ の積。成功回数は n 個の「成功1・失敗0」の和なので、期待値と分散が和から求まる。",
    "formulas": [
     {
-     "tex": "P(X=k)={}_nC_k\\,p^k(1-p)^{n-k}",
+     "id": "F-binom-pmf",
      "symbols": [
       {
        "symbol": "P( )",
@@ -2395,15 +2396,16 @@
        "name": "失敗が n−k 回の確率",
        "meaning": "1回の失敗確率 1−p を、失敗の回数 n−k だけ掛け合わせる"
       }
-     ]
+     ],
+     "tex": "P(X=k)={}_{n}\\mathrm{C}_{k}p^{k}(1-p)^{n-k}"
     },
     {
-     "tex": "E(X)=np",
+     "id": "F-binom-mean",
      "label": "期待値",
      "symbols": [
       {
        "symbol": "E( )",
-       "meaning": "期待値（値×確率を足す）",
+       "meaning": "期待値（値×確率を足す。連続なら密度で重み付けして積分）",
        "key": "E",
        "concept": "stats2:TERM-expect"
       },
@@ -2460,10 +2462,11 @@
         ]
        }
       ]
-     }
+     },
+     "tex": "E(X)=np"
     },
     {
-     "tex": "V(X)=np(1-p)",
+     "id": "F-binom-var",
      "label": "分散",
      "symbols": [
       {
@@ -2536,7 +2539,95 @@
         ]
        }
       ]
-     }
+     },
+     "tex": "V(X)=np(1-p)"
+    },
+    {
+     "id": "F-expect-linear",
+     "label": "線形性",
+     "symbols": [
+      {
+       "symbol": "E( )",
+       "meaning": "期待値（値×確率を足す。連続なら密度で重み付けして積分）",
+       "key": "E",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "a",
+       "meaning": "掛ける定数（単位の換算）",
+       "key": "a",
+       "kind": "const"
+      },
+      {
+       "symbol": "b",
+       "meaning": "足す定数（一律の上乗せ）",
+       "key": "b",
+       "kind": "const"
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "add",
+          "args": [
+           {
+            "op": "mul",
+            "args": [
+             {
+              "sym": "a"
+             },
+             {
+              "sym": "X"
+             }
+            ]
+           },
+           {
+            "sym": "b"
+           }
+          ]
+         }
+        ],
+        "name": "E"
+       },
+       {
+        "op": "add",
+        "args": [
+         {
+          "op": "mul",
+          "args": [
+           {
+            "sym": "a"
+           },
+           {
+            "op": "fn",
+            "args": [
+             {
+              "sym": "X"
+             }
+            ],
+            "name": "E"
+           }
+          ]
+         },
+         {
+          "sym": "b"
+         }
+        ]
+       }
+      ]
+     },
+     "defined_in": "stats2:TERM-expect",
+     "tex": "E(aX+b)=aE(X)+b"
     }
    ],
    "conditions": {
@@ -2551,7 +2642,7 @@
     ]
    },
    "example": "来店客10人がそれぞれ確率 0.3 で買う（互いに独立）なら、買う人数は B(10, 0.3)。期待値は3人、分散は2.1。",
-   "counterexample": "箱から戻さずに取り出すと、各回の確率が変わり独立でもないので二項分布ではない（超幾何分布）。",
+   "counterexample": "箱から戻さずに取り出すと、前に何が出たかで次の当たりの確率が変わる（独立でない）ので二項分布ではない（超幾何分布）。前の結果を知らなければ、どの回も当たりの確率は同じ。",
    "misconceptions": [
     {
      "misconception": "ちょうど期待値 np 回になる確率が高い",
@@ -2565,7 +2656,16 @@
      "p"
     ],
     "over": "k",
-    "mean": 1
+    "mean": 1,
+    "linear": 3
+   },
+   "gist": "当たる確率が毎回同じ挑戦を n 回して、当たった回数を数える。何回当たるかの起こりやすさを並べたのが二項分布。",
+   "question": "同じ条件で n 回くり返すと、成功は何回くらいになる？",
+   "chart": {
+    "kind": "binom",
+    "n": 10,
+    "p": 0.3,
+    "note": "いちばん起こりやすいのは 3 回。平均 np＝3 回の近くに山ができる。"
    },
    "labs": [
     {
@@ -2612,9 +2712,13 @@
      "title": "公式2級範囲表",
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    },
+    {
+     "title": "NIST統計ハンドブック",
+     "locator": "1.3.6.6.18 Binomial Distribution",
+     "url": "https://www.itl.nist.gov/div898/handbook/"
     }
-   ],
-   "short": "同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布"
+   ]
   },
   {
    "id": "stats2:TERM-poisson",

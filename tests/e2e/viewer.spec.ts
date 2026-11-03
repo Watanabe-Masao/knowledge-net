@@ -1131,7 +1131,7 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
   const s = page.getByTestId("detail");
   await expect(s).toHaveAttribute("data-detent", "peek");
-  await expect(s.getByText(/成功確率 p の独立な試行/)).toBeInViewport();   // 少しの段で、名前の1行・切り替え・定義が見える
+  await expect(s.getByTestId("concept-question").or(s.getByText(/成功確率 p の独立な試行/)).first()).toBeInViewport();   // 少しの段で、名前の1行・切り替え・最初の段（問い。なければ定義）が見える（#188 02）
   const tabs = (await page.getByTestId("tabbar").boundingBox())!;
   await expect.poll(async () => { const b = (await s.boundingBox())!; return b.y + b.height; }).toBeLessThanOrEqual(tabs.y + 1);   // 下のタブの上に乗る（出てくる動きが止まってから）
   await s.getByRole("button", { name: "広げる" }).click();
