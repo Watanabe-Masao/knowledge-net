@@ -61,7 +61,7 @@ describe("解き方を組み立てる（walk）", () => {
   const ans = (ap: Apply) => (ap.answer.type === "number" ? solveApply(ap.solve).answer : undefined);
   it("公開の JSON の全部の walk が組み立てられ、最後の値が応用の答えと同じ", () => {
     const list = walks("public/sample/stats2-w0.json");
-    expect(list.map(([id]) => id)).toEqual(["stats2:binom-A-01", "stats2:binom-B-02", "stats2:binom-B-04", "stats2:binom-D-02"]);
+    expect(list.map(([id]) => id.replace("stats2:binom-", "")).sort()).toEqual(["A-01", "A-02", "A-03", "B-01", "B-02", "B-04", "C-01", "C-02", "D-01", "D-02", "E-01", "E-02", "E-03", "E-04"]);   // 応用の全部の課題
     for (const [id, ap] of list) expect([id, walkProblems(ap.walk, ap.task, ap.solve, ans(ap))]).toEqual([id, []]);
   });
   it("式の形に記号を入れても値を入れても KaTeX で読める（\\mathrm{C} を穴と取り違えると赤い文字になった）", () => {
