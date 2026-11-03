@@ -25,8 +25,10 @@ const padTo = (f: number[] | undefined, n: number) => (f ? [...f, ...Array(Math.
 
 /** 棒（実験の割合）・点（理論）・点線（前の条件）・線（あなたの予想）を重ねる図。横軸の文字は labels（なければ番号）。高さは前の値から動く。
  *  pair（前の条件の実験の割合）があると、各値に「前」と「後」の棒を左右に並べる（issue 121）。点線（前の理論）は前の棒、点（後の理論）は後の棒に乗る */
-export function Bars({ freq: freq0, pair: pair0, series, theory: theory0, ghost: ghost0, guess, hi, hiIn, mark, markLabel = "予想", marker, at, labels, height = 150, label }: {
+export function Bars({ freq: freq0, pair: pair0, series, theory: theory0, ghost: ghost0, guess, curve, hi, hiIn, mark, markLabel = "予想", marker, at, labels, height = 150, label }: {
   freq?: number[]; pair?: number[]; theory?: number[]; ghost?: number[]; guess?: number[]; hi?: number;
+  /** 棒に重ねるなめらかな曲線（正規近似など。stats2-course #188 04）。棒の番号 k（小数も）での高さを返す。値で置く図（at）には出さない */
+  curve?: (k: number) => number;
   /** 事象に入る棒を強調する（k 回以上など。stats2-course issue 161 確率の値の問い） */ hiIn?: (k: number) => boolean;
   /** 比べる（issue 122）：いくつかの実験の割合を、値ごとに左から並べる（4つまで。色は SERIES の順） */
   series?: number[][];
@@ -42,7 +44,9 @@ export function Bars({ freq: freq0, pair: pair0, series, theory: theory0, ghost:
   const freq = padTo(freq0, len), pair = padTo(pair0, len), theory = padTo(theory0, len), ghost = padTo(ghost0, len);
   const base = freq ?? theory ?? [];
   const n = base.length - 1, W = 340, B = height - (marker !== undefined ? 30 : 20), R = 30;
-  const raw = Math.max(1e-9, ...(freq ?? []), ...(pair ?? []), ...(theory ?? []), ...(ghost ?? []), ...(guess ?? []));
+  // 曲線は棒の左端から右端まで 0.1 刻みで取る（棒の幅1なので、密度がそのまま棒の高さと並ぶ）
+  const curvePts = curve && !at ? Array.from({ length: Math.round((n + 1) * 10) + 1 }, (_, i) => { const k = -0.5 + i / 10; return [k, curve(k)] as const; }) : undefined;
+  const raw = Math.max(1e-9, ...(freq ?? []), ...(pair ?? []), ...(theory ?? []), ...(ghost ?? []), ...(guess ?? []), ...(curvePts ?? []).map((q) => q[1]));
   const tick = [0.05, 0.1, 0.2, 0.25, 0.5, 1].find((t) => raw / t <= 4) ?? 1;
   const top = Math.ceil(raw / tick - 1e-9) * tick;
   const [topT] = useTween([top]);
@@ -77,6 +81,7 @@ export function Bars({ freq: freq0, pair: pair0, series, theory: theory0, ghost:
         <rect key={k} x={xa(k) - wid / 2} y={y(v)} width={wid} height={B - y(v)} rx={Math.min(3, wid * 0.2)} className={k === hi || hiIn?.(k) ? s.barHi : freq ? s.bar : s.barTheory} data-x={xa(k)} data-hi={hiIn?.(k) || undefined} />
       ))}
       {freq && theory?.map((v, k) => <circle key={k} cx={xa(k)} cy={y(v)} r={pair ? 2.5 : 3} className={s.dot} />)}
+      {curvePts && <path d={curvePts.map(([k, v], i) => `${i ? "L" : "M"}${(k * bw + bw / 2).toFixed(1)},${y(v).toFixed(1)}`).join("")} className={s.curve} data-testid="exp-curve" />}
       <line x1={0} x2={W - R + 4} y1={B} y2={B} className={s.base} />
       {markX !== undefined && (
         <g className={s.mark} key={`m${mark}`} data-testid="exp-mark" data-x={markX}>

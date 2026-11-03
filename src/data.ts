@@ -40,7 +40,12 @@ export type Relation = {
   id: string; version: number; from: string; to: string; type: string; description: string; gist?: string;
   conditions?: string[]; mode?: "exact" | "approximation" | "limit"; premise?: "learning" | "mathematical";
   derivation?: string; units: string[]; labs?: LabRef[]; figures?: FigRef[];
+  /** 開いたときの段（型の改訂26）。対比は same・differ・so、変換は origin・operation・result */
+  stages?: { same?: string; differ?: string; so?: string; origin?: string; operation?: string; result?: string };
+  /** 開いたときの図（型の改訂26）。数は engine から */
+  chart?: { kind: "pair"; a: ChartDist; b: ChartDist; note?: string } | { kind: "normal"; n: number; p: number; note?: string };
 };
+export type ChartDist = { model: "binom" | "hyper" | "poisson"; n?: number; p?: number; total?: number; success?: number; lambda?: number; label: string };
 export type Derivation = {
   id: string; version: number; premises: string[]; conclusion: string; statement: string;
   steps: string[]; conditions: string[]; units: string[];

@@ -25,3 +25,23 @@
 .more { font-size: 13px; color: var(--accent); text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
 .close { margin-left: auto; }
 .switch { margin-top: var(--sp-3); }
+
+/* 関係を開いたときの面（#188 04） */
+.open { display: grid; gap: var(--sp-2); }
+.block { display: grid; gap: 6px; padding: 12px 14px; border-radius: var(--r-l); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.lab { font-size: var(--fs-tag); font-weight: 600; color: var(--accent); }
+.gistText { margin: 0; font-size: var(--fs-body); line-height: 1.65; color: var(--ink); }
+.desc0 { margin: 0; font-size: var(--fs-body); line-height: 1.6; color: var(--ink); }
+.stages { margin: 0; border-radius: var(--r-l); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.stage { display: grid; grid-template-columns: 5.2em minmax(0, 1fr); gap: var(--sp-2); padding: 10px 14px; }
+.stage + .stage { border-top: 1px solid var(--line); }
+.stage dt { font-size: var(--fs-small); font-weight: 600; color: var(--ink-2); }
+.stage dd { margin: 0; font-size: var(--fs-body); line-height: 1.55; color: var(--ink); min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; font-size: var(--fs-tag); color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.legend .swLine { height: 2px; width: 14px; border-radius: 1px; vertical-align: 3px; background: var(--data-2); }
+.sw1 { background: var(--data-1); }
+.sw2 { background: var(--data-2); }
+.note { margin: 0; font-size: var(--fs-small); color: var(--ink-2); line-height: 1.55; }
+.condList { margin: 0; padding-left: 1.2em; display: grid; gap: 2px; font-size: var(--fs-small); color: var(--ink); line-height: 1.55; }
+.moreDesc summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: var(--fs-small); color: var(--ink-2); }

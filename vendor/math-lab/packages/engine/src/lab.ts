@@ -136,6 +136,22 @@ export function modelPmf(m: Model): number[] {
   return out;
 }
 
+/** ポアソン分布 Po(λ) の確率（k＝0〜kmax）。つながりの図で二項分布と並べる（stats2-course #188 04）。
+ *  上限のない分布なので kmax で切る（合計は1より少し小さい）。λ は0以上 */
+export function poissonPmf(lambda: number, kmax: number): number[] {
+  if (!(lambda >= 0) || !Number.isFinite(lambda)) throw new Error(`λ は0以上の有限の数：${lambda}`);
+  if (!isCount(kmax)) throw new Error(`kmax は0以上の整数：${kmax}`);
+  if (lambda === 0) return Array.from({ length: kmax + 1 }, (_, k) => (k === 0 ? 1 : 0));
+  return Array.from({ length: kmax + 1 }, (_, k) => Math.exp(-lambda + k * Math.log(lambda) - lnFact(k)));
+}
+
+/** 正規分布 N(μ, σ²) の密度。二項分布の棒に重ねる曲線に使う（棒の幅1なので、密度の値が棒の高さに並ぶ）。σ は0より大きい */
+export function normalDensity(x: number, mean: number, sd: number): number {
+  if (!(sd > 0)) throw new Error(`σ は0より大きい：${sd}`);
+  const z = (x - mean) / sd;
+  return Math.exp(-z * z / 2) / (sd * Math.sqrt(2 * Math.PI));
+}
+
 /** 起き方に合う理論のモデル（独立でない起き方には式がないので undefined） */
 export function modelOf(m: Mechanism): Model | undefined {
   if (m.kind === "bernoulli") return { kind: "binom", n: m.n, p: m.p };

@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 25,
+ "schema_revision": 26,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -4610,7 +4610,27 @@
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-approx-tour-3.svg",
      "caption": "n＝1000（p＝0.003）まで。(1−p) が1に近づき、分散も λ に近づく。"
     }
-   ]
+   ],
+   "stages": {
+    "origin": "二項分布 B(n, p)。回数 n と確率 p の2つで形が決まる。",
+    "operation": "平均 np＝λ を保ったまま、n を大きく・p を小さくしていく。",
+    "result": "ポアソン分布 Po(λ)。λ 1つで形が決まる。"
+   },
+   "chart": {
+    "kind": "pair",
+    "a": {
+     "model": "binom",
+     "n": 50,
+     "p": 0.06,
+     "label": "二項分布 n＝50・p＝0.06"
+    },
+    "b": {
+     "model": "poisson",
+     "lambda": 3,
+     "label": "ポアソン分布 λ＝3"
+    },
+    "note": "どちらも平均は3回。n＝50 でも棒の高さはほとんど同じで、n を大きくするほど差が縮む。"
+   }
   },
   {
    "id": "stats2:REL-binom-normal",
@@ -4663,7 +4683,18 @@
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-binom-rel-norm-tour-3.svg",
      "caption": "p＝0.02 だと np＝2。山が端に寄り曲線とずれる（np・n(1−p)≧5 が目安）。"
     }
-   ]
+   ],
+   "stages": {
+    "origin": "二項分布 B(n, p)。0〜n の飛び飛びの棒。",
+    "operation": "平均 np・分散 np(1−p) が同じ正規分布の曲線を重ねる。",
+    "result": "正規分布 N(np, np(1−p))。なめらかな山。"
+   },
+   "chart": {
+    "kind": "normal",
+    "n": 30,
+    "p": 0.3,
+    "note": "平均 9 回・標準偏差 約 2.5 回。np＝9 と n(1−p)＝21 がどちらも5以上なので、棒の頭が曲線に沿う。"
+   }
   },
   {
    "id": "stats2:REL-binom-poisson-contrast",
@@ -4705,7 +4736,27 @@
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-contrast-tour-2.svg",
      "caption": "回数を 5回 に減らす（p＝0.6）。二項は5より大きくならない。ポアソンに上限はない。"
     }
-   ]
+   ],
+   "stages": {
+    "same": "どちらも起きた回数を数える分布。平均は同じにできる（np＝λ）。",
+    "differ": "二項分布は回数に上限 n がある。ポアソン分布には上限がない。",
+    "so": "二項分布の分散 np(1−p) は平均より小さく、ポアソン分布の分散は平均と同じ λ。だから二項分布の方が散らばりが小さい。"
+   },
+   "chart": {
+    "kind": "pair",
+    "a": {
+     "model": "binom",
+     "n": 6,
+     "p": 0.5,
+     "label": "二項分布 n＝6・p＝0.5（上限6回）"
+    },
+    "b": {
+     "model": "poisson",
+     "lambda": 3,
+     "label": "ポアソン分布 λ＝3"
+    },
+    "note": "どちらも平均は3回。二項分布は6回で切れ、ポアソン分布は7回より先にも続く。"
+   }
   },
   {
    "id": "stats2:REL-var-std",
@@ -5046,7 +5097,29 @@
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-hyper-contrast-tour-3.svg",
      "caption": "全部取る（n＝N）と、当たりは必ず6個。戻さない方の散らばりは0。"
     }
-   ]
+   ],
+   "stages": {
+    "same": "当たりの数を数える。取る数 n と当たりの割合が同じなら、平均はどちらも np。",
+    "differ": "戻して取る（毎回同じ確率）か、戻さずに取る（取るたびに残りの割合が変わる）か。",
+    "so": "戻さない方が散らばりが小さい。分散は二項分布の (N−n)/(N−1) 倍になる。"
+   },
+   "chart": {
+    "kind": "pair",
+    "a": {
+     "model": "binom",
+     "n": 10,
+     "p": 0.3,
+     "label": "戻す（二項分布 n＝10・p＝0.3）"
+    },
+    "b": {
+     "model": "hyper",
+     "n": 10,
+     "total": 20,
+     "success": 6,
+     "label": "戻さない（20個のうち当たり6個から10個）"
+    },
+    "note": "どちらも平均は3個。戻さない方が3個の近くに集まり、山が細い。"
+   }
   },
   {
    "id": "stats2:REL-poisson-expo",

@@ -290,29 +290,32 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
   await expect(figs.locator("figcaption")).toContainText("B(4, 0.25)");
 });
 
+// 図をその場で描かない関係（ポアソン分布 → 指数分布）で、画像の図・解説・触るを切り替える。図をその場で描く関係は relation-open.spec.ts
 test("図／解説／触る は切り替えて1つだけ出す。最初は図、選んだ形を覚える。一覧のカードは閉じておく", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${W0}&c=stats2:TERM-poisson`);
   await settle(page);
   await tab(page, /つながり/);
-  await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
+  await page.getByTestId("edge-list").getByRole("button", { name: /指数分布/ }).first().click();
   const panel = page.getByTestId("edge-panel");
   const sw = panel.getByTestId(/^media-panel-/);
-  await expect(sw.getByRole("radio")).toHaveText(["🖼 図 3", "▶ 解説", "🧪 触る"]);
+  await expect(sw.getByRole("radio")).toHaveText(["🖼 図 2", "▶ 解説", "🧪 触る"]);
   const figs = panel.getByTestId(/^figures-panel-/);
   await expect(figs.locator("img")).toHaveCount(1);
-  await expect(figs).toContainText("1／3");
+  await expect(figs).toContainText("1／2");
   await figs.getByRole("button", { name: "次の図" }).click();
-  await expect(figs).toContainText("2／3");
+  await expect(figs).toContainText("2／2");
   await expect(figs.locator("img")).toHaveAttribute("src", /tour-2\.svg$/);
   await sw.getByRole("radio", { name: /解説/ }).click();
   await expect(figs).toHaveCount(0);
-  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=rel-approx-tour&embed=1/);
+  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=rel-expo-tour&embed=1/);
   await sw.getByRole("radio", { name: /触る/ }).click();
-  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=rel-approx&embed=1/);
+  await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=s5-free&embed=1/);
   await panel.getByTestId(/^labs-panel-/).getByRole("button", { name: "閉じる" }).click();
   await expect(panel.locator("iframe")).toHaveCount(0);
   // 選んだ形（触る）を覚え、別の線も同じ形で開く
   await sw.getByRole("radio", { name: /触る/ }).click();
+  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await settle(page);
   await tab(page, /つながり/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると 正規分布/ }).click();
   await expect(panel.getByTestId(/^labs-panel-/).locator("iframe")).toHaveAttribute("src", /p=s5-norm&embed=1/);
@@ -329,8 +332,8 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
   // 面が開く動きの途中で2つの位置を別々に測ると、ずれて逆になることがある。同じ時点の位置で比べ、落ち着くまで待つ
   const desc = panel.getByText(/二項分布は回数に上限 n があり/);
   await expect.poll(async () => { const [g, d] = await Promise.all([gist.boundingBox(), desc.boundingBox()]); return g && d ? d.y - (g.y + g.height) : -1; }).toBeGreaterThanOrEqual(0);
-  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["🖼 図 2", "▶ 解説", "🧪 触る"]);
-  await expect(panel.getByTestId(/^figures-panel-/)).toContainText("1／2");
+  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["▶ 解説", "🧪 触る"]);   // 図はその場で描くので、画像の図は出さない
+  await expect(panel.getByTestId("rel-chart")).toBeVisible();
   await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
   await expect(panel.getByText("対比", { exact: false }).first()).toBeVisible();   // 種類は札で出す（括弧を重ねない）
 });
@@ -895,6 +898,7 @@ test("骨格の概念は定義1文と分類と「定義だけ」を出し、見�
 
 // 129語の骨格（#105）：全体図を分類で絞ると、その分類の概念と、1本の線でつながる外の点（薄く）だけになる
 test("全体図を分類で絞り、骨格の概念は定義1文と「定義だけ」を出す", async ({ page }) => {
+  test.setTimeout(60_000);   // 129語の見本を2回読み、全体図を3回描き直す。main でも単独で 26 秒かかり、全部を続けて走らせると 30 秒を超えることがある
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2-p1.json");
