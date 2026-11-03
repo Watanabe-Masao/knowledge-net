@@ -196,7 +196,9 @@ export function Dock({ chips, sel, onSel, children, action, mark, idle = 2000 }:
     if (!el || typeof ResizeObserver === "undefined") return;
     const box = el, put = () => { for (const [k, v] of Object.entries({ "--dock-gap": `${Math.max(0, window.innerHeight - box.getBoundingClientRect().top)}px` })) de.style.setProperty(k, v); };
     const ro = new ResizeObserver(put); ro.observe(box); if (root.current && root.current !== box) ro.observe(root.current); window.addEventListener("resize", put); put();
-    return () => { ro.disconnect(); window.removeEventListener("resize", put); de.style.removeProperty("--dock-gap"); };
+    // 下の欄が動いて出てくる間（transform）は大きさが変わらず ResizeObserver が知らせないので、動きの終わりにも測る
+    document.addEventListener("animationend", put, true); document.addEventListener("transitionend", put, true); const late = setTimeout(put, 500);
+    return () => { ro.disconnect(); window.removeEventListener("resize", put); document.removeEventListener("animationend", put, true); document.removeEventListener("transitionend", put, true); clearTimeout(late); de.style.removeProperty("--dock-gap"); };
   }, []);
   const tap = (k: string) => {
     haptic();
