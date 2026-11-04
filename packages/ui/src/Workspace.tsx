@@ -373,7 +373,8 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   // ---- 読み方（stats2-course #188 07b・03）：式を 意味（記号は何を表すか）・構造（部品に分ける）・計算（今の値を入れた部品ごとの値）で読む。
   // 部品の分け方と意味は原本の式の parts、記号の意味は記号の表から（画面に手で書かない）。部品の色は3つの見方と式の囲みで同じ ----
   const [readAs, setReadAs] = useState<"meaning" | "structure" | "calc">("meaning");
-  const valueSyms = [...new Set(symbolsIn(tree))].map((k) => symOf(k, symbols)).filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
+  const inTree = new Set(symbolsIn(tree));
+  const valueSyms = [...(model.kind === "formula" ? [...vary, over] : []), ...inTree].filter((k, i, a) => a.indexOf(k) === i && inTree.has(k)).map((k) => symOf(k, symbols)).filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
   const partList = parts.map((p, i) => ({ p, i, node: nodeAt(tree, p.path) })).filter((x): x is { p: FormulaPart; i: number; node: FormulaNode } => !!x.node);
   const pickPart = (i: number) => { haptic(); setSel((x) => (x?.part === i && !x.sym ? null : { part: i })); };
   const reading = () => {
