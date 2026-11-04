@@ -251,6 +251,7 @@ export default function App() {
         onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
         only={positions ? undefined : path ? path.only : grouped.only} outer={positions || path ? undefined : grouped.outer}
         overview={positions || path ? undefined : overview}
+        isles={eff === "*" && !positions && !path}
         topLeft={<>
           {!positions && !path && groups.length > 1 ? (
             <select className={st.groupSel} value={eff ?? ""} onChange={(e) => setGroup(e.target.value || null)} aria-label="分類で絞る" data-testid="group-select">
