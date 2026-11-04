@@ -22,7 +22,8 @@ export type FormulaNode =
 export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string; kind?: "tour" | "check";
   /** JS の部品で描く形（型の改訂27）。あれば iframe ではなく場面の部品で描く */ play?: import("@math-lab/ui").ScenePlay };
 export type FigRef = { id: string; url: string; caption?: string };
-export type Formula = { id?: string; tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode; parts?: { path: number[]; name: string; meaning: string }[] };
+export type Formula = { id?: string; tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode; parts?: { path: number[]; name: string; meaning: string }[];
+  /** なぜこの式で求まるかの段（型の改訂30） */ why?: { steps: { title: string; text: string; parts?: number[] }[]; note?: string } };
 export type Concept = {
   id: string; name: string; en?: string; status: "filled" | "skeleton" | "stub"; version: number;
   /** 定義1文と分類（骨格の段から。#105） */ short?: string; category?: string;
