@@ -1,0 +1,4 @@
+/* 語のアイコン：public/term-icons の SVG を mask で読み、文字色（柱の色）で塗る。iPhone の Safari のため -webkit- 付きも並べる */
+.icon { display: block; width: 100%; height: 100%; background-color: currentColor;
+  -webkit-mask-image: var(--icon); -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain;
+  mask-image: var(--icon); mask-repeat: no-repeat; mask-position: center; mask-size: contain; }

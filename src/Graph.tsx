@@ -8,7 +8,7 @@ import { type Network, type Placed } from "./data";
 import { Button } from "@math-lab/ui";
 import { iconUri } from "./icons";
 import s from "./Graph.module.css";
-import { Icon } from "./Shell";
+import { Icon, labCountOf } from "./Shell";
 
 cytoscape.use(dagre);
 
@@ -245,9 +245,7 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
       const icon = !e.data.source && e.data.kind !== "derivation" && e.data.kind !== "missing" ? iconUri((e.data.cat as string) || undefined, mute) : undefined;
       return icon ? { ...e, data: { ...e.data, icon, w: textWidth(String(e.data.label), fs, maxW) + 20 } } : e;
     };
-    // 実験の問いの数を分類ごとに数える（問いの一覧があればその数、なければ実験室1つ＝1）
-    const labsOf = (cat: string) => [...net.experiments.values()].filter((x) => net.concepts.get(x.links?.concepts?.[0] ?? "")?.category === cat)
-      .reduce((t, x) => t + ("catalog" in x && x.catalog ? x.catalog.flatMap((g) => g.items).length : 1), 0);
+    const labsOf = (cat: string) => labCountOf(net, cat);   // 実験室のタブと同じ数え方（使わない問いを除く）
     const isle = isles && !positions && !overview && !numbers ? islands(elements(net, hidden, keep, numbers).map(withIcon), fs, labsOf) : null;
     const c = cytoscape({
       container: box.current,

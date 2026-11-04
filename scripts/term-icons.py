@@ -1,6 +1,6 @@
 # 語のアイコン（試作）を作る：python3 scripts/term-icons.py
 # 48×48 の枠・線 2.4・丸い端・色は currentColor（置き場所の文字色＝柱の色）。
-# 出力：public/term-icons/<語のID>.svg（教科書・Notion から同じ印を使うため）と src/conceptIcons.tsx（画面の中の印）。
+# 出力：public/term-icons/<語のID>.svg（画面・教科書・Notion で同じ印を使う）と src/conceptIcons.tsx（語の ID の一覧と、mask で読む部品）。
 # form：形＝しくみや形で特徴を描いた語、記号＝形にしにくく記号や文字を主にした語。
 # ※ 試作。本番では教材（stats2-course）の側に置き、概念の任意の項目 icon で公開する（画面は教材に依らない）。
 import json, math, os
@@ -219,17 +219,32 @@ for k, v in I.items():
     with open(os.path.join(os.path.dirname(OUT), f"{k}.svg"), "w") as fh:
         fh.write(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">{v["svg"]}</svg>\n')
 json.dump({k: v["form"] for k, v in I.items()}, open(OUT, "w"), ensure_ascii=False, indent=0)
-body = ",\n".join(f"  {json.dumps(k)}: {json.dumps(v['svg'], ensure_ascii=False)}" for k, v in I.items())
+keys = ",".join(json.dumps(k) for k in I)
 with open(os.path.join(ROOT, "src/conceptIcons.tsx"), "w") as fh:
-    fh.write(f"""// 語のアイコン（試作。全{len(I)}語）：48×48・線 2.4・色は currentColor（柱の色）。scripts/term-icons.py が作る（手で直さない）。
-// ※ 本番では教材のデータ（概念の icon）から読む。画面に教材ごとの絵を持たない（画面は教材に依らない）。
-const SVG: Record<string, string> = {{
-{body}
-}};
+    fh.write(f"""// 語のアイコン（試作。全{len(I)}語）：絵は public/term-icons/<語のID>.svg。scripts/term-icons.py が作る（手で直さない）。
+// 本体には絵を入れない（約62KB と dangerouslySetInnerHTML をなくす。#109）。CSS の mask で読み、色は置き場所の文字色（柱の色）で塗る。
+// iPhone の Safari のため -webkit-mask-* も並べる。地図（canvas）には CSS の mask が使えないので、地図に語の印を出すときは別の読み方にする。
+// ※ 本番では教材のデータ（概念の icon）から読む。そのときは URL が公開のデータから来るので、
+//   1 登録した教材の場所の下だけを通す（data.ts の allowedSource と同じ確かめ）、2 引用符・括弧・改行を通さないで CSS に入れる、
+//   3 別の場所の mask は CORS での取り寄せになるので iPhone で確かめる（#220）。
+import type {{ CSSProperties }} from "react";
+import s from "./conceptIcons.module.css";
 
-/** その語のアイコン（なければ null）。id は「教材名:教材の中のID」 */
+const KEYS = new Set<string>([{keys}]);
+/** CSS の url() に入れてよい名前か（英数字とハイフンだけ。引用符・括弧・改行を通さない） */
+const SAFE = /^[A-Za-z0-9-]+$/;
+
+/** 語のアイコンの URL（なければ null）。id は「教材名:教材の中のID」 */
+export function conceptIconUrl(id: string): string | null {{
+  const k = id.split(":").pop()!;
+  if (!KEYS.has(k) || !SAFE.test(k)) return null;
+  // ページの場所を基準に完全な URL にする（CSS の変数に相対の URL を入れると、スタイルシートの場所 assets/ を基準に解かれて別の道になる）
+  return new URL(`term-icons/${{k}}.svg`, typeof document === "undefined" ? "http://localhost/" : document.baseURI).href;
+}}
+
+/** その語のアイコン（なければ null）。色は親の color（currentColor） */
 export function conceptIcon(id: string) {{
-  const g = SVG[id.split(":").pop()!];
-  return g ? <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth={{2.4}} strokeLinecap="round" strokeLinejoin="round" aria-hidden dangerouslySetInnerHTML={{{{ __html: g }}}} /> : null;
+  const url = conceptIconUrl(id);
+  return url ? <span className={{s.icon}} style={{{{ "--icon": `url("${{url}}")` }} as CSSProperties}} aria-hidden /> : null;
 }}
 """)

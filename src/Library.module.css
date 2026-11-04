@@ -23,7 +23,7 @@
 .cellName { font-size: var(--fs-tag); font-weight: 500; line-height: 1.2; color: var(--ink-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 語の絵：柱の色で、枠の6割ほど。分類の印（img）も同じ大きさ */
 .glyph { width: 58%; aspect-ratio: 1 / 1; display: grid; place-items: center; color: var(--tint); }
-.glyph svg, .glyph img { width: 100%; height: 100%; display: block; }
+.glyph img { display: block; }
 .glyph img { width: 62%; height: 62%; opacity: .7; }
 .shape { width: 70%; height: 16px; fill: var(--data-1); opacity: .85; }
 

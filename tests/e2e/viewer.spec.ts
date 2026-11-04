@@ -903,7 +903,11 @@ test("比べる（値の表）：URL のカードからテーマと重みを戻�
 // 129語の骨格（#105）：全体図を分類で絞ると、その分類の概念と、1本の線でつながる外の点（薄く）だけになる
 // 確かめる対象：探索の入口（分類のライブラリ。試作 2026-11-05）から分類を開き、全部の語の島の地図・骨格の概念へ進めること。
 // 想定する故障：タイルが分類の数だけ出ない・押せる範囲が 44px を下回る・分類を開くとほかの分類の点が混ざる（背景の線が残る）・「全部の語」で語が欠ける。
-// 見つけ方：タイルの数と押せる大きさ、開いた分類の語の数とほかの分類の点の数、全部の語の地図の語の数を数える。既存との違い：前は入口が分類の地図（12の点）だった
+//   実験の問いの数に使わない問い（retired）が入る（#109 の指摘：二項分布は 24 と出たが、実験室に並ぶのは 22）。
+//   語のアイコンの URL がスタイルシートの場所（assets/）を基準に解かれ、別の道を読んで黙って消える（#109 で一度起きた。プレビューのサーバーは無い道にも 200 を返すので、型で確かめる）。
+//   390px で、分類を開いた地図の左上の「分類で絞る」欄が「収める」ボタンに重なる・点がその欄の下に隠れる（前の「分類で絞る」テストの確かめを残す）。
+// 見つけ方：タイルの数と押せる大きさ、「実験 N」と実験室のタブの数、アイコンの取り寄せの型（image/svg+xml）、開いた分類の語の数とほかの分類の点の数、欄とボタンと点の位置、全部の語の地図の語の数を数える。
+// 既存との違い：前は入口が分類の地図（12の点）だった
 test("分類のライブラリから分類を開き、骨格の概念は定義1文と「定義だけ」を出す", async ({ page }) => {
   test.setTimeout(60_000);   // 129語の見本を2回読み、地図を何度か描き直す
   const errs = noErrors(page);
@@ -914,6 +918,18 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   await expect(lib.locator("[data-testid^=lib-]")).toHaveCount(12);   // 12の分類のタイル
   const small = await lib.locator("button").evaluateAll((bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); return r.width < 44 || r.height < 44; }).length);
   expect(small).toBe(0);
+  // 実験の問いの数は、実験室のタブと同じ（使わない問いを除く）。見本では二項分布の問い 24 のうち 2 つが使わない印
+  const items = await page.evaluate(async () => { const d = await (await fetch("sample/stats2.json")).json();
+    const x = d.experiments.find((e: any) => e.id === "stats2:EXP-binom-p"); const all = x.catalog.flatMap((g: any) => g.items);
+    return { all: all.length, live: all.filter((it: any) => !it.retired).length }; });
+  expect(items.all).toBeGreaterThan(items.live);   // 使わない問いがある見本で確かめている
+  await expect(lib.getByTestId("lib-確率分布").locator("xpath=..")).toContainText(`実験 ${items.live}`);
+  // 語のアイコン：ページの場所を基準にした URL で、SVG が返る
+  const iconUrl = await lib.getByTestId("lib-確率分布").locator("span[style*='--icon']").first().evaluate((e) => getComputedStyle(e).getPropertyValue("--icon").match(/url\("?([^")]+)"?\)/)?.[1] ?? "");
+  expect(new URL(iconUrl).pathname).toMatch(/\/term-icons\/TERM-[\w-]+\.svg$/);
+  expect(new URL(iconUrl).pathname).not.toContain("/assets/");
+  const res = await page.request.get(iconUrl);
+  expect(res.headers()["content-type"]).toContain("image/svg+xml");
   // タイルの4つ目（ほかの語）を押すと、その分類の語だけの地図
   await lib.getByRole("button", { name: "確率の語をすべて地図で見る" }).click();
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87/);
@@ -924,6 +940,16 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     other: ns.filter((n: any) => n.id().startsWith("stats2:TERM-") && n.data("cat") !== "確率").length } });
   await expect.poll(async () => (await terms()).core).toBe(14);   // 確率の分類の14語（標本空間・事象・確率・ベイズの定理・事後確率など）
   expect((await terms()).other).toBe(0);   // ほかの分類の点は出さない
+  // 390px で：左上の選ぶ欄が「収める」ボタンに重ならず、点が左上の操作の下に隠れない
+  const fitBox = (await page.getByRole("button", { name: "図を枠に収める" }).boundingBox())!;
+  const selBox = (await sel.boundingBox())!;
+  expect(selBox.x + selBox.width).toBeLessThanOrEqual(fitBox.x);
+  const hidden = () => page.evaluate((bottom) => {
+    const c = (window as unknown as { kn: { container: () => HTMLElement; nodes: (q?: string) => { toArray: () => { renderedBoundingBox: () => { y1: number } }[] } } }).kn;
+    const top = c.container().getBoundingClientRect().top;
+    return c.nodes('[kind != "isle"][kind != "band"][kind != "isleCap"]').toArray().filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
+  }, selBox.y + selBox.height);
+  await expect.poll(hidden, { timeout: 10000 }).toBe(0);   // 文字の読み込み・枠の大きさが決まってから収め直すのを待つ
   // 全部の語：語を分類の島に入れた地図。語は129すべて
   await sel.selectOption("*");
   await expect.poll(() => page.evaluate(() => (window as any).kn.nodes().toArray().filter((n: any) => n.id().startsWith("stats2:TERM-")).length)).toBe(129);

@@ -136,6 +136,12 @@ type Item = { id: string; title: string; open?: string; concept?: string; relate
 /** 主が関係（REL-…）なら、その両端の概念として数える（stats2-course issue 169）。概念ならそれ自身 */
 type Ends = (id: string) => string[];
 const itemsOf = (x: ExperimentData): Item[] => (x.model === "binom" ? (x.catalog ?? []).flatMap((g) => g.items).filter((it) => !it.retired) : []);   // 使わない印の問いは数えない
+/** 分類ごとの実験の問いの数（ライブラリ・島の地図の「実験 N」）。実験室のタブと同じ数え方（itemsOf：使わない印の問いを除く）。
+ *  問いの一覧のない実験室は 1 と数える。どの分類かは実験室のつなぐ概念の1つ目で決める */
+export function labCountOf(net: Network, category: string): number {
+  return [...net.experiments.values()].filter((x) => net.concepts.get(x.links?.concepts?.[0] ?? "")?.category === category)
+    .reduce((t, x) => t + (x.model === "binom" && x.catalog ? itemsOf(x).length : 1), 0);
+}
 const conceptsOf = (it: Item, ends: Ends = (id) => [id]) => [...new Set([it.concept, ...(it.related ?? [])].filter((c): c is string => !!c).flatMap(ends))];
 
 /** 実験室のつなぐ概念：つなぐ概念（links）と、テーマ体系の問いの主概念・関連概念（stats2-course #163。問いの側に書き、ここで引く） */

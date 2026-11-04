@@ -4,6 +4,7 @@
 // 語には個別の印がない（分類ごとの共通の印。CLAUDE.md）ので、枠は名前を主にし、分布の図のデータ（chart）を持つ語だけ小さな形を添える。
 // ※ 柱の分け方は試作のため画面に書いている（Graph.tsx の BANDS）。本番では教材のデータから読む。
 import { BANDS } from "./Graph";
+import { labCountOf } from "./Shell";
 import { iconUri } from "./icons";
 import { type Network } from "./data";
 import s from "./Library.module.css";
@@ -15,8 +16,7 @@ export default function Library({ net, onConcept, onGroup }: Props) {
   const all = [...net.concepts.values()];
   const degree = new Map<string, number>();
   for (const r of net.relations) { degree.set(r.from, (degree.get(r.from) ?? 0) + 1); degree.set(r.to, (degree.get(r.to) ?? 0) + 1); }
-  const labsOf = (cat: string) => [...net.experiments.values()].filter((x) => net.concepts.get(x.links?.concepts?.[0] ?? "")?.category === cat)
-    .reduce((t, x) => t + ("catalog" in x && x.catalog ? x.catalog.flatMap((g) => g.items).length : 1), 0);
+  const labsOf = (cat: string) => labCountOf(net, cat);   // 実験室のタブと同じ数え方（使わない問いを除く）
   const cats = [...new Set(all.map((c) => c.category).filter((x): x is string => !!x))];
   const bandOf = (c: string) => BANDS.find((b) => b.cats.includes(c))?.id ?? BANDS[BANDS.length - 1].id;
   const mute = getComputedStyle(document.documentElement).getPropertyValue("--ink-3").trim() || "gray";   // 印の色（tokens の値を読む）
