@@ -35,7 +35,8 @@ export function createRandom(seed: number): Random {
     seed: start,
     next,
     int(lo, hi) {
-      if (!Number.isInteger(lo) || !Number.isInteger(hi) || hi < lo) throw new RangeError(`int(${lo}, ${hi})：整数で lo ≤ hi`);
+      if (!Number.isInteger(lo) || !Number.isInteger(hi) || hi < lo)
+        throw new RangeError(`int(${lo}, ${hi})：整数で lo ≤ hi`);
       return lo + Math.floor(next() * (hi - lo + 1));
     },
     chance(p) {
@@ -62,7 +63,10 @@ export function normal(r: Random): number {
 /** 並べ替えた新しい配列（Fisher–Yates。元の配列は変えない） */
 export function shuffle<T>(r: Random, xs: readonly T[]): T[] {
   const a = xs.slice();
-  for (let i = a.length - 1; i > 0; i--) { const j = r.int(0, i); [a[i], a[j]] = [a[j]!, a[i]!]; }
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = r.int(0, i);
+    [a[i], a[j]] = [a[j]!, a[i]!];
+  }
   return a;
 }
 

@@ -19,7 +19,8 @@ export const INT: ApplyFormat = { kind: "int", digits: 0 };
 export function formatApply(x: number, f: ApplyFormat): string {
   if (!Number.isFinite(x)) return "—";
   if (f.kind === "int") return Math.round(x).toLocaleString("ja-JP");
-  if (f.kind === "sig") {   // 有効数字の %（0.1% より小さい値も桁を保つ）
+  if (f.kind === "sig") {
+    // 有効数字の %（0.1% より小さい値も桁を保つ）
     if (x === 0) return "0%";
     if (x === 1) return "100%";
     const v = x * 100;
@@ -36,9 +37,14 @@ export function formatApply(x: number, f: ApplyFormat): string {
 export const texApply = (x: number, f: ApplyFormat) => formatApply(x, f).replace(/%/g, "\\%").replace(/,/g, "{,}");
 
 /** 入力の値（% の課題は 0〜1 に直した値）が答えと合うか：決めた形で丸めて同じ文字になるか、原本の幅（tol）の中か */
-export function answerMatches(input: number, answer: number, f: ApplyFormat, tol: { abs?: number; rel?: number } = {}): boolean {
+export function answerMatches(
+  input: number,
+  answer: number,
+  f: ApplyFormat,
+  tol: { abs?: number; rel?: number } = {},
+): boolean {
   if (!Number.isFinite(input)) return false;
   if (formatApply(input, f) === formatApply(answer, f)) return true;
-  const scale = f.kind === "pct" || f.kind === "sig" ? 100 : 1;   // 幅は入力と同じ目盛り（% の課題は % の値）で書く
+  const scale = f.kind === "pct" || f.kind === "sig" ? 100 : 1; // 幅は入力と同じ目盛り（% の課題は % の値）で書く
   return Math.abs(input - answer) * scale <= Math.max(tol.abs ?? 0, (tol.rel ?? 0) * Math.abs(answer) * scale) + 1e-9;
 }

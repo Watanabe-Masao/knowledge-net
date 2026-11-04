@@ -5,8 +5,12 @@ import { describe, expect, it } from "vitest";
 import { nudge } from "../src/nudge";
 
 const press = (seq: number[], start: number, base: number, step: number, lo: number, hi: number) => {
-  const out: number[] = []; let v = start;
-  for (const d of seq) { v = nudge(d, v, base, step, lo, hi); out.push(v); }
+  const out: number[] = [];
+  let v = start;
+  for (const d of seq) {
+    v = nudge(d, v, base, step, lo, hi);
+    out.push(v);
+  }
   return out;
 };
 

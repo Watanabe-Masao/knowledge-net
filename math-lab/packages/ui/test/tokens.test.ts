@@ -19,9 +19,20 @@ describe("packages/ui/tokens.json", () => {
     expect(tokensCss(json)).toContain("--ease: cubic-bezier(0.2, 0.8, 0.2, 1);");
   });
   it("CSS と画面が使う var(--…) はすべて定義がある", () => {
-    const defined = new Set([...vars.map((v) => v[0]), "card", "mute"]);   // card・mute は古い名前（tokens.css の中で結ぶ）
+    const defined = new Set([...vars.map((v) => v[0]), "card", "mute"]); // card・mute は古い名前（tokens.css の中で結ぶ）
     const used: string[] = [];
-    const walk = (d: string) => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) { walk(p); } else if (/\.(css|tsx?)$/.test(f)) { const t = readFileSync(p, "utf8"); for (const m of t.matchAll(/var\(--([\w-]+)/g)) used.push(`${m[1]}（${p}）`); for (const m of t.matchAll(/["']--([\w-]+)["']\s*:/g)) defined.add(m[1]!); } } };   // 部品が style で渡す変数（スライダーの --fill）は、その部品の中の定義として数える
+    const walk = (d: string) => {
+      for (const f of readdirSync(d)) {
+        const p = join(d, f);
+        if (statSync(p).isDirectory()) {
+          walk(p);
+        } else if (/\.(css|tsx?)$/.test(f)) {
+          const t = readFileSync(p, "utf8");
+          for (const m of t.matchAll(/var\(--([\w-]+)/g)) used.push(`${m[1]}（${p}）`);
+          for (const m of t.matchAll(/["']--([\w-]+)["']\s*:/g)) defined.add(m[1]!);
+        }
+      }
+    }; // 部品が style で渡す変数（スライダーの --fill）は、その部品の中の定義として数える
     walk("packages/ui/src");
     expect(used.filter((u) => !defined.has(u.split("（")[0]))).toEqual([]);
   });
@@ -31,7 +42,14 @@ describe("packages/ui/tokens.json", () => {
 import { springAt, springLinear } from "../scripts/spring.mjs";
 import tokensJson from "../tokens.json";
 describe("ばねの動き", () => {
-  const m = (tokensJson as unknown as { motion: Record<string, { $value: string; $extensions?: { spring?: { response: number; damping: number; duration: number } } }> }).motion;
+  const m = (
+    tokensJson as unknown as {
+      motion: Record<
+        string,
+        { $value: string; $extensions?: { spring?: { response: number; damping: number; duration: number } } }
+      >;
+    }
+  ).motion;
   for (const name of ["ease-spring", "ease-bounce"]) {
     it(`${name} は式から作った値と同じ`, () => {
       const sp = m[name]!.$extensions!.spring!;

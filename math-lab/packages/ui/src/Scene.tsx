@@ -9,14 +9,28 @@ import { Dock, Field, Seg } from "./QuestionParts";
 import { haptic, reduced } from "./motion";
 import s from "./Scene.module.css";
 
-import { fmt, getAt, inKind, KIND, num, pad, pctS, setAt, sum, type FieldDef, type ModeDef, type SceneState } from "./sceneCore";
+import {
+  fmt,
+  getAt,
+  inKind,
+  KIND,
+  num,
+  pad,
+  pctS,
+  setAt,
+  sum,
+  type FieldDef,
+  type ModeDef,
+  type SceneState,
+} from "./sceneCore";
 import { MODES2 } from "./SceneModes2";
 import { SceneView } from "./SceneViews";
 export type { SceneState, TourStep, ScenePlay } from "./sceneCore";
 import type { ScenePlay, TourStep } from "./sceneCore";
 
 /** p を λ÷n にする（np＝λ を保つ版）。lam がなければ p のまま */
-const pOf = (st: SceneState) => (st.lam !== undefined && st.lam !== "" ? num(st, "lam") / Math.max(1, num(st, "n", 1)) : num(st, "p"));
+const pOf = (st: SceneState) =>
+  st.lam !== undefined && st.lam !== "" ? num(st, "lam") / Math.max(1, num(st, "n", 1)) : num(st, "p");
 
 export const MODES: Record<string, ModeDef> = {
   approx: {
@@ -29,20 +43,34 @@ export const MODES: Record<string, ModeDef> = {
       { key: "k", label: "k 回", min: 0, max: 30, step: 1 },
     ],
     draw(st, { kmax, dec }) {
-      const n = Math.round(num(st, "n", 10)), p = pOf(st), lam = n * p, k = num(st, "k");
+      const n = Math.round(num(st, "n", 10)),
+        p = pOf(st),
+        lam = n * p,
+        k = num(st, "k");
       const top = kmax ?? Math.max(10, Math.ceil(lam + 5 * Math.sqrt(lam) + 3));
-      const b = pad(modelPmf({ kind: "binom", n, p }), top), q = poissonPmf(lam, top);
+      const b = pad(modelPmf({ kind: "binom", n, p }), top),
+        q = poissonPmf(lam, top);
       const only = st.only === "binom";
       const maxdiff = Math.max(...b.map((v, i) => Math.abs(v - q[i]!)));
       return {
-        series: only ? [b] : [b, q], names: only ? [`二項 n＝${n}・p＝${fmt(p, 4)}`] : [`二項 n＝${n}・p＝${fmt(p, 4)}`, `ポアソン λ＝${fmt(lam, dec)}`],
-        labels: b.map((_, i) => i), hi: k,
+        series: only ? [b] : [b, q],
+        names: only
+          ? [`二項 n＝${n}・p＝${fmt(p, 4)}`]
+          : [`二項 n＝${n}・p＝${fmt(p, 4)}`, `ポアソン λ＝${fmt(lam, dec)}`],
+        labels: b.map((_, i) => i),
+        hi: k,
         stats: [
           { key: "np", label: "平均 np", value: fmt(lam, dec) },
-          { key: "var", label: only ? "分散 np(1−p)" : "分散 二項／ポアソン", value: only ? fmt(n * p * (1 - p), dec) : `${fmt(n * p * (1 - p), dec)}／${fmt(lam, dec)}` },
+          {
+            key: "var",
+            label: only ? "分散 np(1−p)" : "分散 二項／ポアソン",
+            value: only ? fmt(n * p * (1 - p), dec) : `${fmt(n * p * (1 - p), dec)}／${fmt(lam, dec)}`,
+          },
           ...(only ? [] : [{ key: "bars", label: "棒の差の最大", value: fmt(maxdiff, dec) }]),
         ],
-        label: only ? `二項分布 n＝${n}・p＝${fmt(p, 4)} の確率の棒` : `二項分布 n＝${n}・p＝${fmt(p, 4)} とポアソン分布 λ＝${fmt(lam, dec)} の確率を並べた棒。差の最大 ${fmt(maxdiff, dec)}`,
+        label: only
+          ? `二項分布 n＝${n}・p＝${fmt(p, 4)} の確率の棒`
+          : `二項分布 n＝${n}・p＝${fmt(p, 4)} とポアソン分布 λ＝${fmt(lam, dec)} の確率を並べた棒。差の最大 ${fmt(maxdiff, dec)}`,
       };
     },
   },
@@ -56,12 +84,21 @@ export const MODES: Record<string, ModeDef> = {
       { key: "k", label: "当たり k 個", min: 0, max: (st) => Math.min(num(st, "n", 1), num(st, "K")), step: 1 },
     ],
     draw(st, { dec }) {
-      const N = Math.round(num(st, "N", 20)), K = Math.min(N, Math.round(num(st, "K"))), n = Math.min(N, Math.round(num(st, "n", 1))), k = num(st, "k");
-      const q = K / N, h = modelPmf({ kind: "hyper", n, total: N, success: K }), b = modelPmf({ kind: "binom", n, p: q });
-      const fpc = N > 1 ? (N - n) / (N - 1) : 0, vb = n * q * (1 - q);
+      const N = Math.round(num(st, "N", 20)),
+        K = Math.min(N, Math.round(num(st, "K"))),
+        n = Math.min(N, Math.round(num(st, "n", 1))),
+        k = num(st, "k");
+      const q = K / N,
+        h = modelPmf({ kind: "hyper", n, total: N, success: K }),
+        b = modelPmf({ kind: "binom", n, p: q });
+      const fpc = N > 1 ? (N - n) / (N - 1) : 0,
+        vb = n * q * (1 - q);
       return {
         // 色は関係の図と同じ並び（1つ目＝戻す二項、2つ目＝戻さない超幾何）
-        series: [b, h], names: [`戻す（二項 p＝${fmt(q, 3)}）`, `戻さない（超幾何 N＝${N}・K＝${K}）`], labels: h.map((_, i) => i), hi: k,
+        series: [b, h],
+        names: [`戻す（二項 p＝${fmt(q, 3)}）`, `戻さない（超幾何 N＝${N}・K＝${K}）`],
+        labels: h.map((_, i) => i),
+        hi: k,
         stats: [
           { key: "mean", label: "平均 nK/N", value: fmt(n * q, dec) },
           { key: "var", label: "分散 戻す／戻さない", value: `${fmt(vb, dec)}／${fmt(vb * fpc, dec)}` },
@@ -80,12 +117,18 @@ export const MODES: Record<string, ModeDef> = {
       { key: "k", label: "k 回目", min: 1, max: 40, step: 1 },
     ],
     draw(st, { kmax, dec }) {
-      const p = num(st, "p", 0.3), r = Math.max(1, Math.round(num(st, "r", 1))), k = num(st, "k", 1);
-      const mean = r / p, sd = Math.sqrt(r * (1 - p)) / p;
+      const p = num(st, "p", 0.3),
+        r = Math.max(1, Math.round(num(st, "r", 1))),
+        k = num(st, "k", 1);
+      const mean = r / p,
+        sd = Math.sqrt(r * (1 - p)) / p;
       const top = kmax ?? Math.max(10, Math.ceil(mean + 4 * sd));
-      const f = negbinomPmf(r, p, top).slice(1);   // 横軸は試行の番号 1, 2, …（0回目はない）
+      const f = negbinomPmf(r, p, top).slice(1); // 横軸は試行の番号 1, 2, …（0回目はない）
       return {
-        series: [f], names: [r === 1 ? `幾何分布 p＝${fmt(p, 2)}` : `負の二項分布 r＝${r}・p＝${fmt(p, 2)}`], labels: f.map((_, i) => i + 1), hi: k - 1,
+        series: [f],
+        names: [r === 1 ? `幾何分布 p＝${fmt(p, 2)}` : `負の二項分布 r＝${r}・p＝${fmt(p, 2)}`],
+        labels: f.map((_, i) => i + 1),
+        hi: k - 1,
         stats: [
           { key: "mean", label: "平均 r/p", value: fmt(mean, dec) },
           { key: "var", label: "分散 r(1−p)/p²", value: fmt(sd * sd, dec) },
@@ -105,12 +148,18 @@ export const MODES: Record<string, ModeDef> = {
       { key: "k", label: "k 件", min: 0, max: 40, step: 1 },
     ],
     draw(st, { kmax, dec }) {
-      const lam = num(st, "rate", 2) * num(st, "t", 1), k = num(st, "k"), kind = String(st.kind ?? "eq");
+      const lam = num(st, "rate", 2) * num(st, "t", 1),
+        k = num(st, "k"),
+        kind = String(st.kind ?? "eq");
       const top = kmax ?? Math.max(10, Math.ceil(lam + 5 * Math.sqrt(lam) + 3));
-      const f = poissonPmf(lam, top), pin = inKind(kind, k);
-      const pk = kind === "ge" ? 1 - sum(f, (i) => i < k) : sum(f, pin);   // 以上は上限で切れないよう 1 から引く
+      const f = poissonPmf(lam, top),
+        pin = inKind(kind, k);
+      const pk = kind === "ge" ? 1 - sum(f, (i) => i < k) : sum(f, pin); // 以上は上限で切れないよう 1 から引く
       return {
-        series: [f], names: [`ポアソン λ＝${fmt(lam, dec)}`], labels: f.map((_, i) => i), hiIn: pin,
+        series: [f],
+        names: [`ポアソン λ＝${fmt(lam, dec)}`],
+        labels: f.map((_, i) => i),
+        hiIn: pin,
         stats: [
           { key: "lambda", label: "λ（平均＝分散）", value: fmt(lam, dec) },
           { key: "pk", label: `${k} 件${KIND[kind] ?? ""}の確率`, value: fmt(pk, dec) },
@@ -123,26 +172,53 @@ export const MODES: Record<string, ModeDef> = {
     name: "二項分布",
     defaults: { n: 10, p: 0.3, k: 3, kind: "eq", norm: "no" },
     kinds: true,
-    toggles: [{ key: "norm", name: "重ねる", items: [["no", "重ねない"], ["yes", "正規分布"]] }],
+    toggles: [
+      {
+        key: "norm",
+        name: "重ねる",
+        items: [
+          ["no", "重ねない"],
+          ["yes", "正規分布"],
+        ],
+      },
+    ],
     fields: [
       { key: "n", label: "回数 n", min: 1, max: 100, step: 1 },
       { key: "p", label: "確率 p", min: 0, max: 1, step: 0.01, show: pctS },
       { key: "k", label: "k 回", min: 0, max: (st) => num(st, "n", 1), step: 1 },
     ],
     draw(st, { dec }) {
-      const n = Math.round(num(st, "n", 10)), p = num(st, "p", 0.3), k = Math.min(n, num(st, "k")), kind = String(st.kind ?? "eq");
-      const f = modelPmf({ kind: "binom", n, p }), mean = n * p, sd = Math.sqrt(n * p * (1 - p));
+      const n = Math.round(num(st, "n", 10)),
+        p = num(st, "p", 0.3),
+        k = Math.min(n, num(st, "k")),
+        kind = String(st.kind ?? "eq");
+      const f = modelPmf({ kind: "binom", n, p }),
+        mean = n * p,
+        sd = Math.sqrt(n * p * (1 - p));
       // 棒の範囲：n が30より大きいときは平均±4標準偏差（教材の build の binom_window と同じ決まり）
-      const from = n > 30 ? Math.max(0, Math.floor(mean - 4 * sd)) : 0, to = n > 30 ? Math.min(n, Math.ceil(mean + 4 * sd)) : n;
-      const shown = f.slice(from, to + 1), pin = inKind(kind, k), norm = st.norm === "yes" && sd > 0;
+      const from = n > 30 ? Math.max(0, Math.floor(mean - 4 * sd)) : 0,
+        to = n > 30 ? Math.min(n, Math.ceil(mean + 4 * sd)) : n;
+      const shown = f.slice(from, to + 1),
+        pin = inKind(kind, k),
+        norm = st.norm === "yes" && sd > 0;
       const ngap = norm ? Math.max(...f.map((v, i) => Math.abs(v - normalDensity(i, mean, sd)))) : 0;
       return {
-        series: [shown], names: [`二項 n＝${n}・p＝${pctS(p)}`], labels: shown.map((_, i) => i + from), hiIn: (i) => pin(i + from),
-        ...(norm ? { curve: (i: number) => normalDensity(i + from, mean, sd), curveName: `正規分布（平均 ${fmt(mean, 2)}・標準偏差 ${fmt(sd, 2)}）` } : {}),
+        series: [shown],
+        names: [`二項 n＝${n}・p＝${pctS(p)}`],
+        labels: shown.map((_, i) => i + from),
+        hiIn: (i) => pin(i + from),
+        ...(norm
+          ? {
+              curve: (i: number) => normalDensity(i + from, mean, sd),
+              curveName: `正規分布（平均 ${fmt(mean, 2)}・標準偏差 ${fmt(sd, 2)}）`,
+            }
+          : {}),
         stats: [
           { key: "np", label: "平均 np", value: fmt(mean, dec) },
           { key: "var", label: "分散 np(1−p)", value: fmt(sd * sd, dec) },
-          norm ? { key: "gap", label: "棒と曲線の差の最大", value: fmt(ngap, dec) } : { key: "pk", label: `${k} 回${KIND[kind] ?? ""}の確率`, value: fmt(sum(f, pin), dec) },
+          norm
+            ? { key: "gap", label: "棒と曲線の差の最大", value: fmt(ngap, dec) }
+            : { key: "pk", label: `${k} 回${KIND[kind] ?? ""}の確率`, value: fmt(sum(f, pin), dec) },
         ],
         label: `二項分布 n＝${n}・p＝${pctS(p)} の確率の棒${norm ? "に、同じ平均と分散の正規分布の曲線を重ねた図" : ""}`,
       };
@@ -150,40 +226,98 @@ export const MODES: Record<string, ModeDef> = {
   },
 };
 
-Object.assign(MODES, MODES2);   // 離散の分布でない場面（値の表・同時分布・z得点・連続の分布・並び）
+Object.assign(MODES, MODES2); // 離散の分布でない場面（値の表・同時分布・z得点・連続の分布・並び）
 
 /** モードのつまみ（状態で数が変わるものは、その状態で） */
-export const fieldsOf = (d: ModeDef, st: SceneState): FieldDef[] => (typeof d.fields === "function" ? d.fields(st) : d.fields);
+export const fieldsOf = (d: ModeDef, st: SceneState): FieldDef[] =>
+  typeof d.fields === "function" ? d.fields(st) : d.fields;
 
 /** モードが受け取る状態の項目（教材の版の set・段の状態はこの中だけ。知らない項目は黙って捨てずにテストで止める）。
  *  値の表の確率（p.0 など）は配列の項目 p として数える */
 export const sceneKeys = (mode: string, st: SceneState = {}): string[] => {
   const d = MODES[mode];
-  return d ? ["mode", ...new Set(fieldsOf(d, { ...d.defaults, ...st }).map((f) => f.key.split(".")[0]!)), ...(d.toggles ?? []).map((t) => t.key), ...(d.kinds ? ["kind"] : []), ...(d.extra ?? [])] : [];
+  return d
+    ? [
+        "mode",
+        ...new Set(fieldsOf(d, { ...d.defaults, ...st }).map((f) => f.key.split(".")[0]!)),
+        ...(d.toggles ?? []).map((t) => t.key),
+        ...(d.kinds ? ["kind"] : []),
+        ...(d.extra ?? []),
+      ]
+    : [];
 };
 
 /** 状態から図の数を出す（画面と同じ計算。テストで使う） */
 export const drawScene = (mode: string, st: SceneState, kmax?: number, dec = 3) => MODES[mode]?.draw(st, { kmax, dec });
 
-export const sceneSupported = (play?: ScenePlay) => !!play && [play.mode, ...(play.modes ?? [])].every((m) => m in MODES);
+export const sceneSupported = (play?: ScenePlay) =>
+  !!play && [play.mode, ...(play.modes ?? [])].every((m) => m in MODES);
 
 /** 場面の図と数（解説と触るで同じ） */
-export function Scene({ mode, state, kmax, decimals = 3, focus }: { mode: string; state: SceneState; kmax?: number; decimals?: number; focus?: string }) {
+export function Scene({
+  mode,
+  state,
+  kmax,
+  decimals = 3,
+  focus,
+}: {
+  mode: string;
+  state: SceneState;
+  kmax?: number;
+  decimals?: number;
+  focus?: string;
+}) {
   const def = MODES[mode];
   const d = useMemo(() => def?.draw(state, { kmax, dec: decimals }), [def, state, kmax, decimals]);
   if (!def || !d) return null;
   const two = (d.series?.length ?? 0) > 1;
   return (
     <div className={s.scene} data-testid="scene" data-mode={mode}>
-      {(d.names?.length || d.curveName) && <div className={s.legend}>
-        {d.names?.map((nm, i) => <span key={nm}><i className={i ? s.sw2 : s.sw1} />{nm}</span>)}
-        {d.curveName && <span><i className={s.swLine} />{d.curveName}</span>}
-      </div>}
-      {d.view ? <SceneView view={d.view} />
-        : two ? <Bars series={d.series!} labels={d.labels} height={150} label={d.label} />
-        : <Bars theory={d.series![0]} labels={d.labels} at={d.at} marker={d.marker} hi={d.hi} hiIn={d.hiIn} curve={d.curve} height={150} label={d.label} />}
+      {(d.names?.length || d.curveName) && (
+        <div className={s.legend}>
+          {d.names?.map((nm, i) => (
+            <span key={nm}>
+              <i className={i ? s.sw2 : s.sw1} />
+              {nm}
+            </span>
+          ))}
+          {d.curveName && (
+            <span>
+              <i className={s.swLine} />
+              {d.curveName}
+            </span>
+          )}
+        </div>
+      )}
+      {d.view ? (
+        <SceneView view={d.view} />
+      ) : two ? (
+        <Bars series={d.series!} labels={d.labels} height={150} label={d.label} />
+      ) : (
+        <Bars
+          theory={d.series![0]}
+          labels={d.labels}
+          at={d.at}
+          marker={d.marker}
+          hi={d.hi}
+          hiIn={d.hiIn}
+          curve={d.curve}
+          height={150}
+          label={d.label}
+        />
+      )}
       <dl className={s.stats} data-testid="scene-stats">
-        {d.stats.map((x) => <div key={x.key} className={focus === x.key ? s.on : undefined} data-key={x.key} data-focus={focus === x.key || undefined}><dt>{x.label}</dt><dd>{x.value}</dd></div>)}
+        {d.stats.map((x) => (
+          <div
+            key={x.key}
+            className={focus === x.key ? s.on : undefined}
+            data-key={x.key}
+            data-focus={focus === x.key || undefined}
+          >
+            <dt>{x.label}</dt>
+            <dd>{x.value}</dd>
+          </div>
+        ))}
       </dl>
     </div>
   );
@@ -197,7 +331,8 @@ function Rich({ text }: { text: string }) {
 /** 解説：段ごとに状態を見せる。段に入ると frames を少しずつ進める（動きを減らす設定では最後の状態だけ） */
 export function Tour({ play, onDone }: { play: ScenePlay; onDone?: () => void }) {
   const steps = play.steps ?? [];
-  const [at, setAt] = useState(0), [fi, setFi] = useState(0);
+  const [at, setAt] = useState(0),
+    [fi, setFi] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const step = steps[at];
   const last = useRef<{ mode: string; state: SceneState } | null>(null);
@@ -206,35 +341,84 @@ export function Tour({ play, onDone }: { play: ScenePlay; onDone?: () => void })
     if (timer.current) clearTimeout(timer.current);
     if (!st) return;
     const n = st.states.length;
-    if (reduced() || n <= 1) { setFi(Math.max(0, n - 1)); return; }
+    if (reduced() || n <= 1) {
+      setFi(Math.max(0, n - 1));
+      return;
+    }
     setFi(0);
     let i = 0;
-    const go = () => { i++; setFi(i); if (i < n - 1) timer.current = setTimeout(go, st.ms ?? 900); };
+    const go = () => {
+      i++;
+      setFi(i);
+      if (i < n - 1) timer.current = setTimeout(go, st.ms ?? 900);
+    };
     timer.current = setTimeout(go, st.ms ?? 900);
   };
-  useEffect(() => { run(step); return () => { if (timer.current) clearTimeout(timer.current); }; }, [at]);   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    run(step);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [at]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!step) return null;
   // つまりの段は状態を持たないので、前の段の図をそのまま残す
   const cur = step.states[Math.min(fi, step.states.length - 1)];
   const mode = String(cur?.mode ?? play.mode);
   if (cur) last.current = { mode, state: cur };
   const shown = last.current;
-  const move = (i: number) => { haptic(); setAt(i); };
+  const move = (i: number) => {
+    haptic();
+    setAt(i);
+  };
   return (
     <section className={s.tour} data-testid="tour" aria-label="解説">
       <div className={s.tourHead}>
-        <span className={s.count} aria-live="polite">解説 {at + 1}／{steps.length}</span>
-        <div className={s.dots} aria-hidden="true">{steps.map((_, i) => <i key={i} className={i === at ? s.dotOn : undefined} />)}</div>
+        <span className={s.count} aria-live="polite">
+          解説 {at + 1}／{steps.length}
+        </span>
+        <div className={s.dots} aria-hidden="true">
+          {steps.map((_, i) => (
+            <i key={i} className={i === at ? s.dotOn : undefined} />
+          ))}
+        </div>
       </div>
       <div className={s.tourText} data-testid="tour-text">
         {step.gist ? <span className={s.gistLab}>つまり</span> : <b className={s.stepTitle}>{step.title}</b>}
-        <p><Rich text={step.text.replace(/^💡\s*/, "")} /></p>
+        <p>
+          <Rich text={step.text.replace(/^💡\s*/, "")} />
+        </p>
       </div>
-      {shown && <Scene mode={shown.mode} state={shown.state} kmax={play.kmax} decimals={play.decimals} focus={step.gist ? undefined : step.focus} />}
+      {shown && (
+        <Scene
+          mode={shown.mode}
+          state={shown.state}
+          kmax={play.kmax}
+          decimals={play.decimals}
+          focus={step.gist ? undefined : step.focus}
+        />
+      )}
       <div className={s.tourNav}>
-        <button type="button" className={s.navBtn} onClick={() => (at ? move(at - 1) : onDone?.())} data-testid="tour-prev">{at ? "前へ" : "やめる"}</button>
-        {step.states.length > 1 && <button type="button" className={s.navBtn} onClick={() => run(step)} data-testid="tour-replay">もう一度</button>}
-        <button type="button" className={`${s.navBtn} ${s.navMain}`} onClick={() => (at < steps.length - 1 ? move(at + 1) : onDone?.())} data-testid="tour-next">{at < steps.length - 1 ? "次へ" : "終わる"}</button>
+        <button
+          type="button"
+          className={s.navBtn}
+          onClick={() => (at ? move(at - 1) : onDone?.())}
+          data-testid="tour-prev"
+        >
+          {at ? "前へ" : "やめる"}
+        </button>
+        {step.states.length > 1 && (
+          <button type="button" className={s.navBtn} onClick={() => run(step)} data-testid="tour-replay">
+            もう一度
+          </button>
+        )}
+        <button
+          type="button"
+          className={`${s.navBtn} ${s.navMain}`}
+          onClick={() => (at < steps.length - 1 ? move(at + 1) : onDone?.())}
+          data-testid="tour-next"
+        >
+          {at < steps.length - 1 ? "次へ" : "終わる"}
+        </button>
       </div>
     </section>
   );
@@ -244,30 +428,86 @@ export function Tour({ play, onDone }: { play: ScenePlay; onDone?: () => void })
 export function Explore({ play }: { play: ScenePlay }) {
   const modes = play.modes?.length ? play.modes : [play.mode];
   const [mode, setMode] = useState(play.mode);
-  const [st, setSt] = useState<Record<string, SceneState>>(() => ({ [play.mode]: { ...MODES[play.mode]?.defaults, ...play.set } }));
+  const [st, setSt] = useState<Record<string, SceneState>>(() => ({
+    [play.mode]: { ...MODES[play.mode]?.defaults, ...play.set },
+  }));
   const def = MODES[mode]!;
   const cur = st[mode] ?? def.defaults;
   const fields = fieldsOf(def, cur);
   const [sel, setSel] = useState(fields[0]!.key);
-  const val = (f: FieldDef, k: "min" | "max") => { const v = f[k]; return typeof v === "function" ? v(cur) : v; };
-  const set = (k: string, v: number | string) => setSt((o) => {
-    let next: SceneState = setAt({ ...(o[mode] ?? def.defaults) }, k, v);
-    if (k === "p" || k === "n") delete next.lam;   // 自分で p を動かしたら np＝λ を保つ版をやめる
-    for (const f of fieldsOf(def, next)) { const hi = typeof f.max === "function" ? f.max(next) : f.max; if (getAt(next, f.key) > hi) next = setAt(next, f.key, hi); }
-    return { ...o, [mode]: next };
-  });
+  const val = (f: FieldDef, k: "min" | "max") => {
+    const v = f[k];
+    return typeof v === "function" ? v(cur) : v;
+  };
+  const set = (k: string, v: number | string) =>
+    setSt((o) => {
+      let next: SceneState = setAt({ ...(o[mode] ?? def.defaults) }, k, v);
+      if (k === "p" || k === "n") delete next.lam; // 自分で p を動かしたら np＝λ を保つ版をやめる
+      for (const f of fieldsOf(def, next)) {
+        const hi = typeof f.max === "function" ? f.max(next) : f.max;
+        if (getAt(next, f.key) > hi) next = setAt(next, f.key, hi);
+      }
+      return { ...o, [mode]: next };
+    });
   const f = fields.find((x) => x.key === sel) ?? fields[0]!;
   const show = (x: FieldDef, v: number) => (x.show ? x.show(v) : String(Number(v.toFixed(4))));
   const value = (x: FieldDef) => (x.key === "p" && mode === "approx" ? pOf(cur) : getAt(cur, x.key));
   return (
     <section className={s.explore} data-testid="explore" aria-label="操作">
-      {modes.length > 1 && <Seg name="モード" items={modes.map((m) => [m, MODES[m]!.name] as [string, string])} value={mode} onChange={(m) => { setMode(m); setSt((o) => (o[m] ? o : { ...o, [m]: { ...MODES[m]!.defaults } })); setSel(fieldsOf(MODES[m]!, MODES[m]!.defaults)[0]!.key); }} />}
-      {play.task && <p className={s.task}><Rich text={play.task} /></p>}
+      {modes.length > 1 && (
+        <Seg
+          name="モード"
+          items={modes.map((m) => [m, MODES[m]!.name] as [string, string])}
+          value={mode}
+          onChange={(m) => {
+            setMode(m);
+            setSt((o) => (o[m] ? o : { ...o, [m]: { ...MODES[m]!.defaults } }));
+            setSel(fieldsOf(MODES[m]!, MODES[m]!.defaults)[0]!.key);
+          }}
+        />
+      )}
+      {play.task && (
+        <p className={s.task}>
+          <Rich text={play.task} />
+        </p>
+      )}
       <Scene mode={mode} state={cur} decimals={play.decimals} />
-      {def.toggles?.map((t) => <Seg key={t.key} name={t.name} items={t.items} value={String(cur[t.key] ?? t.items[0]![0])} onChange={(v) => set(t.key, v)} />)}
-      {def.kinds && <Seg name="数える範囲" items={[["eq", "ちょうど"], ["le", "以下"], ["ge", "以上"]]} value={String(cur.kind ?? "eq") as "eq" | "le" | "ge"} onChange={(v) => set("kind", v)} />}
-      <Dock chips={fields.map((x) => [x.key, `${x.label.split(" ")[0]} ${show(x, value(x))}`])} sel={sel} onSel={setSel}>
-        <Field id={`scene-${f.key.replace(".", "-")}`} label={f.label} value={value(f)} min={val(f, "min")} max={val(f, "max")} step={f.step} show={(v) => show(f, v)} onChange={(v) => set(f.key, v)} />
+      {def.toggles?.map((t) => (
+        <Seg
+          key={t.key}
+          name={t.name}
+          items={t.items}
+          value={String(cur[t.key] ?? t.items[0]![0])}
+          onChange={(v) => set(t.key, v)}
+        />
+      ))}
+      {def.kinds && (
+        <Seg
+          name="数える範囲"
+          items={[
+            ["eq", "ちょうど"],
+            ["le", "以下"],
+            ["ge", "以上"],
+          ]}
+          value={String(cur.kind ?? "eq") as "eq" | "le" | "ge"}
+          onChange={(v) => set("kind", v)}
+        />
+      )}
+      <Dock
+        chips={fields.map((x) => [x.key, `${x.label.split(" ")[0]} ${show(x, value(x))}`])}
+        sel={sel}
+        onSel={setSel}
+      >
+        <Field
+          id={`scene-${f.key.replace(".", "-")}`}
+          label={f.label}
+          value={value(f)}
+          min={val(f, "min")}
+          max={val(f, "max")}
+          step={f.step}
+          show={(v) => show(f, v)}
+          onChange={(v) => set(f.key, v)}
+        />
       </Dock>
     </section>
   );

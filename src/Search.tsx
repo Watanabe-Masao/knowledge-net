@@ -8,7 +8,15 @@ type Props = { concepts: Concept[]; onPick: (id: string) => void };
 
 const mark = (text: string, q: string) => {
   const i = q ? text.toLowerCase().indexOf(q.toLowerCase()) : -1;
-  return i < 0 ? text : <>{text.slice(0, i)}<b>{text.slice(i, i + q.length)}</b>{text.slice(i + q.length)}</>;
+  return i < 0 ? (
+    text
+  ) : (
+    <>
+      {text.slice(0, i)}
+      <b>{text.slice(i, i + q.length)}</b>
+      {text.slice(i + q.length)}
+    </>
+  );
 };
 
 export default function Search({ concepts, onPick }: Props) {
@@ -17,35 +25,83 @@ export default function Search({ concepts, onPick }: Props) {
   const [at, setAt] = useState(0);
   const list = useId();
   const input = useRef<HTMLInputElement>(null);
-  const rank = (s: string) => (s === "filled" ? 0 : s === "skeleton" ? 1 : 2);   // 説明あり → 骨格 → 説明なし
+  const rank = (s: string) => (s === "filled" ? 0 : s === "skeleton" ? 1 : 2); // 説明あり → 骨格 → 説明なし
   const hits = useMemo(() => {
     const k = q.trim().toLowerCase();
     const m = concepts.filter((c) => !k || (c.name + " " + (c.en ?? "")).toLowerCase().includes(k));
     // 名前の頭で一致 → 説明のある概念 → 名前順
-    return m.sort((a, b) => Number(!a.name.toLowerCase().startsWith(k)) - Number(!b.name.toLowerCase().startsWith(k))
-      || rank(a.status) - rank(b.status) || a.name.localeCompare(b.name, "ja")).slice(0, 30);
+    return m
+      .sort(
+        (a, b) =>
+          Number(!a.name.toLowerCase().startsWith(k)) - Number(!b.name.toLowerCase().startsWith(k)) ||
+          rank(a.status) - rank(b.status) ||
+          a.name.localeCompare(b.name, "ja"),
+      )
+      .slice(0, 30);
   }, [q, concepts]);
-  const pick = (id: string) => { onPick(id); setQ(""); setOpen(false); input.current?.blur(); };
+  const pick = (id: string) => {
+    onPick(id);
+    setQ("");
+    setOpen(false);
+    input.current?.blur();
+  };
   const onKey = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setAt((i) => Math.min(hits.length - 1, i + 1)); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setAt((i) => Math.max(0, i - 1)); }
-    else if (e.key === "Enter" && open && hits[at]) { e.preventDefault(); pick(hits[at]!.id); }
-    else if (e.key === "Escape") setOpen(false);
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      setAt((i) => Math.min(hits.length - 1, i + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setAt((i) => Math.max(0, i - 1));
+    } else if (e.key === "Enter" && open && hits[at]) {
+      e.preventDefault();
+      pick(hits[at]!.id);
+    } else if (e.key === "Escape") setOpen(false);
   };
   return (
     <div className={s.root}>
-      <input ref={input} type="search" className={s.field} placeholder="概念を検索（名前・英語名）" aria-label="概念を検索" value={q}
-        role="combobox" aria-expanded={open} aria-controls={list} aria-autocomplete="list" aria-activedescendant={open && hits[at] ? `${list}-${at}` : undefined}
-        onChange={(e) => { setQ(e.target.value); setOpen(true); setAt(0); }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 120)} onKeyDown={onKey} />
+      <input
+        ref={input}
+        type="search"
+        className={s.field}
+        placeholder="概念を検索（名前・英語名）"
+        aria-label="概念を検索"
+        value={q}
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={list}
+        aria-autocomplete="list"
+        aria-activedescendant={open && hits[at] ? `${list}-${at}` : undefined}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setOpen(true);
+          setAt(0);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        onKeyDown={onKey}
+      />
       {open && (
         <ul id={list} role="listbox" className={s.list} aria-label="候補">
-          {hits.length ? hits.map((c, i) => (
-            <li key={c.id} id={`${list}-${i}`} role="option" aria-selected={i === at} className={`${s.item}${c.status === "stub" ? ` ${s.stub}` : ""}`}
-              onPointerDown={(e) => e.preventDefault()} onClick={() => pick(c.id)} onPointerEnter={() => setAt(i)}>
-              <span className={s.name}>{mark(c.name, q.trim())}</span>
-              {c.en && <span className={s.en}>{mark(c.en, q.trim())}</span>}
-            </li>
-          )) : <li className={s.none}>「{q}」に合う概念はない</li>}
+          {hits.length ? (
+            hits.map((c, i) => (
+              <li
+                key={c.id}
+                id={`${list}-${i}`}
+                role="option"
+                aria-selected={i === at}
+                className={`${s.item}${c.status === "stub" ? ` ${s.stub}` : ""}`}
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => pick(c.id)}
+                onPointerEnter={() => setAt(i)}
+              >
+                <span className={s.name}>{mark(c.name, q.trim())}</span>
+                {c.en && <span className={s.en}>{mark(c.en, q.trim())}</span>}
+              </li>
+            ))
+          ) : (
+            <li className={s.none}>「{q}」に合う概念はない</li>
+          )}
         </ul>
       )}
     </div>

@@ -28,12 +28,18 @@ const normal = (s: UrlState): UrlState => ({
 
 describe("URL の状態：保存と復元は同じ定義で往復する", () => {
   it("どの組み合わせでも、保存 → 復元で同じ状態に戻る", () => {
-    fc.assert(fc.property(state, (s) => {
-      expect(fromUrl(toUrl(s, new URLSearchParams()))).toEqual(normal(s));
-    }), { numRuns: 500 });
+    fc.assert(
+      fc.property(state, (s) => {
+        expect(fromUrl(toUrl(s, new URLSearchParams()))).toEqual(normal(s));
+      }),
+      { numRuns: 500 },
+    );
   });
   it("ほかの項目（src・embed）は残し、昔の trace は消す", () => {
-    const p = toUrl(normal({ sel: null, view: "all", cmp: [], exp: null, q: null, cards: null, group: null, tab: "explore" }), new URLSearchParams("src=sample/x.json&embed=1&trace=1"));
+    const p = toUrl(
+      normal({ sel: null, view: "all", cmp: [], exp: null, q: null, cards: null, group: null, tab: "explore" }),
+      new URLSearchParams("src=sample/x.json&embed=1&trace=1"),
+    );
     expect(p.get("src")).toBe("sample/x.json");
     expect(p.get("embed")).toBe("1");
     expect(p.has("trace")).toBe(false);

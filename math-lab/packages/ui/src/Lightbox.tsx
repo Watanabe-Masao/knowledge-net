@@ -17,28 +17,63 @@ export function Lightbox({ src, alt, caption, href, from, onClose }: Props) {
     const k = from.width / Math.max(1, to.width);
     const start = `translate(${from.left - to.left + (from.width - to.width) / 2}px, ${from.top - to.top + (from.height - to.height) / 2}px) scale(${k})`;
     const frames = [{ transform: start }, { transform: "none" }];
-    return el.animate(reverse ? frames.reverse() : frames, { duration: tokenMs("--dur-sheet", 320), easing: "cubic-bezier(.32,.72,0,1)", fill: "forwards" });
+    return el.animate(reverse ? frames.reverse() : frames, {
+      duration: tokenMs("--dur-sheet", 320),
+      easing: "cubic-bezier(.32,.72,0,1)",
+      fill: "forwards",
+    });
   };
-  useLayoutEffect(() => { if (img.current) flip(img.current, false); }, []);   // eslint-disable-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (img.current) flip(img.current, false);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const close = () => {
     if (closing) return;
     setClosing(true);
     const a = img.current && flip(img.current, true);
-    if (a) a.finished.then(onClose, onClose); else onClose();
+    if (a) a.finished.then(onClose, onClose);
+    else onClose();
   };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === "Escape") close(); }; addEventListener("keydown", k); return () => removeEventListener("keydown", k); });
-  return createPortal(   // シートの中（transform のある面）からでも画面全体に出す
-    <div className={`${s.root}${closing ? ` ${s.closing}` : ""}`} role="dialog" aria-modal="true" aria-label={alt} onClick={close} data-testid="lightbox">
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    addEventListener("keydown", k);
+    return () => removeEventListener("keydown", k);
+  });
+  return createPortal(
+    // シートの中（transform のある面）からでも画面全体に出す
+    <div
+      className={`${s.root}${closing ? ` ${s.closing}` : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={alt}
+      onClick={close}
+      data-testid="lightbox"
+    >
       <figure className={s.fig}>
         <img ref={img} src={src} alt={alt} className={s.img} />
         {(caption || href) && (
           <figcaption className={s.cap} onClick={(e) => e.stopPropagation()}>
             {caption}
-            {href && <a href={href} target="_blank" rel="noreferrer" className={s.link}>別の画面で開く ↗</a>}
+            {href && (
+              <a href={href} target="_blank" rel="noreferrer" className={s.link}>
+                別の画面で開く ↗
+              </a>
+            )}
           </figcaption>
         )}
       </figure>
-      <button type="button" className={s.close} onClick={(e) => { e.stopPropagation(); close(); }} aria-label="閉じる">✕</button>
+      <button
+        type="button"
+        className={s.close}
+        onClick={(e) => {
+          e.stopPropagation();
+          close();
+        }}
+        aria-label="閉じる"
+      >
+        ✕
+      </button>
     </div>,
     document.body,
   );

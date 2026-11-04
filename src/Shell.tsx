@@ -10,23 +10,98 @@ import type { Tab } from "./urlState";
 export type { Tab } from "./urlState";
 export { readTab } from "./urlState";
 export const TABS: { id: Tab; label: string }[] = [
-  { id: "explore", label: "探索" }, { id: "learn", label: "学習" }, { id: "lab", label: "実験室" }, { id: "problems", label: "問題集" },
+  { id: "explore", label: "探索" },
+  { id: "learn", label: "学習" },
+  { id: "lab", label: "実験室" },
+  { id: "problems", label: "問題集" },
 ];
 
 /** 線で描く小さな印（絵文字は使わない） */
-export function Icon({ name, size = 22 }: { name: Tab | "search" | "chevron" | "out" | "full" | "shrink" | "fit"; size?: number }) {
-  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
+export function Icon({
+  name,
+  size = 22,
+}: {
+  name: Tab | "search" | "chevron" | "out" | "full" | "shrink" | "fit";
+  size?: number;
+}) {
+  const p = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
   switch (name) {
-    case "explore": return <svg {...p}><circle cx="6" cy="7" r="2.6" /><circle cx="18" cy="6" r="2.6" /><circle cx="12" cy="18" r="2.6" /><path d="M8.5 7.5l7-1M7.2 9.3l3.6 6.4M16.8 8.4l-3.6 7.3" /></svg>;
-    case "learn": return <svg {...p}><path d="M3 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H3zM21 5h-7a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h7z" /></svg>;
-    case "lab": return <svg {...p}><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" /></svg>;
-    case "problems": return <svg {...p}><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 12l3 3 5-6" /></svg>;
-    case "search": return <svg {...p}><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>;
-    case "chevron": return <svg {...p}><path d="M9 6l6 6-6 6" /></svg>;
-    case "out": return <svg {...p}><path d="M7 17L17 7M9 7h8v8" /></svg>;
-    case "full": return <svg {...p}><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>;
-    case "shrink": return <svg {...p}><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>;
-    case "fit": return <svg {...p}><rect x="4" y="4" width="16" height="16" rx="3" /><circle cx="12" cy="12" r="2.5" /></svg>;
+    case "explore":
+      return (
+        <svg {...p}>
+          <circle cx="6" cy="7" r="2.6" />
+          <circle cx="18" cy="6" r="2.6" />
+          <circle cx="12" cy="18" r="2.6" />
+          <path d="M8.5 7.5l7-1M7.2 9.3l3.6 6.4M16.8 8.4l-3.6 7.3" />
+        </svg>
+      );
+    case "learn":
+      return (
+        <svg {...p}>
+          <path d="M3 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H3zM21 5h-7a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h7z" />
+        </svg>
+      );
+    case "lab":
+      return (
+        <svg {...p}>
+          <path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" />
+        </svg>
+      );
+    case "problems":
+      return (
+        <svg {...p}>
+          <rect x="4" y="3" width="16" height="18" rx="2" />
+          <path d="M8 12l3 3 5-6" />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg {...p}>
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-4-4" />
+        </svg>
+      );
+    case "chevron":
+      return (
+        <svg {...p}>
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      );
+    case "out":
+      return (
+        <svg {...p}>
+          <path d="M7 17L17 7M9 7h8v8" />
+        </svg>
+      );
+    case "full":
+      return (
+        <svg {...p}>
+          <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+        </svg>
+      );
+    case "shrink":
+      return (
+        <svg {...p}>
+          <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+        </svg>
+      );
+    case "fit":
+      return (
+        <svg {...p}>
+          <rect x="4" y="4" width="16" height="16" rx="3" />
+          <circle cx="12" cy="12" r="2.5" />
+        </svg>
+      );
   }
 }
 
@@ -34,8 +109,13 @@ export function Header({ title, sub, children }: { title: string; sub?: ReactNod
   return (
     <header className={s.header}>
       <div className={s.brand}>
-        <span className={s.logo}><Icon name="explore" size={22} /></span>
-        <div className={s.titles}><h1>{title}</h1>{sub ? <div className={s.sub}>{sub}</div> : null}</div>
+        <span className={s.logo}>
+          <Icon name="explore" size={22} />
+        </span>
+        <div className={s.titles}>
+          <h1>{title}</h1>
+          {sub ? <div className={s.sub}>{sub}</div> : null}
+        </div>
       </div>
       {children}
     </header>
@@ -49,8 +129,18 @@ export function Crumbs({ items }: { items: { label: string; onClick?: () => void
     <nav className={s.crumbs} aria-label="いまいる所" data-testid="crumbs">
       {items.map((it, i) => (
         <span key={i} className={s.crumb}>
-          {i ? <span className={s.sep} aria-hidden="true">/</span> : null}
-          {it.onClick && i < items.length - 1 ? <button type="button" onClick={it.onClick}>{it.label}</button> : <b aria-current={i === items.length - 1 ? "page" : undefined}>{it.label}</b>}
+          {i ? (
+            <span className={s.sep} aria-hidden="true">
+              /
+            </span>
+          ) : null}
+          {it.onClick && i < items.length - 1 ? (
+            <button type="button" onClick={it.onClick}>
+              {it.label}
+            </button>
+          ) : (
+            <b aria-current={i === items.length - 1 ? "page" : undefined}>{it.label}</b>
+          )}
         </span>
       ))}
     </nav>
@@ -64,17 +154,46 @@ export type Focus = { id: string; name: string; units: string[]; problems: strin
 export function focusBadges(net: Network, f: Focus | null): Partial<Record<Tab, string>> {
   if (!f) return {};
   const u = f.units.map((id) => net.units.get(id)).find((x) => !!x);
-  return { ...(u ? { learn: `U${u.number}` } : {}), ...(f.exps.length ? { lab: String(f.exps.length) } : {}), ...(f.problems.length ? { problems: String(f.problems.length) } : {}) };
+  return {
+    ...(u ? { learn: `U${u.number}` } : {}),
+    ...(f.exps.length ? { lab: String(f.exps.length) } : {}),
+    ...(f.problems.length ? { problems: String(f.problems.length) } : {}),
+  };
 }
 
-export function TabBar({ tab, onTab, badges = {}, focusName }: { tab: Tab; onTab: (t: Tab) => void; badges?: Partial<Record<Tab, string>>; focusName?: string }) {
+export function TabBar({
+  tab,
+  onTab,
+  badges = {},
+  focusName,
+}: {
+  tab: Tab;
+  onTab: (t: Tab) => void;
+  badges?: Partial<Record<Tab, string>>;
+  focusName?: string;
+}) {
   return (
     <nav className={s.tabs} aria-label="タブ" data-testid="tabbar">
       {TABS.map((t) => (
-        <a key={t.id} href={t.id === "explore" ? "?" : `?t=${t.id}`} aria-current={tab === t.id ? "page" : undefined}
+        <a
+          key={t.id}
+          href={t.id === "explore" ? "?" : `?t=${t.id}`}
+          aria-current={tab === t.id ? "page" : undefined}
           aria-label={badges[t.id] ? `${t.label}（${focusName}：${badges[t.id]}）` : undefined}
-          onClick={(e) => { e.preventDefault(); onTab(t.id); }}>
-          <span className={s.tabIcon}><Icon name={t.id} />{badges[t.id] ? <span className={s.badge} data-testid={`badge-${t.id}`}>{badges[t.id]}</span> : null}</span>{t.label}
+          onClick={(e) => {
+            e.preventDefault();
+            onTab(t.id);
+          }}
+        >
+          <span className={s.tabIcon}>
+            <Icon name={t.id} />
+            {badges[t.id] ? (
+              <span className={s.badge} data-testid={`badge-${t.id}`}>
+                {badges[t.id]}
+              </span>
+            ) : null}
+          </span>
+          {t.label}
         </a>
       ))}
     </nav>
@@ -86,7 +205,13 @@ function FocusChip({ focus, on, onToggle }: { focus: Focus | null; on: boolean; 
   if (!focus) return null;
   return (
     <button type="button" className={s.focusChip} aria-pressed={on} onClick={onToggle} data-testid="focus-chip">
-      {on ? <>{focus.name} に絞り込み中<span aria-hidden="true">✕</span></> : <>{focus.name} に絞り込む</>}
+      {on ? (
+        <>
+          {focus.name} に絞り込み中<span aria-hidden="true">✕</span>
+        </>
+      ) : (
+        <>{focus.name} に絞り込む</>
+      )}
     </button>
   );
 }
@@ -98,7 +223,9 @@ function GroupChips({ net, value, onChange }: { net: Network; value: string; onC
   return (
     <div className={s.chips} role="radiogroup" aria-label="まとまり" data-testid="group-chips">
       {["", ...groups].map((g) => (
-        <button key={g || "all"} type="button" role="radio" aria-checked={value === g} onClick={() => onChange(g)}>{g || "すべて"}</button>
+        <button key={g || "all"} type="button" role="radio" aria-checked={value === g} onClick={() => onChange(g)}>
+          {g || "すべて"}
+        </button>
       ))}
     </div>
   );
@@ -122,8 +249,15 @@ export function LearnPage({ net, focus = null }: { net: Network; focus?: Focus |
           <li key={u.id}>
             <a className={s.row} href={u.url} target="_blank" rel="noreferrer" aria-disabled={!u.url}>
               <span className={s.num}>{u.number}</span>
-              <span className={s.rowText}>{u.title}{labUnits.get(u.id)?.length ? <small>実験室：{labUnits.get(u.id)!.join("・")}</small> : null}</span>
-              {u.url ? <span className={s.out} aria-label="Notion で開く"><Icon name="out" size={16} /></span> : null}
+              <span className={s.rowText}>
+                {u.title}
+                {labUnits.get(u.id)?.length ? <small>実験室：{labUnits.get(u.id)!.join("・")}</small> : null}
+              </span>
+              {u.url ? (
+                <span className={s.out} aria-label="Notion で開く">
+                  <Icon name="out" size={16} />
+                </span>
+              ) : null}
             </a>
           </li>
         ))}
@@ -135,8 +269,11 @@ export function LearnPage({ net, focus = null }: { net: Network; focus?: Focus |
 type Item = { id: string; title: string; open?: string; concept?: string; related?: string[]; retired?: boolean };
 /** 主が関係（REL-…）なら、その両端の概念として数える（stats2-course issue 169）。概念ならそれ自身 */
 type Ends = (id: string) => string[];
-const itemsOf = (x: ExperimentData): Item[] => (x.model === "binom" ? (x.catalog ?? []).flatMap((g) => g.items).filter((it) => !it.retired) : []);   // 使わない印の問いは数えない
-const conceptsOf = (it: Item, ends: Ends = (id) => [id]) => [...new Set([it.concept, ...(it.related ?? [])].filter((c): c is string => !!c).flatMap(ends))];
+const itemsOf = (x: ExperimentData): Item[] =>
+  x.model === "binom" ? (x.catalog ?? []).flatMap((g) => g.items).filter((it) => !it.retired) : []; // 使わない印の問いは数えない
+const conceptsOf = (it: Item, ends: Ends = (id) => [id]) => [
+  ...new Set([it.concept, ...(it.related ?? [])].filter((c): c is string => !!c).flatMap(ends)),
+];
 
 /** 実験室のつなぐ概念：つなぐ概念（links）と、テーマ体系の問いの主概念・関連概念（stats2-course #163。問いの側に書き、ここで引く） */
 export function labConcepts(x: ExperimentData, ends: Ends = (id) => [id]): string[] {
@@ -148,104 +285,254 @@ export function labConcepts(x: ExperimentData, ends: Ends = (id) => [id]): strin
  *    問いには、選んだ概念がその問いの主か関連かを出し、押すとその問いを直接開く
  *  - A〜F（実験室の入口）＝実験の目的から問いを探す入口。実験室のカードから入る
  *  何も選ばなければ実験室のカードだけを並べる */
-export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (id: string, question?: string | null) => void; focus?: Focus | null }) {
+export function LabPage({
+  net,
+  onOpen,
+  focus = null,
+}: {
+  net: Network;
+  onOpen: (id: string, question?: string | null) => void;
+  focus?: Focus | null;
+}) {
   const all = [...net.experiments.values()];
-  const ends: Ends = (id) => { const r = net.relations.find((x) => x.id === id); return r ? [r.from, r.to] : [id]; };
+  const ends: Ends = (id) => {
+    const r = net.relations.find((x) => x.id === id);
+    return r ? [r.from, r.to] : [id];
+  };
   const concepts = [...new Set(all.flatMap((x) => labConcepts(x, ends)))].filter((id) => net.concepts.has(id));
   const [picked, setPicked] = useState<string[]>(() => (focus && concepts.includes(focus.id) ? [focus.id] : []));
   const toggle = (id: string) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
-  const nm = (id: string) => { const r = net.relations.find((x) => x.id === id); return r ? `${net.concepts.get(r.from)?.name ?? r.from}と${net.concepts.get(r.to)?.name ?? r.to}のつながり` : net.concepts.get(id)?.name ?? id; };
+  const nm = (id: string) => {
+    const r = net.relations.find((x) => x.id === id);
+    return r
+      ? `${net.concepts.get(r.from)?.name ?? r.from}と${net.concepts.get(r.to)?.name ?? r.to}のつながり`
+      : (net.concepts.get(id)?.name ?? id);
+  };
   const hits = (x: ExperimentData) => itemsOf(x).filter((it) => picked.every((c) => conceptsOf(it, ends).includes(c)));
-  const isMain = (it: Item, c: string) => !!it.concept && ends(it.concept).includes(c);   // 主が関係なら、その両端のどちらかが c
+  const isMain = (it: Item, c: string) => !!it.concept && ends(it.concept).includes(c); // 主が関係なら、その両端のどちらかが c
   // 選んだ概念をすべて使う問いがある実験室（問いのない実験室は、つなぐ概念にすべて入っていれば出す）
-  const xs = all.filter((x) => !picked.length || (itemsOf(x).length ? hits(x).length > 0 : picked.every((c) => labConcepts(x, ends).includes(c))));
+  const xs = all.filter(
+    (x) =>
+      !picked.length ||
+      (itemsOf(x).length ? hits(x).length > 0 : picked.every((c) => labConcepts(x, ends).includes(c))),
+  );
   // 実験室のカードの見出し：主な概念の一言（short。地図と同じ文。なければ定義）。問いの1つを代表にしない（渡辺さん 2026-11-02）
-  const lead = (x: ExperimentData) => { const c = net.concepts.get(x.links.concepts?.[0] ?? ""); return c?.short ?? c?.definition ?? x.question; };   // つなぐ概念の最初＝この実験室の主な概念
+  const lead = (x: ExperimentData) => {
+    const c = net.concepts.get(x.links.concepts?.[0] ?? "");
+    return c?.short ?? c?.definition ?? x.question;
+  }; // つなぐ概念の最初＝この実験室の主な概念
   const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1");
   const [sheet, setSheet] = useState(false);
   const [query, setQuery] = useState("");
   const rule = `${picked.map(nm).join("・")}を${picked.length > 1 ? "すべて" : ""}使う問い（主概念か関連概念に入っている問い）`;
   const total = all.reduce((t, x) => t + hits(x).length, 0);
   // その概念を使う問いの数（作成中を含む）。問いのない実験室だけでつながる概念は「実験室」
-  const countOf = (id: string) => { const n = all.reduce((t, x) => t + itemsOf(x).filter((it) => conceptsOf(it, ends).includes(id)).length, 0); return n ? `${n} 問` : "実験室"; };
+  const countOf = (id: string) => {
+    const n = all.reduce((t, x) => t + itemsOf(x).filter((it) => conceptsOf(it, ends).includes(id)).length, 0);
+    return n ? `${n} 問` : "実験室";
+  };
   // 地図と同じ分類ごと（データに出てくる順）。名前で探すと、合う概念だけ
   const cats = [...new Set(concepts.map((id) => net.concepts.get(id)?.category ?? "その他"))]
-    .map((cat): [string, string[]] => [cat, concepts.filter((id) => (net.concepts.get(id)?.category ?? "その他") === cat && (!query || nm(id).includes(query.trim()) || (net.concepts.get(id)?.en ?? "").toLowerCase().includes(query.trim().toLowerCase())))])
+    .map((cat): [string, string[]] => [
+      cat,
+      concepts.filter(
+        (id) =>
+          (net.concepts.get(id)?.category ?? "その他") === cat &&
+          (!query ||
+            nm(id).includes(query.trim()) ||
+            (net.concepts.get(id)?.en ?? "").toLowerCase().includes(query.trim().toLowerCase())),
+      ),
+    ])
     .filter(([, ids]) => ids.length);
   return (
     <section className={s.page} data-testid="page-lab">
       <h2 className={s.pageTitle}>実験室</h2>
       <Muted>予測してから、自分で起こして確かめる。</Muted>
-      {concepts.length ? <>
-        {/* 概念は下から出る面で選ぶ（いくつでも。渡辺さん 2026-11-02）。上には選んだ概念の札だけを出す */}
-        <button type="button" className={s.conceptPick} aria-haspopup="dialog" onClick={() => { setQuery(""); setSheet(true); }} data-testid="lab-concept-pick">
-          <span>概念で検索{picked.length ? <b>：{picked.map(nm).join("・")}</b> : null}</span><i aria-hidden="true">▾</i>
-        </button>
-        {picked.length ? <div className={s.picked} data-testid="lab-picked">{picked.map((id) => (
-          <button key={id} type="button" onClick={() => toggle(id)} aria-label={`${nm(id)} を外す`} data-testid={`lab-sel-${id}`}>{nm(id)}<span aria-hidden="true">✕</span></button>
-        ))}</div> : null}
-        <Muted as="p" data-testid="lab-rule">{picked.length ? rule : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて A〜F から選ぶ。"}</Muted>
-        {sheet ? (
-          <Sheet label="概念で検索" title="概念で検索" onClose={() => setSheet(false)} data-testid="lab-concept-sheet">
-            <input className={s.conceptSearch} type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="名前で検索" aria-label="概念を名前で検索" data-testid="lab-concept-search" />
-            {cats.map(([cat, ids]) => (
-              <section key={cat} className={s.conceptCat} aria-label={cat}>
-                <h4>{cat}</h4>
-                <ul>{ids.map((id) => (
-                  <li key={id}><label data-testid={`lab-c-${id}`}>
-                    <input type="checkbox" checked={picked.includes(id)} onChange={() => toggle(id)} />
-                    <span>{nm(id)}</span><small>{countOf(id)}</small>
-                  </label></li>
-                ))}</ul>
-              </section>
-            ))}
-            {!cats.length ? <Muted>「{query}」に合う概念はない。</Muted> : null}
-            <div className={s.sheetFoot}>
-              <Muted as="p" data-testid="lab-sheet-rule">{picked.length ? `${rule}：${total} 問` : "何も選ばないときは、実験室だけを並べる"}</Muted>
-              <div>
-                <Button onClick={() => setPicked([])} disabled={!picked.length} data-testid="lab-clear">選択を解除</Button>
-                <Button variant="primary" onClick={() => setSheet(false)} data-testid="lab-show">{picked.length ? `${total} 問を表示` : "閉じる"}</Button>
-              </div>
+      {concepts.length ? (
+        <>
+          {/* 概念は下から出る面で選ぶ（いくつでも。渡辺さん 2026-11-02）。上には選んだ概念の札だけを出す */}
+          <button
+            type="button"
+            className={s.conceptPick}
+            aria-haspopup="dialog"
+            onClick={() => {
+              setQuery("");
+              setSheet(true);
+            }}
+            data-testid="lab-concept-pick"
+          >
+            <span>概念で検索{picked.length ? <b>：{picked.map(nm).join("・")}</b> : null}</span>
+            <i aria-hidden="true">▾</i>
+          </button>
+          {picked.length ? (
+            <div className={s.picked} data-testid="lab-picked">
+              {picked.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => toggle(id)}
+                  aria-label={`${nm(id)} を外す`}
+                  data-testid={`lab-sel-${id}`}
+                >
+                  {nm(id)}
+                  <span aria-hidden="true">✕</span>
+                </button>
+              ))}
             </div>
-          </Sheet>
-        ) : null}
-      </> : null}
+          ) : null}
+          <Muted as="p" data-testid="lab-rule">
+            {picked.length
+              ? rule
+              : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて A〜F から選ぶ。"}
+          </Muted>
+          {sheet ? (
+            <Sheet
+              label="概念で検索"
+              title="概念で検索"
+              onClose={() => setSheet(false)}
+              data-testid="lab-concept-sheet"
+            >
+              <input
+                className={s.conceptSearch}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="名前で検索"
+                aria-label="概念を名前で検索"
+                data-testid="lab-concept-search"
+              />
+              {cats.map(([cat, ids]) => (
+                <section key={cat} className={s.conceptCat} aria-label={cat}>
+                  <h4>{cat}</h4>
+                  <ul>
+                    {ids.map((id) => (
+                      <li key={id}>
+                        <label data-testid={`lab-c-${id}`}>
+                          <input type="checkbox" checked={picked.includes(id)} onChange={() => toggle(id)} />
+                          <span>{nm(id)}</span>
+                          <small>{countOf(id)}</small>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+              {!cats.length ? <Muted>「{query}」に合う概念はない。</Muted> : null}
+              <div className={s.sheetFoot}>
+                <Muted as="p" data-testid="lab-sheet-rule">
+                  {picked.length ? `${rule}：${total} 問` : "何も選ばないときは、実験室だけを並べる"}
+                </Muted>
+                <div>
+                  <Button onClick={() => setPicked([])} disabled={!picked.length} data-testid="lab-clear">
+                    選択を解除
+                  </Button>
+                  <Button variant="primary" onClick={() => setSheet(false)} data-testid="lab-show">
+                    {picked.length ? `${total} 問を表示` : "閉じる"}
+                  </Button>
+                </div>
+              </div>
+            </Sheet>
+          ) : null}
+        </>
+      ) : null}
       <ul className={s.cards}>
         {xs.map((x) => {
           const hs = picked.length ? hits(x) : [];
           return (
             <li key={x.id}>
               {/* 概念で選んだ問いを先に、実験室の入口（目的から選ぶ A〜F・自分で条件を決めて比べる）はその下に（渡辺さん 2026-11-02） */}
-              {hs.length ? <>
-                <p className={s.qHead}>{x.title}の問い</p>
-                {/* 概念を1つだけ選んだとき（概念のページから来たときも）は、その概念が主の問いと関連の問いに分ける（stats2-course #163・#171。主が関係ならその両端の概念の主） */}
-                {(picked.length === 1
-                  ? ([["主となる問い", hs.filter((it) => isMain(it, picked[0]!)), "main"], ["関連する問い", hs.filter((it) => !isMain(it, picked[0]!)), "related"]] as const)
-                  : ([["", hs, "all"]] as const)).filter(([, list]) => list.length).map(([head, list, key]) => (
-                  <div key={key}>
-                    {head ? <p className={s.qSub} data-testid={`lab-q-${x.id}-${key}-head`}>{head}<span>{list.length} 問</span></p> : null}
-                    <ul className={s.qList} data-testid={key === "all" ? `lab-q-${x.id}` : `lab-q-${x.id}-${key}`}>
-                      {list.map((it) => {
-                        const roles = <small>主：{it.concept ? nm(it.concept) : "—"}{(() => { const r = (it.related ?? []).filter((id) => net.concepts.has(id)); return r.length ? `｜関連：${r.map(nm).join("・")}` : ""; })()}</small>;
-                        return <li key={it.id}>{it.open
-                          ? <button type="button" className={s.qRow} onClick={() => onOpen(x.id, it.id)} data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span></button>
-                          : <div className={`${s.qRow} ${s.qDraft}`} aria-disabled="true" data-testid={`lab-open-${it.id}`}><span className={s.qKey}>{short(it.id)}</span><span className={s.rowText}>{it.title}{roles}</span><span className={s.qTag}>作成中</span></div>}</li>;
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </> : null}
+              {hs.length ? (
+                <>
+                  <p className={s.qHead}>{x.title}の問い</p>
+                  {/* 概念を1つだけ選んだとき（概念のページから来たときも）は、その概念が主の問いと関連の問いに分ける（stats2-course #163・#171。主が関係ならその両端の概念の主） */}
+                  {(picked.length === 1
+                    ? ([
+                        ["主となる問い", hs.filter((it) => isMain(it, picked[0]!)), "main"],
+                        ["関連する問い", hs.filter((it) => !isMain(it, picked[0]!)), "related"],
+                      ] as const)
+                    : ([["", hs, "all"]] as const)
+                  )
+                    .filter(([, list]) => list.length)
+                    .map(([head, list, key]) => (
+                      <div key={key}>
+                        {head ? (
+                          <p className={s.qSub} data-testid={`lab-q-${x.id}-${key}-head`}>
+                            {head}
+                            <span>{list.length} 問</span>
+                          </p>
+                        ) : null}
+                        <ul className={s.qList} data-testid={key === "all" ? `lab-q-${x.id}` : `lab-q-${x.id}-${key}`}>
+                          {list.map((it) => {
+                            const roles = (
+                              <small>
+                                主：{it.concept ? nm(it.concept) : "—"}
+                                {(() => {
+                                  const r = (it.related ?? []).filter((id) => net.concepts.has(id));
+                                  return r.length ? `｜関連：${r.map(nm).join("・")}` : "";
+                                })()}
+                              </small>
+                            );
+                            return (
+                              <li key={it.id}>
+                                {it.open ? (
+                                  <button
+                                    type="button"
+                                    className={s.qRow}
+                                    onClick={() => onOpen(x.id, it.id)}
+                                    data-testid={`lab-open-${it.id}`}
+                                  >
+                                    <span className={s.qKey}>{short(it.id)}</span>
+                                    <span className={s.rowText}>
+                                      {it.title}
+                                      {roles}
+                                    </span>
+                                  </button>
+                                ) : (
+                                  <div
+                                    className={`${s.qRow} ${s.qDraft}`}
+                                    aria-disabled="true"
+                                    data-testid={`lab-open-${it.id}`}
+                                  >
+                                    <span className={s.qKey}>{short(it.id)}</span>
+                                    <span className={s.rowText}>
+                                      {it.title}
+                                      {roles}
+                                    </span>
+                                    <span className={s.qTag}>作成中</span>
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ))}
+                </>
+              ) : null}
               <button type="button" className={s.labCard} onClick={() => onOpen(x.id)} data-testid={`open-${x.id}`}>
                 <span className={s.labTag}>{x.title}</span>
-                {itemsOf(x).length
-                  ? <><b>{lead(x)}</b><Muted as="span">目的から問いを選ぶ（A〜F の問い {itemsOf(x).filter((it) => it.open).length}／{itemsOf(x).length}）・自分で条件を決めて比較</Muted></>
-                  : <><b>{x.question}</b><Muted as="span">実験室を開く</Muted></>}
+                {itemsOf(x).length ? (
+                  <>
+                    <b>{lead(x)}</b>
+                    <Muted as="span">
+                      目的から問いを選ぶ（A〜F の問い {itemsOf(x).filter((it) => it.open).length}／{itemsOf(x).length}
+                      ）・自分で条件を決めて比較
+                    </Muted>
+                  </>
+                ) : (
+                  <>
+                    <b>{x.question}</b>
+                    <Muted as="span">実験室を開く</Muted>
+                  </>
+                )}
               </button>
             </li>
           );
         })}
       </ul>
-      {!xs.length ? <Muted>{picked.length ? "選んだ概念をすべて使う問いはまだない。" : "実験室はまだない。"}</Muted> : null}
+      {!xs.length ? (
+        <Muted>{picked.length ? "選んだ概念をすべて使う問いはまだない。" : "実験室はまだない。"}</Muted>
+      ) : null}
     </section>
   );
 }
@@ -255,32 +542,79 @@ export function ProblemsPage({ net, focus = null }: { net: Network; focus?: Focu
   const [group, setGroup] = useState("");
   const [on, setOn] = useState(true);
   const only = focus && on ? new Set(focus.problems) : null;
-  const probsOf = (u: { problems?: { id: string; stage: string; prompt: string }[] }) => (u.problems ?? []).filter((p) => !only || only.has(p.id));
+  const probsOf = (u: { problems?: { id: string; stage: string; prompt: string }[] }) =>
+    (u.problems ?? []).filter((p) => !only || only.has(p.id));
   const units = [...net.units.values()].filter((u) => probsOf(u).length && (only || !group || u.group === group));
-  const [open, setOpen] = useState<string | null>(only && units[0] ? units[0].id : null);   // 絞ったときは最初の単元を開いておく
+  const [open, setOpen] = useState<string | null>(only && units[0] ? units[0].id : null); // 絞ったときは最初の単元を開いておく
   return (
     <section className={s.page} data-testid="page-problems">
       <h2 className={s.pageTitle}>問題集</h2>
-      <Muted>押すと Notion の単元ページの問題へ。解いた記録は Notion の解答記録に残す（このサイトは記録を持たない）。</Muted>
-      <FocusChip focus={focus} on={on} onToggle={() => { setOn(!on); setOpen(null); }} />
-      {!only ? <GroupChips net={net} value={group} onChange={(g) => { setGroup(g); setOpen(null); }} /> : null}
+      <Muted>
+        押すと Notion の単元ページの問題へ。解いた記録は Notion の解答記録に残す（このサイトは記録を持たない）。
+      </Muted>
+      <FocusChip
+        focus={focus}
+        on={on}
+        onToggle={() => {
+          setOn(!on);
+          setOpen(null);
+        }}
+      />
+      {!only ? (
+        <GroupChips
+          net={net}
+          value={group}
+          onChange={(g) => {
+            setGroup(g);
+            setOpen(null);
+          }}
+        />
+      ) : null}
       <ul className={s.list}>
         {units.map((u) => {
-          const ps = probsOf(u), isOpen = open === u.id;
+          const ps = probsOf(u),
+            isOpen = open === u.id;
           const stages = [...new Set(ps.map((p) => p.stage))];
           return (
             <li key={u.id}>
-              <button type="button" className={s.row} aria-expanded={isOpen} onClick={() => setOpen(isOpen ? null : u.id)} data-testid={`unit-${u.id}`}>
+              <button
+                type="button"
+                className={s.row}
+                aria-expanded={isOpen}
+                onClick={() => setOpen(isOpen ? null : u.id)}
+                data-testid={`unit-${u.id}`}
+              >
                 <span className={s.num}>{u.number}</span>
-                <span className={s.rowText}>{u.title}<small className={s.mute}>{ps.length} 問</small></span>
-                <span className={`${s.chev}${isOpen ? ` ${s.chevOn}` : ""}`} aria-hidden="true"><Icon name="chevron" size={16} /></span>
+                <span className={s.rowText}>
+                  {u.title}
+                  <small className={s.mute}>{ps.length} 問</small>
+                </span>
+                <span className={`${s.chev}${isOpen ? ` ${s.chevOn}` : ""}`} aria-hidden="true">
+                  <Icon name="chevron" size={16} />
+                </span>
               </button>
               {isOpen ? (
                 <div className={s.probs} data-testid={`problems-${u.id}`}>
-                  <div className={s.stageCounts}>{stages.map((st) => <span key={st}><b>{ps.filter((p) => p.stage === st).length}</b>{st}</span>)}</div>
-                  <ul>{ps.map((p) => (
-                    <li key={p.id}><a href={u.url} target="_blank" rel="noreferrer"><small>{p.id.replace(/^[\w-]+:/, "")}・{p.stage}</small>{p.prompt}</a></li>
-                  ))}</ul>
+                  <div className={s.stageCounts}>
+                    {stages.map((st) => (
+                      <span key={st}>
+                        <b>{ps.filter((p) => p.stage === st).length}</b>
+                        {st}
+                      </span>
+                    ))}
+                  </div>
+                  <ul>
+                    {ps.map((p) => (
+                      <li key={p.id}>
+                        <a href={u.url} target="_blank" rel="noreferrer">
+                          <small>
+                            {p.id.replace(/^[\w-]+:/, "")}・{p.stage}
+                          </small>
+                          {p.prompt}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : null}
             </li>

@@ -3,7 +3,15 @@ export * from "./types";
 export { toTex, symbolTex, formatNum, type TexOptions } from "./tex";
 export { evaluate, expand, substitute, symbolsIn, fnsIn, factorial, comb, type Env } from "./evaluate";
 export { validateFormula } from "./validate";
-export { definitionsFor, openSymbol, applyOpens, substituteFree, type Definition, type Opened, type OpenOptions } from "./open";
+export {
+  definitionsFor,
+  openSymbol,
+  applyOpens,
+  substituteFree,
+  type Definition,
+  type Opened,
+  type OpenOptions,
+} from "./open";
 export { freeSymbols, boundSymbols, renameBound, freshName, replaceFree } from "./scope";
 export { inDomain, describeDomain, checkDomain, sliderRange, stopReason } from "./domain";
 export { nodeAt, rhsOf, lhsOf, distribution } from "./parts";

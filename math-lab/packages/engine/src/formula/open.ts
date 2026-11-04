@@ -19,7 +19,8 @@ export function definitionsFor(key: string, formulas: Formula[]): Definition[] {
     const t = f.tree;
     if (!isOp(t) || t.op !== "eq" || t.args.length < 2) continue;
     const lhs = t.args[0]!;
-    const ok = (isSym(lhs) && lhs.sym === key) || (isOp(lhs) && lhs.op === "fn" && lhs.name === key && lhs.args.every(isSym));
+    const ok =
+      (isSym(lhs) && lhs.sym === key) || (isOp(lhs) && lhs.op === "fn" && lhs.name === key && lhs.args.every(isSym));
     if (ok) for (let side = 1; side < t.args.length; side++) out.push({ formula: f, side });
   }
   return out;
@@ -29,7 +30,10 @@ const clone = <T extends FormulaNode>(n: T): T => JSON.parse(JSON.stringify(n)) 
 
 /** 自由な記号の葉を別の木に置き換える（Σ・∫ で縛られた所は置き換えない） */
 export function substituteFree(node: FormulaNode, map: ReadonlyMap<string, FormulaNode>): FormulaNode {
-  return replaceFree(node, (k) => { const r = map.get(k); return r ? clone(r) : undefined; });   // 決まりは replaceFree の1か所（#142）
+  return replaceFree(node, (k) => {
+    const r = map.get(k);
+    return r ? clone(r) : undefined;
+  }); // 決まりは replaceFree の1か所（#142）
 }
 
 export type OpenOptions = {
@@ -37,7 +41,13 @@ export type OpenOptions = {
   resolve?: (symbol: FormulaSymbol) => Definition[];
 };
 
-export type Opened = { tree: FormulaNode; symbols: FormulaSymbol[]; marks: Map<FormulaNode, string>; count: number; reason?: string };
+export type Opened = {
+  tree: FormulaNode;
+  symbols: FormulaSymbol[];
+  marks: Map<FormulaNode, string>;
+  count: number;
+  reason?: string;
+};
 
 const sub = (s: string) => s.replace(/_\{?([^}]*)\}?$/, "").trim();
 
@@ -45,9 +55,17 @@ const sub = (s: string) => s.replace(/_\{?([^}]*)\}?$/, "").trim();
  * 記号 key を定義で開く。開いた所（置き換えた木）を marks に key で記録する。count は開いた数（0 なら開けなかった。reason に理由）。
  * 定義の式の記号は、まだない key だけ symbols に足す（同じ key は元の式の意味を残す）。
  */
-export function openSymbol(tree: FormulaNode, symbols: FormulaSymbol[], key: string, def: Definition, marks = new Map<FormulaNode, string>(), opt: OpenOptions = {}): Opened {
+export function openSymbol(
+  tree: FormulaNode,
+  symbols: FormulaSymbol[],
+  key: string,
+  def: Definition,
+  marks = new Map<FormulaNode, string>(),
+  opt: OpenOptions = {},
+): Opened {
   const t = def.formula.tree as OpNode;
-  const lhs = t.args[0]!, rhs = t.args[def.side]!;
+  const lhs = t.args[0]!,
+    rhs = t.args[def.side]!;
   const defSyms = def.formula.symbols;
   const extra: FormulaSymbol[] = [];
   const outer = freeSymbols(tree);
@@ -61,18 +79,27 @@ export function openSymbol(tree: FormulaNode, symbols: FormulaSymbol[], key: str
     const rename = new Map<string, FormulaNode>();
     for (const [p, arg] of params) {
       for (const s of defSyms.filter((x) => x.of === p && freeSymbols(body).has(x.key))) {
-        if (isSym(arg) && arg.sym === p) continue;   // 同じ確率変数のまま
+        if (isSym(arg) && arg.sym === p) continue; // 同じ確率変数のまま
         if (isSym(arg)) {
           const k = `${s.key}_${arg.sym}`;
           const argSym = symbols.find((x) => x.key === arg.sym)?.symbol ?? arg.sym;
           const pSym = defSyms.find((x) => x.key === p)?.symbol ?? p;
           if (![...symbols, ...extra].some((x) => x.key === k))
-            extra.push({ ...s, key: k, symbol: `${sub(s.symbol)}_${argSym}`, of: arg.sym, meaning: s.meaning.split(pSym).join(argSym) });
+            extra.push({
+              ...s,
+              key: k,
+              symbol: `${sub(s.symbol)}_${argSym}`,
+              of: arg.sym,
+              meaning: s.meaning.split(pSym).join(argSym),
+            });
           rename.set(s.key, { sym: k });
         } else {
           const d = opt.resolve?.(s).find((x) => isSym((x.formula.tree as OpNode).args[0]!));
-          if (!d) { reason = `${s.symbol} は ${p} に属する記号で、引数が式のときに置き換える定義が見つからない`; return null; }
-          rename.set(s.key, clone((d.formula.tree as OpNode).args[d.side]!));   // μ → E(X)（このあと X → aX+b）
+          if (!d) {
+            reason = `${s.symbol} は ${p} に属する記号で、引数が式のときに置き換える定義が見つからない`;
+            return null;
+          }
+          rename.set(s.key, clone((d.formula.tree as OpNode).args[d.side]!)); // μ → E(X)（このあと X → aX+b）
         }
       }
     }
@@ -81,7 +108,13 @@ export function openSymbol(tree: FormulaNode, symbols: FormulaSymbol[], key: str
     const avoid = new Set([...outer, ...[...params.values()].flatMap((a) => [...freeSymbols(a)])]);
     for (const v of boundSymbols(body)) {
       if (!avoid.has(v)) continue;
-      const used = new Set([...avoid, ...boundSymbols(body), ...freeSymbols(body), ...symbols.map((x) => x.key), ...extra.map((x) => x.key)]);
+      const used = new Set([
+        ...avoid,
+        ...boundSymbols(body),
+        ...freeSymbols(body),
+        ...symbols.map((x) => x.key),
+        ...extra.map((x) => x.key),
+      ]);
       const nv = freshName(v, used);
       body = renameBound(body, v, nv);
       const s = defSyms.find((x) => x.key === v);
@@ -94,20 +127,33 @@ export function openSymbol(tree: FormulaNode, symbols: FormulaSymbol[], key: str
 
   const walk = (n: FormulaNode): FormulaNode => {
     if (isSym(n)) {
-      if (isSym(lhs) && n.sym === key) { const r = build(new Map()); if (!r) return n; count++; marks.set(r, key); return r; }
+      if (isSym(lhs) && n.sym === key) {
+        const r = build(new Map());
+        if (!r) return n;
+        count++;
+        marks.set(r, key);
+        return r;
+      }
       return n;
     }
     if (isNum(n)) return n;
     if (n.op === "fn" && n.name === key && isOp(lhs) && lhs.op === "fn" && n.args.length === lhs.args.length) {
       const params = new Map<string, FormulaNode>(lhs.args.map((p, i) => [(p as { sym: string }).sym, n.args[i]!]));
       const r = build(params);
-      if (r) { count++; marks.set(r, key); return r; }
+      if (r) {
+        count++;
+        marks.set(r, key);
+        return r;
+      }
     }
     const out: OpNode = { ...n, args: n.args.map(walk) };
     if (n.lower) out.lower = walk(n.lower);
     if (n.upper) out.upper = walk(n.upper);
     const m = marks.get(n);
-    if (m !== undefined) { marks.delete(n); marks.set(out, m); }   // 開いた所の中をさらに開いても印を残す
+    if (m !== undefined) {
+      marks.delete(n);
+      marks.set(out, m);
+    } // 開いた所の中をさらに開いても印を残す
     return out;
   };
   const next = walk(tree);

@@ -29,25 +29,43 @@ export function comb(n: number, k: number): number {
 }
 
 const BUILTIN: Record<string, (...a: number[]) => number> = {
-  comb, fact: factorial, exp: Math.exp, log: Math.log,
+  comb,
+  fact: factorial,
+  exp: Math.exp,
+  log: Math.log,
   // 比べる式（記号どうしの条件。教材の契約の conditions。#118）：成り立てば 1、成り立たなければ 0
-  gt: (a, b) => +(a! > b!), ge: (a, b) => +(a! >= b!), lt: (a, b) => +(a! < b!), le: (a, b) => +(a! <= b!),
+  gt: (a, b) => +(a! > b!),
+  ge: (a, b) => +(a! >= b!),
+  lt: (a, b) => +(a! < b!),
+  le: (a, b) => +(a! <= b!),
   between: (x, a, b) => +(a! <= x! && x! <= b!),
 };
 
 /** 1つの演算を、引数の値から計算する（計算できなければ undefined） */
 function apply(n: OpNode, v: number[], env: Env): number | undefined {
   switch (n.op) {
-    case "add": return v.reduce((s, x) => s + x, 0);
-    case "sub": return v.slice(1).reduce((s, x) => s - x, v[0]!);
-    case "mul": return v.reduce((s, x) => s * x, 1);
-    case "div": return v[0]! / v[1]!;
-    case "pow": return v[0]! ** v[1]!;
-    case "neg": return -v[0]!;
-    case "sqrt": return Math.sqrt(v[0]!);
-    case "abs": return Math.abs(v[0]!);
-    case "fn": { const f = env.fns?.[n.name ?? ""] ?? BUILTIN[n.name ?? ""]; return f ? f(...v) : undefined; }
-    default: return undefined;   // eq・sum・prod・int は値にしない（式の形のまま）
+    case "add":
+      return v.reduce((s, x) => s + x, 0);
+    case "sub":
+      return v.slice(1).reduce((s, x) => s - x, v[0]!);
+    case "mul":
+      return v.reduce((s, x) => s * x, 1);
+    case "div":
+      return v[0]! / v[1]!;
+    case "pow":
+      return v[0]! ** v[1]!;
+    case "neg":
+      return -v[0]!;
+    case "sqrt":
+      return Math.sqrt(v[0]!);
+    case "abs":
+      return Math.abs(v[0]!);
+    case "fn": {
+      const f = env.fns?.[n.name ?? ""] ?? BUILTIN[n.name ?? ""];
+      return f ? f(...v) : undefined;
+    }
+    default:
+      return undefined; // eq・sum・prod・int は値にしない（式の形のまま）
   }
 }
 
@@ -62,16 +80,22 @@ const MAX_TERMS = 10000;
 /** Σ・Π の動かす記号がとる値：端が整数ならその範囲、端がなければ domains の一覧（どちらもなければ undefined） */
 function rangeOf(node: OpNode, env: Env): number[] | undefined {
   if (!node.var) return undefined;
-  if (!node.lower && !node.upper) { const d = env.domains?.[node.var]; return d && d.length <= MAX_TERMS ? d : undefined; }
+  if (!node.lower && !node.upper) {
+    const d = env.domains?.[node.var];
+    return d && d.length <= MAX_TERMS ? d : undefined;
+  }
   if (!node.lower || !node.upper) return undefined;
-  const lo = evaluate(node.lower, env), hi = evaluate(node.upper, env);
-  if (lo === undefined || hi === undefined || !Number.isInteger(lo) || !Number.isInteger(hi) || hi - lo + 1 > MAX_TERMS) return undefined;
+  const lo = evaluate(node.lower, env),
+    hi = evaluate(node.upper, env);
+  if (lo === undefined || hi === undefined || !Number.isInteger(lo) || !Number.isInteger(hi) || hi - lo + 1 > MAX_TERMS)
+    return undefined;
   return Array.from({ length: Math.max(0, hi - lo + 1) }, (_, i) => lo + i);
 }
 
 function bigOp(node: OpNode, env: Env): number | undefined {
   if (node.op !== "sum" && node.op !== "prod") return undefined;
-  const xs = rangeOf(node, env); if (!xs) return undefined;
+  const xs = rangeOf(node, env);
+  if (!xs) return undefined;
   let r = node.op === "sum" ? 0 : 1;
   for (const i of xs) {
     const x = evaluate(node.args[0]!, { ...env, values: { ...env.values, [node.var!]: i } });
@@ -92,26 +116,44 @@ export function evaluate(node: FormulaNode, env: Env = {}): number | undefined {
   if (isSym(node)) return symValue(node.sym, env);
   if (node.op === "sum" || node.op === "prod") return bigOp(node, env);
   const v: number[] = [];
-  for (const a of node.args) { const x = evaluate(a, env); if (x === undefined) return undefined; v.push(x); }
+  for (const a of node.args) {
+    const x = evaluate(a, env);
+    if (x === undefined) return undefined;
+    v.push(x);
+  }
   return apply(node, v, env);
 }
 
 /** 記号に値を入れた木（値のない記号はそのまま。e・π は記号のまま残す）。
  *  Σ・Π・∫ の動かす記号は、その中では外の同じ名前の値で置き換えない（#142：Σ_{x=1}^{3} x を x＝10 で 30 にしていた）。決まりは replaceFree の1か所 */
 export function substitute(node: FormulaNode, env: Env): FormulaNode {
-  return replaceFree(node, (k) => { const x = env.values?.[k]; return x === undefined ? undefined : { num: x }; });
+  return replaceFree(node, (k) => {
+    const x = env.values?.[k];
+    return x === undefined ? undefined : { num: x };
+  });
 }
 
 /** 引数がすべて数になった演算を、1段だけ計算する（同じ深さのものはいっしょに）。変わらなければ同じ木を返す */
 function stepOnce(node: FormulaNode, env: Env): FormulaNode {
   if (!isOp(node)) return node;
   // 端のない Σ_x（x が値の一覧をとる）は、1段で項に開く：Σ_x x·p(x) → 1·p(1)＋2·p(2)＋…（どの値を足すかが見える。項が多すぎれば開かない）
-  if (node.op === "sum" && node.var && !node.lower && !node.upper && env.domains?.[node.var] && env.domains[node.var]!.length <= 12) {
+  if (
+    node.op === "sum" &&
+    node.var &&
+    !node.lower &&
+    !node.upper &&
+    env.domains?.[node.var] &&
+    env.domains[node.var]!.length <= 12
+  ) {
     const terms = env.domains[node.var]!.map((x) => substituteVar(node.args[0]!, node.var!, x));
     return terms.length === 0 ? { num: 0 } : terms.length === 1 ? terms[0]! : { op: "add", args: terms };
   }
   // Σ・Π は、端が数になっていれば1段で値にする（中の動かす記号は外から入れない）
-  if ((node.op === "sum" || node.op === "prod") && ((node.lower && node.upper && isNum(node.lower) && isNum(node.upper)) || (!node.lower && !node.upper && node.var && env.domains?.[node.var]))) {
+  if (
+    (node.op === "sum" || node.op === "prod") &&
+    ((node.lower && node.upper && isNum(node.lower) && isNum(node.upper)) ||
+      (!node.lower && !node.upper && node.var && env.domains?.[node.var]))
+  ) {
     const r = bigOp(node, { fns: env.fns, domains: env.domains });
     if (r !== undefined && Number.isFinite(r)) return { num: r };
   }
@@ -123,7 +165,8 @@ function stepOnce(node: FormulaNode, env: Env): FormulaNode {
   }
   const args = node.args.map((a) => stepOnce(a, env));
   // Σ・Π の端（10−3 など）も1段ずつ計算する
-  const lower = node.lower && stepOnce(node.lower, env), upper = node.upper && stepOnce(node.upper, env);
+  const lower = node.lower && stepOnce(node.lower, env),
+    upper = node.upper && stepOnce(node.upper, env);
   if (args.every((a, i) => a === node.args[i]) && lower === node.lower && upper === node.upper) return node;
   const out: OpNode = { ...node, args };
   if (lower) out.lower = lower;
@@ -167,7 +210,10 @@ export function fnsIn(node: FormulaNode): string[] {
 export function symbolsIn(node: FormulaNode): string[] {
   const out: string[] = [];
   const walk = (n: FormulaNode) => {
-    if (isSym(n)) { if (!out.includes(n.sym)) out.push(n.sym); return; }
+    if (isSym(n)) {
+      if (!out.includes(n.sym)) out.push(n.sym);
+      return;
+    }
     if (isNum(n)) return;
     if (n.var && !out.includes(n.var)) out.push(n.var);
     n.args.forEach(walk);

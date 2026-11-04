@@ -17,8 +17,13 @@ const i = process.argv.indexOf("--from");
 if (i > 0) {
   const from = process.argv[i + 1];
   const ref = execFileSync("git", ["-C", from, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
-  const dirty = execFileSync("git", ["-C", from, "status", "--porcelain", "docs/formula-correctness"], { encoding: "utf8" }).trim();
-  if (dirty) { console.error(`❌ ${from} に取り込んでいない変更がある（コミットして GitHub に送った版から取り込む）`); process.exit(1); }
+  const dirty = execFileSync("git", ["-C", from, "status", "--porcelain", "docs/formula-correctness"], {
+    encoding: "utf8",
+  }).trim();
+  if (dirty) {
+    console.error(`❌ ${from} に取り込んでいない変更がある（コミットして GitHub に送った版から取り込む）`);
+    process.exit(1);
+  }
   for (const [src, dst] of FILES) writeFileSync(dst, readFileSync(`${from}/${src}`, "utf8"));
   writeFileSync(LOCK, JSON.stringify({ ref, files: FILES.map(([s]) => s) }, null, 1) + "\n");
   console.log(`取り込んだ：stats2-course ${ref.slice(0, 7)}（${FILES.length} ファイル）`);
@@ -27,9 +32,20 @@ if (i > 0) {
   const bad = [];
   for (const [src, dst] of FILES) {
     const r = await fetch(`${RAW}/${ref}/${src}`);
-    if (!r.ok) { bad.push(`${src}：stats2-course ${ref.slice(0, 7)} から読めない（${r.status}）`); continue; }
-    if ((await r.text()) !== readFileSync(dst, "utf8")) bad.push(`${dst}：stats2-course ${ref.slice(0, 7)} の ${src} と違う`);
+    if (!r.ok) {
+      bad.push(`${src}：stats2-course ${ref.slice(0, 7)} から読めない（${r.status}）`);
+      continue;
+    }
+    if ((await r.text()) !== readFileSync(dst, "utf8"))
+      bad.push(`${dst}：stats2-course ${ref.slice(0, 7)} の ${src} と違う`);
   }
-  if (bad.length) { console.error("❌ 教材の写し\n" + bad.join("\n") + "\n（教材で直し、node scripts/sync-stats2.mjs --from ../stats2-course で取り込む）"); process.exit(1); }
+  if (bad.length) {
+    console.error(
+      "❌ 教材の写し\n" +
+        bad.join("\n") +
+        "\n（教材で直し、node scripts/sync-stats2.mjs --from ../stats2-course で取り込む）",
+    );
+    process.exit(1);
+  }
   console.log(`✅ 教材の写し（stats2-course ${ref.slice(0, 7)}・${FILES.length} ファイル）は元と同じ`);
 }

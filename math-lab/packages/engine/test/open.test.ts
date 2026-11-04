@@ -17,16 +17,18 @@ describe("記号を開く", () => {
     expect(a.count).toBe(1);
     expect(tex(a)).toBe("Z=\\dfrac{X-\\mu}{\\sqrt{V(X)}}");
     const defs = definitionsFor("V", of("TERM-var"));
-    expect(defs.length).toBe(2);   // V(X)＝E((X−μ)²)＝E(X²)−E(X)² の2つの形（V(aX+b) は引数が式なので候補にしない）
+    expect(defs.length).toBe(2); // V(X)＝E((X−μ)²)＝E(X²)−E(X)² の2つの形（V(aX+b) は引数が式なので候補にしない）
     const b = openSymbol(a.tree, a.symbols, "V", defs[0]!, a.marks);
     expect(tex(b)).toBe("Z=\\dfrac{X-\\mu}{\\sqrt{E((X-\\mu)^{2})}}");
     expect(tex(openSymbol(a.tree, a.symbols, "V", defs[1]!))).toBe("Z=\\dfrac{X-\\mu}{\\sqrt{E(X^{2})-(E(X))^{2}}}");
-    expect(b.symbols.map((s) => s.key)).toContain("E");   // 開いた式の記号（E）を足す
+    expect(b.symbols.map((s) => s.key)).toContain("E"); // 開いた式の記号（E）を足す
   });
   it("開いた所に印が付く（画面で淡く光らせる）", () => {
     const [sd] = definitionsFor("sigma", of("TERM-sd"));
     const a = openSymbol(z.tree, z.symbols, "sigma", sd!);
-    expect(toTex(a.tree, { symbols: a.symbols, mark: (n) => a.marks.get(n) })).toContain("\\htmlData{open=sigma}{\\sqrt{V(X)}}");
+    expect(toTex(a.tree, { symbols: a.symbols, mark: (n) => a.marks.get(n) })).toContain(
+      "\\htmlData{open=sigma}{\\sqrt{V(X)}}",
+    );
   });
   it("関数は引数を結び付け、属する記号も移す：V(Z) → E((Z−μ_Z)²)、μ_Z は「Z の期待値」", () => {
     const vz = find("TERM-std", 2);
@@ -37,62 +39,92 @@ describe("記号を開く", () => {
   });
   it("引数が式のとき、属する記号は自分の定義で開いてから移す：V(aX+b) → E((aX+b−E(aX+b))²)", () => {
     const f = find("TERM-var", 1);
-    const resolve = (s: { concept?: string; key: string }) => definitionsFor(s.key, all.filter((g) => g.concept === s.concept));
+    const resolve = (s: { concept?: string; key: string }) =>
+      definitionsFor(
+        s.key,
+        all.filter((g) => g.concept === s.concept),
+      );
     const r = openSymbol(f.tree, f.symbols, "V", definitionsFor("V", of("TERM-var"))[0]!, new Map(), { resolve });
     expect(r.count).toBe(2);
     expect(tex(r)).toBe("E((aX+b-E(aX+b))^{2})=a^{2}E((X-\\mu)^{2})");
   });
   it("属する記号の定義が見つからなければ、引数が式の所は開かない（理由を返す）", () => {
     const f = find("TERM-var", 1);
-    const aXb = ((f.tree as { args: FormulaNode[] }).args[0] as { args: FormulaNode[] }).args[0]!;   // V(aX+b) の aX+b
+    const aXb = ((f.tree as { args: FormulaNode[] }).args[0] as { args: FormulaNode[] }).args[0]!; // V(aX+b) の aX+b
     const r = openSymbol({ op: "fn", name: "V", args: [aXb] }, f.symbols, "V", definitionsFor("V", of("TERM-var"))[0]!);
     expect(r.count).toBe(0);
     expect(r.reason).toContain("μ は X に属する記号");
   });
   it("閉じる＝手順から外して当て直す", () => {
-    const sd = definitionsFor("sigma", of("TERM-sd"))[0]!, v = definitionsFor("V", of("TERM-var"))[0]!;
-    const both = applyOpens(z, [{ key: "sigma", def: sd }, { key: "V", def: v }]);
+    const sd = definitionsFor("sigma", of("TERM-sd"))[0]!,
+      v = definitionsFor("V", of("TERM-var"))[0]!;
+    const both = applyOpens(z, [
+      { key: "sigma", def: sd },
+      { key: "V", def: v },
+    ]);
     expect(both.count).toBe(2);
     expect(tex(applyOpens(z, [{ key: "sigma", def: sd }]))).toBe("Z=\\dfrac{X-\\mu}{\\sqrt{V(X)}}");
     expect(tex(applyOpens(z, []))).toBe(tex(z));
   });
   it("教材の35式で、概念を指す記号のうち開けるものはすべて開け、TeX にできる", () => {
     let opened = 0;
-    for (const f of all) for (const s of f.symbols) {
-      if (!s.concept) continue;
-      const target = all.filter((g) => `${g.concept}` === s.concept);
-      const resolve = (x: { concept?: string; key: string }) => definitionsFor(x.key, all.filter((g) => g.concept === x.concept));
-      for (const d of definitionsFor(s.key, target)) {
-        const r = openSymbol(f.tree, f.symbols, s.key, d, new Map(), { resolve });
-        if (r.count) { opened++; expect(() => toTex(r.tree, { symbols: r.symbols })).not.toThrow(); }
+    for (const f of all)
+      for (const s of f.symbols) {
+        if (!s.concept) continue;
+        const target = all.filter((g) => `${g.concept}` === s.concept);
+        const resolve = (x: { concept?: string; key: string }) =>
+          definitionsFor(
+            x.key,
+            all.filter((g) => g.concept === x.concept),
+          );
+        for (const d of definitionsFor(s.key, target)) {
+          const r = openSymbol(f.tree, f.symbols, s.key, d, new Map(), { resolve });
+          if (r.count) {
+            opened++;
+            expect(() => toTex(r.tree, { symbols: r.symbols })).not.toThrow();
+          }
+        }
       }
-    }
     expect(opened).toBeGreaterThan(20);
   });
 });
 
 // 性質：a＝（b と c の式）で a を開いても、a にその値を入れた式と同じ値になる
-const leaf: fc.Arbitrary<FormulaNode> = fc.oneof(fc.integer({ min: 1, max: 9 }).map((n) => ({ num: n })), fc.constantFrom("b", "c").map((s) => ({ sym: s })));
-const expr = (withA: boolean): fc.Arbitrary<FormulaNode> => fc.letrec<{ t: FormulaNode }>((tie) => ({
-  t: fc.oneof({ depthSize: "small" }, withA ? fc.oneof(leaf, fc.constant({ sym: "a" })) : leaf,
-    fc.record({ op: fc.constantFrom("add", "sub", "mul"), args: fc.array(tie("t"), { minLength: 2, maxLength: 3 }) }),
-    fc.record({ op: fc.constant("div"), args: fc.tuple(tie("t"), tie("t")) }),
-    fc.record({ op: fc.constantFrom("neg", "sqrt"), args: fc.tuple(tie("t")) })) as fc.Arbitrary<FormulaNode>,
-})).t;
+const leaf: fc.Arbitrary<FormulaNode> = fc.oneof(
+  fc.integer({ min: 1, max: 9 }).map((n) => ({ num: n })),
+  fc.constantFrom("b", "c").map((s) => ({ sym: s })),
+);
+const expr = (withA: boolean): fc.Arbitrary<FormulaNode> =>
+  fc.letrec<{ t: FormulaNode }>((tie) => ({
+    t: fc.oneof(
+      { depthSize: "small" },
+      withA ? fc.oneof(leaf, fc.constant({ sym: "a" })) : leaf,
+      fc.record({ op: fc.constantFrom("add", "sub", "mul"), args: fc.array(tie("t"), { minLength: 2, maxLength: 3 }) }),
+      fc.record({ op: fc.constant("div"), args: fc.tuple(tie("t"), tie("t")) }),
+      fc.record({ op: fc.constantFrom("neg", "sqrt"), args: fc.tuple(tie("t")) }),
+    ) as fc.Arbitrary<FormulaNode>,
+  })).t;
 
 describe("性質", () => {
   it("開いても値は変わらない", () => {
-    fc.assert(fc.property(expr(true), expr(false), (body, def) => {
-      const vals = { b: 2.5, c: 4 };
-      const a = evaluate(def, { values: vals });
-      fc.pre(a !== undefined && Number.isFinite(a));
-      const before = evaluate(body, { values: { ...vals, a } });
-      fc.pre(before !== undefined && Number.isFinite(before));
-      const sym = [{ symbol: "a", meaning: "a", key: "a" }, { symbol: "b", meaning: "b", key: "b" }, { symbol: "c", meaning: "c", key: "c" }];
-      const d = { formula: { symbols: sym, tree: { op: "eq", args: [{ sym: "a" }, def] } as FormulaNode }, side: 1 };
-      const r = openSymbol(body, sym, "a", d);
-      const after = evaluate(r.tree, { values: vals });
-      expect(after).toBeCloseTo(before!, 9);
-    }), { numRuns: 300 });
+    fc.assert(
+      fc.property(expr(true), expr(false), (body, def) => {
+        const vals = { b: 2.5, c: 4 };
+        const a = evaluate(def, { values: vals });
+        fc.pre(a !== undefined && Number.isFinite(a));
+        const before = evaluate(body, { values: { ...vals, a } });
+        fc.pre(before !== undefined && Number.isFinite(before));
+        const sym = [
+          { symbol: "a", meaning: "a", key: "a" },
+          { symbol: "b", meaning: "b", key: "b" },
+          { symbol: "c", meaning: "c", key: "c" },
+        ];
+        const d = { formula: { symbols: sym, tree: { op: "eq", args: [{ sym: "a" }, def] } as FormulaNode }, side: 1 };
+        const r = openSymbol(body, sym, "a", d);
+        const after = evaluate(r.tree, { values: vals });
+        expect(after).toBeCloseTo(before!, 9);
+      }),
+      { numRuns: 300 },
+    );
   });
 });

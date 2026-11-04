@@ -12,11 +12,19 @@ async function open(page: Page, name: RegExp) {
   return panel;
 }
 /** 並べた棒（MultiBars）の矩形を系列ごとに分けて、高さを値の順に返す（系列は class で分かれ、DOM は系列の順に並ぶ） */
-const seriesHeights = (panel: ReturnType<Page["getByTestId"]>) => panel.getByTestId("rel-chart").locator("[data-testid=exp-multibars] rect").evaluateAll((es) => {
-  const by = new Map<string, { x: number; h: number }[]>();
-  for (const e of es) { const c = e.getAttribute("class")!; if (!by.has(c)) by.set(c, []); by.get(c)!.push({ x: Number(e.getAttribute("x")), h: Number(e.getAttribute("height")) }); }
-  return [...by.values()].map((v) => v.map((q) => q.h));
-});
+const seriesHeights = (panel: ReturnType<Page["getByTestId"]>) =>
+  panel
+    .getByTestId("rel-chart")
+    .locator("[data-testid=exp-multibars] rect")
+    .evaluateAll((es) => {
+      const by = new Map<string, { x: number; h: number }[]>();
+      for (const e of es) {
+        const c = e.getAttribute("class")!;
+        if (!by.has(c)) by.set(c, []);
+        by.get(c)!.push({ x: Number(e.getAttribute("x")), h: Number(e.getAttribute("height")) });
+      }
+      return [...by.values()].map((v) => v.map((q) => q.h));
+    });
 
 // 確かめる対象：対比の面の並び（つまり → 同じ所・違う所・だから → 図）と、図が2つの分布を正しいモデルで描くこと。
 // 想定する故障：段の並びや名前が崩れる・図の系列が入れ替わる・超幾何分布の数（N・K）の取り違え・画像の図を重ねて出す。
@@ -26,11 +34,20 @@ test("対比：つまり → 同じ所・違う所・だから → 2つの分布
   const panel = await open(page, /二項分布 と 超幾何分布 を比べる/);
   await expect(panel.getByTestId("rel-stages").locator("dt")).toHaveText(["同じ所", "違う所", "だから"]);
   // 面が上がる動きの途中で別々に測るとずれるので、同じ時点の位置を一度に測り、落ち着くまで待つ
-  await expect.poll(() => panel.evaluate((el) => ["gist", "rel-stages", "rel-chart"].map((id) => el.querySelector(`[data-testid=${id}]`)!.getBoundingClientRect().top))
-    .then((ys) => ys.every((y, i) => !i || y > ys[i - 1]!))).toBe(true);
+  await expect
+    .poll(() =>
+      panel
+        .evaluate((el) =>
+          ["gist", "rel-stages", "rel-chart"].map(
+            (id) => el.querySelector(`[data-testid=${id}]`)!.getBoundingClientRect().top,
+          ),
+        )
+        .then((ys) => ys.every((y, i) => !i || y > ys[i - 1]!)),
+    )
+    .toBe(true);
   const [bin, hyp] = await seriesHeights(panel);
   expect(hyp![3]! / bin![3]!).toBeCloseTo(0.37152 / 0.26683, 2);
-  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio", { name: /図/ })).toHaveCount(0);   // 画像の図は重ねない
+  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio", { name: /図/ })).toHaveCount(0); // 画像の図は重ねない
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 
@@ -54,16 +71,25 @@ test("変換（近似）：元の形・変える操作・行き着く形と、�
   await expect(panel.getByTestId("rel-conds")).toContainText("近似");
   const chart = panel.getByTestId("rel-chart");
   const got = await chart.locator("svg").evaluate((svg) => {
-    const pts = svg.querySelector("[data-testid=exp-curve]")!.getAttribute("d")!.slice(1).split("L").map((q) => q.split(",").map(Number));
+    const pts = svg
+      .querySelector("[data-testid=exp-curve]")!
+      .getAttribute("d")!
+      .slice(1)
+      .split("L")
+      .map((q) => q.split(",").map(Number));
     const top = pts.reduce((a, b) => (b[1]! < a[1]! ? b : a));
     const labels = [...svg.querySelectorAll("text")].filter((t) => t.textContent === "8");
-    const rects = [...svg.querySelectorAll("rect")].map((r) => ({ x: Number(r.getAttribute("x")) + Number(r.getAttribute("width")) / 2, y: Number(r.getAttribute("y")), h: Number(r.getAttribute("height")) }));
+    const rects = [...svg.querySelectorAll("rect")].map((r) => ({
+      x: Number(r.getAttribute("x")) + Number(r.getAttribute("width")) / 2,
+      y: Number(r.getAttribute("y")),
+      h: Number(r.getAttribute("height")),
+    }));
     const base = rects[0]!.y + rects[0]!.h;
     const nine = rects.reduce((a, b) => (Math.abs(b.x - top[0]!) < Math.abs(a.x - top[0]!) ? b : a));
     const eight = Number(labels[0]?.getAttribute("x"));
     return { dx: Math.abs(nine.x - top[0]!), barW: Math.abs(nine.x - eight), ratio: (base - top[1]!) / nine.h };
   });
-  expect(got.dx).toBeLessThan(got.barW / 2);       // 曲線の山が、8 回の隣（9 回）の棒の上にある
+  expect(got.dx).toBeLessThan(got.barW / 2); // 曲線の山が、8 回の隣（9 回）の棒の上にある
   expect(got.barW).toBeGreaterThan(5);
   expect(got.ratio).toBeCloseTo(0.1589 / 0.1573, 1);
 });

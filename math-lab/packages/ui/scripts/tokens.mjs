@@ -19,7 +19,13 @@ export function flatten(json) {
       const type = t.$type ?? g.$type;
       if (!type) throw new Error(`${group}.${name} に $type がない`);
       const dark = t.$extensions?.dark;
-      out.push([name, value(t, type), dark === undefined ? null : value({ $value: dark }, type), t.$description ?? "", type]);
+      out.push([
+        name,
+        value(t, type),
+        dark === undefined ? null : value({ $value: dark }, type),
+        t.$description ?? "",
+        type,
+      ]);
     }
   }
   const names = out.map((o) => o[0]);

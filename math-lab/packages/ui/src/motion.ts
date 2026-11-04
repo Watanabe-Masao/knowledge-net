@@ -6,14 +6,18 @@
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
-export const reduced = (): boolean => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+export const reduced = (): boolean =>
+  typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 type VTDoc = Document & { startViewTransition?: (cb: () => void) => { finished: Promise<void> } };
 
 /** el の中身を update で変え、前後を短くつなぐ。el に一時だけ名前を付けるので、同じ画面に何個あっても重ならない。 */
 export function change(el: HTMLElement | null, update: () => void): void {
   const doc = document as VTDoc;
-  if (!el || !doc.startViewTransition || reduced()) { update(); return; }
+  if (!el || !doc.startViewTransition || reduced()) {
+    update();
+    return;
+  }
   el.style.setProperty("view-transition-name", "kn-change");
   const t = doc.startViewTransition(() => flushSync(update));
   t.finished.finally(() => el.style.removeProperty("view-transition-name"));
@@ -24,7 +28,10 @@ export function flash(el: Element | null): void {
   if (!el || reduced() || !("animate" in el)) return;
   const css = getComputedStyle(document.documentElement);
   const ms = parseFloat(css.getPropertyValue("--dur-flash")) || 700;
-  (el as HTMLElement).animate([{ backgroundColor: css.getPropertyValue("--flash").trim() || "transparent" }, { backgroundColor: "transparent" }], { duration: ms, easing: "ease-out" });
+  (el as HTMLElement).animate(
+    [{ backgroundColor: css.getPropertyValue("--flash").trim() || "transparent" }, { backgroundColor: "transparent" }],
+    { duration: ms, easing: "ease-out" },
+  );
 }
 
 let sw: HTMLLabelElement | null = null;
@@ -62,17 +69,28 @@ export function useTween(target: number[], ms?: number): number[] {
   const now = useRef(target);
   const key = target.join(",");
   useEffect(() => {
-    if (reduced()) { now.current = target; setCur(target); return; }
-    const from = now.current, dur = ms ?? tokenMs("--dur-sheet", 320), t0 = performance.now();
+    if (reduced()) {
+      now.current = target;
+      setCur(target);
+      return;
+    }
+    const from = now.current,
+      dur = ms ?? tokenMs("--dur-sheet", 320),
+      t0 = performance.now();
     let raf = 0;
     const step = (t: number) => {
-      const u = Math.min(1, (t - t0) / dur), e = 1 - (1 - u) ** 3;
-      const v = target.map((x, i) => { const f = from[i] ?? 0; return u >= 1 || !Number.isFinite(x) || !Number.isFinite(f) ? x : f + (x - f) * e; });
-      now.current = v; setCur(v);
+      const u = Math.min(1, (t - t0) / dur),
+        e = 1 - (1 - u) ** 3;
+      const v = target.map((x, i) => {
+        const f = from[i] ?? 0;
+        return u >= 1 || !Number.isFinite(x) || !Number.isFinite(f) ? x : f + (x - f) * e;
+      });
+      now.current = v;
+      setCur(v);
       if (u < 1) raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [key]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
   return target.map((x, i) => cur[i] ?? x);
 }

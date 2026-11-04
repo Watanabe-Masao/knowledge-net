@@ -17,9 +17,14 @@ const raw = async (ref) => {
 if (process.argv.includes("--update")) {
   let ref = process.argv[process.argv.indexOf("--update") + 1];
   if (!ref || !/^[0-9a-f]{40}$/.test(ref)) {
-    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;   // 回数の制限を避ける（なくても読める）
-    const r = await fetch(`https://api.github.com/repos/${REPO}/commits/main`, { headers: { "User-Agent": "knowledge-net-sync", ...(token ? { Authorization: `Bearer ${token}` } : {}) } });
-    if (!r.ok) { console.error(`❌ ${REPO} の main を読めない（${r.status}）。コミットを渡して --update <コミット> でもよい`); process.exit(1); }
+    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN; // 回数の制限を避ける（なくても読める）
+    const r = await fetch(`https://api.github.com/repos/${REPO}/commits/main`, {
+      headers: { "User-Agent": "knowledge-net-sync", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!r.ok) {
+      console.error(`❌ ${REPO} の main を読めない（${r.status}）。コミットを渡して --update <コミット> でもよい`);
+      process.exit(1);
+    }
     ref = (await r.json()).sha;
   }
   writeFileSync(DST, await raw(ref));
@@ -28,7 +33,17 @@ if (process.argv.includes("--update")) {
 } else {
   const { ref } = JSON.parse(readFileSync(LOCK, "utf8"));
   let src;
-  try { src = await raw(ref); } catch (e) { console.error(`❌ ${e.message}`); process.exit(1); }
-  if (src !== readFileSync(DST, "utf8")) { console.error(`❌ ${DST} が ${REPO}@${ref.slice(0, 7)} の ${SRC} と違う（手で直さない。node scripts/sync-sample.mjs --update で取り込む）`); process.exit(1); }
+  try {
+    src = await raw(ref);
+  } catch (e) {
+    console.error(`❌ ${e.message}`);
+    process.exit(1);
+  }
+  if (src !== readFileSync(DST, "utf8")) {
+    console.error(
+      `❌ ${DST} が ${REPO}@${ref.slice(0, 7)} の ${SRC} と違う（手で直さない。node scripts/sync-sample.mjs --update で取り込む）`,
+    );
+    process.exit(1);
+  }
   console.log(`✅ 見本（${DST}）は ${REPO}@${ref.slice(0, 7)} の公開データと同じ`);
 }

@@ -7,15 +7,35 @@ import { describe, expect, it } from "vitest";
 import { WALK_FORMULAS, WALK_TEXT_SPEC, walkCompute } from "../src";
 
 const INPUTS: Record<string, Record<string, number>[]> = {
-  "binom.pmf": [{ n: 10, k: 3, p: 0.3 }, { n: 10, k: 0, p: 0.3 }, { n: 5, k: 5, p: 0.6 }],
-  "binom.mean": [{ n: 10, p: 0.3 }], "binom.mean-p": [{ E: 6, n: 20 }], "binom.var": [{ n: 10, p: 0.3 }],
-  "share.sd-n": [{ p: 0.3, s: 0.08 }, { p: 0.5, s: 0.25 }],
-  "binom.mode": [{ n: 10, p: 0.8 }, { n: 9, p: 0.5 }],
-  ratio: [{ A: 2, B: 3 }], "share.se": [{ P: 0.3, m: 100 }], "share.z": [{ x: 30, m: 100, P: 0.25, S: 0.05 }],
-  "binom.ge": [{ k: 4, n: 10, p: 0.3 }], "sets.n": [{ P: 0.35, e: 0.01, u: 100 }],
-  "lin.sum": [{ a: 200, E: 3, b: -50, n: 10 }], "fatigue.var": [{ n: 10, F: 0.7, L: 0.3 }],
-  "streak.max": [{ n: 10, r: 1.1, h: 0.05 }, { n: 10, r: 1.2, h: 0.05 }],
-  "fpc.N": [{ n: 10, r: 0.8, u: 2 }], "mix.d": [{ V: 3, B: 2.1, n: 10 }],
+  "binom.pmf": [
+    { n: 10, k: 3, p: 0.3 },
+    { n: 10, k: 0, p: 0.3 },
+    { n: 5, k: 5, p: 0.6 },
+  ],
+  "binom.mean": [{ n: 10, p: 0.3 }],
+  "binom.mean-p": [{ E: 6, n: 20 }],
+  "binom.var": [{ n: 10, p: 0.3 }],
+  "share.sd-n": [
+    { p: 0.3, s: 0.08 },
+    { p: 0.5, s: 0.25 },
+  ],
+  "binom.mode": [
+    { n: 10, p: 0.8 },
+    { n: 9, p: 0.5 },
+  ],
+  ratio: [{ A: 2, B: 3 }],
+  "share.se": [{ P: 0.3, m: 100 }],
+  "share.z": [{ x: 30, m: 100, P: 0.25, S: 0.05 }],
+  "binom.ge": [{ k: 4, n: 10, p: 0.3 }],
+  "sets.n": [{ P: 0.35, e: 0.01, u: 100 }],
+  "lin.sum": [{ a: 200, E: 3, b: -50, n: 10 }],
+  "fatigue.var": [{ n: 10, F: 0.7, L: 0.3 }],
+  "streak.max": [
+    { n: 10, r: 1.1, h: 0.05 },
+    { n: 10, r: 1.2, h: 0.05 },
+  ],
+  "fpc.N": [{ n: 10, r: 0.8, u: 2 }],
+  "mix.d": [{ V: 3, B: 2.1, n: 10 }],
 };
 
 describe("計算の行の文の型", () => {
@@ -23,17 +43,24 @@ describe("計算の行の文の型", () => {
     expect(Object.keys(INPUTS).sort()).toEqual(Object.keys(WALK_FORMULAS).sort());
     expect(Object.keys(WALK_TEXT_SPEC).sort()).toEqual(Object.keys(WALK_FORMULAS).sort());
     const seen = new Set<string>();
-    for (const [ref, list] of Object.entries(INPUTS)) for (const v of list) {
-      const bind = Object.fromEntries(WALK_FORMULAS[ref]!.syms.map((s) => [s, s]));
-      for (const row of walkCompute([{ id: "x", ref, bind }], v)[0]!.rows) {
-        const id = row.tid ?? row.key, spec = WALK_TEXT_SPEC[ref]![id];
-        expect(spec, `${ref} の行 ${id} が表にない`).toBeDefined();
-        expect(Object.keys(row.vars ?? {}).sort(), `${ref} の ${id} の穴`).toEqual([...spec!.vars].sort());
-        if (row.variant) expect(spec!.variants, `${ref} の ${id} の別の言い方`).toContain(row.variant);
-        seen.add(`${ref}/${id}/${row.variant ?? ""}`);
+    for (const [ref, list] of Object.entries(INPUTS))
+      for (const v of list) {
+        const bind = Object.fromEntries(WALK_FORMULAS[ref]!.syms.map((s) => [s, s]));
+        for (const row of walkCompute([{ id: "x", ref, bind }], v)[0]!.rows) {
+          const id = row.tid ?? row.key,
+            spec = WALK_TEXT_SPEC[ref]![id];
+          expect(spec, `${ref} の行 ${id} が表にない`).toBeDefined();
+          expect(Object.keys(row.vars ?? {}).sort(), `${ref} の ${id} の穴`).toEqual([...spec!.vars].sort());
+          if (row.variant) expect(spec!.variants, `${ref} の ${id} の別の言い方`).toContain(row.variant);
+          seen.add(`${ref}/${id}/${row.variant ?? ""}`);
+        }
       }
-    }
-    const all = Object.entries(WALK_TEXT_SPEC).flatMap(([ref, ts]) => Object.entries(ts).flatMap(([id, s]) => ["", ...s.variants].map((x) => `${ref}/${id}/${x}`)));
-    expect(all.filter((k) => !seen.has(k)), "表にあるのに出ない文の型").toEqual([]);
+    const all = Object.entries(WALK_TEXT_SPEC).flatMap(([ref, ts]) =>
+      Object.entries(ts).flatMap(([id, s]) => ["", ...s.variants].map((x) => `${ref}/${id}/${x}`)),
+    );
+    expect(
+      all.filter((k) => !seen.has(k)),
+      "表にあるのに出ない文の型",
+    ).toEqual([]);
   });
 });

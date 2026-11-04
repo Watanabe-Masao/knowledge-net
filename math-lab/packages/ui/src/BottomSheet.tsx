@@ -19,11 +19,20 @@ export const DETENTS: Detent[] = ["min", "peek", "half", "full"];
  */
 export function snapDetent(h: number, v: number, heights: Record<Detent, number>): Detent {
   const projected = h + v * 180;
-  let best: Detent = "min", dist = Infinity;
-  for (const d of DETENTS) { const x = Math.abs(heights[d] - projected); if (x < dist) { dist = x; best = d; } }
-  if (Math.abs(v) > 0.5) {   // 速く払った：今の高さから払った向きに次の段へ（戻りはしない）
+  let best: Detent = "min",
+    dist = Infinity;
+  for (const d of DETENTS) {
+    const x = Math.abs(heights[d] - projected);
+    if (x < dist) {
+      dist = x;
+      best = d;
+    }
+  }
+  if (Math.abs(v) > 0.5) {
+    // 速く払った：今の高さから払った向きに次の段へ（戻りはしない）
     const order = DETENTS.map((d) => heights[d]);
-    const next = v > 0 ? DETENTS.find((_, i) => order[i]! > h + 1) : [...DETENTS].reverse().find((d) => heights[d] < h - 1);
+    const next =
+      v > 0 ? DETENTS.find((_, i) => order[i]! > h + 1) : [...DETENTS].reverse().find((d) => heights[d] < h - 1);
     if (next && (v > 0 ? heights[next] > heights[best] : heights[next] < heights[best])) best = next;
   }
   return best;
@@ -44,7 +53,8 @@ type Props = {
   detent: Detent;
   onDetent: (d: Detent) => void;
   /** 段の高さ（px）。peek は見出しと主の操作が見える高さ、min はしまったとき（つまみと見出しの1行） */
-  peek?: number; min?: number;
+  peek?: number;
+  min?: number;
   /** 下の余白（下のタブの高さなど。面はその上に乗る） */
   bottom?: number;
 } & Omit<HTMLAttributes<HTMLElement>, "title">;
@@ -54,32 +64,72 @@ const nextDetent = (d: Detent): Detent => (d === "peek" ? "half" : d === "half" 
 
 const vh = () => (typeof window === "undefined" ? 800 : window.innerHeight);
 
-export function BottomSheet({ label, header, children, detent, onDetent, peek = 220, min = 64, bottom = 0, ...rest }: Props) {
-  const heights = (): Record<Detent, number> => ({ min, peek, half: Math.round((vh() - bottom) * 0.55), full: vh() - bottom - 44 });
+export function BottomSheet({
+  label,
+  header,
+  children,
+  detent,
+  onDetent,
+  peek = 220,
+  min = 64,
+  bottom = 0,
+  ...rest
+}: Props) {
+  const heights = (): Record<Detent, number> => ({
+    min,
+    peek,
+    half: Math.round((vh() - bottom) * 0.55),
+    full: vh() - bottom - 44,
+  });
   const [drag, setDrag] = useState<number | null>(null);
   const [, force] = useState(0);
-  const g = useRef<{ y0: number; h0: number; t: number; y: number; v: number; moved: boolean; grab: boolean } | null>(null);
-  useEffect(() => { const r = () => force((n) => n + 1); addEventListener("resize", r); return () => removeEventListener("resize", r); }, []);
+  const g = useRef<{ y0: number; h0: number; t: number; y: number; v: number; moved: boolean; grab: boolean } | null>(
+    null,
+  );
+  useEffect(() => {
+    const r = () => force((n) => n + 1);
+    addEventListener("resize", r);
+    return () => removeEventListener("resize", r);
+  }, []);
 
   const onDown = (e: RPE) => {
     if ((e.target as HTMLElement).closest("button:not([data-grab]), a, input, select")) return;
-    g.current = { y0: e.clientY, h0: heights()[detent], t: e.timeStamp, y: e.clientY, v: 0, moved: false, grab: !!(e.target as HTMLElement).closest("[data-grab]") };
+    g.current = {
+      y0: e.clientY,
+      h0: heights()[detent],
+      t: e.timeStamp,
+      y: e.clientY,
+      v: 0,
+      moved: false,
+      grab: !!(e.target as HTMLElement).closest("[data-grab]"),
+    };
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onMove = (e: RPE) => {
-    const d = g.current; if (!d) return;
+    const d = g.current;
+    if (!d) return;
     const dt = Math.max(1, e.timeStamp - d.t);
-    d.v = -(e.clientY - d.y) / dt; d.t = e.timeStamp; d.y = e.clientY;   // 上向きが＋
+    d.v = -(e.clientY - d.y) / dt;
+    d.t = e.timeStamp;
+    d.y = e.clientY; // 上向きが＋
     if (Math.abs(e.clientY - d.y0) > 4) d.moved = true;
     const hs = heights();
     setDrag(rubber(d.h0 - (e.clientY - d.y0), hs.min, hs.full));
   };
   const onUp = (e: RPE) => {
-    const d = g.current; g.current = null; if (!d) return;
+    const d = g.current;
+    g.current = null;
+    if (!d) return;
     setDrag(null);
-    if (!d.moved) {   // 押しただけ：しまっているなら少しへ。つまみなら次の段へ（全部の次は少し）
-      if (detent === "min") { haptic(); onDetent("peek"); }
-      else if (d.grab) { haptic(); onDetent(nextDetent(detent)); }
+    if (!d.moved) {
+      // 押しただけ：しまっているなら少しへ。つまみなら次の段へ（全部の次は少し）
+      if (detent === "min") {
+        haptic();
+        onDetent("peek");
+      } else if (d.grab) {
+        haptic();
+        onDetent(nextDetent(detent));
+      }
       return;
     }
     const next = snapDetent(d.h0 - (e.clientY - d.y0), d.v, heights());
@@ -89,16 +139,39 @@ export function BottomSheet({ label, header, children, detent, onDetent, peek = 
 
   const hs = heights();
   const h = drag ?? hs[detent];
-  const dim = drag !== null ? Math.max(0, Math.min(1, (drag - hs.half) / (hs.full - hs.half))) : detent === "full" ? 1 : 0;
+  const dim =
+    drag !== null ? Math.max(0, Math.min(1, (drag - hs.half) / (hs.full - hs.half))) : detent === "full" ? 1 : 0;
   return (
     <>
-      <div className={s.scrim} style={{ opacity: dim, pointerEvents: detent === "full" && drag === null ? "auto" : "none", transition: drag !== null ? "none" : undefined }}
-        onClick={() => onDetent("half")} aria-hidden="true" data-testid="bottomsheet-scrim" />
-      <section className={s.sheet} role="region" aria-label={label} data-detent={detent}
-        style={{ height: h, bottom, transition: drag !== null ? "none" : undefined }} {...rest}>
+      <div
+        className={s.scrim}
+        style={{
+          opacity: dim,
+          pointerEvents: detent === "full" && drag === null ? "auto" : "none",
+          transition: drag !== null ? "none" : undefined,
+        }}
+        onClick={() => onDetent("half")}
+        aria-hidden="true"
+        data-testid="bottomsheet-scrim"
+      />
+      <section
+        className={s.sheet}
+        role="region"
+        aria-label={label}
+        data-detent={detent}
+        style={{ height: h, bottom, transition: drag !== null ? "none" : undefined }}
+        {...rest}
+      >
         <div className={s.head} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
-          <button type="button" className={s.grab} data-grab aria-label={detent === "full" ? "少しだけにする" : detent === "min" ? "出す" : "広げる"}
-            onClick={(e) => { if (e.detail === 0) onDetent(detent === "min" ? "peek" : nextDetent(detent)); }} />
+          <button
+            type="button"
+            className={s.grab}
+            data-grab
+            aria-label={detent === "full" ? "少しだけにする" : detent === "min" ? "出す" : "広げる"}
+            onClick={(e) => {
+              if (e.detail === 0) onDetent(detent === "min" ? "peek" : nextDetent(detent));
+            }}
+          />
           {header}
         </div>
         <div className={s.body}>{children}</div>
