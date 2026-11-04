@@ -8,7 +8,14 @@ import { useRunner } from "./runner";
 import s from "./Experiment.module.css";
 
 export const STAGES = ["予測", "実験", "観察", "理由", "応用", "比較"] as const;
-export const tex = (t: string) => { try { return katex.renderToString(t, { throwOnError: false, output: "html" }); } catch { return t; } };
+/** HTML の特別な文字を文字として出す（KaTeX が描けなかった式を、そのまま HTML として差し込まない。stats2-course issue 206） */
+export const escapeHtml = (t: string) => t.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+export const tex = (t: string) => { try { return katex.renderToString(t, { throwOnError: false, output: "html" }); } catch { return escapeHtml(t); } };
+/** 原本の短い文（問い）を出す。HTML として差し込まず、決まった印 <sup>…</sup>（上付き）だけを部品で描く（issue 206） */
+export function RichText({ text }: { text: string }) {
+  const parts = text.split(/<sup>(.*?)<\/sup>/g);
+  return <>{parts.map((x, i) => (i % 2 ? <sup key={i}>{x}</sup> : x))}</>;
+}
 export const pct = (v: number) => `${Math.round(v * 100)}%`;
 export const r2 = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? "—" : String(Number(v.toFixed(2))));
 /** 図の目盛りの数：大きい数は有効数字3桁で区切る（3515.5 → 3,520） */
