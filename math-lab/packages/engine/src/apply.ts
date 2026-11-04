@@ -67,7 +67,11 @@ const _fieldsComplete: { [M in ApplyMethod]: [Same<ListOf<M, "required">, ReqKey
 void _fieldsComplete;
 
 /** 解き方の1段：題（何をする段か）・式（TeX）・文 */
-export type ApplyStep = { title: string; tex?: string; text?: string };
+export type ApplyStep = {
+  title: string; tex?: string; text?: string;
+  /** 文の型の id・穴の値・別の言い方（題と文は教材の apply_texts。stats2-course #211） */
+  tid?: string; vars?: Record<string, string>; variant?: string;
+};
 export type ApplyResult = { answer: number; facts: Record<string, number>; steps: ApplyStep[] };
 
 const EPS = 1e-12;
@@ -124,7 +128,7 @@ function solveCore(s: ApplySolve): ApplyResult {
       checkNP(s.n, s.p);
       if (!(s.err > 0)) throw new RangeError(`err は正：${s.err}`);
       const P = prob(s.n, s.p, s.event), v = P * (1 - P);
-      if (v === 0) return { answer: 1, facts: { prob: P }, steps: [{ title: "求める", text: "理論の確率が 0 か 1 なので、ずれは起きない。1セットで足りる。" }] };
+      if (v === 0) return { answer: 1, facts: { prob: P }, steps: [{ tid: "sets-for-error.none", vars: {}, title: "求める", text: "理論の確率が 0 か 1 なので、ずれは起きない。1セットで足りる。" }] };
       let N = Math.max(1, Math.floor((4 * v) / (s.err * s.err)) - 1);
       while (2 * Math.sqrt(v / N) > s.err + EPS) N++;
       const u = s.unit ?? 1;
