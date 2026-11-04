@@ -1629,7 +1629,9 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
           const rq = sh.getByTestId("exp-walk-rowq-0");
           if (await rq.count()) await rowq(st, fu.id);
           // 計算の行の題と意味の文は教材の walk_texts から（stats2-course #211）。故障：文がない（題が行の key のまま・意味が空）・穴が {k} のまま出る
-          for (const li of await sh.getByTestId(new RegExp(`^exp-walk-row-${fu.id}-`)).all()) {
+          const lis = await sh.getByTestId(new RegExp(`^exp-walk-row-${fu.id}-`)).all();
+          expect(lis.length, `${key} の ${fu.id} の計算の行が見えない`).toBeGreaterThan(0);
+          for (const li of lis) {
             const words = await li.evaluate((e) => [e.querySelector("b")?.textContent ?? "", e.querySelector("p")?.textContent ?? ""]);
             expect(words[1], `${key} の ${fu.id} の行に意味の文がない（題「${words[0]}」）`).not.toBe("");
             expect(words[0], `${key} の ${fu.id} の行の題が文の型の id のまま`).not.toMatch(/^[a-z]+[0-9]*$/);
