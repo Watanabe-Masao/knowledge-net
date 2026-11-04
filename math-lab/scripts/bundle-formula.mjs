@@ -12,35 +12,110 @@ import { pathToFileURL } from "node:url";
 
 const HEAD = (src) => `// 生成物：${src} から scripts/bundle-formula.mjs で作る。手で直さない（npm run lab:bundle）\n`;
 const BUNDLES = [
-  { out: "packages/engine/dist/formula.mjs", input: "packages/engine/src/formula/index.ts", src: "packages/engine/src/formula", output: { format: "esm" } },
-  { out: "packages/engine/dist/random.js", input: "packages/engine/src/random.ts", src: "packages/engine/src/random.ts", output: { format: "iife", name: "MLRandom" } },
+  {
+    out: "packages/engine/dist/formula.mjs",
+    input: "packages/engine/src/formula/index.ts",
+    src: "packages/engine/src/formula",
+    output: { format: "esm" },
+  },
+  {
+    out: "packages/engine/dist/random.js",
+    input: "packages/engine/src/random.ts",
+    src: "packages/engine/src/random.ts",
+    output: { format: "iife", name: "MLRandom" },
+  },
 ];
 // 公式の記号と課題の項目：engine を束ねて読み、JSON にする（手で書き写さない）
 async function contracts() {
-  const r = await build({ input: "packages/engine/src/index.ts", output: { format: "esm" }, write: false, logLevel: "silent" });
+  const r = await build({
+    input: "packages/engine/src/index.ts",
+    output: { format: "esm" },
+    write: false,
+    logLevel: "silent",
+  });
   const dir = mkdtempSync(join(tmpdir(), "mlc-"));
   try {
     writeFileSync(join(dir, "e.mjs"), r.output[0].code);
-    const { WALK_FORMULAS, WALK_TEXT_SPEC, APPLY_FIELDS, APPLY_TEXT_SPEC, APPLY_TEXT_WORDS, solveValue } = await import(pathToFileURL(join(dir, "e.mjs")).href);
+    const { WALK_FORMULAS, WALK_TEXT_SPEC, APPLY_FIELDS, APPLY_TEXT_SPEC, APPLY_TEXT_WORDS, solveValue } = await import(
+      pathToFileURL(join(dir, "e.mjs")).href
+    );
     const walk = Object.fromEntries(Object.entries(WALK_FORMULAS).map(([k, d]) => [k, d.syms]));
-    const apply = Object.fromEntries(Object.entries(APPLY_FIELDS).map(([k, f]) => [k, { required: f.required, optional: f.optional ?? [], ...(f.choices ? { choices: f.choices } : {}) }]));
+    const apply = Object.fromEntries(
+      Object.entries(APPLY_FIELDS).map(([k, f]) => [
+        k,
+        { required: f.required, optional: f.optional ?? [], ...(f.choices ? { choices: f.choices } : {}) },
+      ]),
+    );
     // 情報の of（solve の値の小さな式）の見本：engine の solveValue で求めた値。教材の Python の写し（network.py の solve_value）がこれと同じかを教材のテストが照らす（#212）
-    const SV = { method: "x", n: 10, p: 0.3, a: { n: 20, p: 0.25, k: 5 }, mechanism: { n: 10, p: 0.5, drop: 0.3 }, unit: 100, flag: true };
-    const solve_value_cases = ["n", "p", "a.n", "a.k", "unit", "mechanism.n*mechanism.p", "mechanism.p+mechanism.drop", "mechanism.p-mechanism.drop",
-      "2*a.p+p", "-n+3", "1.5*n", " n * p ", "flag", "a", "nothing", "a.nothing", "n*nothing"].map((path) => ({ path, value: solveValue(SV, path) ?? null }));
-    return JSON.stringify({ _: "生成物：packages/engine/src（walk.ts・apply.ts）から scripts/bundle-formula.mjs で作る。手で直さない（npm run lab:bundle）", walk_formulas: walk, walk_rows: WALK_TEXT_SPEC, apply_methods: apply, apply_steps: APPLY_TEXT_SPEC, apply_words: APPLY_TEXT_WORDS, solve_value_cases: { solve: SV, cases: solve_value_cases } }, null, 1) + "\n";
-  } finally { rmSync(dir, { recursive: true, force: true }); }
+    const SV = {
+      method: "x",
+      n: 10,
+      p: 0.3,
+      a: { n: 20, p: 0.25, k: 5 },
+      mechanism: { n: 10, p: 0.5, drop: 0.3 },
+      unit: 100,
+      flag: true,
+    };
+    const solve_value_cases = [
+      "n",
+      "p",
+      "a.n",
+      "a.k",
+      "unit",
+      "mechanism.n*mechanism.p",
+      "mechanism.p+mechanism.drop",
+      "mechanism.p-mechanism.drop",
+      "2*a.p+p",
+      "-n+3",
+      "1.5*n",
+      " n * p ",
+      "flag",
+      "a",
+      "nothing",
+      "a.nothing",
+      "n*nothing",
+    ].map((path) => ({ path, value: solveValue(SV, path) ?? null }));
+    return (
+      JSON.stringify(
+        {
+          _: "生成物：packages/engine/src（walk.ts・apply.ts）から scripts/bundle-formula.mjs で作る。手で直さない（npm run lab:bundle）",
+          walk_formulas: walk,
+          walk_rows: WALK_TEXT_SPEC,
+          apply_methods: apply,
+          apply_steps: APPLY_TEXT_SPEC,
+          apply_words: APPLY_TEXT_WORDS,
+          solve_value_cases: { solve: SV, cases: solve_value_cases },
+        },
+        null,
+        1,
+      ) + "\n"
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 let bad = 0;
-for (const b of [...BUNDLES, { out: "packages/engine/dist/contracts.json", src: "packages/engine/src（walk.ts・apply.ts）", json: true }]) {
+for (const b of [
+  ...BUNDLES,
+  { out: "packages/engine/dist/contracts.json", src: "packages/engine/src（walk.ts・apply.ts）", json: true },
+]) {
   let code;
   if (b.json) code = await contracts();
-  else { const r = await build({ input: b.input, output: b.output, write: false, logLevel: "silent" }); code = HEAD(b.src) + r.output[0].code; }
+  else {
+    const r = await build({ input: b.input, output: b.output, write: false, logLevel: "silent" });
+    code = HEAD(b.src) + r.output[0].code;
+  }
   if (process.argv.includes("--check")) {
     let now = "";
-    try { now = readFileSync(b.out, "utf8"); } catch { /* ない */ }
-    if (now !== code) { console.error(`✗ ${b.out} が元（${b.src}）と違う。npm run lab:bundle で作り直してコミットする`); bad++; }
-    else console.log(`✓ ${b.out} は元と同じ`);
+    try {
+      now = readFileSync(b.out, "utf8");
+    } catch {
+      /* ない */
+    }
+    if (now !== code) {
+      console.error(`✗ ${b.out} が元（${b.src}）と違う。npm run lab:bundle で作り直してコミットする`);
+      bad++;
+    } else console.log(`✓ ${b.out} は元と同じ`);
   } else {
     mkdirSync("packages/engine/dist", { recursive: true });
     writeFileSync(b.out, code);

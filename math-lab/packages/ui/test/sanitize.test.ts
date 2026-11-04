@@ -9,12 +9,16 @@ import { RichText, escapeHtml } from "../src/labParts";
 
 describe("原本の文を HTML として動かさない", () => {
   it("問いの文：上付きだけを要素にし、ほかの札は文字として出す", () => {
-    const html = renderToStaticMarkup(createElement(RichText, { text: '0.3<sup>0</sup> は？<img src=x onerror="alert(1)">' }));
+    const html = renderToStaticMarkup(
+      createElement(RichText, { text: '0.3<sup>0</sup> は？<img src=x onerror="alert(1)">' }),
+    );
     expect(html).toContain("<sup>0</sup>");
     expect(html).not.toContain("<img");
     expect(html).toContain("&lt;img");
   });
   it("描けなかった式の代わりの文字は escape する", () => {
-    expect(escapeHtml('<a href="javascript:alert(1)">x</a>')).toBe("&lt;a href=&quot;javascript:alert(1)&quot;&gt;x&lt;/a&gt;");
+    expect(escapeHtml('<a href="javascript:alert(1)">x</a>')).toBe(
+      "&lt;a href=&quot;javascript:alert(1)&quot;&gt;x&lt;/a&gt;",
+    );
   });
 });

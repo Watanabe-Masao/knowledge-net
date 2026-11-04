@@ -32,13 +32,13 @@ describe("型（schema/kn-schema-v1.json）", () => {
     std.formulas[0].tree.args[1].op = "割る";
     std.formulas[0].tree.args[0] = { sym: "" };
     std.formulas[0].symbols[0].kind = "なに";
-    std.formulas[0].symbols[2].concept = "TERM-expect";   // 教材名のない概念
+    std.formulas[0].symbols[2].concept = "TERM-expect"; // 教材名のない概念
     expect(schemaErrors(d).length).toBeGreaterThanOrEqual(4);
   });
   it("誤解と反例にもラボの参照を書ける（改訂3）", () => {
     const d = sample();
     const normal = d.concepts.find((c: { id: string }) => c.id === "stats2:TERM-normal");
-    normal.misconceptions[0].labs = [{ id: "LAB-cont", url: "https://example.com/x" }];   // 公開データにはまだないので足す
+    normal.misconceptions[0].labs = [{ id: "LAB-cont", url: "https://example.com/x" }]; // 公開データにはまだないので足す
     normal.counterexample_labs = [{ id: "LAB-cont", url: "https://example.com/x" }];
     expect(schemaErrors(d)).toEqual([]);
     normal.counterexample_labs = [{ id: "cont" }];
@@ -47,7 +47,12 @@ describe("型（schema/kn-schema-v1.json）", () => {
   it("関係の種類は8つで、どれにも読み方とたどるかどうかがある", () => {
     expect(Object.keys(KINDS)).toHaveLength(8);
     expect(KINDS["変換"].trace).toBe(false);
-    expect(Object.entries(KINDS).filter(([, k]) => k.trace).map(([t]) => t).sort()).toEqual(["一般化", "前提", "導出", "特殊化", "統合"].sort());
+    expect(
+      Object.entries(KINDS)
+        .filter(([, k]) => k.trace)
+        .map(([t]) => t)
+        .sort(),
+    ).toEqual(["一般化", "前提", "導出", "特殊化", "統合"].sort());
     for (const k of Object.values(KINDS)) {
       expect(k.reading).toMatch(/□/);
       expect(typeof k.trace).toBe("boolean");
@@ -63,7 +68,10 @@ describe("ネットワーク", () => {
     expect(net.concepts.get("stats2:TERM-binom")?.status).toBe("filled");
   });
   it("型に合わない教材は外して知らせる", () => {
-    const r = merge([{ id: "bad", data: { schema: "x" } }, { id: "stats2", data: sample() }]);
+    const r = merge([
+      { id: "bad", data: { schema: "x" } },
+      { id: "stats2", data: sample() },
+    ]);
     expect(r.errors[0]).toMatch(/^bad：/);
     expect(r.net.courses.map((c) => c.id)).toEqual(["stats2"]);
   });
@@ -71,10 +79,10 @@ describe("ネットワーク", () => {
     const t = trace(net, "stats2:TERM-std");
     expect(t.order).toContain("stats2:TERM-expect");
     expect(t.order).toContain("stats2:TERM-var");
-    expect(t.order).toContain("stats2:TERM-rv");          // 期待値の前提の前提
+    expect(t.order).toContain("stats2:TERM-rv"); // 期待値の前提の前提
     const n = trace(net, "stats2:TERM-normal");
-    expect(n.order).not.toContain("stats2:TERM-std");     // 標準化→正規分布は「応用」なのでたどらない
-    expect(trace(net, "stats2:TERM-normal").order).not.toContain("stats2:TERM-binom");  // 変換（近似）はたどらない：正規分布に二項分布は要らない
+    expect(n.order).not.toContain("stats2:TERM-std"); // 標準化→正規分布は「応用」なのでたどらない
+    expect(trace(net, "stats2:TERM-normal").order).not.toContain("stats2:TERM-binom"); // 変換（近似）はたどらない：正規分布に二項分布は要らない
     expect(trace(net, "stats2:TERM-poisson").order).not.toContain("stats2:TERM-binom"); // 変換（極限）もたどらない。学ぶ順に要るなら「前提」で書く
   });
   it("導出の前提もたどる", () => {
@@ -135,7 +143,8 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(schemaErrors(d)).toEqual([]);
     delete c.category;
     expect(schemaErrors(d).length).toBeGreaterThan(0);
-    c.category = "標本分布・極限"; delete c.short;
+    c.category = "標本分布・極限";
+    delete c.short;
     expect(schemaErrors(d).length).toBeGreaterThan(0);
   });
   it("画面より新しい改訂のデータは知らせる（表示はする）", async () => {
@@ -185,7 +194,7 @@ describe("型の改訂より新しいデータも、知っている項目だけ�
     expect(r.errors[0]).toContain("知っている項目だけで表示");
     const got = [...r.net.concepts.values()].flatMap((c) => c.formulas ?? []).find((x) => x.id === f.id)!;
     const { future: _f, ...tree } = got.tree as Record<string, unknown>;
-    expect(JSON.stringify(tree)).toBe(before);   // 知っている形（式の木）は消えていない
+    expect(JSON.stringify(tree)).toBe(before); // 知っている形（式の木）は消えていない
   });
   it("本当に型の違うデータは今までどおり外す", () => {
     const d = w0();

@@ -10,13 +10,22 @@ export function nodeAt(tree: FormulaNode, path: number[]): FormulaNode | undefin
 }
 
 /** 等しい式の右辺（なければ木そのもの） */
-export const rhsOf = (tree: FormulaNode): FormulaNode => (isOp(tree) && tree.op === "eq" ? tree.args[tree.args.length - 1]! : tree);
+export const rhsOf = (tree: FormulaNode): FormulaNode =>
+  isOp(tree) && tree.op === "eq" ? tree.args[tree.args.length - 1]! : tree;
 /** 等しい式の左辺 */
-export const lhsOf = (tree: FormulaNode): FormulaNode | undefined => (isOp(tree) && tree.op === "eq" ? tree.args[0] : undefined);
+export const lhsOf = (tree: FormulaNode): FormulaNode | undefined =>
+  isOp(tree) && tree.op === "eq" ? tree.args[0] : undefined;
 
 /** 横軸の記号 over を lo〜hi の整数で動かしたときの右辺の値（確率の分布など）。計算できない所は undefined */
-export function distribution(tree: FormulaNode, over: string, lo: number, hi: number, env: Env = {}): { x: number; y: number | undefined }[] {
-  const body = rhsOf(tree), out: { x: number; y: number | undefined }[] = [];
+export function distribution(
+  tree: FormulaNode,
+  over: string,
+  lo: number,
+  hi: number,
+  env: Env = {},
+): { x: number; y: number | undefined }[] {
+  const body = rhsOf(tree),
+    out: { x: number; y: number | undefined }[] = [];
   for (let x = Math.ceil(lo); x <= Math.floor(hi); x++) {
     const y = evaluate(body, { ...env, values: { ...env.values, [over]: x } });
     out.push({ x, y: y !== undefined && Number.isFinite(y) ? y : undefined });

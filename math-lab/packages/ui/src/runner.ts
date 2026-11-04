@@ -5,13 +5,22 @@ import { useEffect, useRef } from "react";
 export function useRunner() {
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const gen = useRef(0);
-  const stop = () => { gen.current++; if (timer.current) { clearInterval(timer.current); timer.current = null; } };
+  const stop = () => {
+    gen.current++;
+    if (timer.current) {
+      clearInterval(timer.current);
+      timer.current = null;
+    }
+  };
   useEffect(() => stop, []);
   /** tick をすぐ1回と、その後 ms ごとに呼ぶ。tick が true（終わった）を返すか stop されたら止まる。止めた後に届いた tick は何もしない */
   const start = (tick: () => boolean, ms: number) => {
     stop();
     const g = gen.current;
-    const t = () => { if (g !== gen.current) return; if (tick()) stop(); };
+    const t = () => {
+      if (g !== gen.current) return;
+      if (tick()) stop();
+    };
     t();
     if (g === gen.current) timer.current = setInterval(t, ms);
   };

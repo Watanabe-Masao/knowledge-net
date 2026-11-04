@@ -41,7 +41,8 @@ export function checkMechanism(m: Mechanism): string | undefined {
   if (m.kind === "table") {
     if (!m.values.length || m.values.length !== m.weights.length) return "値と重みは同じ数（1つ以上）";
     if (m.values.some((v) => !Number.isFinite(v))) return "値は有限の数";
-    if (m.weights.some((w) => !(w >= 0)) || !(m.weights.reduce((a, b) => a + b, 0) > 0)) return "重みは0以上で、合計が0より大きい";
+    if (m.weights.some((w) => !(w >= 0)) || !(m.weights.reduce((a, b) => a + b, 0) > 0))
+      return "重みは0以上で、合計が0より大きい";
     if (m.values.length ** Math.min(m.n, 8) > 1e6) return "値の数と回数が多すぎる（足した値の一覧が大きくなる）";
     return undefined;
   }
@@ -63,24 +64,35 @@ export function drawSet(rng: Random, m: Mechanism): number[] {
   const bad = checkMechanism(m);
   if (bad) throw new RangeError(bad);
   const out: number[] = [];
-  if (m.kind === "bernoulli") { for (let i = 0; i < m.n; i++) out.push(rng.next() < m.p ? 1 : 0); return out; }
+  if (m.kind === "bernoulli") {
+    for (let i = 0; i < m.n; i++) out.push(rng.next() < m.p ? 1 : 0);
+    return out;
+  }
   if (m.kind === "table") {
     const tot = m.weights.reduce((a, b) => a + b, 0);
     for (let i = 0; i < m.n; i++) {
-      let u = rng.next() * tot, j = 0;
+      let u = rng.next() * tot,
+        j = 0;
       while (j < m.values.length - 1 && (u -= m.weights[j]!) >= 0) j++;
-      while (m.weights[j] === 0 && j > 0) j--;   // 丸めで重み0の値に落ちたとき
+      while (m.weights[j] === 0 && j > 0) j--; // 丸めで重み0の値に落ちたとき
       out.push(m.values[j]!);
     }
     return out;
   }
   if (m.kind === "urn") {
-    let left = m.total, hit = m.success;
-    for (let i = 0; i < m.n; i++) { const x = rng.next() < hit / left ? 1 : 0; out.push(x); hit -= x; left -= 1; }
+    let left = m.total,
+      hit = m.success;
+    for (let i = 0; i < m.n; i++) {
+      const x = rng.next() < hit / left ? 1 : 0;
+      out.push(x);
+      hit -= x;
+      left -= 1;
+    }
     return out;
   }
   if (m.kind === "mix") {
-    const d = mixSpread(m), q = m.p + (rng.next() < 0.5 ? -d : d);   // セットの最初に1回だけ選ぶ（試行ごとに選び直すと二項分布と同じになる）
+    const d = mixSpread(m),
+      q = m.p + (rng.next() < 0.5 ? -d : d); // セットの最初に1回だけ選ぶ（試行ごとに選び直すと二項分布と同じになる）
     for (let i = 0; i < m.n; i++) out.push(rng.next() < q ? 1 : 0);
     return out;
   }
@@ -90,13 +102,20 @@ export function drawSet(rng: Random, m: Mechanism): number[] {
   }
   let q = m.p;
   for (let i = 0; i < m.n; i++) {
-    const x = rng.next() < q ? 1 : 0; out.push(x);
+    const x = rng.next() < q ? 1 : 0;
+    out.push(x);
     q = m.p + m.carry * (x - m.p);
   }
   return out;
 }
 
-const lnFact = (() => { const t = [0]; return (k: number) => { for (let i = t.length; i <= k; i++) t[i] = t[i - 1]! + Math.log(i); return t[k]!; }; })();
+const lnFact = (() => {
+  const t = [0];
+  return (k: number) => {
+    for (let i = t.length; i <= k; i++) t[i] = t[i - 1]! + Math.log(i);
+    return t[k]!;
+  };
+})();
 const lnComb = (n: number, k: number) => (k < 0 || k > n ? -Infinity : lnFact(n) - lnFact(k) - lnFact(n - k));
 
 // 足した値の丸め（0.1+0.2 を 0.3 にそろえる）。桁数で丸める：小数点以下9桁で丸めると、大きな値（|v|＞約900万）で v×1e9 が倍精度の整数の範囲を越え、
@@ -109,7 +128,11 @@ function tableSum(m: { n: number; values: number[]; weights: number[] }): { supp
   let dist = new Map<number, number>([[0, 1]]);
   for (let i = 0; i < m.n; i++) {
     const next = new Map<number, number>();
-    for (const [s, q] of dist) m.values.forEach((v, j) => { const w = m.weights[j]! / tot; if (w > 0) next.set(key(s + v), (next.get(key(s + v)) ?? 0) + q * w); });
+    for (const [s, q] of dist)
+      m.values.forEach((v, j) => {
+        const w = m.weights[j]! / tot;
+        if (w > 0) next.set(key(s + v), (next.get(key(s + v)) ?? 0) + q * w);
+      });
     dist = next;
   }
   const support = [...dist.keys()].sort((a, b) => a - b);
@@ -127,7 +150,10 @@ export function modelPmf(m: Model): number[] {
   const out: number[] = [];
   for (let k = 0; k <= m.n; k++) {
     if (m.kind === "binom") {
-      if (m.p === 0 || m.p === 1) { out.push(k === (m.p === 1 ? m.n : 0) ? 1 : 0); continue; }
+      if (m.p === 0 || m.p === 1) {
+        out.push(k === (m.p === 1 ? m.n : 0) ? 1 : 0);
+        continue;
+      }
       out.push(Math.exp(lnComb(m.n, k) + k * Math.log(m.p) + (m.n - k) * Math.log(1 - m.p)));
     } else {
       out.push(Math.exp(lnComb(m.success, k) + lnComb(m.total - m.success, m.n - k) - lnComb(m.total, m.n)));
@@ -148,23 +174,48 @@ export function poissonPmf(lambda: number, kmax: number): number[] {
 /** 標準正規分布の累積 Φ(z)。誤差関数の近似（Abramowitz–Stegun 7.1.26。誤差 1.5×10⁻⁷ 以下。教材の旧版のラボと同じ式） */
 export function normalCdf(z: number): number {
   if (!Number.isFinite(z)) return z > 0 ? 1 : 0;
-  const x = Math.abs(z) / Math.SQRT2, t = 1 / (1 + 0.3275911 * x);
-  const erf = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
+  const x = Math.abs(z) / Math.SQRT2,
+    t = 1 / (1 + 0.3275911 * x);
+  const erf =
+    1 -
+    ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);
   return z >= 0 ? (1 + erf) / 2 : (1 - erf) / 2;
 }
 
 /** 標準正規分布の逆関数 Φ⁻¹(q)（Acklam の近似。相対誤差 1.15×10⁻⁹ 程度）。q は 0〜1 の外なら止まる */
 export function normalQuantile(q: number): number {
   if (!(q > 0 && q < 1)) throw new Error(`q は 0 より大きく 1 より小さい：${q}`);
-  const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239];
+  const a = [
+    -39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239,
+  ];
   const b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572];
-  const c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+  const c = [
+    -0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968,
+    2.938163982698783,
+  ];
   const d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
-  const lo = 0.02425, hi = 1 - lo;
-  if (q < lo) { const r = Math.sqrt(-2 * Math.log(q)); return (((((c[0]! * r + c[1]!) * r + c[2]!) * r + c[3]!) * r + c[4]!) * r + c[5]!) / ((((d[0]! * r + d[1]!) * r + d[2]!) * r + d[3]!) * r + 1); }
-  if (q > hi) { const r = Math.sqrt(-2 * Math.log(1 - q)); return -(((((c[0]! * r + c[1]!) * r + c[2]!) * r + c[3]!) * r + c[4]!) * r + c[5]!) / ((((d[0]! * r + d[1]!) * r + d[2]!) * r + d[3]!) * r + 1); }
-  const u = q - 0.5, r = u * u;
-  return (((((a[0]! * r + a[1]!) * r + a[2]!) * r + a[3]!) * r + a[4]!) * r + a[5]!) * u / (((((b[0]! * r + b[1]!) * r + b[2]!) * r + b[3]!) * r + b[4]!) * r + 1);
+  const lo = 0.02425,
+    hi = 1 - lo;
+  if (q < lo) {
+    const r = Math.sqrt(-2 * Math.log(q));
+    return (
+      (((((c[0]! * r + c[1]!) * r + c[2]!) * r + c[3]!) * r + c[4]!) * r + c[5]!) /
+      ((((d[0]! * r + d[1]!) * r + d[2]!) * r + d[3]!) * r + 1)
+    );
+  }
+  if (q > hi) {
+    const r = Math.sqrt(-2 * Math.log(1 - q));
+    return (
+      -(((((c[0]! * r + c[1]!) * r + c[2]!) * r + c[3]!) * r + c[4]!) * r + c[5]!) /
+      ((((d[0]! * r + d[1]!) * r + d[2]!) * r + d[3]!) * r + 1)
+    );
+  }
+  const u = q - 0.5,
+    r = u * u;
+  return (
+    ((((((a[0]! * r + a[1]!) * r + a[2]!) * r + a[3]!) * r + a[4]!) * r + a[5]!) * u) /
+    (((((b[0]! * r + b[1]!) * r + b[2]!) * r + b[3]!) * r + b[4]!) * r + 1)
+  );
 }
 
 /** r 回目の成功が k 回目の試行で起きる確率（k＝0〜kmax。k＜r は0）。r＝1 で幾何分布、2以上で負の二項分布。
@@ -184,7 +235,7 @@ export function negbinomPmf(r: number, p: number, kmax: number): number[] {
 export function normalDensity(x: number, mean: number, sd: number): number {
   if (!(sd > 0)) throw new Error(`σ は0より大きい：${sd}`);
   const z = (x - mean) / sd;
-  return Math.exp(-z * z / 2) / (sd * Math.sqrt(2 * Math.PI));
+  return Math.exp((-z * z) / 2) / (sd * Math.sqrt(2 * Math.PI));
 }
 
 /** 起き方に合う理論のモデル（独立でない起き方には式がないので undefined） */
@@ -201,11 +252,12 @@ export function modelMoments(m: Model): { mean: number; variance: number } {
   if (m.kind === "table") {
     const tot = m.weights.reduce((a, b) => a + b, 0);
     // 分散は平均からのずれの2乗で求める（E(X²)−μ² の引き算は、近い大きな値で桁が落ちる：10億と10億＋1 で 0 になっていた。#142）
-    const mu = m.values.reduce((s, v, j) => s + v * m.weights[j]! / tot, 0);
-    const v2 = m.values.reduce((s, v, j) => s + (v - mu) ** 2 * m.weights[j]! / tot, 0);
+    const mu = m.values.reduce((s, v, j) => s + (v * m.weights[j]!) / tot, 0);
+    const v2 = m.values.reduce((s, v, j) => s + ((v - mu) ** 2 * m.weights[j]!) / tot, 0);
     return { mean: m.n * mu, variance: m.n * v2 };
   }
-  const q = m.success / m.total, fpc = m.total > 1 ? (m.total - m.n) / (m.total - 1) : 0;
+  const q = m.success / m.total,
+    fpc = m.total > 1 ? (m.total - m.n) / (m.total - 1) : 0;
   return { mean: m.n * q, variance: m.n * q * (1 - q) * fpc };
 }
 
@@ -234,10 +286,24 @@ export function mechanismMoments(m: Mechanism): { mean: number; variance: number
   if (bad) throw new RangeError(bad);
   if (m.kind === "bernoulli" || m.kind === "urn" || m.kind === "table") return modelMoments(modelOf(m)!);
   const pq = m.p * (1 - m.p);
-  if (m.kind === "mix") { const d = mixSpread(m); return { mean: m.n * m.p, variance: m.n * pq + m.n * (m.n - 1) * d * d }; }
-  if (m.kind === "fatigue") { let v = 0; for (let i = 0; i < m.n; i++) { const q = fatigueP(m, i); v += q * (1 - q); } return { mean: m.n * m.p, variance: v }; }
-  let lag = 0, c = 1;
-  for (let h = 1; h < m.n; h++) { c *= m.carry; lag += (m.n - h) * c; }
+  if (m.kind === "mix") {
+    const d = mixSpread(m);
+    return { mean: m.n * m.p, variance: m.n * pq + m.n * (m.n - 1) * d * d };
+  }
+  if (m.kind === "fatigue") {
+    let v = 0;
+    for (let i = 0; i < m.n; i++) {
+      const q = fatigueP(m, i);
+      v += q * (1 - q);
+    }
+    return { mean: m.n * m.p, variance: v };
+  }
+  let lag = 0,
+    c = 1;
+  for (let h = 1; h < m.n; h++) {
+    c *= m.carry;
+    lag += (m.n - h) * c;
+  }
   return { mean: m.n * m.p, variance: pq * (m.n + 2 * lag) };
 }
 
@@ -258,17 +324,36 @@ export type SetRecord = {
 
 export function emptySetRecord(seed: number, mechanism: Mechanism): SetRecord {
   const support = supportOf(mechanism);
-  return { version: 2, support, seed, mechanism, sets: 0, ks: [], counts: Array(support.length).fill(0), last: null, sum: 0, sumSq: 0 };
+  return {
+    version: 2,
+    support,
+    seed,
+    mechanism,
+    sets: 0,
+    ks: [],
+    counts: Array(support.length).fill(0),
+    last: null,
+    sum: 0,
+    sumSq: 0,
+  };
 }
 
 /** count セットを起こして記録に足す（元の記録は変えない） */
 export function runSets(rng: Random, rec: SetRecord, count: number): SetRecord {
   if (!isCount(count)) throw new RangeError(`セットの数は0以上の整数：${count}`);
-  const ks = [...rec.ks], counts = [...rec.counts], at = new Map(rec.support.map((x, i) => [key(x), i]));
-  let { sum, sumSq } = rec, last = rec.last;
+  const ks = [...rec.ks],
+    counts = [...rec.counts],
+    at = new Map(rec.support.map((x, i) => [key(x), i]));
+  let { sum, sumSq } = rec,
+    last = rec.last;
   for (let i = 0; i < count; i++) {
-    const s = drawSet(rng, rec.mechanism), k = key(s.reduce((a, b) => a + b, 0));
-    ks.push(k); counts[at.get(k)!]! += 1; sum += k; sumSq += k * k; last = s;
+    const s = drawSet(rng, rec.mechanism),
+      k = key(s.reduce((a, b) => a + b, 0));
+    ks.push(k);
+    counts[at.get(k)!]! += 1;
+    sum += k;
+    sumSq += k * k;
+    last = s;
   }
   return { ...rec, sets: rec.sets + count, ks, counts, last, sum, sumSq };
 }
@@ -286,9 +371,21 @@ export function summarize(rec: SetRecord): { mean: number | undefined; variance:
 
 /** 移り変わり（stats2-course #161 の観察）：1セット目から i セット目までの平均・標準偏差（÷セット数）・当てはまった割合。
  *  標準偏差は Welford の方法で1つずつ足す（大きな値の 2 乗の引き算で桁が落ちない）。scale は割合にするとき 1/n */
-export function runningMean(ks: number[]): number[] { let t = 0; return ks.map((k, i) => (t += k) / (i + 1)); }
-export function runningSd(ks: number[], scale = 1): number[] {
-  let m = 0, q = 0;
-  return ks.map((k, i) => { const d = k - m; m += d / (i + 1); q += d * (k - m); return Math.sqrt(Math.max(0, q) / (i + 1)) * scale; });
+export function runningMean(ks: number[]): number[] {
+  let t = 0;
+  return ks.map((k, i) => (t += k) / (i + 1));
 }
-export function runningShare(flags: boolean[]): number[] { let t = 0; return flags.map((f, i) => (t += f ? 1 : 0) / (i + 1)); }
+export function runningSd(ks: number[], scale = 1): number[] {
+  let m = 0,
+    q = 0;
+  return ks.map((k, i) => {
+    const d = k - m;
+    m += d / (i + 1);
+    q += d * (k - m);
+    return Math.sqrt(Math.max(0, q) / (i + 1)) * scale;
+  });
+}
+export function runningShare(flags: boolean[]): number[] {
+  let t = 0;
+  return flags.map((f, i) => (t += f ? 1 : 0) / (i + 1));
+}

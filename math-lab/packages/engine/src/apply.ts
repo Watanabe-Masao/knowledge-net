@@ -24,7 +24,15 @@ export type ApplySolve =
   /** 反証：平均が np でも二項分布と言えるか。answer は 0＝言える（分散も np(1−p)）・1＝言えない */
   | { method: "binom-judge"; mechanism: Mechanism }
   /** 評価：起き方の強さ（param）を min〜max の step 刻みで動かし、分散が二項分布の ratio 倍以内に収まる最大の強さ */
-  | { method: "max-strength"; mechanism: Mechanism; param: "carry" | "spread" | "drop"; min: number; max: number; step: number; ratio: number }
+  | {
+      method: "max-strength";
+      mechanism: Mechanism;
+      param: "carry" | "spread" | "drop";
+      min: number;
+      max: number;
+      step: number;
+      ratio: number;
+    }
   /** 変換：戻さずに n 個取るとき、分散が二項分布の ratio 倍以上（有限母集団修正 (N−n)/(N−1)≧ratio）になる最小の箱の中の玉の数 N */
   | { method: "min-total"; n: number; ratio: number; step?: number }
   /** 逆算：混ざる起き方の分散 variance から、ずれ幅 d を求める（V＝np(1−p)＋n(n−1)d²） */
@@ -59,17 +67,27 @@ export const APPLY_FIELDS = {
   "within-band": { required: ["P", "m", "x"], choices: 2 },
   "linear-sum": { required: ["n", "p", "a", "b"] },
   "compare-var": { required: ["a", "b"], choices: 3 },
-} as const satisfies { [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number } };
+} as const satisfies {
+  [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
+};
 // 項目の書き漏らしも型で止める（required・optional が型の項目とちょうど同じ）
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
-type ListOf<M extends ApplyMethod, F extends "required" | "optional"> = (typeof APPLY_FIELDS)[M] extends { [P in F]: readonly (infer K)[] } ? K : never;
-const _fieldsComplete: { [M in ApplyMethod]: [Same<ListOf<M, "required">, ReqKeys<Of<M>>>, Same<ListOf<M, "optional">, OptKeys<Of<M>>>] } = {} as { [M in ApplyMethod]: [true, true] };
+type ListOf<M extends ApplyMethod, F extends "required" | "optional"> = (typeof APPLY_FIELDS)[M] extends {
+  [P in F]: readonly (infer K)[];
+}
+  ? K
+  : never;
+const _fieldsComplete: {
+  [M in ApplyMethod]: [Same<ListOf<M, "required">, ReqKeys<Of<M>>>, Same<ListOf<M, "optional">, OptKeys<Of<M>>>];
+} = {} as { [M in ApplyMethod]: [true, true] };
 void _fieldsComplete;
 
 /** 解き方の1段：題（何をする段か）・式（TeX）・文 */
 export type ApplyStep = {
   /** 文の型の id・穴の値・別の言い方。段の題と文は教材の apply_texts（stats2-course #211） */
-  tid: string; vars: Record<string, string>; variant?: string;
+  tid: string;
+  vars: Record<string, string>;
+  variant?: string;
   tex?: string;
 };
 export type ApplyResult = { answer: number; facts: Record<string, number>; steps: ApplyStep[] };
@@ -78,7 +96,11 @@ const EPS = 1e-12;
 const prob = (n: number, p: number, e: ApplyEvent) => {
   if (!(Number.isInteger(e.k) && e.k >= 0 && e.k <= n)) throw new RangeError(`k は 0〜n の整数：${e.k}`);
   const fm = modelPmf({ kind: "binom", n, p });
-  return fm.reduce((s, x, k) => s + ((e.op === "eq" ? k === e.k : e.op === "ge" ? k >= e.k : e.op === "le" ? k <= e.k : k > e.k) ? x : 0), 0);
+  return fm.reduce(
+    (s, x, k) =>
+      s + ((e.op === "eq" ? k === e.k : e.op === "ge" ? k >= e.k : e.op === "le" ? k <= e.k : k > e.k) ? x : 0),
+    0,
+  );
 };
 const checkNP = (n: number, p: number) => {
   if (!(Number.isInteger(n) && n >= 1)) throw new RangeError(`n は1以上の整数：${n}`);
@@ -104,56 +126,82 @@ function solveCore(s: ApplySolve): ApplyResult {
       const v = s.p * (1 - s.p);
       let n = Math.max(1, Math.floor(v / (s.sd * s.sd)) - 1);
       while (Math.sqrt(v / n) > s.sd + EPS) n++;
-      const at = Math.sqrt(v / n), before = n > 1 ? Math.sqrt(v / (n - 1)) : NaN;
+      const at = Math.sqrt(v / n),
+        before = n > 1 ? Math.sqrt(v / (n - 1)) : NaN;
       return { answer: n, facts: { sd: at, sdBefore: before }, steps: [] };
     }
     case "compare-eq": {
-      checkNP(s.a.n, s.a.p); checkNP(s.b.n, s.b.p);
-      const a = prob(s.a.n, s.a.p, { op: "eq", k: s.a.k }), b = prob(s.b.n, s.b.p, { op: "eq", k: s.b.k });
-      const r = a / b, ans = r > 1.1 ? 0 : r < 1 / 1.1 ? 2 : 1;
+      checkNP(s.a.n, s.a.p);
+      checkNP(s.b.n, s.b.p);
+      const a = prob(s.a.n, s.a.p, { op: "eq", k: s.a.k }),
+        b = prob(s.b.n, s.b.p, { op: "eq", k: s.b.k });
+      const r = a / b,
+        ans = r > 1.1 ? 0 : r < 1 / 1.1 ? 2 : 1;
       return { answer: ans, facts: { a, b, ratio: r }, steps: [] };
     }
     case "boundary": {
       checkNP(s.n, s.p);
-      const ge = prob(s.n, s.p, { op: "ge", k: s.k }), gt = s.k < s.n ? prob(s.n, s.p, { op: "gt", k: s.k }) : 0, eq = ge - gt;
+      const ge = prob(s.n, s.p, { op: "ge", k: s.k }),
+        gt = s.k < s.n ? prob(s.n, s.p, { op: "gt", k: s.k }) : 0,
+        eq = ge - gt;
       return { answer: eq, facts: { ge, gt }, steps: [] };
     }
     case "expected-observers": {
       checkNP(s.n, s.p);
       if (!(Number.isInteger(s.people) && s.people >= 1)) throw new RangeError(`人数は1以上の整数：${s.people}`);
-      const P = prob(s.n, s.p, s.event), any = 1 - (1 - P) ** s.people;
+      const P = prob(s.n, s.p, s.event),
+        any = 1 - (1 - P) ** s.people;
       return { answer: s.people * P, facts: { prob: P, atLeastOne: any }, steps: [] };
     }
     case "sets-for-error": {
       checkNP(s.n, s.p);
       if (!(s.err > 0)) throw new RangeError(`err は正：${s.err}`);
-      const P = prob(s.n, s.p, s.event), v = P * (1 - P);
-      if (v === 0) return { answer: 1, facts: { prob: P }, steps: [{ tid: "sets-for-error.none", vars: {}}] };
+      const P = prob(s.n, s.p, s.event),
+        v = P * (1 - P);
+      if (v === 0) return { answer: 1, facts: { prob: P }, steps: [{ tid: "sets-for-error.none", vars: {} }] };
       let N = Math.max(1, Math.floor((4 * v) / (s.err * s.err)) - 1);
       while (2 * Math.sqrt(v / N) > s.err + EPS) N++;
       const u = s.unit ?? 1;
       if (!(Number.isInteger(u) && u >= 1)) throw new RangeError(`unit は1以上の整数：${u}`);
-      N = Math.ceil(N / u) * u;   // セット数を u 単位で数える（実験室の道具の刻み）
+      N = Math.ceil(N / u) * u; // セット数を u 単位で数える（実験室の道具の刻み）
       const at = 2 * Math.sqrt(v / N);
       return { answer: N, facts: { prob: P, err: at }, steps: [] };
     }
     case "binom-judge": {
       const m = s.mechanism;
       if (m.kind === "table" || m.kind === "urn") throw new RangeError("0/1 で毎回の確率 p を持つ起き方だけ");
-      const { mean, variance } = mechanismMoments(m), bv = m.n * m.p * (1 - m.p);
-      const same = Math.abs(variance - bv) <= 1e-9 * Math.max(1, bv), r = bv > 0 ? variance / bv : 1;
-      return { answer: same ? 0 : 1, facts: { mean, variance, binomMean: m.n * m.p, binomVariance: bv, ratio: r }, steps: [] };
+      const { mean, variance } = mechanismMoments(m),
+        bv = m.n * m.p * (1 - m.p);
+      const same = Math.abs(variance - bv) <= 1e-9 * Math.max(1, bv),
+        r = bv > 0 ? variance / bv : 1;
+      return {
+        answer: same ? 0 : 1,
+        facts: { mean, variance, binomMean: m.n * m.p, binomVariance: bv, ratio: r },
+        steps: [],
+      };
     }
     case "max-strength": {
       const m = s.mechanism;
-      if (m.kind === "table" || m.kind === "urn" || m.kind === "bernoulli" || !(s.param in m)) throw new RangeError(`起き方 ${m.kind} に強さ ${s.param} がない`);
+      if (m.kind === "table" || m.kind === "urn" || m.kind === "bernoulli" || !(s.param in m))
+        throw new RangeError(`起き方 ${m.kind} に強さ ${s.param} がない`);
       if (!(s.step > 0 && s.max >= s.min && s.ratio > 0)) throw new RangeError("min≦max・step と ratio は正");
-      const bv = m.n * m.p * (1 - m.p), steps = Math.round((s.max - s.min) / s.step);
-      const ratioAt = (x: number) => { const mm = { ...m, [s.param]: x } as Mechanism; const bad = checkMechanism(mm); if (bad) throw new RangeError(bad); return mechanismMoments(mm).variance / bv; };
-      let best = Number.NaN, bestRatio = Number.NaN;
+      const bv = m.n * m.p * (1 - m.p),
+        steps = Math.round((s.max - s.min) / s.step);
+      const ratioAt = (x: number) => {
+        const mm = { ...m, [s.param]: x } as Mechanism;
+        const bad = checkMechanism(mm);
+        if (bad) throw new RangeError(bad);
+        return mechanismMoments(mm).variance / bv;
+      };
+      let best = Number.NaN,
+        bestRatio = Number.NaN;
       for (let i = 0; i <= steps; i++) {
-        const x = Number((s.min + i * s.step).toFixed(10)), r = ratioAt(x);
-        if (r <= s.ratio + EPS && r >= 1 / s.ratio - EPS) { best = x; bestRatio = r; } else break;
+        const x = Number((s.min + i * s.step).toFixed(10)),
+          r = ratioAt(x);
+        if (r <= s.ratio + EPS && r >= 1 / s.ratio - EPS) {
+          best = x;
+          bestRatio = r;
+        } else break;
       }
       return { answer: best, facts: { ratio: bestRatio }, steps: [] };
     }
@@ -163,15 +211,17 @@ function solveCore(s: ApplySolve): ApplyResult {
       const st = s.step ?? 1;
       if (!(Number.isInteger(st) && st >= 1)) throw new RangeError(`step は1以上の整数：${st}`);
       let N = s.n;
-      while ((N - s.n) / (N - 1) < s.ratio - EPS || N % st !== 0) N++;   // 箱の中の玉の数は st 個刻み（実験室の道具の刻み）
+      while ((N - s.n) / (N - 1) < s.ratio - EPS || N % st !== 0) N++; // 箱の中の玉の数は st 個刻み（実験室の道具の刻み）
       const fpc = (x: number) => (x - s.n) / (x - 1);
       return { answer: N, facts: { fpc: fpc(N), share: s.n / N }, steps: [] };
     }
     case "solve-spread": {
       checkNP(s.n, s.p);
       if (s.n < 2) throw new RangeError("n は2以上（n＝1 では d が分散に出ない）");
-      const bv = s.n * s.p * (1 - s.p), extra = s.variance - bv;
-      if (extra < -EPS) throw new RangeError(`分散 ${s.variance} は二項分布の ${bv} より小さい（混ざる起き方では起きない）`);
+      const bv = s.n * s.p * (1 - s.p),
+        extra = s.variance - bv;
+      if (extra < -EPS)
+        throw new RangeError(`分散 ${s.variance} は二項分布の ${bv} より小さい（混ざる起き方では起きない）`);
       const d = Math.sqrt(Math.max(0, extra) / (s.n * (s.n - 1)));
       if (d > Math.min(s.p, 1 - s.p) + EPS) throw new RangeError(`d＝${d} は min(p, 1−p) を超える`);
       return { answer: d, facts: { binomVariance: bv }, steps: [] };
@@ -180,13 +230,17 @@ function solveCore(s: ApplySolve): ApplyResult {
       checkNP(s.n, s.p);
       const fm = modelPmf({ kind: "binom", n: s.n, p: s.p });
       let best = 0;
-      fm.forEach((x, k) => { if (x > fm[best]! + EPS) best = k; });
+      fm.forEach((x, k) => {
+        if (x > fm[best]! + EPS) best = k;
+      });
       return { answer: best, facts: { prob: fm[best]! }, steps: [] };
     }
     case "within-band": {
       checkNP(1, s.P);
-      if (!(Number.isInteger(s.m) && s.m >= 1 && Number.isInteger(s.x) && s.x >= 0 && s.x <= s.m)) throw new RangeError(`m は1以上・x は 0〜m の整数：${s.m}・${s.x}`);
-      const se = Math.sqrt((s.P * (1 - s.P)) / s.m), z = se > 0 ? Math.abs(s.x / s.m - s.P) / se : Infinity;
+      if (!(Number.isInteger(s.m) && s.m >= 1 && Number.isInteger(s.x) && s.x >= 0 && s.x <= s.m))
+        throw new RangeError(`m は1以上・x は 0〜m の整数：${s.m}・${s.x}`);
+      const se = Math.sqrt((s.P * (1 - s.P)) / s.m),
+        z = se > 0 ? Math.abs(s.x / s.m - s.P) / se : Infinity;
       return { answer: z <= 2 + EPS ? 1 : 0, facts: { se, z }, steps: [] };
     }
     case "linear-sum":
@@ -194,8 +248,11 @@ function solveCore(s: ApplySolve): ApplyResult {
       if (!(Number.isFinite(s.a) && Number.isFinite(s.b))) throw new RangeError("a・b は数");
       return { answer: s.n * (s.a * s.p + s.b * (1 - s.p)), facts: {}, steps: [] };
     case "compare-var": {
-      checkNP(s.a.n, s.a.p); checkNP(s.b.n, s.b.p);
-      const va = s.a.n * s.a.p * (1 - s.a.p), vb = s.b.n * s.b.p * (1 - s.b.p), r = va / vb;
+      checkNP(s.a.n, s.a.p);
+      checkNP(s.b.n, s.b.p);
+      const va = s.a.n * s.a.p * (1 - s.a.p),
+        vb = s.b.n * s.b.p * (1 - s.b.p),
+        r = va / vb;
       return { answer: r > 1.1 ? 0 : r < 1 / 1.1 ? 2 : 1, facts: { va, vb, ratio: r }, steps: [] };
     }
   }
@@ -212,7 +269,9 @@ export type ApplyMark = { chip?: string; read?: string; bar?: number };
 export type ApplyVar = { key: string; min: number; max: number; step: number };
 export type ApplyCheck = {
   answerFormat: ApplyFormat | null;
-  at: ApplyState; mark: ApplyMark; vars: ApplyVar[];
+  at: ApplyState;
+  mark: ApplyMark;
+  vars: ApplyVar[];
   goal?: { ok: (s: ApplyState) => boolean; kind: "min" | "max" | "exact" };
   /** 解き方を組み立てる（stats2-course #181）の確かめる段で、道具を合わせる先（順に）。ふつうは at の1つ、2つを比べる課題は両方、
    *  最小・最大を求める課題は答えと1刻み外（境目の前後。答えでは条件を満たし、1刻み外では満たさない） */
@@ -220,17 +279,27 @@ export type ApplyCheck = {
   /** 合わせる先の種類：one＝答えの1つ・compare＝2つを比べる・boundary＝境目の前後 */
   probe: "one" | "compare" | "boundary";
 };
-const OPS = { eq: 0, ge: 1, le: 2, gt: 1 } as const;   // 道具の「数え方」（ちょうど・以上・以下）。より多い は k＋1 以上として合わせる
+const OPS = { eq: 0, ge: 1, le: 2, gt: 1 } as const; // 道具の「数え方」（ちょうど・以上・以下）。より多い は k＋1 以上として合わせる
 
 /** 課題の「グラフを問いに合わせる」先と、色を付ける所を作る（答えは solveApply と同じ求め方） */
 export function applyCheck(s: ApplySolve): ApplyCheck {
   const c = check0(s);
-  if (s.method === "compare-var") return { ...c, targets: [{ n: s.a.n, p: s.a.p }, { n: s.b.n, p: s.b.p }], probe: "compare" };
-  const g = c.goal, v = c.vars[0];
+  if (s.method === "compare-var")
+    return {
+      ...c,
+      targets: [
+        { n: s.a.n, p: s.a.p },
+        { n: s.b.n, p: s.b.p },
+      ],
+      probe: "compare",
+    };
+  const g = c.goal,
+    v = c.vars[0];
   if (g && v && (g.kind === "min" || g.kind === "max")) {
     // 最小なら1刻み下、最大なら1刻み上。道具の範囲の外なら答えの1つだけ
     const x = Number((c.at[v.key]! + (g.kind === "min" ? -v.step : v.step)).toFixed(10));
-    if (x >= v.min - 1e-12 && x <= v.max + 1e-12) return { ...c, targets: [c.at, { ...c.at, [v.key]: x }], probe: "boundary" };
+    if (x >= v.min - 1e-12 && x <= v.max + 1e-12)
+      return { ...c, targets: [c.at, { ...c.at, [v.key]: x }], probe: "boundary" };
   }
   return { ...c, targets: [c.at], probe: "one" };
 }
@@ -238,49 +307,111 @@ function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
   const ans = solveApply(s).answer;
   switch (s.method) {
     case "mean-to-p":
-      return { answerFormat: PCT0, at: { n: s.n, p: ans }, mark: { chip: "p", read: "center" }, vars: [{ key: "p", min: 0.01, max: 0.99, step: 0.01 }],
-        goal: { ok: (v) => Math.abs(v.n! * v.p! - s.mean) < 1e-9, kind: "exact" } };
+      return {
+        answerFormat: PCT0,
+        at: { n: s.n, p: ans },
+        mark: { chip: "p", read: "center" },
+        vars: [{ key: "p", min: 0.01, max: 0.99, step: 0.01 }],
+        goal: { ok: (v) => Math.abs(v.n! * v.p! - s.mean) < 1e-9, kind: "exact" },
+      };
     case "min-n-share-sd":
-      return { answerFormat: INT, at: { p: s.p, n: ans }, mark: { chip: "n", read: "share-sd" }, vars: [{ key: "n", min: 1, max: 40, step: 1 }],
-        goal: { ok: (v) => Math.sqrt((v.p! * (1 - v.p!)) / v.n!) <= s.sd + EPS, kind: "min" } };
+      return {
+        answerFormat: INT,
+        at: { p: s.p, n: ans },
+        mark: { chip: "n", read: "share-sd" },
+        vars: [{ key: "n", min: 1, max: 40, step: 1 }],
+        goal: { ok: (v) => Math.sqrt((v.p! * (1 - v.p!)) / v.n!) <= s.sd + EPS, kind: "min" },
+      };
     case "compare-eq":
-      return { answerFormat: null, at: { n: s.a.n, p: s.a.p, k: s.a.k, op: OPS.eq }, mark: { read: "eq", bar: s.a.k }, vars: [] };
+      return {
+        answerFormat: null,
+        at: { n: s.a.n, p: s.a.p, k: s.a.k, op: OPS.eq },
+        mark: { read: "eq", bar: s.a.k },
+        vars: [],
+      };
     case "boundary":
-      return { answerFormat: SIG3, at: { n: s.n, p: s.p, k: s.k, op: OPS.eq }, mark: { read: "eq", bar: s.k }, vars: [] };
+      return {
+        answerFormat: SIG3,
+        at: { n: s.n, p: s.p, k: s.k, op: OPS.eq },
+        mark: { read: "eq", bar: s.k },
+        vars: [],
+      };
     case "expected-observers":
-      return { answerFormat: NUM2, at: { n: s.n, p: s.p, k: s.event.op === "gt" ? s.event.k + 1 : s.event.k, op: OPS[s.event.op] }, mark: { read: "prob", bar: s.event.k }, vars: [] };
+      return {
+        answerFormat: NUM2,
+        at: { n: s.n, p: s.p, k: s.event.op === "gt" ? s.event.k + 1 : s.event.k, op: OPS[s.event.op] },
+        mark: { read: "prob", bar: s.event.k },
+        vars: [],
+      };
     case "sets-for-error": {
-      const P = prob(s.n, s.p, s.event), u = s.unit ?? 1;
-      return { answerFormat: INT, at: { n: s.n, p: s.p, k: s.event.k, N: ans }, mark: { chip: "N", read: "se" }, vars: [{ key: "N", min: u, max: 100000, step: u }],
-        goal: { ok: (v) => 2 * Math.sqrt((P * (1 - P)) / v.N!) <= s.err + EPS, kind: "min" } };
+      const P = prob(s.n, s.p, s.event),
+        u = s.unit ?? 1;
+      return {
+        answerFormat: INT,
+        at: { n: s.n, p: s.p, k: s.event.k, N: ans },
+        mark: { chip: "N", read: "se" },
+        vars: [{ key: "N", min: u, max: 100000, step: u }],
+        goal: { ok: (v) => 2 * Math.sqrt((P * (1 - P)) / v.N!) <= s.err + EPS, kind: "min" },
+      };
     }
     case "binom-judge": {
       const m = s.mechanism as Extract<Mechanism, { p: number }>;
-      const key = m.kind === "streak" ? "carry" : m.kind === "mix" ? "spread" : m.kind === "fatigue" ? "drop" : undefined;
-      return { answerFormat: null, at: key ? { s: (m as unknown as Record<string, number>)[key]! } : {}, mark: { read: "variance" }, vars: [] };
+      const key =
+        m.kind === "streak" ? "carry" : m.kind === "mix" ? "spread" : m.kind === "fatigue" ? "drop" : undefined;
+      return {
+        answerFormat: null,
+        at: key ? { s: (m as unknown as Record<string, number>)[key]! } : {},
+        mark: { read: "variance" },
+        vars: [],
+      };
     }
     case "max-strength": {
-      const m = s.mechanism as Extract<Mechanism, { p: number }>, bv = m.n * m.p * (1 - m.p);
+      const m = s.mechanism as Extract<Mechanism, { p: number }>,
+        bv = m.n * m.p * (1 - m.p);
       const r = (v: ApplyState) => mechanismMoments({ ...m, [s.param]: v.s! } as Mechanism).variance / bv;
-      return { answerFormat: NUM2, at: { s: ans }, mark: { chip: "s", read: "ratio" }, vars: [{ key: "s", min: s.min, max: s.max, step: s.step }],
-        goal: { ok: (v) => r(v) <= s.ratio + EPS && r(v) >= 1 / s.ratio - EPS, kind: "max" } };
+      return {
+        answerFormat: NUM2,
+        at: { s: ans },
+        mark: { chip: "s", read: "ratio" },
+        vars: [{ key: "s", min: s.min, max: s.max, step: s.step }],
+        goal: { ok: (v) => r(v) <= s.ratio + EPS && r(v) >= 1 / s.ratio - EPS, kind: "max" },
+      };
     }
     case "min-total": {
-      const st = s.step ?? 1, fpc = (v: ApplyState) => (v.s! - s.n) / (v.s! - 1);
-      return { answerFormat: INT, at: { s: ans }, mark: { chip: "s", read: "ratio" }, vars: [{ key: "s", min: 12, max: 60, step: st }],
-        goal: { ok: (v) => fpc(v) >= s.ratio - EPS, kind: "min" } };
+      const st = s.step ?? 1,
+        fpc = (v: ApplyState) => (v.s! - s.n) / (v.s! - 1);
+      return {
+        answerFormat: INT,
+        at: { s: ans },
+        mark: { chip: "s", read: "ratio" },
+        vars: [{ key: "s", min: 12, max: 60, step: st }],
+        goal: { ok: (v) => fpc(v) >= s.ratio - EPS, kind: "min" },
+      };
     }
     case "solve-spread": {
       const V = (v: ApplyState) => s.n * s.p * (1 - s.p) + s.n * (s.n - 1) * v.s! ** 2;
-      return { answerFormat: NUM2, at: { s: ans }, mark: { chip: "s", read: "variance" }, vars: [{ key: "s", min: 0.05, max: 0.4, step: 0.05 }],
-        goal: { ok: (v) => Math.abs(V(v) - s.variance) < 1e-9, kind: "exact" } };
+      return {
+        answerFormat: NUM2,
+        at: { s: ans },
+        mark: { chip: "s", read: "variance" },
+        vars: [{ key: "s", min: 0.05, max: 0.4, step: 0.05 }],
+        goal: { ok: (v) => Math.abs(V(v) - s.variance) < 1e-9, kind: "exact" },
+      };
     }
     case "mode":
       return { answerFormat: INT, at: { n: s.n, p: s.p }, mark: { bar: ans }, vars: [] };
     case "within-band":
       return { answerFormat: null, at: { n: 1, p: s.P, k: 1, m: s.m }, mark: { read: "band" }, vars: [] };
     case "linear-sum":
-      return { answerFormat: NUM2, at: { n: s.n, p: s.p, a: s.a, b: s.b }, mark: { read: "sum" }, vars: [{ key: "a", min: -500, max: 500, step: 50 }, { key: "b", min: -500, max: 500, step: 50 }] };
+      return {
+        answerFormat: NUM2,
+        at: { n: s.n, p: s.p, a: s.a, b: s.b },
+        mark: { read: "sum" },
+        vars: [
+          { key: "a", min: -500, max: 500, step: 50 },
+          { key: "b", min: -500, max: 500, step: 50 },
+        ],
+      };
     case "compare-var":
       return { answerFormat: null, at: { n: s.a.n, p: s.a.p }, mark: { read: "variance" }, vars: [] };
   }
@@ -299,9 +430,14 @@ export const solveValue = (sv: ApplySolve, path: string): number | undefined => 
   const terms = path.replace(/\s+/g, "").split(/(?=[+-])/);
   let sum = 0;
   for (const term of terms) {
-    const sign = term.startsWith("-") ? -1 : 1, body = term.replace(/^[+-]/, "");
+    const sign = term.startsWith("-") ? -1 : 1,
+      body = term.replace(/^[+-]/, "");
     let prod = 1;
-    for (const f of body.split("*")) { const x = one(f); if (x === undefined) return undefined; prod *= x; }
+    for (const f of body.split("*")) {
+      const x = one(f);
+      if (x === undefined) return undefined;
+      prod *= x;
+    }
     sum += sign * prod;
   }
   return sum;

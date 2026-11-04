@@ -9,25 +9,36 @@ export function sampleDiscrete(rng: Random, dist: Dist): number {
   const total = dist.reduce((s, d) => s + Math.max(0, d.y ?? 0), 0);
   if (!(total > 0)) throw new RangeError("確率がすべて0の分布からは引けない");
   let u = rng.next() * total;
-  for (const d of dist) { u -= Math.max(0, d.y ?? 0); if (u < 0) return d.x; }
-  return dist[dist.length - 1]!.x;   // 丸めの誤差で最後まで来たとき
+  for (const d of dist) {
+    u -= Math.max(0, d.y ?? 0);
+    if (u < 0) return d.x;
+  }
+  return dist[dist.length - 1]!.x; // 丸めの誤差で最後まで来たとき
 }
 
 /** 記録：引いた値の並びと、値ごとの回数・平均 */
 export type Record = { values: number[]; counts: Map<number, number>; mean: number | undefined };
 
-export function emptyRecord(): Record { return { values: [], counts: new Map(), mean: undefined }; }
+export function emptyRecord(): Record {
+  return { values: [], counts: new Map(), mean: undefined };
+}
 
 /** count 回引いて記録に足す（元の記録は変えない） */
 export function runTrials(rng: Random, dist: Dist, count: number, rec: Record = emptyRecord()): Record {
-  const values = [...rec.values], counts = new Map(rec.counts);
-  for (let i = 0; i < count; i++) { const x = sampleDiscrete(rng, dist); values.push(x); counts.set(x, (counts.get(x) ?? 0) + 1); }
+  const values = [...rec.values],
+    counts = new Map(rec.counts);
+  for (let i = 0; i < count; i++) {
+    const x = sampleDiscrete(rng, dist);
+    values.push(x);
+    counts.set(x, (counts.get(x) ?? 0) + 1);
+  }
   return { values, counts, mean: values.length ? values.reduce((s, v) => s + v, 0) / values.length : undefined };
 }
 
 /** 値ごとの割合（回数 ÷ 全体） */
 export function frequencies(rec: Record): Map<number, number> {
-  const n = rec.values.length, out = new Map<number, number>();
+  const n = rec.values.length,
+    out = new Map<number, number>();
   for (const [x, c] of rec.counts) out.set(x, c / n);
   return out;
 }

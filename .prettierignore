@@ -1,0 +1,12 @@
+# 生成物・写し・データは整形しない（中身の比べ合わせ・教材の写しの版がずれる）
+dist/
+**/dist/
+math-lab/packages/ui/src/tokens.css
+math-lab/packages/ui/tokens.json
+math-lab/test/fixtures/
+schema/
+public/
+*.json
+*.md
+*.yaml
+*.yml

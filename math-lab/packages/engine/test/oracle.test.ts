@@ -7,22 +7,46 @@
 import { describe, expect, it } from "vitest";
 import formulas from "./fixtures/stats2-formulas.json";
 import reference from "./fixtures/stats2-reference.json";
-import { checkDomain, evaluate, type Formula, type FormulaCondition, type FormulaNode, type FormulaSymbol } from "../src";
+import {
+  checkDomain,
+  evaluate,
+  type Formula,
+  type FormulaCondition,
+  type FormulaNode,
+  type FormulaSymbol,
+} from "../src";
 
-type F = Formula & { id: string; concept: string; defined_in?: string; contract: { conditions?: FormulaCondition[]; representative?: boolean } };
+type F = Formula & {
+  id: string;
+  concept: string;
+  defined_in?: string;
+  contract: { conditions?: FormulaCondition[]; representative?: boolean };
+};
 const all = formulas as unknown as F[];
 const byId = (id: string) => all.find((f) => f.id === id && !f.defined_in)!;
-const rhs = (f: { tree: FormulaNode }) => { const a = (f.tree as { args: FormulaNode[] }).args; return a[a.length - 1]!; };
+const rhs = (f: { tree: FormulaNode }) => {
+  const a = (f.tree as { args: FormulaNode[] }).args;
+  return a[a.length - 1]!;
+};
 type Num = { exact?: string; float: number };
 const TOL = { exact: { rel: 1e-12, abs: 1e-15 }, derived: { rel: 1e-12, abs: 1e-12 } } as const;
 const near = (got: number | undefined, want: Num, kind: keyof typeof TOL = "exact") =>
   got !== undefined && Math.abs(got - want.float) <= Math.max(TOL[kind].abs, TOL[kind].rel * Math.abs(want.float));
 
-type BinomCase = { id: string; inputs: { n: number; p: Num }; values: { pmf: Num[]; mean_by_definition: Num; var_by_definition: Num } };
+type BinomCase = {
+  id: string;
+  inputs: { n: number; p: Num };
+  values: { pmf: Num[]; mean_by_definition: Num; var_by_definition: Num };
+};
 type TableCase = {
-  id: string; inputs: { rows: { x: number; weight: number }[] };
-  values: { mu: Num; var_by_definition: Num; linear: { a: Num; b: Num; E_by_table: Num; V_by_table: Num; mutants: Record<string, Num> }[];
-    standardize: { sigma: Num; z: { x: Num; z: Num }[] } };
+  id: string;
+  inputs: { rows: { x: number; weight: number }[] };
+  values: {
+    mu: Num;
+    var_by_definition: Num;
+    linear: { a: Num; b: Num; E_by_table: Num; V_by_table: Num; mutants: Record<string, Num> }[];
+    standardize: { sigma: Num; z: { x: Num; z: Num }[] };
+  };
 };
 const cases = reference.cases as unknown[];
 const binom = cases.filter((c) => (c as { id: string }).id.startsWith("binom-")) as BinomCase[];
@@ -32,8 +56,11 @@ const tables = cases.filter((c) => (c as { id: string }).id.startsWith("table-")
 function binomMismatches(pmf: FormulaNode, mean: FormulaNode, variance: FormulaNode): string[] {
   const bad: string[] = [];
   for (const c of binom) {
-    const { n } = c.inputs, p = c.inputs.p.float;
-    c.values.pmf.forEach((want, k) => { if (!near(evaluate(pmf, { values: { n, k, p } }), want)) bad.push(`${c.id} P(X=${k})`); });
+    const { n } = c.inputs,
+      p = c.inputs.p.float;
+    c.values.pmf.forEach((want, k) => {
+      if (!near(evaluate(pmf, { values: { n, k, p } }), want)) bad.push(`${c.id} P(X=${k})`);
+    });
     if (!near(evaluate(mean, { values: { n, p } }), c.values.mean_by_definition)) bad.push(`${c.id} E`);
     if (!near(evaluate(variance, { values: { n, p } }), c.values.var_by_definition)) bad.push(`${c.id} V`);
   }
@@ -41,13 +68,14 @@ function binomMismatches(pmf: FormulaNode, mean: FormulaNode, variance: FormulaN
 }
 function linearMismatches(eLin: FormulaNode, vLin: FormulaNode): string[] {
   const bad: string[] = [];
-  for (const c of tables) for (const l of c.values.linear) {
-    const values = { a: l.a.float, b: l.b.float, X: Number.NaN };   // X は関数の引数として置くだけ（値は fns が表から返す）
-    // E(X)・V(X) は表で決まる数。式の右辺 aE(X)+b・a²V(X) に、その数を関数として渡す（式の形を確かめる。分布の計算は見本の側）
-    const fns = { E: () => c.values.mu.float, V: () => c.values.var_by_definition.float };
-    if (!near(evaluate(eLin, { values, fns }), l.E_by_table)) bad.push(`${c.id} a=${l.a.float} E`);
-    if (!near(evaluate(vLin, { values, fns }), l.V_by_table)) bad.push(`${c.id} a=${l.a.float} V`);
-  }
+  for (const c of tables)
+    for (const l of c.values.linear) {
+      const values = { a: l.a.float, b: l.b.float, X: Number.NaN }; // X は関数の引数として置くだけ（値は fns が表から返す）
+      // E(X)・V(X) は表で決まる数。式の右辺 aE(X)+b・a²V(X) に、その数を関数として渡す（式の形を確かめる。分布の計算は見本の側）
+      const fns = { E: () => c.values.mu.float, V: () => c.values.var_by_definition.float };
+      if (!near(evaluate(eLin, { values, fns }), l.E_by_table)) bad.push(`${c.id} a=${l.a.float} E`);
+      if (!near(evaluate(vLin, { values, fns }), l.V_by_table)) bad.push(`${c.id} a=${l.a.float} V`);
+    }
   return bad;
 }
 /** 木の中の節を1つ置き換えた木（わざと入れる誤り） */
@@ -81,7 +109,8 @@ describe("二項分布：教材の式は、並びの数え上げの見本と一�
 // 見つけ方：見本は値の表を aX+b に置き換えた別の表の平均・分散（式を使わない。a＝0・負・分数を含む）。
 // 既存との違い：今までは V(aX+b) を開いた形の TeX（文字列）だけを見ていて、値では確かめていなかった
 describe("1次変換：E(aX+b)・V(aX+b) の式は、置き換えた表の見本と一致する", () => {
-  const eLin = rhs(byId("F-expect-linear")), vLin = rhs(byId("F-var-linear"));
+  const eLin = rhs(byId("F-expect-linear")),
+    vLin = rhs(byId("F-var-linear"));
   it("全部の表・全部の (a, b) で一致する", () => {
     expect(tables.length).toBeGreaterThanOrEqual(3);
     expect(linearMismatches(eLin, vLin)).toEqual([]);
@@ -99,8 +128,16 @@ describe("標準化：教材の式は見本の z と一致する", () => {
   it("全部の表・全部の値で一致する", () => {
     const f = rhs(byId("F-std-def"));
     const bad: string[] = [];
-    for (const c of tables) for (const { x, z } of c.values.standardize.z)
-      if (!near(evaluate(f, { values: { X: x.float, mu: c.values.mu.float, sigma: c.values.standardize.sigma.float } }), z, "derived")) bad.push(`${c.id} x=${x.float}`);
+    for (const c of tables)
+      for (const { x, z } of c.values.standardize.z)
+        if (
+          !near(
+            evaluate(f, { values: { X: x.float, mu: c.values.mu.float, sigma: c.values.standardize.sigma.float } }),
+            z,
+            "derived",
+          )
+        )
+          bad.push(`${c.id} x=${x.float}`);
     expect(bad).toEqual([]);
   });
 });
@@ -113,13 +150,27 @@ describe("前提の崩れ：見本の入力は、式の定義域か記号どう�
   type Pre = { id: string; formula_ids: string[]; inputs: Record<string, unknown> };
   const pres = (reference.preconditions as Pre[]).filter((p) => p.formula_ids.length);
   const valuesOf = (p: Pre): Record<string, number> => {
-    if (p.id === "std-sigma-zero") { const x = (p.inputs.rows as { x: number }[])[0]!.x; return { X: x, mu: x, sigma: 0 }; }   // 1点の表：μ＝x・σ＝0
+    if (p.id === "std-sigma-zero") {
+      const x = (p.inputs.rows as { x: number }[])[0]!.x;
+      return { X: x, mu: x, sigma: 0 };
+    } // 1点の表：μ＝x・σ＝0
     return p.inputs as Record<string, number>;
   };
-  const stops = (f: F, values: Record<string, number>, symbols: FormulaSymbol[] = f.symbols) => checkDomain(values, symbols, f.contract.conditions ?? []);
+  const stops = (f: F, values: Record<string, number>, symbols: FormulaSymbol[] = f.symbols) =>
+    checkDomain(values, symbols, f.contract.conditions ?? []);
   it("全部の崩れた入力で、関係する式のどれもが止まる理由を言う", () => {
-    expect(pres.map((p) => p.id)).toEqual(expect.arrayContaining(["std-sigma-zero", "geom-p-zero", "uniform-a-eq-b", "hyper-k-over-M", "hyper-k-too-small"]));
-    const silent = pres.flatMap((p) => p.formula_ids.filter((id) => stops(byId(id), valuesOf(p)).length === 0).map((id) => `${p.id}：${id}`));
+    expect(pres.map((p) => p.id)).toEqual(
+      expect.arrayContaining([
+        "std-sigma-zero",
+        "geom-p-zero",
+        "uniform-a-eq-b",
+        "hyper-k-over-M",
+        "hyper-k-too-small",
+      ]),
+    );
+    const silent = pres.flatMap((p) =>
+      p.formula_ids.filter((id) => stops(byId(id), valuesOf(p)).length === 0).map((id) => `${p.id}：${id}`),
+    );
     expect(silent).toEqual([]);
   });
   it("定義域の中の入力では止まらない（止まりすぎない）", () => {
@@ -129,7 +180,9 @@ describe("前提の崩れ：見本の入力は、式の定義域か記号どう�
   });
   it("わざと入れた誤り（σ の domain の minOpen を消す：M4）は見つかる", () => {
     const f = byId("F-std-def");
-    const m4 = f.symbols.map((s) => (s.key === "sigma" && s.domain ? { ...s, domain: { ...s.domain, minOpen: false } } : s));
+    const m4 = f.symbols.map((s) =>
+      s.key === "sigma" && s.domain ? { ...s, domain: { ...s.domain, minOpen: false } } : s,
+    );
     expect(stops(f, { X: 4, mu: 4, sigma: 0 }, m4)).toEqual([]);
   });
 });

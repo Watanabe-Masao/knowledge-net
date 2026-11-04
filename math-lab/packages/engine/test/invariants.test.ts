@@ -4,8 +4,20 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import {
-  createRandom, decodeCard, emptySetRecord, encodeCard, evaluate, expand, MAX_CARD_DRAWS, MAX_CARD_N, MAX_CARD_SETS, modelMoments, runSets, summarize,
-  type Card, type FormulaNode,
+  createRandom,
+  decodeCard,
+  emptySetRecord,
+  encodeCard,
+  evaluate,
+  expand,
+  MAX_CARD_DRAWS,
+  MAX_CARD_N,
+  MAX_CARD_SETS,
+  modelMoments,
+  runSets,
+  summarize,
+  type Card,
+  type FormulaNode,
 } from "../src";
 
 // ---- 1. 式：どう展開しても値は変わらない ----
@@ -22,26 +34,50 @@ const tree: fc.Arbitrary<FormulaNode> = fc.letrec<{ t: FormulaNode }>((tie) => (
   t: fc.oneof(
     { depthSize: "small", withCrossShrink: true },
     leaf,
-    fc.tuple(fc.constantFrom("add", "sub", "mul"), tie("t"), tie("t")).map(([op, a, b]) => ({ op, args: [a, b] }) as FormulaNode),
-    fc.tuple(tie("t"), fc.integer({ min: 0, max: 2 })).map(([a, e]) => ({ op: "pow", args: [a, { num: e }] }) as FormulaNode),
+    fc
+      .tuple(fc.constantFrom("add", "sub", "mul"), tie("t"), tie("t"))
+      .map(([op, a, b]) => ({ op, args: [a, b] }) as FormulaNode),
+    fc
+      .tuple(tie("t"), fc.integer({ min: 0, max: 2 }))
+      .map(([a, e]) => ({ op: "pow", args: [a, { num: e }] }) as FormulaNode),
     // Σ・Π：動かす記号は外と同じ名前もとる。上端は数か外の記号 n（端は外側の記号）
-    fc.tuple(fc.constantFrom("sum", "prod"), fc.constantFrom(...NAMES), fc.integer({ min: 0, max: 2 }), fc.oneof(fc.integer({ min: 0, max: 3 }).map((num) => ({ num }) as FormulaNode), fc.constant({ sym: "n" } as FormulaNode)), tie("t"))
+    fc
+      .tuple(
+        fc.constantFrom("sum", "prod"),
+        fc.constantFrom(...NAMES),
+        fc.integer({ min: 0, max: 2 }),
+        fc.oneof(
+          fc.integer({ min: 0, max: 3 }).map((num) => ({ num }) as FormulaNode),
+          fc.constant({ sym: "n" } as FormulaNode),
+        ),
+        tie("t"),
+      )
       .map(([op, v, lo, hi, body]) => ({ op, var: v, lower: { num: lo }, upper: hi, args: [body] }) as FormulaNode),
   ),
 })).t;
-const env = fc.record(Object.fromEntries(NAMES.map((k) => [k, fc.integer({ min: -2, max: 4 })])) as Record<(typeof NAMES)[number], fc.Arbitrary<number>>)
+const env = fc
+  .record(
+    Object.fromEntries(NAMES.map((k) => [k, fc.integer({ min: -2, max: 4 })])) as Record<
+      (typeof NAMES)[number],
+      fc.Arbitrary<number>
+    >,
+  )
   .map((v) => ({ ...v, n: Math.abs(v.n) }));
-const same = (a: number | undefined, b: number) => a !== undefined && (a === b || Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b)));
+const same = (a: number | undefined, b: number) =>
+  a !== undefined && (a === b || Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(b)));
 
 describe("式：どう展開しても値は変わらない", () => {
   it("乱数の木（Σ・Π・入れ子・外に同じ名前の値）で、展開の全部の段の値＝evaluate", () => {
-    fc.assert(fc.property(tree, env, (t, values) => {
-      const want = evaluate(t, { values });
-      fc.pre(want !== undefined && Number.isFinite(want) && Math.abs(want) < 1e12);
-      const steps = expand(t, { values });
-      for (const s of steps) if (!same(evaluate(s, { values }), want!)) return false;
-      return "num" in steps[steps.length - 1]!;   // 最後は数になる（途中で止まらない）
-    }), { numRuns: 400 });
+    fc.assert(
+      fc.property(tree, env, (t, values) => {
+        const want = evaluate(t, { values });
+        fc.pre(want !== undefined && Number.isFinite(want) && Math.abs(want) < 1e12);
+        const steps = expand(t, { values });
+        for (const s of steps) if (!same(evaluate(s, { values }), want!)) return false;
+        return "num" in steps[steps.length - 1]!; // 最後は数になる（途中で止まらない）
+      }),
+      { numRuns: 400 },
+    );
   });
   it("#142 の例（Σ_{x=1}^{3} x、外の x＝10）は性質の入力に入る", () => {
     const t: FormulaNode = { op: "sum", var: "x", lower: { num: 1 }, upper: { num: 3 }, args: [{ sym: "x" }] };
@@ -54,26 +90,45 @@ describe("式：どう展開しても値は変わらない", () => {
 // 確かめる対象：値の表のモデル（modelMoments）と、実験の記録のまとめ（summarize）の分散。
 // 想定する故障：E(X²)−μ² の引き算の桁落ち（大きな値で 0 や負になる）・平均のずれ。見つけ方：小さな整数の表に 1e9 などを足した表・a 倍した表で比べる。
 // 既存との違い：今までの表は小さな値だけで、桁落ちが起きない入力だった
-const tableArb = fc.integer({ min: 2, max: 6 }).chain((m) => fc.tuple(
-  fc.uniqueArray(fc.integer({ min: -20, max: 20 }), { minLength: m, maxLength: m }).map((v) => v.sort((a, b) => a - b)),
-  fc.array(fc.integer({ min: 1, max: 9 }), { minLength: m, maxLength: m }),
-));
+const tableArb = fc.integer({ min: 2, max: 6 }).chain((m) =>
+  fc.tuple(
+    fc
+      .uniqueArray(fc.integer({ min: -20, max: 20 }), { minLength: m, maxLength: m })
+      .map((v) => v.sort((a, b) => a - b)),
+    fc.array(fc.integer({ min: 1, max: 9 }), { minLength: m, maxLength: m }),
+  ),
+);
 const SHIFTS = [0, 1e9, -1e9, 123456.75, 1e12];
 describe("数値：分散は平行移動で変わらず、a 倍で a² 倍", () => {
   it("値の表のモデル", () => {
-    fc.assert(fc.property(tableArb, fc.constantFrom(...SHIFTS), fc.constantFrom(-3, 0.5, 2), ([values, weights], c, a) => {
-      const v0 = modelMoments({ kind: "table", n: 1, values, weights }).variance;
-      const vs = modelMoments({ kind: "table", n: 1, values: values.map((x) => x + c), weights }).variance;
-      const va = modelMoments({ kind: "table", n: 1, values: values.map((x) => a * x), weights }).variance;
-      return Math.abs(vs - v0) <= 1e-6 * Math.max(1, v0) && Math.abs(va - a * a * v0) <= 1e-9 * Math.max(1, a * a * v0);
-    }), { numRuns: 200 });
+    fc.assert(
+      fc.property(tableArb, fc.constantFrom(...SHIFTS), fc.constantFrom(-3, 0.5, 2), ([values, weights], c, a) => {
+        const v0 = modelMoments({ kind: "table", n: 1, values, weights }).variance;
+        const vs = modelMoments({ kind: "table", n: 1, values: values.map((x) => x + c), weights }).variance;
+        const va = modelMoments({ kind: "table", n: 1, values: values.map((x) => a * x), weights }).variance;
+        return (
+          Math.abs(vs - v0) <= 1e-6 * Math.max(1, v0) && Math.abs(va - a * a * v0) <= 1e-9 * Math.max(1, a * a * v0)
+        );
+      }),
+      { numRuns: 200 },
+    );
   });
   it("実験の記録のまとめ（同じ種で、値を平行移動した表）", () => {
-    fc.assert(fc.property(tableArb, fc.constantFrom(...SHIFTS), fc.integer({ min: 1, max: 2 ** 31 }), ([values, weights], c, seed) => {
-      const rec = (vs: number[]) => runSets(createRandom(seed), emptySetRecord(seed, { kind: "table", n: 1, values: vs, weights }), 200);
-      const v0 = summarize(rec(values)).variance!, vs = summarize(rec(values.map((x) => x + c))).variance!;
-      return Math.abs(vs - v0) <= 1e-6 * Math.max(1, v0);
-    }), { numRuns: 60 });
+    fc.assert(
+      fc.property(
+        tableArb,
+        fc.constantFrom(...SHIFTS),
+        fc.integer({ min: 1, max: 2 ** 31 }),
+        ([values, weights], c, seed) => {
+          const rec = (vs: number[]) =>
+            runSets(createRandom(seed), emptySetRecord(seed, { kind: "table", n: 1, values: vs, weights }), 200);
+          const v0 = summarize(rec(values)).variance!,
+            vs = summarize(rec(values.map((x) => x + c))).variance!;
+          return Math.abs(vs - v0) <= 1e-6 * Math.max(1, v0);
+        },
+      ),
+      { numRuns: 60 },
+    );
   });
 });
 
@@ -84,16 +139,35 @@ describe("数値：分散は平行移動で変わらず、a 倍で a² 倍", () 
 describe("入力：共有カードの往復と大きさの上限", () => {
   const P = fc.integer({ min: 0, max: 100 }).map((x) => x / 100);
   it("上限の中のカードは、文字にして戻すと同じ", () => {
-    fc.assert(fc.property(fc.integer({ min: 1, max: MAX_CARD_N }), P, fc.integer({ min: 0, max: MAX_CARD_SETS }), fc.integer({ min: 0, max: 2 ** 32 }), (n, p, sets, seed) => {
-      fc.pre(n * sets <= MAX_CARD_DRAWS);
-      const c: Card = { mechanism: { kind: "bernoulli", n, p }, sets, seed };
-      expect(decodeCard(encodeCard(c))).toEqual(c);
-    }), { numRuns: 300 });
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: MAX_CARD_N }),
+        P,
+        fc.integer({ min: 0, max: MAX_CARD_SETS }),
+        fc.integer({ min: 0, max: 2 ** 32 }),
+        (n, p, sets, seed) => {
+          fc.pre(n * sets <= MAX_CARD_DRAWS);
+          const c: Card = { mechanism: { kind: "bernoulli", n, p }, sets, seed };
+          expect(decodeCard(encodeCard(c))).toEqual(c);
+        },
+      ),
+      { numRuns: 300 },
+    );
   });
   it("どんな大きさの文字でも、受け付けたカードは上限の中", () => {
-    fc.assert(fc.property(fc.oneof(fc.integer({ min: 1, max: 2000 }), fc.constantFrom(1e9, 10 ** 15)), P, fc.oneof(fc.integer({ min: 0, max: 200000 }), fc.constant(10 ** 12)), (n, p, sets) => {
-      const c = decodeCard(`b${n}_${p}_${sets}_1`);
-      return !c || (c.mechanism.n <= MAX_CARD_N && c.sets <= MAX_CARD_SETS && c.mechanism.n * c.sets <= MAX_CARD_DRAWS);
-    }), { numRuns: 300 });
+    fc.assert(
+      fc.property(
+        fc.oneof(fc.integer({ min: 1, max: 2000 }), fc.constantFrom(1e9, 10 ** 15)),
+        P,
+        fc.oneof(fc.integer({ min: 0, max: 200000 }), fc.constant(10 ** 12)),
+        (n, p, sets) => {
+          const c = decodeCard(`b${n}_${p}_${sets}_1`);
+          return (
+            !c || (c.mechanism.n <= MAX_CARD_N && c.sets <= MAX_CARD_SETS && c.mechanism.n * c.sets <= MAX_CARD_DRAWS)
+          );
+        },
+      ),
+      { numRuns: 300 },
+    );
   });
 });

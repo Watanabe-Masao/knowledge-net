@@ -6,10 +6,14 @@ async function open(page: Page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   await page.getByRole("radio", { name: "関係" }).click();
-  await page.getByTestId("edge-list").getByRole("button", { name: /と 超幾何分布 を比べる/ }).click();
+  await page
+    .getByTestId("edge-list")
+    .getByRole("button", { name: /と 超幾何分布 を比べる/ })
+    .click();
   return page.getByTestId("edge-panel");
 }
-const stat = (panel: ReturnType<Page["getByTestId"]>, key: string) => panel.page().locator(`[data-testid=scene-stats] [data-key=${key}] dd`);
+const stat = (panel: ReturnType<Page["getByTestId"]>, key: string) =>
+  panel.page().locator(`[data-testid=scene-stats] [data-key=${key}] dd`);
 
 // 確かめる対象：解説の段の状態（set と frames を重ねたもの）が順に図と数に出て、最後に関係の gist の「つまり」が出ること。
 // 解説・触るは全画面のページ（body に出す。#188 07）で開くので、ページ全体から探す。
@@ -29,7 +33,7 @@ test("解説：段ごとに状態が進み、注目する数が光り、最後�
   await page.getByTestId("tour-next").click();
   await expect(page.getByTestId("tour-text")).toContainText("つまり");
   await expect(page.getByTestId("tour-text")).toContainText("戻さずに取り出すと");
-  await expect(page.getByTestId("scene")).toBeVisible();   // つまりの段も前の図を残す
+  await expect(page.getByTestId("scene")).toBeVisible(); // つまりの段も前の図を残す
 });
 
 // 確かめる対象：触るで帯のつまみが状態を変え、数がその場で計算し直されること。
@@ -39,7 +43,7 @@ test("触る：帯で N を変えると数がその場で変わり、上限が�
   const panel = await open(page);
   await panel.getByRole("radio", { name: /操作/ }).click();
   await expect(panel.locator("iframe")).toHaveCount(0);
-  await expect(stat(panel, "fpc")).toHaveText("0.789");   // (20−5)/19
+  await expect(stat(panel, "fpc")).toHaveText("0.789"); // (20−5)/19
   await page.getByTestId("q-chip-N").click();
   await page.getByTestId("scene-N-plus").click();
   await expect(stat(panel, "fpc")).toHaveText("0.8");

@@ -6,7 +6,10 @@ import { isNum, isSym, type FormulaNode, type OpNode } from "./types";
 export function freeSymbols(node: FormulaNode, bound: ReadonlySet<string> = new Set()): Set<string> {
   const out = new Set<string>();
   const walk = (n: FormulaNode, b: ReadonlySet<string>) => {
-    if (isSym(n)) { if (!b.has(n.sym)) out.add(n.sym); return; }
+    if (isSym(n)) {
+      if (!b.has(n.sym)) out.add(n.sym);
+      return;
+    }
     if (isNum(n)) return;
     // 範囲（lower・upper）は外側で決まる。中身（args）だけが var に縛られる
     if (n.lower) walk(n.lower, b);
@@ -21,7 +24,13 @@ export function freeSymbols(node: FormulaNode, bound: ReadonlySet<string> = new 
 /** 木の中で縛る記号（var）の一覧 */
 export function boundSymbols(node: FormulaNode): Set<string> {
   const out = new Set<string>();
-  const walk = (n: FormulaNode) => { if (isSym(n) || isNum(n)) return; if (n.var) out.add(n.var); n.args.forEach(walk); if (n.lower) walk(n.lower); if (n.upper) walk(n.upper); };
+  const walk = (n: FormulaNode) => {
+    if (isSym(n) || isNum(n)) return;
+    if (n.var) out.add(n.var);
+    n.args.forEach(walk);
+    if (n.lower) walk(n.lower);
+    if (n.upper) walk(n.upper);
+  };
   walk(node);
   return out;
 }
@@ -31,8 +40,13 @@ export function renameBound(node: FormulaNode, from: string, to: string): Formul
   const sub = (n: FormulaNode): FormulaNode => {
     if (isSym(n)) return n.sym === from ? { sym: to } : n;
     if (isNum(n)) return n;
-    if (n.var === from) return n;   // 中で同じ名前を縛り直している
-    return { ...n, args: n.args.map(sub), ...(n.lower ? { lower: sub(n.lower) } : {}), ...(n.upper ? { upper: sub(n.upper) } : {}) };
+    if (n.var === from) return n; // 中で同じ名前を縛り直している
+    return {
+      ...n,
+      args: n.args.map(sub),
+      ...(n.lower ? { lower: sub(n.lower) } : {}),
+      ...(n.upper ? { upper: sub(n.upper) } : {}),
+    };
   };
   const walk = (n: FormulaNode): FormulaNode => {
     if (isSym(n) || isNum(n)) return n;
@@ -42,14 +56,22 @@ export function renameBound(node: FormulaNode, from: string, to: string): Formul
       if (n.upper) out.upper = walk(n.upper);
       return out;
     }
-    return { ...n, args: n.args.map(walk), ...(n.lower ? { lower: walk(n.lower) } : {}), ...(n.upper ? { upper: walk(n.upper) } : {}) };
+    return {
+      ...n,
+      args: n.args.map(walk),
+      ...(n.lower ? { lower: walk(n.lower) } : {}),
+      ...(n.upper ? { upper: walk(n.upper) } : {}),
+    };
   };
   return walk(node);
 }
 
 /** used にない新しい名前（x → x2 → x3 …） */
 export function freshName(base: string, used: ReadonlySet<string>): string {
-  for (let i = 2; ; i++) { const k = `${base}${i}`; if (!used.has(k)) return k; }
+  for (let i = 2; ; i++) {
+    const k = `${base}${i}`;
+    if (!used.has(k)) return k;
+  }
 }
 
 /**
@@ -58,8 +80,12 @@ export function freshName(base: string, used: ReadonlySet<string>): string {
  * 値を入れる（substitute）・動かす記号に1つずつ値を入れる（Σ を項に開く）・記号を式で開く（substituteFree）は、どれもこれを使う。
  * f が undefined を返す記号はそのまま残す。
  */
-export function replaceFree(node: FormulaNode, f: (sym: string) => FormulaNode | undefined, bound: ReadonlySet<string> = new Set()): FormulaNode {
-  if (isSym(node)) return bound.has(node.sym) ? node : f(node.sym) ?? node;
+export function replaceFree(
+  node: FormulaNode,
+  f: (sym: string) => FormulaNode | undefined,
+  bound: ReadonlySet<string> = new Set(),
+): FormulaNode {
+  if (isSym(node)) return bound.has(node.sym) ? node : (f(node.sym) ?? node);
   if (isNum(node)) return node;
   const inner = node.var ? new Set([...bound, node.var]) : bound;
   const out: OpNode = { ...node, args: node.args.map((a) => replaceFree(a, f, inner)) };

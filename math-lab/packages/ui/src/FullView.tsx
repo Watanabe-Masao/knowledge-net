@@ -11,21 +11,38 @@ export function FullView({ title, label, onClose, children, aside }: Props) {
   const [closing, setClosing] = useState(false);
   const close = () => {
     if (closing) return;
-    if (reduced()) { onClose(); return; }
+    if (reduced()) {
+      onClose();
+      return;
+    }
     setClosing(true);
     setTimeout(onClose, tokenMs("--dur", 200));
   };
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    const k = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
     addEventListener("keydown", k);
-    const html = document.documentElement, before = html.style.overflow;
-    html.style.overflow = "hidden";   // 後ろの画面は動かさない
-    return () => { removeEventListener("keydown", k); html.style.overflow = before; };
+    const html = document.documentElement,
+      before = html.style.overflow;
+    html.style.overflow = "hidden"; // 後ろの画面は動かさない
+    return () => {
+      removeEventListener("keydown", k);
+      html.style.overflow = before;
+    };
   });
   return createPortal(
-    <div className={`${s.root}${closing ? ` ${s.closing}` : ""}`} role="dialog" aria-modal="true" aria-label={label} data-testid="fullview">
+    <div
+      className={`${s.root}${closing ? ` ${s.closing}` : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+      data-testid="fullview"
+    >
       <header className={s.bar}>
-        <button type="button" className={s.close} onClick={close} aria-label="閉じて戻る">✕</button>
+        <button type="button" className={s.close} onClick={close} aria-label="閉じて戻る">
+          ✕
+        </button>
         <div className={s.title}>{title}</div>
         <div className={s.aside}>{aside}</div>
       </header>
