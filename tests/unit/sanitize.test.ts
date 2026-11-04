@@ -13,7 +13,7 @@ const REG = ["https://watanabe-masao.github.io/stats2-labs/net/stats2.json"];
 
 describe("読むデータは、同じサイトの中か教材の一覧にある所だけ", () => {
   it("同じサイトの見本と、一覧にある教材は読む", () => {
-    expect(allowedSource("sample/stats2-w0.json", BASE, REG)).toBe(true);
+    expect(allowedSource("sample/stats2.json", BASE, REG)).toBe(true);
     expect(allowedSource(REG[0]!, BASE, REG)).toBe(true);
   });
   it("別のサイト・javascript: は読まない", () => {

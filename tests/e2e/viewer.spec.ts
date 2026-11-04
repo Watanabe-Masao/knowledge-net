@@ -1,4 +1,4 @@
-// 画面のテスト（見本のデータ public/sample/stats2.json で）。スマホ幅・ライト／ダーク・Notion の埋め込み（360×320）。
+// 画面のテスト（見本のデータ public/sample/stats2.json：教材の公開データの写し。scripts/sync-sample.mjs で版を固定する。stats2-course #209）。スマホ幅・ライト／ダーク・Notion の埋め込み（360×320）。
 import { expect, test, type Page } from "@playwright/test";
 import { WALK_FORMULAS } from "../../math-lab/packages/engine/src";
 
@@ -15,7 +15,7 @@ for (const scheme of ["light", "dark"] as const) {
     const errs = noErrors(page);
     await page.emulateMedia({ colorScheme: scheme });
     await page.setViewportSize({ width: 380, height: 800 });
-    await page.goto(`./?${SRC}`);
+    await page.goto(`./?${SRC}&g=*`);   // 入口は分類の地図なので、全部の語の地図で押す
     await expect(page.getByRole("heading", { name: "知識ネットワーク" })).toBeVisible();
     await expect(page.getByTestId("graph").locator("canvas").first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
@@ -106,7 +106,7 @@ test("Notion の埋め込み（360×320）に収まり、大きく開ける", as
   await expect(link).toHaveAttribute("href", /c=stats2%3ATERM-binom/);
   expect(await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.scrollHeight])).toEqual([360, 320]);
   const nodes = await page.evaluate(() => (window as any).kn.nodes().length);
-  expect(nodes).toBeLessThan(10);   // まわりだけ
+  expect(nodes).toBeLessThan(30);   // 全体（129語）ではなく、まわりだけ
   expect(errs).toEqual([]);
 });
 
@@ -116,6 +116,12 @@ test("読めないデータは知らせる", async ({ page }) => {
 });
 
 test("概念と関係からラボを開く（図／解説／触る の切り替え）", async ({ page }) => {
+  // 公開データのラボは全部 play（JS の部品で描く。#192）なので、play のない古い形（iframe で開く）を確かめるため、読み込んだデータから play を外す
+  await page.route((u) => u.pathname.endsWith("/sample/stats2.json"), async (r) => {
+    const d = await (await r.fetch()).json();
+    for (const x of [...d.concepts, ...d.relations]) for (const l of x.labs ?? []) delete l.play;
+    await r.fulfill({ json: d });
+  });
   await page.goto(`./?${SRC}&c=stats2:TERM-std`);
   const d = page.getByTestId("detail");
   await d.getByTestId("media-concept").getByRole("radio", { name: /操作/ }).click();
@@ -134,12 +140,11 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
   // 上で「触る」を選んだので、覚えた形（触る）で開いている
   await expect(media.getByRole("radio", { name: /操作/ })).toHaveAttribute("aria-checked", "true");
-  await expect(page.getByTestId("labs-panel-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
+  await expect(page.getByTestId("labs-panel-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute("src", /poisson\/\?p=rel-approx&embed=1/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
 
-// 周辺図（#42）：関係の多い二項分布で、W0 の公開データを使って確かめる
-const W0 = "src=sample/stats2-w0.json";
+// 周辺図（#42）：関係の多い二項分布で、教材の公開データを使って確かめる
 /** 実験室の入口で問いを開く：上の選択でまとまり（A〜F）を選び、その中の問い（A-01 など）を押す（stats2-course #163） */
 async function openQ(x: import("@playwright/test").Locator, key: string) {
   await x.getByTestId("exp-group-pick").click();
@@ -159,7 +164,7 @@ const fullSheet = async (page: Page) => {
 test("🕸 リンク（c 付き）で開くと、その概念の周辺図から始まり、名前が重ならない", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 380, height: 800 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
   await settle(page);
   const r = await page.evaluate(() => {
@@ -196,12 +201,18 @@ test("🕸 リンク（c 付き）で開くと、その概念の周辺図から�
 
 test("線を押すと下から説明が開き、閉じても選んだ概念はそのまま", async ({ page }) => {
   await page.setViewportSize({ width: 380, height: 800 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   const p = await page.evaluate(() => {
+    // 線の上で、どの点（の枠）にも重ならない所を押す（129語の公開データでは、線の真ん中に別の点が来ることがある）
     const cy = (window as any).kn; const e = cy.getElementById("stats2:REL-indep-binom");
-    const r = cy.container().getBoundingClientRect(); const m = e.renderedMidpoint();
-    return { x: r.left + m.x, y: r.top + m.y };
+    const r = cy.container().getBoundingClientRect(); const s = e.renderedSourceEndpoint(), g = e.renderedTargetEndpoint();
+    const boxes = cy.nodes().map((n: any) => n.renderedBoundingBox());
+    for (const k of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8]) {
+      const x = s.x + (g.x - s.x) * k, y = s.y + (g.y - s.y) * k;
+      if (!boxes.some((b: any) => x >= b.x1 - 4 && x <= b.x2 + 4 && y >= b.y1 - 4 && y <= b.y2 + 4)) return { x: r.left + x, y: r.top + y };
+    }
+    throw new Error("線の上に点のない所がない");
   });
   await page.mouse.click(p.x, p.y);
   const panel = page.getByTestId("edge-panel");
@@ -213,7 +224,7 @@ test("線を押すと下から説明が開き、閉じても選んだ概念は�
 });
 
 test("つながり一覧からも同じ説明を開ける", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /超幾何分布 を変換すると 二項分布/ }).click();
   const panel = page.getByTestId("edge-panel");
@@ -224,7 +235,7 @@ test("つながり一覧からも同じ説明を開ける", async ({ page }) => 
 });
 
 test("全体に切り替えても選んだ概念を引き継ぎ、「戻る」で前の概念へ", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   const around = await page.evaluate(() => (window as any).kn.nodes().length);
   await page.getByRole("radio", { name: "俯瞰" }).click();
@@ -249,7 +260,7 @@ test("全体に切り替えても選んだ概念を引き継ぎ、「戻る」�
 
 test("枠の大きさが後から決まっても図が枠に収まり、⤢ で収め直せる", async ({ page }) => {
   await page.setViewportSize({ width: 200, height: 800 });   // 開いた直後は枠が狭い（iPhone の Notion から開いたとき）
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   await page.setViewportSize({ width: 390, height: 800 });
   const inside = () => page.evaluate(() => {
@@ -265,7 +276,7 @@ test("枠の大きさが後から決まっても図が枠に収まり、⤢ で�
 });
 
 test("周辺図では中心につながらない線を薄くし、説明を開くと下に余白", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   const faint = await page.evaluate(() => (window as any).kn.edges(".faint").map((e: any) => e.id()));
   expect(faint).toContain("stats2:REL-indep-geom");
@@ -276,7 +287,7 @@ test("周辺図では中心につながらない線を薄くし、説明を開�
 });
 
 test("概念の図：詳細に出て、押すと図を別の画面で大きく見る", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   await page.getByTestId("media-concept").getByRole("radio", { name: /図/ }).click();   // 作業台のある概念では図は閉じておく
   const figs = page.getByTestId("figures-concept");
@@ -293,7 +304,7 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
 
 // 図をその場で描かない関係（ポアソン分布 → 指数分布）で、画像の図・解説・触るを切り替える。図をその場で描く関係は relation-open.spec.ts
 test("図／解説／触る は切り替えて1つだけ出す。最初は図、選んだ形を覚える。一覧のカードは閉じておく", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-poisson`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-poisson`);
   await settle(page);
   await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /指数分布/ }).first().click();
@@ -320,7 +331,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await expect(page.getByTestId("tour")).toHaveCount(0);
   // 選んだ形（触る）を覚え、別の線も同じ形で開く
   await sw.getByRole("radio", { name: /操作/ }).click();
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると 正規分布/ }).click();
@@ -329,13 +340,13 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
 });
 
 test("つながりは「💡 つまり」を説明より先に出す（対比・変換）", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 と ポアソン分布 を比べる/ }).click();
   const panel = page.getByTestId("edge-panel");
   const gist = panel.getByTestId("gist");
-  await expect(gist).toContainText("ばらつきが小さい");
+  await expect(gist).toContainText("ばらつきが小さく");
   // 面が開く動きの途中で2つの位置を別々に測ると、ずれて逆になることがある。同じ時点の位置で比べ、落ち着くまで待つ
   const desc = panel.getByText(/二項分布は回数に上限 n があり/);
   await expect.poll(async () => { const [g, d] = await Promise.all([gist.boundingBox(), desc.boundingBox()]); return g && d ? d.y - (g.y + g.height) : -1; }).toBeGreaterThanOrEqual(0);
@@ -348,7 +359,7 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
 // 手触り（#42）：選んだ印が選んだ項目に重なる・押すと沈む・動きを減らす設定では止まる
 test("切り替えの印は選んだ項目の上に滑って重なる", async ({ page }) => {
   await page.setViewportSize({ width: 380, height: 800 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await fullSheet(page);
   const media = page.getByTestId("media-concept");
   const mark = media.getByTestId("segmented-mark");
@@ -368,7 +379,7 @@ test("切り替えの印は選んだ項目の上に滑って重なる", async ({
 });
 
 test("押した瞬間に少し沈み、動きを減らす設定では動かない", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   const btn = page.getByRole("button", { name: "ほかの操作" });
   // 離すとばねで戻る（tokens 改訂4：dur-spring 0.48s・ease-bounce は linear()）。押している間は速く沈む（0.09s。:active）
   await expect(btn).toHaveCSS("transition-duration", /0\.48s/);
@@ -382,7 +393,7 @@ test("押した瞬間に少し沈み、動きを減らす設定では動かな�
 
 test("説明のシートは指で動かせる：上へ引くと全体、下へ払うと閉じる", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   // 地図の線から開くと下からの面（概念のページ〔全画面〕から開くと全画面のページ。#188 07a）
   await page.evaluate(() => (window as any).kn.getElementById("stats2:REL-binom-poisson").emit("tap"));
@@ -420,7 +431,7 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
 test("式の記号を押すと意味が出て、値を入れると1段ずつ計算できる", async ({ page }) => {
   // 作業台に出した式は下の一覧に重ねて出さない（#156）ので、作業台のない幾何分布の式の一覧で確かめる
   await page.setViewportSize({ width: 380, height: 800 });
-  await page.goto(`./?${W0}&c=stats2:TERM-geom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-geom`);
   await fullSheet(page);
   const d = page.getByTestId("detail");
   await tab(page, /^式$/);
@@ -446,7 +457,7 @@ test("式の記号を押すと意味が出て、値を入れると1段ずつ計�
 // 記号を開く・閉じる（#72）：Z＝(X−μ)/σ の σ を開く → √V(X)、V を開く → √E((X−μ)²)、σ を閉じると戻る
 test("式の記号を定義の式で開き、閉じると戻る", async ({ page }) => {
   await page.setViewportSize({ width: 380, height: 800 });
-  await page.goto(`./?${W0}&c=stats2:TERM-std`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-std`);
   await fullSheet(page);
   await tab(page, /^式$/);
   const f = page.getByTestId("detail").getByTestId("formula").first();
@@ -466,9 +477,9 @@ test("式の記号を定義の式で開き、閉じると戻る", async ({ page 
 });
 
 // 式の正しさ（#109）：定義域の外は計算せず知らせる（k ≦ n も）、V(aX+b) は中の μ を E(X) にしてから開く、μ は μ＝E(X) で開く
-test("定義域の外の値は計算せず、理由を知らせる（k ≦ n・0 ≦ p ≦ 1）", async ({ page }) => {
-  // 作業台のない概念の式で確かめる（組合せ ₙCₖ の k ≦ n、幾何分布の 0 ≦ p ≦ 1。#156）
-  await page.goto(`./?${W0}&c=stats2:TERM-comb`);
+test("定義域の外の値は計算せず、理由を知らせる（k ≦ n・0 < p ≦ 1）", async ({ page }) => {
+  // 作業台のない概念の式で確かめる（組合せ ₙCₖ の k ≦ n、幾何分布の 0 < p ≦ 1。#156）
+  await page.goto(`./?${SRC}&c=stats2:TERM-comb`);
   await tab(page, /^式$/);
   const f = page.getByTestId("detail").getByTestId("formula").first();   // ₙCₖ＝n!/(k!(n−k)!)
   await f.getByRole("button", { name: "値を入れて計算する" }).click();
@@ -480,23 +491,23 @@ test("定義域の外の値は計算せず、理由を知らせる（k ≦ n・0
   await f.getByRole("spinbutton", { name: /^k/ }).fill("2");
   await expect(out).toHaveCount(0);
   await expect(f.getByTestId("expansion")).toBeVisible();
-  await page.goto(`./?${W0}&c=stats2:TERM-geom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-geom`);
   await tab(page, /^式$/);
   const g = page.getByTestId("detail").getByTestId("formula").nth(1);   // E(X)＝1/p
   await g.getByRole("button", { name: "値を入れて計算する" }).click();
   await g.getByRole("spinbutton", { name: /^p/ }).fill("7");
-  await expect(g.getByTestId("outside")).toContainText("p は 0以上1以下（今 7）");
+  await expect(g.getByTestId("outside")).toContainText("p は 0より大きい1以下（今 7）");
 });
 
 
 test("V(aX+b) を開くと中の μ は E(aX+b) になり、μ は μ＝E(X) で開ける", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-var`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-var`);
   await tab(page, /^式$/);
   const lin = page.getByTestId("detail").getByTestId("formula").nth(1);   // V(aX+b)＝a²V(X)
   await lin.getByTestId("sym-V").click();
   await lin.getByTestId("open-def").first().click();
   await expect(lin.locator(".katex").first()).toContainText("E((aX+b−E(aX+b))");
-  await page.goto(`./?${W0}&c=stats2:TERM-std`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-std`);
   await tab(page, /^式$/);
   const z = page.getByTestId("detail").getByTestId("formula").first();
   await z.getByTestId("sym-mu").click();
@@ -507,7 +518,7 @@ test("V(aX+b) を開くと中の μ は E(aX+b) になり、μ は μ＝E(X) で
 // 式の作業台（#110）：かたまりを押す → 帯に意味と値、スライダー → 分布と結果、棒を押す → k、n を下げると k も下がる
 test("式の作業台：かたまり・スライダー・分布が1つの操作で連動する", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await fullSheet(page);
   await tab(page, /^式$/);
   const w = page.getByTestId("workspace");
@@ -536,7 +547,7 @@ test("式の作業台：かたまり・スライダー・分布が1つの操作�
 // 作業台 P0（#110）：計算過程を1段ずつ・k のスライダー・確率は %・初期値に戻す・開くと広がる
 test("作業台：計算過程を1段ずつ見て、k を動かし、初期値に戻す", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await fullSheet(page);
   await tab(page, /^式$/);
   const w = page.getByTestId("workspace");
@@ -554,7 +565,7 @@ test("作業台：計算過程を1段ずつ見て、k を動かし、初期値�
 // 実験（#102・#110）：100回で実験の割合が棒に重なり、平均と理論が並ぶ。1回で今回の値。条件を変えたら記録を分ける
 test("作業台で実験する：100回・1回・条件を変えると記録を分ける", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await tab(page, /^式$/);
   const w = page.getByTestId("workspace");
   await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
@@ -576,7 +587,7 @@ test("作業台で実験する：100回・1回・条件を変えると記録を�
 // 式を分解する（#110）：ₙCₖ → n!/(k!(n−k)!) → 階乗を ∏ に。値は変わらず、計算の段も分解した式で進む
 test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分解しても値は変わらない", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await fullSheet(page);
   await tab(page, /^式$/);
   const w = page.getByTestId("workspace");
@@ -598,7 +609,7 @@ test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分�
 
 // モーダルで足りるものはモーダルに（#42）：線の見方は下から開く面、隠すと数を出す
 test("線の見方は下から開く面で、種類を隠せる", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await page.getByRole("button", { name: /^線の見方/ }).click();
   const k = page.getByTestId("kinds");
   await k.getByRole("checkbox").first().uncheck();
@@ -609,7 +620,7 @@ test("線の見方は下から開く面で、種類を隠せる", async ({ page 
 
 // 比べる（#42）：「ほかの概念と比べる」→ つながりのある概念から相手を選ぶ → そのまま比べる面が開く
 test("ほかの概念と比較：相手を選ぶとすぐ比べられる", async ({ page }) => {
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await page.getByRole("button", { name: "ほかの操作" }).click();
   await page.getByRole("menuitem", { name: "ほかの概念と比較" }).click();
   const pick = page.getByTestId("pick");
@@ -629,7 +640,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   // 疲れて下がる n＝10・p＝0.5・d＝0.3 の分散 2.5−0.09×330/81＝2.13、戻さずに取る 40 個の箱の分散 10×0.25×30/39＝1.92）
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
   await page.getByTestId("open-stats2:EXP-binom-p").click();
   const x = page.getByTestId("experiment");
@@ -775,7 +786,7 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   // この時刻の種では大当たりが出て線は約 100px 動く。縦の幅を揺れの目安で広げる故障では 2px ほどにつぶれる
   await page.clock.setFixedTime(new Date("2026-11-01T13:00:55.555Z"));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-expect`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-expect`);
   // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
   await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
   await page.getByTestId("open-stats2:EXP-expect-table").click();
@@ -844,7 +855,7 @@ test("比べる（実験室に1か所）：起き方も選んでカードに残�
   // 0.25×(10＋2Σ(10−h)0.3^h)＝4.34 と照らし、ブラウザの保存を消して URL だけで開き直す
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
   await openQ(x, "compare");
   await x.getByTestId("cmp-save-100").click();   // 条件どおり n＝10・p＝0.5
@@ -871,7 +882,7 @@ test("比べる（実験室に1か所）：起き方も選んでカードに残�
 test("比べる（値の表）：URL のカードからテーマと重みを戻し、重みを変えて足すと期待値の理論が並ぶ", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&x=stats2:EXP-expect-table&cards=dice:t1~1~1~1~1~3_100_7`);
+  await page.goto(`./?${SRC}&x=stats2:EXP-expect-table&cards=dice:t1~1~1~1~1~3_100_7`);
   const x = page.getByTestId("experiment");
   await expect(x.getByTestId("cmp-card")).toHaveCount(1);
   await expect(x.getByTestId("cmp-table").locator("tbody tr").nth(0)).toContainText("（4.13）");   // (1+2+3+4+5+6×3)÷8＝4.125
@@ -884,32 +895,12 @@ test("比べる（値の表）：URL のカードからテーマと重みを戻�
   expect(errs).toEqual([]);
 });
 
-// 骨格（#105・P1）：定義1文と分類だけの概念は点線の枠で、押すと定義1文と「定義だけ」（画面の言葉。渡辺さん 2026-11-01）
-test("骨格の概念は定義1文と分類と「定義だけ」を出し、見出しにその数", async ({ page }) => {
-  const errs = noErrors(page);
-  await page.route((u) => u.pathname.endsWith("/sample/stats2-w0.json"), async (r) => {   // ページの URL（?src=…）ではなくデータの読み込みだけ
-    const d = await (await r.fetch()).json();
-    const c = d.concepts.find((x: { status: string }) => x.status === "stub");
-    Object.assign(c, { status: "skeleton", short: "独立に同じ分布から取った平均は、n が大きいと正規分布に近づく", category: "標本分布・極限" });
-    await r.fulfill({ json: d });
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-clt`);
-  const det = page.getByTestId("detail");
-  await expect(det).toContainText("独立に同じ分布から取った平均は");
-  await expect(det).toContainText("標本分布・極限");
-  await expect(det.getByTestId("skeleton-note")).toContainText("定義だけ");
-  await page.setViewportSize({ width: 1024, height: 844 });   // スマホで概念を選ぶと見出しの数はしまう（地図を広く）
-  await expect(page.getByText(/（定義だけ 1）/)).toBeVisible();
-  expect(errs).toEqual([]);
-});
-
 // 129語の骨格（#105）：全体図を分類で絞ると、その分類の概念と、1本の線でつながる外の点（薄く）だけになる
 test("全体図を分類で絞り、骨格の概念は定義1文と「定義だけ」を出す", async ({ page }) => {
   test.setTimeout(60_000);   // 129語の見本を2回読み、全体図を3回描き直す。main でも単独で 26 秒かかり、全部を続けて走らせると 30 秒を超えることがある
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json");
+  await page.goto("./?src=sample/stats2.json");
   await expect(page.getByText(/（定義だけ 110）/)).toBeVisible();
   const sel = page.getByTestId("group-select");
   await expect(sel.locator("option")).toHaveCount(14);   // 分類の地図・全部の語 ＋ 12の分類
@@ -942,10 +933,11 @@ test("全体図を分類で絞り、骨格の概念は定義1文と「定義だ�
   // 分類の地図で点を押すと、その分類で絞る
   await page.evaluate(() => (window as unknown as { kn: { getElementById: (id: string) => { emit: (e: string) => void } } }).kn.getElementById("group:検定").emit("tap"));
   await expect(sel).toHaveValue("検定");
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-bayes");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-bayes");
   const det = page.getByTestId("detail");
-  await expect(det).toContainText("条件付き確率を逆向きにして");
-  await expect(det.getByTestId("skeleton-note")).toBeVisible();
+  await expect(det).toContainText("条件付き確率を逆向きにして");   // 骨格の概念（#105・P1）：定義1文と分類と「定義だけ」
+  await expect(det).toContainText("確率");
+  await expect(det.getByTestId("skeleton-note")).toContainText("定義だけ");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
 });
@@ -954,7 +946,7 @@ test("全体図を分類で絞り、骨格の概念は定義1文と「定義だ�
 test("下のタブで探索・学習・実験室・問題集を切り替え、パンくずで分類へ戻る", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const bar = page.getByTestId("tabbar");
   await expect(bar.getByRole("link")).toHaveCount(4);
   await expect(bar.getByRole("link", { name: "探索" })).toHaveAttribute("aria-current", "page");
@@ -962,7 +954,7 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   await expect(crumbs).toContainText("確率分布");
   await expect(crumbs).toContainText("二項分布");
   // 学習：単元の一覧（Notion へのリンク）。概念を選んでいないときは全部（選んでいるときの絞り込みは別のテスト）
-  await page.goto("./?src=sample/stats2-p1.json");
+  await page.goto("./?src=sample/stats2.json");
   await bar.getByRole("link", { name: "学習" }).click();
   await expect(page).toHaveURL(/t=learn/);
   await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
@@ -988,7 +980,7 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   await expect(list.getByRole("link").first()).toHaveAttribute("href", /notion\.com/);
   // 探索へ戻り、パンくずの分類を押すとその分類の地図
   await bar.getByRole("link", { name: "探索" }).click();
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   await page.getByTestId("crumbs").getByRole("button", { name: "確率分布" }).click();
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
   await expect(page).not.toHaveURL(/c=stats2/);
@@ -997,7 +989,7 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   expect(box.height).toBeGreaterThanOrEqual(44);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   // 埋め込みではタブを出さない
-  await page.goto("./?src=sample/stats2-p1.json&embed=1&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&embed=1&c=stats2:TERM-binom");
   await expect(page.getByTestId("embed-card")).toBeVisible();
   await expect(page.getByTestId("tabbar")).toHaveCount(0);
   expect(errs).toEqual([]);
@@ -1007,7 +999,7 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
 test("見方を切り替える：経路は前提を学ぶ順の番号で並べ、縮めると点の見せ方が変わる", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("radio", { name: "経路" }).click();
   await expect(page).toHaveURL(/view=path/);
@@ -1032,7 +1024,7 @@ test("見方を切り替える：経路は前提を学ぶ順の番号で並べ�
 test("詳しく：見出しは名前と切り替えだけ、ほかは「…」", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const det = page.getByTestId("detail");
   await expect(det).toContainText("確率分布・U14 U15 U19");
   await expect(det.getByRole("radiogroup", { name: "概念の中身" }).getByRole("radio")).toHaveText(["概要", "式", "関係"]);
@@ -1053,12 +1045,12 @@ test("詳しく：見出しは名前と切り替えだけ、ほかは「…」",
 test("下のタブ：選んだ概念の分を目印で出し、押すとその分に絞って開く。探索をもう一度押すと地図に戻る", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const bar = page.getByTestId("tabbar");
   await expect(bar.getByTestId("badge-learn")).toHaveText("U14");
   await expect(bar.getByTestId("badge-problems")).toHaveText("17");
   await expect(bar.getByTestId("badge-lab")).toHaveText("1");
-  await expect(page.getByTestId("concept-short")).toHaveText("同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布");   // 概念のページの一言（定義の前）
+  await expect(page.getByTestId("concept-gist")).toContainText("成功確率が毎回同じで");   // 概念のページの一言（定義の前。つまり）
   // 問題集：二項分布の問題だけ（17問）。札を押すと全部に戻る
   await bar.getByRole("link", { name: /^問題集/ }).click();
   const pp = page.getByTestId("page-problems");
@@ -1140,7 +1132,7 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
 test("スマホ：詳しくは地図に重なる下からの面で、段を動かせる", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const s = page.getByTestId("detail");
   await expect(s).toHaveAttribute("data-detent", "peek");
   await expect(s.getByTestId("concept-question").or(s.getByTestId("concept-gist")).or(s.getByTestId("concept-short")).or(s.getByText(/成功確率 p の独立な試行/)).first()).toBeInViewport();   // 少しの段で、名前の1行・切り替え・最初の段（問い。なければつまりか一言、それもなければ定義）が見える（#188 02）
@@ -1160,7 +1152,7 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   await s.getByTestId("detail-to-map").click();
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
   // 別の概念を選ぶと少しの段から
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-poisson");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-poisson");
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
   expect(errs).toEqual([]);
 });
@@ -1169,7 +1161,7 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
 test("点を長押しすると、名前・分類・定義1文の札が出る", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json&g=" + encodeURIComponent("確率分布"));
+  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布"));
   await expect(page.getByText("概念を押すと、定義")).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => (window as any).kn?.getElementById("stats2:TERM-binom").length ?? 0)).toBe(1);
   await page.evaluate(() => { (window as any).kn.getElementById("stats2:TERM-binom").emit("taphold"); });   // 戻り値を返さない（要素を返すと受け渡しに時間がかかる）
@@ -1197,7 +1189,7 @@ test("動きを減らす設定でも、移り変わりの再生は1セット目�
   // 故障：動きを減らすと再生が一度に最後まで飛び、途中の時点が見えない（#142 で直した振る舞いを、問いの形の図でも保つ）
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
   await openQ(x, "A-01");
   await x.getByRole("button", { name: "増やす" }).click();
@@ -1215,7 +1207,7 @@ test("動きを減らす設定でも、移り変わりの再生は1セット目�
 test("地図を全画面で見て、点を押すと札が出て、閉じると元の枠に戻る", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom&view=path`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom&view=path`);
   const g = page.getByTestId("graph");
   await expect.poll(async () => (await g.boundingBox())?.height ?? 0).toBeGreaterThan(150);
   const before = (await g.boundingBox())!.height;
@@ -1249,7 +1241,7 @@ test("地図を全画面で見て、点を押すと札が出て、閉じると�
 test("スマホで概念を選んでいる間は、ページが縦に送れず、下のタブは画面の下", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const q of ["", "&view=path"]) {
-    await page.goto(`./?src=sample/stats2-p1.json&c=stats2:TERM-sample-space${q}`);
+    await page.goto(`./?src=sample/stats2.json&c=stats2:TERM-sample-space${q}`);
     await expect(page.getByTestId("tabbar")).toBeVisible();
     await page.mouse.move(195, 300); await page.mouse.wheel(0, 2000);
     await page.evaluate(() => scrollTo(0, 5000));
@@ -1258,7 +1250,7 @@ test("スマホで概念を選んでいる間は、ページが縦に送れず�
     expect(Math.round(bar.y + bar.height)).toBe(844);
   }
   // 概念を選んでいないときは、ふつうに送れる（一覧などを読むため）
-  await page.goto("./?src=sample/stats2-p1.json&t=learn");
+  await page.goto("./?src=sample/stats2.json&t=learn");
   await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
   await page.evaluate(() => scrollTo(0, 400));
   expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
@@ -1269,7 +1261,7 @@ test("スマホで概念を選んでいる間は、ページが縦に送れず�
 // cmp も同じ1行で戻すので、g で代表して確かめる
 test("戻ると、分類の絞り込みも URL のとおりに戻る", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 800 });
-  await page.goto("./?src=sample/stats2-p1.json&g=" + encodeURIComponent("確率分布"));
+  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布"));
   const sel = page.getByTestId("group-select");
   await expect(sel).toHaveValue("確率分布");
   await expect.poll(() => page.evaluate(() => (window as any).kn?.getElementById("stats2:TERM-binom").length ?? 0)).toBe(1);
@@ -1287,7 +1279,7 @@ test("戻ると、分類の絞り込みも URL のとおりに戻る", async ({ 
 // 条件が初期値のままだと、消した記録を次の更新が書き戻す。見つけ方：100回を押した直後（流している途中）に戻し、更新の間隔を十分に過ぎても記録が空か
 test("作業台：実験の途中で初期値に戻すと、記録は空のまま", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-binom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await tab(page, /^式$/);
   const w = page.getByTestId("workspace");
   await w.getByTestId("ws-run-100").click();
@@ -1301,7 +1293,7 @@ test("値の表の実験室：横は値に比例し、▲（期待値）と予�
   // （38円の▲が 0 と 100 の間の 4 割に立ち、重心＝てんびんの支点に見えない）。見つけ方：棒の位置だけから値→位置の直線を作り、
   // ▲・予想の線がその直線の 38 円・予想の値に立つかを見る（画面の計算式は使わない）。既存のテストは ▲ の有無だけを見ていた
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&c=stats2:TERM-expect`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-expect`);
   // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
   await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
   await page.getByTestId("open-stats2:EXP-expect-table").click();
@@ -1322,7 +1314,7 @@ test("実験室の基本の面は型どおり：式は記号を押せる・本�
   // 関連する概念に実験室の本体が入る、実験室ごとに欄が違う（期待値だけ式しかない）。見つけ方：両方の実験室で同じ確かめ方を当てる
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [cid, eid, mainName, related] of [["TERM-binom", "EXP-binom-p", "二項分布", ["期待値"]], ["TERM-expect", "EXP-expect-table", "期待値", []]] as const) {
-    await page.goto(`./?${W0}&c=stats2:${cid}`);
+    await page.goto(`./?${SRC}&c=stats2:${cid}`);
     // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
     await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
     await page.getByTestId(`open-stats2:${eid}`).click();
@@ -1346,7 +1338,7 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   // 8 回以上 38.3%・5% を切る境目 10 回以上、ちょうど 5 回 252/1024＝24.6%・5 回以上 638/1024＝62.3%）
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
   // 広がり
   await openQ(x, "A-02");
@@ -1444,7 +1436,7 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
 test("並び・ばらつきの問い：並びの数と分散の最大を理論から出す", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
   await openQ(x, "A-03");
   await x.getByRole("radio", { name: "表が 3 回" }).click();
@@ -1491,7 +1483,7 @@ test("応用の課題：全部の問いで、グラフを問いに合わせる�
   test.setTimeout(240000);
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
   for (const c of APPLY_CASES) {
     await openQ(x, c.key);
@@ -1517,7 +1509,7 @@ test("応用の課題：全部の問いで、グラフを問いに合わせる�
     await ap.getByTestId("exp-apply-fit").click();
     const marked = x.locator("[data-mark=answer]");
     expect(await marked.count(), `${c.key} に色の付いた所がない`).toBeGreaterThan(0);
-    if (c.answerIn) expect((await marked.allTextContents()).join("｜"), `${c.key} の答え ${answer} が色の所に出ない`).toContain(answer.replace(/(回|人|個|セット|円)$/, ""));
+    if (c.answerIn) expect((await marked.allTextContents()).join("｜"), `${c.key} の答え ${answer} が色の所に出ない`).toContain(answer.replace(/\s*(回|人|個|セット|円|ポイント)$/, ""));   // 確率の差（ポイント）は図では % で出る
     if (c.chip) {
       const [chip, slider, v] = c.chip;
       await x.getByTestId(`q-chip-${chip}`).click();
@@ -1548,9 +1540,9 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
   test.setTimeout(240000);
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  const json = JSON.parse(await (await page.request.get("./sample/stats2-w0.json")).text());
+  const json = JSON.parse(await (await page.request.get("./sample/stats2.json")).text());
   const items = new Map<string, { apply: { walk: WalkData } }>(json.experiments.flatMap((e: { catalog?: { items: { id: string }[] }[] }) => (e.catalog ?? []).flatMap((g) => g.items.map((it) => [it.id, it]))));
-  await page.goto(`./?${W0}&x=stats2:EXP-binom-p`);
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
   for (const [key, targets] of Object.entries(WALK_TARGETS)) {
     const w = items.get(`stats2:binom-${key}`)!.apply.walk;

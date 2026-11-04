@@ -1,7 +1,7 @@
 // つながりを開いたときの面（stats2-course #188 04）。スマホの幅（390px）で、二項分布のつながりから開く。
 import { test, expect, type Page } from "@playwright/test";
 
-const URL = "./?src=sample/stats2-w0.json&c=stats2%3ATERM-binom";
+const URL = "./?src=sample/stats2.json&c=stats2%3ATERM-binom";
 async function open(page: Page, name: RegExp) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);

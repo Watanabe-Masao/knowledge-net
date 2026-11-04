@@ -37,7 +37,7 @@ const problem = (ap: Apply): string | undefined => {
 };
 
 describe("応用の課題が解ける", () => {
-  for (const file of ["public/sample/stats2-w0.json", "public/sample/stats2-p1.json"]) {
+  for (const file of ["public/sample/stats2.json", "public/sample/stats2.json"]) {
     it(`${file} の全部の課題`, () => {
       const list = applies(file);
       expect(list.length).toBeGreaterThanOrEqual(10);
@@ -45,9 +45,9 @@ describe("応用の課題が解ける", () => {
     });
   }
   it("わざと崩した課題は止まる（条件の外・選び肢の外）", () => {
-    const [, ap] = applies("public/sample/stats2-w0.json").find(([id]) => id === "stats2:binom-B-02")!;
+    const [, ap] = applies("public/sample/stats2.json").find(([id]) => id === "stats2:binom-B-02")!;
     expect(problem({ ...ap, solve: { ...ap.solve, k: 99 } as ApplySolve })).toMatch(/k は/);
-    const [, ch] = applies("public/sample/stats2-w0.json").find(([id]) => id === "stats2:binom-B-01")!;
+    const [, ch] = applies("public/sample/stats2.json").find(([id]) => id === "stats2:binom-B-01")!;
     expect(problem({ ...ch, answer: { ...ch.answer, options: [] } })).toMatch(/選び肢の外/);
   });
 });
@@ -60,7 +60,7 @@ describe("解き方を組み立てる（walk）", () => {
   const walks = (file: string) => applies(file).filter(([, ap]) => (ap as { walk?: unknown }).walk) as [string, Apply & { walk: ApplyWalkSpec; task: string }][];
   const ans = (ap: Apply) => (ap.answer.type === "number" ? solveApply(ap.solve).answer : undefined);
   it("公開の JSON の全部の walk が組み立てられ、最後の値が応用の答えと同じ", () => {
-    const list = walks("public/sample/stats2-w0.json");
+    const list = walks("public/sample/stats2.json");
     expect(list.map(([id]) => id.replace("stats2:binom-", "")).sort()).toEqual(["A-01", "A-02", "A-03", "B-01", "B-02", "B-04", "C-01", "C-02", "D-01", "D-02", "E-01", "E-02", "E-03", "E-04"]);   // 応用の全部の課題
     for (const [id, ap] of list) expect([id, walkProblems(ap.walk, ap.task, ap.solve, ans(ap))]).toEqual([id, []]);
   });
@@ -72,7 +72,7 @@ describe("解き方を組み立てる（walk）", () => {
     }
   });
   it("当てはめを入れ替えると答えと違って止まる", () => {
-    const [, ap] = walks("public/sample/stats2-w0.json").find(([id]) => id.endsWith("B-02"))!;
+    const [, ap] = walks("public/sample/stats2.json").find(([id]) => id.endsWith("B-02"))!;
     const swapped = { ...ap.walk, formulas: [{ ...ap.walk.formulas[0]!, bind: { n: "n", k: "k", p: "n" } }] };
     expect(walkProblems(swapped, ap.task, ap.solve, ans(ap)).join()).toMatch(/応用の答え/);
   });

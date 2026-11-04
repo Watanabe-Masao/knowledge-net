@@ -1,7 +1,7 @@
 // 解説・触るを JS の部品で描く（stats2-course #188 04b・#192）。二項分布と超幾何分布の対比から開く。
 import { test, expect, type Page } from "@playwright/test";
 
-const URL = "./?src=sample/stats2-w0.json&c=stats2%3ATERM-binom";
+const URL = "./?src=sample/stats2.json&c=stats2%3ATERM-binom";
 async function open(page: Page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);

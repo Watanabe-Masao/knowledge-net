@@ -6,7 +6,7 @@ import { AROUND, merge, neighborhood } from "../../src/data";
 const load = (f: string) => merge([{ id: "stats2", data: JSON.parse(readFileSync(f, "utf8")) }]).net;
 
 describe("周辺図（neighborhood）", () => {
-  const net = load("public/sample/stats2-w0.json");   // W0 の公開データ（概念17・関係26）
+  const net = load("public/sample/stats2.json");   // 教材の公開データの写し
   const binom = "stats2:TERM-binom";
   const pos = neighborhood(net, binom);
   it("中心は選んだ概念、まわりは直接つながる概念と導出だけ", () => {
