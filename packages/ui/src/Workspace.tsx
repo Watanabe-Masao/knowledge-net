@@ -387,6 +387,14 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   const pickPart = (i: number) => { haptic(); setSel((x) => (x?.part === i && !x.sym ? null : { part: i })); };
   // 成功・失敗をくり返して数える式（二項分布：n 回・成功確率 p・成功の回数 k を横軸）だけ、並びを自分で作る札を出す
   const seqOk = model.kind === "formula" && over === "k" && values.n !== undefined && values.p !== undefined && partList.length >= 3;
+  // 段の文の中の [[番号]] は、その部品を式の囲みと同じ色の札で出す（押すとその部品を選ぶ。色で式とつなぐ。渡辺さん 2026-11-04）
+  const whyText = (text: string) => text.split(/\[\[(\d+)\]\]/g).map((x, j) => {
+    if (j % 2 === 0) return x;
+    const i = Number(x), node = partList.find((q) => q.i === i)?.node;
+    if (!node) return null;
+    return <button key={j} type="button" className={`${s.whyPart} ${PART_TINT[i % PART_TINT.length]}`} aria-pressed={sel?.part === i} onClick={() => pickPart(i)} aria-label={parts[i]?.name}
+      data-testid={`ws-why-part-${i}`} dangerouslySetInnerHTML={{ __html: render(toTex(node, { symbols }), false) }} />;
+  });
   const reading = () => {
     if (!partList.length && !valueSyms.length) return null;
     const items: ["meaning" | "structure" | "calc", string][] = [["meaning", "意味"], ...((why || seqOk) && partList.length ? [["structure", "構造"]] as ["structure", string][] : []), ...(partList.length ? [["calc", "計算"]] as ["calc", string][] : [])];
@@ -394,6 +402,8 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
     return (
       <div className={s.read} data-testid="ws-read" data-mode={mode}>
         {items.length > 1 && <Seg name="式の読み方" items={items} value={mode} onChange={setReadAs} />}
+        {/* 説明（帯）は 式 → 見方の切り替え の下に置く（渡辺さん 2026-11-04）。計算では部品の札に名前と値が出るので、記号を選んだときだけ出す */}
+        {(mode !== "calc" || sel?.sym) && strip()}
         {mode === "meaning" && (
           <ul className={s.symList} aria-label="記号は何を表すか">
             {valueSyms.map((y) => (
@@ -409,7 +419,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
           <div className={s.why} data-testid="ws-why" data-step={stepNo}>
             <div className={s.whyHead}><span className={s.muted}>なぜこの式で求まるか</span><span className={s.whyNo} data-testid="ws-why-no">{stepNo + 1} / {why.steps.length}</span></div>
             <b className={s.whyTitle} data-testid="ws-why-title">{why.steps[stepNo]!.title}</b>
-            <p className={s.whyText}>{why.steps[stepNo]!.text}</p>
+            <p className={s.whyText} data-testid="ws-why-text">{whyText(why.steps[stepNo]!.text)}</p>
             {stepNo === why.steps.length - 1 && why.note && <p className={s.whyNote} data-testid="ws-why-note">{why.note}</p>}
             <div className={s.whyNav}>
               <button type="button" className={s.tool} disabled={stepNo === 0} onClick={() => { haptic(); setWhyStep(stepNo - 1); }} data-testid="ws-why-prev">前の段</button>
@@ -455,7 +465,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
     const foldable = (node ? marksIn(node) : []).sort((a, b) => lastOpen(b) - lastOpen(a));
     const v = selSym ? values[selSym.key] : undefined;
     return (
-      <div className={s.strip} data-testid="ws-strip">
+      <div className={p && sel.part !== undefined ? `${s.strip} ${PART_TINT[sel.part % PART_TINT.length]}` : s.strip} data-testid="ws-strip" data-part={sel.part}>
         {p && node && (
           <div className={s.ctx} key={`p${sel.part}`}>
             <span className={s.ctxTex} dangerouslySetInnerHTML={{ __html: render(toTex(node, { symbols }), false) }} />
@@ -543,7 +553,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   return (
     <section className={s.ws} data-testid="workspace" data-pattern={model.kind} data-only={only} aria-label="式の作業台">
       {/* 1 見出し：式の名前・場面の選択（場面が2つ以上のとき）・初期値に戻す */}
-      {!only && <><div className={s.head}><b>{given.label ?? "式を動かす"}</b>
+      {!only && <><div className={s.head}><b>{given.label ?? "式の操作"}</b>
         <button type="button" className={s.reset} onClick={reset} data-testid="ws-reset">初期値に戻す</button></div>
       {model.kind === "table" && model.tables.length > 1 && (
         <label className={s.scene}><span className={s.muted}>場面</span>
@@ -558,8 +568,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
         </div>
         <div ref={stage} className={s.stage} onClick={onStage} dangerouslySetInnerHTML={{ __html: html }} data-testid="ws-formula" />
       </div>
-      {strip()}
-      {reading()}
+      {reading() ?? strip()}
       {(restKeys.length > 0 || opens.length > 1) && (
         <div className={s.tools}>
           {restKeys.map((k) => <button key={k} type="button" className={s.tool} onClick={() => close(k)} data-testid={`ws-close-${k}`}>{symOf(k, symbols)?.symbol ?? k} をたたむ</button>)}

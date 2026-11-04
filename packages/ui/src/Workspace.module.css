@@ -233,3 +233,16 @@
 .outSeq { display: inline-flex; gap: 2px; }
 .outSeq i { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in srgb, var(--data-2) 25%, var(--surface)); box-shadow: inset 0 0 0 1px var(--line-strong); }
 .outSeq i[data-x="1"] { background: var(--accent); box-shadow: none; }
+
+/* 段の文の中の部品の札：式の囲みと同じ色。押すとその部品を選ぶ */
+.whyPart { all: unset; box-sizing: border-box; display: inline-block; min-height: 32px; padding: 2px 6px; margin: 0 2px; border-radius: 6px; vertical-align: middle; cursor: pointer; }
+.whyPart.tint0 { background: color-mix(in srgb, var(--data-1) 14%, transparent); box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--data-1) 60%, transparent); }
+.whyPart.tint1 { background: color-mix(in srgb, var(--accent) 14%, transparent); box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--accent) 60%, transparent); }
+.whyPart.tint2 { background: color-mix(in srgb, var(--data-2) 14%, transparent); box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--data-2) 60%, transparent); }
+.whyPart[aria-pressed="true"] { outline: 2px solid var(--accent); }
+.whyPart:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* 説明（帯）も、選んだ部品の色の地と枠で出す（廃止した部品の札の色の見せ方を引き継ぐ。式の囲み・段の文の札と同じ色。渡辺さん 2026-11-04） */
+.strip.tint0 { background: color-mix(in srgb, var(--data-1) 12%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--data-1) 40%, transparent); }
+.strip.tint1 { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+.strip.tint2 { background: color-mix(in srgb, var(--data-2) 12%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--data-2) 40%, transparent); }
