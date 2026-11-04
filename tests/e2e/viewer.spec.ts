@@ -515,7 +515,7 @@ test("式の作業台：かたまり・スライダー・分布が1つの操作�
   await w.getByTestId("ws-bar-5").click();
   await expect(w.getByTestId("ws-result")).toContainText("P(X=5)");
   await expect(w.getByTestId("ws-part-value")).toHaveText("252");   // ₁₀C₅
-  await w.getByTestId("ws-slider-n").fill("4");   // n を 4 に下げると k（5）は 4 に下がる
+  await w.getByTestId("ws-chip-n").click(); await w.getByTestId("ws-slider-n").fill("4");   // n を 4 に下げると k（5）は 4 に下がる
   await expect(w.getByTestId("ws-result")).toContainText("P(X=4)");
   await expect(w.getByTestId("ws-bar-5")).toHaveCount(0);
   await w.getByTestId("ws-strip").getByRole("button", { name: "k" }).click();   // かたまりの中の記号へ
@@ -541,7 +541,7 @@ test("作業台：計算過程を1段ずつ見て、k を動かし、初期値�
   await expect(calc).toContainText("1／");
   await calc.getByRole("button", { name: "次の段" }).click();
   await expect(calc.locator(".katex")).toContainText("120×0.027×0.7");   // ₁₀C₃・0.3³・(1−0.3) を計算した段（0.7⁷ は次の段）
-  await w.getByTestId("ws-slider-k").fill("5");
+  await w.getByTestId("ws-chip-k").click(); await w.getByTestId("ws-slider-k").fill("5");
   await expect(w.getByTestId("ws-result")).toContainText("P(X=5)");
   await w.getByTestId("ws-reset").click();
   await expect(w.getByTestId("ws-result")).toContainText("P(X=3)");
@@ -561,11 +561,11 @@ test("作業台で実験する：100回・1回・条件を変えると記録を�
   await w.getByTestId("ws-run-1").click();
   await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 101 回");
   await expect(w.getByTestId("ws-exp-stat")).toContainText("今回 k＝");
-  await w.getByTestId("ws-slider-p").fill("0.5");   // 条件を変えると記録を分ける
+  await w.getByTestId("ws-chip-p").click(); await w.getByTestId("ws-slider-p").fill("0.5");   // 条件を変えると記録を分ける
   await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
-  await w.getByTestId("ws-slider-k").fill("6");     // k を変えても記録は残る（条件ではない）
+  await w.getByTestId("ws-chip-k").click(); await w.getByTestId("ws-slider-k").fill("6");     // k を変えても記録は残る（条件ではない）
   await w.getByTestId("ws-run-100").click();
-  await w.getByTestId("ws-slider-k").fill("4");
+  await w.getByTestId("ws-chip-k").click(); await w.getByTestId("ws-slider-k").fill("4");
   await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
 });
 
@@ -1360,7 +1360,7 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   const sd = x.getByTestId("exp-workspace").getByTestId("ws-sd");
   expect(Number(await sd.getAttribute("data-value"))).toBeCloseTo(Math.sqrt(10), 6);
   await expect(x.getByTestId("exp-workspace")).toContainText("±標準偏差 3.16");
-  await x.getByTestId("exp-workspace").getByTestId("ws-slider-n").fill("10");
+  await x.getByTestId("exp-workspace").getByTestId("ws-chip-n").click(); await x.getByTestId("exp-workspace").getByTestId("ws-slider-n").fill("10");
   expect(Number(await sd.getAttribute("data-value"))).toBeCloseTo(Math.sqrt(2.5), 6);
   // 応用の答えのあとの解き方（何を求めるか → 使う式 → 数を入れる → 解く → 境目の前後）。なぜ 33 回かを、32 回と 33 回の値で言う
   await x.getByRole("button", { name: "応用の課題へ" }).click();
