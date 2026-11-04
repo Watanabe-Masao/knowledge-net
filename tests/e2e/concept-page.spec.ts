@@ -96,3 +96,30 @@ test("読むときは全画面のページ：下のタブに重なり、次の1�
   await expect(page.getByTestId("experiment")).toBeVisible();
   expect(errs).toEqual([]);
 });
+
+// 確かめる対象：式の読み方（意味・構造・計算。#188 07b・03）。部品の分け方と意味は原本の式の parts、値は engine の式の木の部分の計算。
+// 想定する故障：部品の木の位置（path）がずれて違う部分を計算する（成功の部品に失敗の確率が出る）・つまみを動かしても部品の値が追わない・
+// 記号の一覧が今の値を出さない。見つけ方：n＝10・p＝0.3・k＝3 の部品の値を手の値（₁₀C₃＝120・0.3³＝0.027・0.7⁷＝0.0823543）と照らし、
+// k を 4 にすると ₁₀C₄＝210・0.3⁴＝0.0081 に変わることを見る。既存の作業台のテストは式全体の値（26.68%）と計算の段だけを見る
+test("式の読み方：意味は記号と今の値、構造は部品と意味、計算は部品ごとの値（手の値と照らす）", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByRole("radio", { name: "式" }).click();
+  const r = d.getByTestId("ws-read");
+  await expect(r.getByTestId("ws-read-sym-k")).toContainText("3");
+  await expect(r.getByTestId("ws-read-sym-n")).toContainText("10");
+  await r.getByRole("radio", { name: "構造" }).click();
+  await expect(r.getByTestId("ws-read-part-0")).toContainText("並び方の数");
+  await expect(r.getByTestId("ws-read-part-2")).toContainText("失敗");
+  await r.getByRole("radio", { name: "計算" }).click();
+  const val = async (i: number) => Number(await r.getByTestId(`ws-read-val-${i}`).getAttribute("data-value"));
+  expect(await val(0)).toBe(120);
+  expect(await val(1)).toBeCloseTo(0.027, 10);
+  expect(await val(2)).toBeCloseTo(0.0823543, 7);
+  await d.getByTestId("ws-slider-k").fill("4");
+  await expect.poll(() => val(0)).toBe(210);
+  expect(await val(1)).toBeCloseTo(0.0081, 10);
+  expect(errs).toEqual([]);
+});
