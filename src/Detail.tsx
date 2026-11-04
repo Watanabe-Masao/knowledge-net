@@ -1,6 +1,7 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
 import { useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as RPE } from "react";
 import { Media, relationParts } from "./Relation";
+import { RelDig, RelMap } from "./RelMap";
 import { Bars, BottomSheet, Button, Card, Disclosure, Formula, Muted, Segmented, Workspace, TableWorkspace, type Detent } from "@math-lab/ui";
 import { modelPmf, modelMoments } from "@math-lab/engine";
 import katex from "katex";
@@ -130,6 +131,8 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   const qs = useMemo(() => [...net.experiments.values()].flatMap((x) => ("catalog" in x ? x.catalog ?? [] : []).flatMap((g) => g.items)
     .filter((it) => !it.retired && it.open && it.concept === c.id).map((it) => ({ x: x.id, id: it.id, title: it.title }))), [net, c.id]);
   const [allQ, setAllQ] = useState(false);
+  const [pick, setPick] = useState<string | null>(null);   // つながりの地図で選んだつながり
+  useEffect(() => { setPick(null); }, [c.id]);
   const chart = useMemo(() => {
     if (c.chart?.kind !== "binom") return null;
     const m = { kind: "binom" as const, n: c.chart.n ?? 10, p: c.chart.p ?? 0.5 };
@@ -228,13 +231,9 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
       </div>}
       {tab === "rel" && <div className={st.pane} data-testid="tab-rel">
         {groups.length ? <>
-          {/* 小さな地図：前に知っておく → この概念 → 姿を変えると、下に比べる（stats2-course #188 04） */}
-          <div className={st.mini} data-testid="rel-map" aria-label="つながりの小さな地図">
-            <div className={st.miniCol}>{(groups.find((g) => g.key === "before")?.rows ?? []).map((r) => <button key={r.id} type="button" onClick={() => onEdge(r.id)}>{r.other}</button>)}</div>
-            <div className={st.miniMid}><b>{c.name}</b></div>
-            <div className={st.miniCol}>{(groups.find((g) => g.key === "change")?.rows ?? []).map((r) => <button key={r.id} type="button" onClick={() => onEdge(r.id)}>{r.other}</button>)}</div>
-            {groups.some((g) => g.key === "contrast") && <div className={st.miniRow}><span>比べる</span>{groups.find((g) => g.key === "contrast")!.rows.map((r) => <button key={r.id} type="button" onClick={() => onEdge(r.id)}>{r.other}</button>)}</div>}
-          </div>
+          {/* つながりの地図（#188 07c）：点を押すと、そのつながりを下に「問い → 段」で掘る。一覧の行を押すと全画面で開く */}
+          <RelMap center={c.name} groups={groups} sel={pick} onSel={(id) => setPick((x) => (x === id ? null : id))} />
+          {pick ? <RelDig net={net} id={pick} onOpen={onEdge} onClose={() => setPick(null)} /> : <Muted as="p" className={st.digHint}>点を押すと、そのつながりを問いと段で掘る。</Muted>}
           <div data-testid="edge-list">{groups.map((g) => <section key={g.key} data-testid={`rel-group-${g.key}`}>
             <h3 className={st.groupTitle}>{g.title}</h3>
             <ul className={st.rels}>
