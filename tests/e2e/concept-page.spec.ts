@@ -150,7 +150,7 @@ test("並びを作ってみる：札を押すと成功の回数・1通りの確�
 // 補助として、結果を全部ならべ、事象（成功 k 回）に入る結果の行を強く見せる。
 // 想定する故障：段の部品の番号と式の囲みの対応がずれる（掛け算の段で組合せが光る）・段が進まない・前提が崩れたときの一言が出ない・
 // 結果の数え方の誤り（行の数が二項係数にならない・強く見せる行が k でない・n が大きいときの小さい例の切り替えの誤り）。
-// 見つけ方：式の上の囲みで、段 1（部品なし）は何も薄くない、段 2 は成功・失敗の部品（1・2）だけ濃く組合せ（0）が薄い、段 4 は組合せだけ濃い。
+// 見つけ方：式の上の囲みで、段 1（部品なし）は何も薄くない、段 2 は成功・失敗の部品（1・2）だけ濃く組合せ（0）が薄い、段 4（式全体を組み立てる段）は全部濃い。
 // 結果の行の数は手の値（n＝4：1・4・6・4・1、n＝5：1・5・10・10・5・1）と照らす。既存の「式の読み方」は部品の名前と値だけを見る
 test("構造：なぜこの式で求まるかを段で読み、段ごとに効く部品だけが濃い。結果を全部ならべ、成功 k 回の行を強く見せる", async ({ page }) => {
   const errs = noErrors(page);
@@ -171,7 +171,7 @@ test("構造：なぜこの式で求まるかを段で読み、段ごとに効�
   expect(await dim(), "掛け算の段で成功・失敗の部品だけが濃くない").toEqual([true, false, false]);
   await w.getByTestId("ws-why-next").click(); await w.getByTestId("ws-why-next").click();
   await expect(w.getByTestId("ws-why-no")).toHaveText("4 / 4");
-  expect(await dim(), "個数の段で組合せだけが濃くない").toEqual([false, true, true]);
+  expect(await dim(), "式全体を組み立てる段で、どれかの部品が薄い").toEqual([false, false, false]);
   await expect(w.getByTestId("ws-why-note")).toContainText("独立");
   await expect(w.getByTestId("ws-why-next")).toBeDisabled();
   // 結果を全部ならべる：n＝10 は並べきれないので n＝4 の小さい例（k＝3）
