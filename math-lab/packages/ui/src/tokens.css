@@ -1,4 +1,4 @@
-/* 生成物：packages/ui/tokens.json から packages/ui/scripts/tokens.mjs が作る（npm run tokens）。ここを直さない。
+/* 生成物：packages/ui/tokens.json から packages/ui/scripts/tokens.mjs が作る（npm run lab:tokens）。ここを直さない。
    動きは「何が変わったか」を伝えるためだけ。1つの操作に動きは1つ。動きを減らす設定では全部止める（base.css）。 */
 :root {
   --bg: #f6f7f7;  /* 地 */

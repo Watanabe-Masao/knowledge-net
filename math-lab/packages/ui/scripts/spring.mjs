@@ -20,7 +20,7 @@ export function springLinear(response, damping, duration, steps = 32) {
   return `linear(${pts.join(", ")})`;
 }
 
-// npm run springs：tokens.json の $extensions.spring から $value を作り直す
+// npm run lab:tokens：tokens.json の $extensions.spring から $value を作り直す
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

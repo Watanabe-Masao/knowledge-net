@@ -1,6 +1,6 @@
 // packages/ui/tokens.json（見た目と手触りの値の元）から CSS の変数を作る（packages/ui/src/tokens.css。生成して git に入れる）。
 // 教材（stats2-course）は同じ JSON の写しから labkit の CSS と静止図の色を作る。
-const LEAD = `/* 生成物：packages/ui/tokens.json から packages/ui/scripts/tokens.mjs が作る（npm run tokens）。ここを直さない。
+const LEAD = `/* 生成物：packages/ui/tokens.json から packages/ui/scripts/tokens.mjs が作る（npm run lab:tokens）。ここを直さない。
    動きは「何が変わったか」を伝えるためだけ。1つの操作に動きは1つ。動きを減らす設定では全部止める（base.css）。 */`;
 
 const value = (t, type) => {
@@ -48,7 +48,7 @@ ${dark.join("\n")}
 `;
 }
 
-// npm run tokens：tokens.json → src/tokens.css
+// npm run lab:tokens：tokens.json → src/tokens.css
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

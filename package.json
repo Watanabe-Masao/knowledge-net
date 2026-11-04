@@ -9,9 +9,12 @@
     "build": "npm run gen && tsc --noEmit && vite build",
     "test": "npm run gen && vitest run",
     "e2e": "playwright test",
-    "check": "npm run sync && npm run design && npm run test && npm run build && npm run e2e",
+    "check": "npm run lab && npm run design && npm run test && npm run build && npm run e2e",
     "design": "node scripts/check-design.mjs",
-    "sync": "node scripts/sync-math-lab.mjs"
+    "lab": "cd math-lab && node scripts/check-design.mjs && tsc -p packages/engine --noEmit && tsc -p packages/ui --noEmit && node scripts/bundle-formula.mjs --check && node scripts/sync-stats2.mjs && vitest run",
+    "lab:tokens": "cd math-lab && node packages/ui/scripts/spring.mjs && node packages/ui/scripts/tokens.mjs",
+    "lab:bundle": "cd math-lab && node scripts/bundle-formula.mjs",
+    "lab:sync": "cd math-lab && node scripts/sync-stats2.mjs"
   },
   "dependencies": {
     "@radix-ui/react-toggle-group": "1.2.1",
@@ -28,9 +31,13 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
     "fast-check": "4.10.2",
+    "rolldown": "1.2.16",
     "typescript": "5.9.3",
     "vite": "8.3.5",
     "vitest": "5.0.5",
     "yaml": "2.8.1"
-  }
+  },
+  "workspaces": [
+    "math-lab/packages/*"
+  ]
 }

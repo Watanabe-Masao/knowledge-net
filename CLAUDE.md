@@ -15,7 +15,7 @@
 7. **スマホ前提**。380px で横にはみ出さない。押す場所は 44px 以上。表は3列まで。Notion の埋め込み（360×320）に収める。
 8. **作業はブランチ**で行い、PR で GitHub のチェック（`npm run check`）が通ってからマージする。作業は stats2-course の issue（最終ゴール #55、画面は #42）で管理する。
 
-9. **部品と手触りの値は math-lab**（#107）。ここの `vendor/math-lab` は写しで直接直さない。math-lab で直して `node scripts/sync-math-lab.mjs --from ../math-lab` で取り込む（`npm run sync` がずれを止める）。
+9. **部品と手触りの値は math-lab**（#107）。math-lab は、このリポジトリの `math-lab/` にある（npm workspaces。2026-11-04 に別のリポジトリから履歴ごと移した。stats2-course #210）。画面は `@math-lab/ui`・`@math-lab/engine` として使う。math-lab の中の決まりは `math-lab/CLAUDE.md`。写しと取り込みはもうない。`npm run lab`（`npm run check` の中）が math-lab の確認（デザインの決まり・型・式の束・教材の式の見本・単体テスト）を走らせる。
 
 ## 画面の決まり（渡辺さん 2026-10-31。stats2-course #42・#130）
 

@@ -20,10 +20,10 @@
     ],
     "paths": {
       "@math-lab/ui": [
-        "./vendor/math-lab/packages/ui/src/index.ts"
+        "./math-lab/packages/ui/src/index.ts"
       ],
       "@math-lab/engine": [
-        "./vendor/math-lab/packages/engine/src/index.ts"
+        "./math-lab/packages/engine/src/index.ts"
       ]
     }
   },

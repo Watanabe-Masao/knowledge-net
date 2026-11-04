@@ -12,9 +12,9 @@
 | 場所 | 中身 | 守ること |
 | --- | --- | --- |
 | packages/engine | 画面を持たない計算（純粋関数） | DOM・React を使わない（tsconfig の lib に DOM を入れない）。Math.random を使わず、種つき乱数（createRandom）だけ |
-| packages/ui | 画面の部品（Button・Card などの並べ方・Segmented・Sheet・motion）と手触りの値（tokens.json → src/tokens.css） | 計算は engine を呼ぶだけ。色の値は tokens.json にだけ書き、動きの長さは変数で（npm run design が止める）。tokens.json を変えたら `npm run tokens` で src/tokens.css を作り直し、改訂（x-revision）を上げて CHANGELOG に書く |
+| packages/ui | 画面の部品（Button・Card などの並べ方・Segmented・Sheet・motion）と手触りの値（tokens.json → src/tokens.css） | 計算は engine を呼ぶだけ。色の値は tokens.json にだけ書き、動きの長さは変数で（npm run design が止める）。tokens.json を変えたら `npm run lab:tokens` で src/tokens.css を作り直し、改訂（x-revision）を上げて CHANGELOG に書く |
 
-使う側：knowledge-net（入口・地図・実験室のサイト）は packages の写しを持ち、math-lab の決まった版と同じかを確かめる。教材（stats2-course）は tokens.json の写しを持つ（ずれたら check_all が止まる）。
+使う側：knowledge-net（入口・地図・実験室のサイト）。math-lab は knowledge-net のリポジトリの `math-lab/` にあり（npm workspaces。2026-11-04 に別のリポジトリから履歴ごと移した。stats2-course #210）、画面は `@math-lab/…` として直接使う（写しはない）。教材（stats2-course）は tokens.json・式の束・乱数の写しを持ち、knowledge-net の決まった版と同じかを確かめる（ずれたら check_all が止まる）。
 
 ## 作業台の型（stats2-course #156、渡辺さん 2026-11-01）
 
@@ -30,10 +30,10 @@
 2. **再現できる**。乱数は種つきだけ。種を画面に出せるようにし、同じ種なら同じ結果。決まった種の最初の値をテストで固定する（方式を変えると既存の実験の再現が崩れるので、変えるときは版を上げて理由を書く）。
 3. **性質で確かめる**。Vitest＋fast-check で「同じ種なら同じ」「範囲」「回数を増やすと理論に近づく（許す幅は標準誤差の5倍）」を確かめる。例の数だけで済ませない。ランダムな同値性だけでは数学的な正しさは保証できないので、**変数のスコープ**（Σ・∫ の記号が漏れない・取り込まれない）、**記号と確率変数の対応**（of。開いた式に違う確率変数の μ が残らない）、**定義域と前提条件**（domain の外・0 で割るなどで止まり理由を言う）、**式の中身**（確率の和が1・期待値と分散が定義と一致）も確かめる（test/correctness.test.ts。stats2-course #109）。
 4. **式は木で持つ**。式の木の型は knowledge-net の schema（formulaNode）に合わせる。木から TeX（`toTex`。括弧は演算の強さから付け、手で書かない）・値（`evaluate`）・1段ずつの展開（`expand`）・検査（`validateFormula`）を作る。TeX は「読み戻した値が木の値と同じ」性質で確かめる。教材の式はテストの見本（test/fixtures/stats2-formulas.json。教材の terms.yaml から作った写し）で、全部が検査を通り KaTeX で読めることを確かめる。
-5. **作業はブランチ**で行い、PR で GitHub のチェック（`npm run check`）が通ってからマージする。
+5. **作業はブランチ**で行い、PR で GitHub のチェック（knowledge-net の `npm run check`。math-lab の確認は `npm run lab`）が通ってからマージする。
 
 ## 確かめる
 
 **テストの有効性と最小十分性**（渡辺さん 2026-10-31。stats2-course #118）：効果の薄い・目的の不明確なテストは書かない。件数やカバレッジを増やすためではなく、数学的・機能的な重大なリスクを効率よく見つけるために作る。テストごとに「確かめる対象・想定する故障・見つけ方・既存のテストとの違い」を書く（テストの前のコメントか PR）。1 リスク起点（起きやすく影響の大きい誤りから）、2 最小十分性（同じ故障を見つけるテストを重ねない）、3 独立性（期待値と実際値が同じ誤りを共有しない）、4 検出能力の実証（大事なテストは、わざと誤りを入れて落ちるかを確かめる）、5 継続的な整理（見つける価値の下がったテストはまとめる・消す・置き換える）。測るのは件数ではなく、重要な故障を見つける力・確かめていないリスク・実行の時間・保守の手間。
 
-`npm run check`（デザインの決まり → 型の検査 → 単体テスト）。部品の画面のテスト（Playwright）は今は使う側（knowledge-net）にある。
+knowledge-net の根で `npm run lab`（デザインの決まり → 型の検査 → 式の束 → 教材の式の見本 → 単体テスト）。部品の画面のテスト（Playwright）は今は使う側（knowledge-net）にある。

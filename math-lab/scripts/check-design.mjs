@@ -2,7 +2,7 @@
 // - 色の値（#fff・rgb()・hsl()）は packages/ui/tokens.json にだけ書く（src/tokens.css に変数として出る）。ほかは var(--…) を使う
 // - 動きの長さは変数（--dur-press・--dur・--dur-flash・--dur-sheet）だけ。ずっと動く飾り（infinite）は使わない
 // - 部品（.tsx）は className="…"（グローバルな名前）を使わない。CSS Modules を使う
-// - src/tokens.css は tokens.json から作ったものと同じ（npm run tokens で作り直す）
+// - src/tokens.css は tokens.json から作ったものと同じ（npm run lab:tokens で作り直す）
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { tokensCss } from "../packages/ui/scripts/tokens.mjs";
@@ -21,6 +21,6 @@ for (const f of files) {
   });
 }
 const want = tokensCss(JSON.parse(readFileSync("packages/ui/tokens.json", "utf8")));
-if (readFileSync("packages/ui/src/tokens.css", "utf8") !== want) bad.push("packages/ui/src/tokens.css が tokens.json と違う（npm run tokens で作り直す）");
+if (readFileSync("packages/ui/src/tokens.css", "utf8") !== want) bad.push("packages/ui/src/tokens.css が tokens.json と違う（npm run lab:tokens で作り直す）");
 if (bad.length) { console.error("❌ デザインの決まり\n" + bad.join("\n")); process.exit(1); }
 console.log(`✅ デザインの決まり（${files.length} ファイル）`);

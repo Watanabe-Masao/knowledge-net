@@ -6,7 +6,7 @@
 import { build } from "rolldown";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 
-const HEAD = (src) => `// 生成物：${src} から scripts/bundle-formula.mjs で作る。手で直さない（npm run bundle）\n`;
+const HEAD = (src) => `// 生成物：${src} から scripts/bundle-formula.mjs で作る。手で直さない（npm run lab:bundle）\n`;
 const BUNDLES = [
   { out: "packages/engine/dist/formula.mjs", input: "packages/engine/src/formula/index.ts", src: "packages/engine/src/formula", output: { format: "esm" } },
   { out: "packages/engine/dist/random.js", input: "packages/engine/src/random.ts", src: "packages/engine/src/random.ts", output: { format: "iife", name: "MLRandom" } },
@@ -18,7 +18,7 @@ for (const b of BUNDLES) {
   if (process.argv.includes("--check")) {
     let now = "";
     try { now = readFileSync(b.out, "utf8"); } catch { /* ない */ }
-    if (now !== code) { console.error(`✗ ${b.out} が元（${b.src}）と違う。npm run bundle で作り直してコミットする`); bad++; }
+    if (now !== code) { console.error(`✗ ${b.out} が元（${b.src}）と違う。npm run lab:bundle で作り直してコミットする`); bad++; }
     else console.log(`✓ ${b.out} は元と同じ`);
   } else {
     mkdirSync("packages/engine/dist", { recursive: true });
