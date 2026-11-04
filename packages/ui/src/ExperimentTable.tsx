@@ -210,7 +210,7 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
             </div>
           ))}
         </div>
-        {!rec.sets && <p className={s.muted}>「1回」を押すと、前の表と変えた表から1つずつ引く</p>}
+        {!rec.sets && <p className={s.muted}>「前と後 1回」を押すと、前の表と変えた表から1つずつ引く</p>}
       </section>
       <section className={s.card}>
         <p className={s.h}>出た値の割合<span data-testid="exp-sets">各 {rec.sets} 回</span></p>
