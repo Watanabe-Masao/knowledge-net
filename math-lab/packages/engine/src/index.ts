@@ -7,3 +7,4 @@ export { checkMechanism, drawSet, mechanismMoments, mixSpread, fatigueDrop, fati
 export { APPLY_FIELDS, applyCheck, solveApply, type ApplyCheck, type ApplyMark, type ApplyState, type ApplyVar, type ApplySolve, type ApplyResult, type ApplyEvent, type ApplyStep } from "./apply";
 export { INT, NUM2, NUM3, NUM4, PCT0, PCT1, PCT2, PCT3, PCT4, PCT5, SIG3, answerMatches, formatApply, texApply, type ApplyFormat } from "./applyFormat";
 export { WALK_FORMULAS, WALK_TEXT_SPEC, walkCompute, type WalkComputed, type WalkFormulaDef, type WalkFormulaUse, type WalkRow } from "./walk";
+export { APPLY_TEXT_SPEC, APPLY_TEXT_WORDS } from "./applySteps";

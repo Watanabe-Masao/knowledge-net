@@ -38,6 +38,7 @@
 | 30 | 2026-11-04 | 概念の式に任意の `why`（この式でなぜその値が求まるかの段：steps〔title・text・parts＝その段で効く式の部品の番号〕と note〔前提が崩れたとき、どの段が成り立たなくなるか〕）。作業台の読み方「構造」で順に出す（stats2-course #188）。任意 |
 | 31 | 2026-11-05 | 型を芯と実験室の拡張に分けた（stats2-course #211）：実験室の定義（experiment・experimentBinom・experimentTable・walkQuiz）を `kn-experiment-v1.json` へ移し、芯の `experiments` はそれを指す。中身は変わらない。`$id` を URL にした（2つのファイルを互いに指すため）。書き出しに任意の `experiment_revision`（使った拡張の改訂） |
 | 32 | 2026-11-05 | 書き出しに任意の `walk_texts`（解き方の公式の文。型は実験室の拡張の `walkTexts`）（stats2-course #211）。任意 |
+| 33 | 2026-11-05 | 書き出しに任意の `apply_texts`（応用の解き方の段の文。型は実験室の拡張の `applyTexts`）（stats2-course #211）。任意 |
 
 ## 実験室の拡張（kn-experiment-v1.json）
 
@@ -47,3 +48,4 @@
 | --- | --- | --- |
 | 1 | 2026-11-05 | 芯の改訂30までの実験室の定義をそのまま移した（stats2-course #211） |
 | 2 | 2026-11-05 | `$defs.walkTexts`：解き方の公式の文（記号の意味・呼び名・選び肢の形・行の題と文と別の言い方）。engine は文の型の id・穴の値・別の言い方だけを返す（stats2-course #211） |
+| 3 | 2026-11-05 | `$defs.applyTexts`：応用の解き方の段の文（語の名前の穴の言葉・段の題と文と別の言い方）（stats2-course #211） |
