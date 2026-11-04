@@ -22,7 +22,7 @@ type Sub = { t: "mark"; key: string } | { t: "collect"; need: string[]; later: s
 const KIND: Record<WalkKind, [string, string]> = {
   ask: ["問いの理解", "何を明らかにしたい？"], unit: ["対象の分解", "まず、何（誰）について考える？"], event: ["事象の定義", "その1つに何が起きればよい？"],
   info: ["情報の抽出", "それを求めるには何が必要？"], relate: ["関係の発見", "全体（問い）とはどうつながる？"], formula: ["公式の選択", "どの公式に当てはめる？"],
-  build: ["式の構築と計算", "記号に何が入る？ 何を計算している？"], probe: ["道具で確かめる", "下の道具で確かめる"],
+  build: ["式の構築と計算", "記号に何が入る？ 何を計算している？"], probe: ["道具で検証", "下の道具で検証する"],
 };
 const ORDER: WalkKind[] = ["ask", "unit", "event", "info", "relate", "formula", "build", "probe"];
 const r4 = (x: number) => formatApply(x, NUM4);
@@ -284,7 +284,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
     ...walk.formulas.slice(0, f).map((fu, g) => ({ k: fu.id, word: fu.word ?? WALK_FORMULAS[fu.ref]!.outWord, value: `${Math.abs(computed[g]!.value - Number(r4(computed[g]!.value))) > 1e-12 ? "≈" : "="} ${r4(computed[g]!.value)}` })),
   ];
   const taskCard = <section className={s.wTask} data-testid="exp-walk-task">
-    <div className={s.wTaskHead}><span>応用の課題</span>{!sheetMarks && !review && <button type="button" className={s.link} onClick={() => setFull(!full)} data-testid="exp-walk-full">{full ? "要点だけ見る" : "全文を見る"}</button>}</div>
+    <div className={s.wTaskHead}><span>応用の課題</span>{!sheetMarks && !review && <button type="button" className={s.link} onClick={() => setFull(!full)} data-testid="exp-walk-full">{full ? "要点だけ表示" : "全文を表示"}</button>}</div>
     {showFull ? <p className={s.walkSheet} data-testid="exp-walk-sheet">{walk.segments.map((g, i) => {
       const cls = [s.wSeg, pick.includes(i) ? s.wSegPick : "", g.role === "ask" && marked[g.key!] ? s.wSegQ : "", g.key && marked[g.key] && g.role !== "ask" ? (g.role === "condition" ? s.wSegQ : s.wSegNum) : "", g.key && struck[g.key] ? s.wSegX : ""].filter(Boolean).join(" ");
       const lab = g.role === "ask" && marked[g.key!] ? "明らかにしたい" : g.key && struck[g.key] ? "使わない" : g.key && marked[g.key] ? walk.info[g.key]?.word ?? "" : "";
@@ -317,7 +317,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
   }
 
   let todo = "";
-  if (done) todo = cur === N - 1 ? "まとめを確かめて「まとめを見る」へ" : "まとめを確かめて「次へ」";
+  if (done) todo = cur === N - 1 ? "まとめを確かめて「まとめを表示」へ" : "まとめを確かめて「次へ」";
   else if (here?.t === "mark") todo = (st.todo ?? (st.kind === "ask" ? "課題の文で、聞かれている所を押す" : "課題の文で、それが書いてある所を押す")) + "。選んだら「これで答える」";
   else if (here?.t === "collect") todo = st.todo ?? "必要な情報を課題の文から全部押し、「これで答える」";
   else if (here?.t === "quiz") todo = subDone(cur, sub) ? "合っている。「次の問いへ」で続ける" : here.q.todo ?? "選んで「これで答える」";
@@ -395,7 +395,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
         <p className={msg ? (msg.good ? s.wcGood : s.wcBad) : s.wcStatus} role="status" data-testid="exp-walk-status">{msg?.t ?? ""}</p>
         <div className={s.wcFoot}>
           <button type="button" className={s.wcBtn} disabled={cur === 0} onClick={() => go(cur - 1)} data-testid="exp-walk-prev">前へ</button>
-          <button type="button" className={`${s.wcBtn} ${s.wcMain}`} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを見る" : "次へ"}</button>
+          <button type="button" className={`${s.wcBtn} ${s.wcMain}`} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを表示" : "次へ"}</button>
         </div>
       </div>
       : <div className={s.wSheet} role="dialog" aria-label="解き方" data-testid="exp-walk-sheet-box" data-compact="false">
@@ -408,7 +408,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
       <div className={s.wFoot}>
         {review ? <button type="button" className={s.secondary} onClick={restart} data-testid="exp-walk-again">最初から組み立てる</button>
           : <><button type="button" className={s.secondary} disabled={cur === 0} onClick={() => go(cur - 1)} data-testid="exp-walk-prev">前へ</button>
-            <button type="button" className={s.primary} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを見る" : "次へ"}</button></>}
+            <button type="button" className={s.primary} disabled={!done} onClick={() => { haptic(); if (cur === N - 1) { setReview(true); setMsg(null); } else go(cur + 1); }} data-testid="exp-walk-next">{cur === N - 1 ? "まとめを表示" : "次へ"}</button></>}
       </div>
     </div>}
     {slotAsk && <>
@@ -428,7 +428,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
 
   return <div className={s.walk} data-testid="exp-walk">
     <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
-    <p className={s.walkNote}>{ok ? "合っている。解き方を確かめるだけなら、まとめを見る。" : "課題の文に印を付けるところから、解き方を自分で組み立てる。どこで迷ったかが最後に分かる。"}</p>
+    <p className={s.walkNote}>{ok ? "合っている。解き方を確かめるだけなら、まとめを表示する。" : "課題の文に印を付けるところから、解き方を自分で組み立てる。どこで迷ったかが最後に分かる。"}</p>
     <div className={s.two}>
       <button type="button" className={ok ? s.secondary : s.primary} onClick={() => { haptic(); if (started && !review) setOpen(true); else restart(); }} data-testid="exp-walk-start">{started && !review ? "続きから" : "解き方を組み立てる"}</button>
       <button type="button" className={ok ? s.primary : s.secondary} onClick={() => { haptic(); setReview(true); setOpen(true); }} data-testid="exp-walk-review">まとめだけ見る</button>

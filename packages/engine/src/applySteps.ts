@@ -50,10 +50,10 @@ function eventSteps(n: number, p: number, e: ApplyEvent, fmt = SIG3): ApplyStep[
   const list = useRest ? rest : ks;
   const terms = list.map((k) => `P(X=${k})`).join("+"), vals = list.map((k) => f(fm[k]!)).join("+"), sum = list.reduce((t, k) => t + fm[k]!, 0);
   return [
-    { title: "棒を足す形にする", tex: useRest ? al([`P(X${OPT[e.op]}${e.k})&=1-\\{${terms}\\}`]) : al([`P(X${OPT[e.op]}${e.k})&=${terms}`]),
+    { title: "棒の和の形にする", tex: useRest ? al([`P(X${OPT[e.op]}${e.k})&=1-\\{${terms}\\}`]) : al([`P(X${OPT[e.op]}${e.k})&=${terms}`]),
       text: useRest ? `「${e.k} 回${OPW[e.op]}」の棒は ${ks.length} 本。残りの ${list.length} 本を 1 から引くほうが短い（確率の合計は 1）。` : `「${e.k} 回${OPW[e.op]}」に入る棒を全部足す。` },
     { title: "1本ずつの確率", tex: al(list.map((k) => `P(X=${k})&=${C(n, k)}\\,${p}^{${k}}\\,${f(1 - p)}^{${n - k}}=${f(fm[k]!)}`)), text: "どの棒も P(X＝k)＝ₙCₖ pᵏ(1−p)ⁿ⁻ᵏ に k を入れる。" },
-    { title: "足す", tex: useRest ? al([`&=1-(${vals})`, `&=1-${f(sum)}`, `&=${f(P)}\\;(${tx(P, fmt)})`]) : al([`&=${vals}`, `&=${f(P)}\\;(${tx(P, fmt)})`]) },
+    { title: "合計", tex: useRest ? al([`&=1-(${vals})`, `&=1-${f(sum)}`, `&=${f(P)}\\;(${tx(P, fmt)})`]) : al([`&=${vals}`, `&=${f(P)}\\;(${tx(P, fmt)})`]) },
   ];
 }
 
@@ -66,12 +66,12 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         { title: "大元の公式", tex: "E(X)=np", text: "二項分布の平均は、回数 n×1回の成功確率 p。" },
         { title: "値を入れる", tex: al([`E(X)&=${f(s.mean)},\\quad n=${s.n}`, `${s.n}\\times p&=${f(s.mean)}`]) },
         { title: "計算する", tex: al([`p&=${f(s.mean)}\\div${s.n}`, `&=${f(answer)}=${tx(answer, PCT0)}`]), text: "両辺を n で割る。" },
-        { title: "確かめる", tex: `${s.n}\\times${f(answer)}=${f(s.n * answer)}`, text: "下の道具で n と p をこの値にすると、中心 n×p がこの値になる。" },
+        { title: "検証", tex: `${s.n}\\times${f(answer)}=${f(s.n * answer)}`, text: "下の道具で n と p をこの値にすると、中心 n×p がこの値になる。" },
       ];
     case "min-n-share-sd": {
       const v = s.p * (1 - s.p), sd2 = s.sd * s.sd, n = answer, q = Number((1 - s.p).toFixed(10));
       return [
-        { title: "何を求めるか", tex: `\\hat p=\\dfrac{X}{n}`, text: `成功の割合 p̂（成功の回数 X を n で割った値）は、調べるたびにぶれる。そのぶれ（標準偏差）を ${fa(s.sd, PCT2)} 以下にする、いちばん少ない回数 n。` },
+        { title: "何を求めるか", tex: `\\hat p=\\dfrac{X}{n}`, text: `成功の割合 p̂（成功の回数 X を n で割った値）は、調べるたびにばらつく。そのばらつき（標準偏差）を ${fa(s.sd, PCT2)} 以下にする、いちばん少ない回数 n。` },
         { title: "大元の公式", tex: al(["V(X)&=np(1-p)", "V(\\hat p)&=\\dfrac{V(X)}{n^2}=\\dfrac{p(1-p)}{n}", "\\sigma_{\\hat p}&=\\sqrt{\\dfrac{p(1-p)}{n}}"]), text: "回数 X の分散は np(1−p)。割合は X を n で割るので、分散は n² で割る。標準偏差はその平方根。" },
         { title: "値を入れる", tex: al([`p&=${s.p},\\quad 1-p=${q}`, `\\sqrt{\\dfrac{${s.p}\\times${q}}{n}}&\\le ${f(s.sd)}`]) },
         { title: "計算する", tex: al([`${s.p}\\times${q}&=${f(v)}`, `\\dfrac{${f(v)}}{n}&\\le ${f(s.sd)}^2=${f(sd2)}`, `n&\\ge ${f(v)}\\div${f(sd2)}`, `&=${f(v / sd2, 6)}`]), text: "両辺を2乗して √ を外し、n について解く。" },
@@ -85,7 +85,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         { title: "大元の公式", tex: "P(X=k)={}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}" },
         { title: `${s.a.n} 回中 ${s.a.k} 回（n＝${s.a.n}・k＝${s.a.k}・p＝${s.a.p}）`, tex: al(pmfRows(s.a.n, s.a.p, s.a.k)) },
         { title: `${s.b.n} 回中 ${s.b.k} 回（n＝${s.b.n}・k＝${s.b.k}・p＝${s.b.p}）`, tex: al(pmfRows(s.b.n, s.b.p, s.b.k)) },
-        { title: "比べる", tex: al([`\\dfrac{${tx(fa1, SIG3)}}{${tx(fb1, SIG3)}}&=${tx(r, NUM2)}`]), text: `${r > 1.1 ? `${s.a.n} 回中 ${s.a.k} 回の方が約 ${fa(r, NUM2)} 倍起きやすい` : r < 1 / 1.1 ? `${s.b.n} 回中 ${s.b.k} 回の方が約 ${fa(1 / r, NUM2)} 倍起きやすい` : "ほぼ同じ（0.9〜1.1 倍）"}。並びの数 ₙCₖ は増えるが、1つの並びの確率がそれ以上に小さくなる。` },
+        { title: "比較", tex: al([`\\dfrac{${tx(fa1, SIG3)}}{${tx(fb1, SIG3)}}&=${tx(r, NUM2)}`]), text: `${r > 1.1 ? `${s.a.n} 回中 ${s.a.k} 回の方が約 ${fa(r, NUM2)} 倍起きやすい` : r < 1 / 1.1 ? `${s.b.n} 回中 ${s.b.k} 回の方が約 ${fa(1 / r, NUM2)} 倍起きやすい` : "ほぼ同じ（0.9〜1.1 倍）"}。並びの数 ₙCₖ は増えるが、1つの並びの確率がそれ以上に小さくなる。` },
       ];
     }
     case "boundary": {
@@ -95,7 +95,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         { title: "2つの違い", tex: al([`P(X\\ge ${s.k})&=P(X=${s.k})+P(X\\ge ${s.k + 1})`, `P(X>${s.k})&=P(X\\ge ${s.k + 1})`, `\\text{差}&=P(X=${s.k})`]), text: `「以上」は境目の ${s.k} 回を含み、「より多い」は含まない。差は境目の棒1本。` },
         { title: "大元の公式", tex: "P(X=k)={}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}" },
         { title: `値を入れて計算する（n＝${s.n}・k＝${s.k}・p＝${s.p}）`, tex: al(pmfRows(s.n, s.p, s.k)) },
-        { title: "グラフで確かめる", tex: al([`&P(X\\ge ${s.k})-P(X\\ge ${s.k + 1})`, `&=${tx(ge, SIG3)}-${tx(gt, SIG3)}`, `&=${tx(ge - gt, SIG3)}`]), text: `下の道具で n＝${s.n}・p＝${s.p}・k＝${s.k} にすると、「${s.k} 回以上」${fa(ge, SIG3)} と「${s.k + 1} 回以上」${fa(gt, SIG3)} が出る。その差が境目の棒（ちょうど ${s.k} 回）。` },
+        { title: "グラフで検証", tex: al([`&P(X\\ge ${s.k})-P(X\\ge ${s.k + 1})`, `&=${tx(ge, SIG3)}-${tx(gt, SIG3)}`, `&=${tx(ge - gt, SIG3)}`]), text: `下の道具で n＝${s.n}・p＝${s.p}・k＝${s.k} にすると、「${s.k} 回以上」${fa(ge, SIG3)} と「${s.k + 1} 回以上」${fa(gt, SIG3)} が出る。その差が境目の棒（ちょうど ${s.k} 回）。` },
       ];
     }
     case "expected-observers": {
@@ -126,7 +126,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
     case "binom-judge": {
       const m = s.mechanism as Extract<Mechanism, { p: number }>, { mean, variance } = mechanismMoments(m), bv = m.n * m.p * (1 - m.p), r = variance / bv;
       return [
-        { title: "何を確かめるか", text: "二項分布かどうかは平均だけでは決まらない。平均と散らばり（分散）の両方を、二項分布の式と比べる。" },
+        { title: "何を確かめるか", text: "二項分布かどうかは平均だけでは決まらない。平均とばらつき（分散）の両方を、二項分布の式と比べる。" },
         { title: "大元の公式（二項分布）", tex: al(["E(X)&=np", "V(X)&=np(1-p)"]) },
         { title: "値を入れる", tex: al([`np&=${m.n}\\times${m.p}=${tx(m.n * m.p, NUM2)}`, `np(1-p)&=${m.n}\\times${m.p}\\times${f(1 - m.p)}=${tx(bv, NUM2)}`]) },
         ...mechSteps(m),
@@ -160,10 +160,10 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
       const bv = s.n * s.p * (1 - s.p), nn = s.n * (s.n - 1), d2 = (s.variance - bv) / nn;
       return [
         { title: "何を求めるか", text: "日によって成功確率が p−d か p＋d に変わると、成功の回数の分散は二項分布より大きくなる。増えた分から、ずれ幅 d を逆に求める。" },
-        { title: "大元の公式", tex: "V(X)=np(1-p)+n(n-1)d^2", text: "1日の中のぶれ（二項分布の分）に、日ごとの確率の違いの分が足される。" },
+        { title: "大元の公式", tex: "V(X)=np(1-p)+n(n-1)d^2", text: "1日の中のばらつき（二項分布の分）に、日ごとの確率の違いの分が足される。" },
         { title: "値を入れる", tex: al([`n=${s.n},\\;p&=${s.p},\\;V(X)=${f(s.variance)}`, `${f(s.variance)}&=${s.n}\\times${s.p}\\times${f(1 - s.p)}+${s.n}\\times${s.n - 1}\\,d^2`, `&=${f(bv)}+${nn}\\,d^2`]) },
         { title: "計算する", tex: al([`${nn}\\,d^2&=${f(s.variance)}-${f(bv)}=${f(s.variance - bv)}`, `d^2&=${f(s.variance - bv)}\\div${nn}=${f(d2)}`, `d&=\\sqrt{${f(d2)}}=${tx(answer, NUM2)}`]) },
-        { title: "確かめる", tex: `${f(bv)}+${nn}\\times${tx(answer, NUM2)}^2=${tx(bv + nn * answer * answer, NUM2)}`, text: `確率は p−d＝${fa(s.p - answer, NUM2)} と p＋d＝${fa(s.p + answer, NUM2)} の日が半々。下の道具でずれ幅をこの値にすると、分散がこの値になる。` },
+        { title: "検証", tex: `${f(bv)}+${nn}\\times${tx(answer, NUM2)}^2=${tx(bv + nn * answer * answer, NUM2)}`, text: `確率は p−d＝${fa(s.p - answer, NUM2)} と p＋d＝${fa(s.p + answer, NUM2)} の日が半々。下の道具でずれ幅をこの値にすると、分散がこの値になる。` },
       ];
     }
     case "mode": {
@@ -178,11 +178,11 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
     case "within-band": {
       const se = Math.sqrt((s.P * (1 - s.P)) / s.m), lo = s.P - 2 * se, hi = s.P + 2 * se, obs = s.x / s.m, z = Math.abs(obs - s.P) / se;
       return [
-        { title: "何を確かめるか", text: `理論の確率 ${fa(s.P, PCT0)} で ${s.m} 回中 ${s.x} 回（${fa(obs, PCT0)}）。このずれが、実験のゆれ（標本変動）の範囲かどうか。` },
-        { title: "大元の公式", tex: al(["SE&=\\sqrt{\\dfrac{P(1-P)}{m}}", "\\text{帯}&=P\\pm2\\,SE"]), text: "同じ条件の実験をくり返すと、割合は理論のまわりを SE ほどゆれる。±2SE の帯の中なら、ゆれとして説明できる。" },
+        { title: "何を確かめるか", text: `理論の確率 ${fa(s.P, PCT0)} で ${s.m} 回中 ${s.x} 回（${fa(obs, PCT0)}）。このずれが、実験のばらつき（標本変動）の範囲かどうか。` },
+        { title: "大元の公式", tex: al(["SE&=\\sqrt{\\dfrac{P(1-P)}{m}}", "\\text{帯}&=P\\pm2\\,SE"]), text: "同じ条件の実験をくり返すと、割合は理論のまわりを SE ほどばらつく。±2SE の帯の中なら、ばらつきとして説明できる。" },
         { title: "値を入れる", tex: al([`SE&=\\sqrt{\\dfrac{${s.P}\\times${f(1 - s.P)}}{${s.m}}}`, `&=\\sqrt{${f((s.P * (1 - s.P)) / s.m)}}=${f(se)}`]) },
         { title: "帯を計算する", tex: al([`${s.P}-2\\times${f(se)}&=${tx(lo, PCT1)}`, `${s.P}+2\\times${f(se)}&=${tx(hi, PCT1)}`]) },
-        { title: "比べて判断する", tex: `${tx(obs, PCT1)}\\;${obs >= lo - EPS && obs <= hi + EPS ? "\\text{は帯の中}" : "\\text{は帯の外}"}\\quad(${f(z, 3)}\\,SE)`, text: z <= 2 ? "帯の中なので、理論が間違いとは言えない（ゆれで説明できる）。ただし1回の実験で理論が正しいとも証明できない。" : "帯の外なので、ゆれだけでは説明しにくい。理論か、実験の条件を疑う。" },
+        { title: "比べて判断する", tex: `${tx(obs, PCT1)}\\;${obs >= lo - EPS && obs <= hi + EPS ? "\\text{は帯の中}" : "\\text{は帯の外}"}\\quad(${f(z, 3)}\\,SE)`, text: z <= 2 ? "帯の中なので、理論が間違いとは言えない（ばらつきで説明できる）。ただし1回の実験で理論が正しいとも証明できない。" : "帯の外なので、ばらつきだけでは説明しにくい。理論か、実験の条件を疑う。" },
       ];
     }
     case "linear-sum": {
@@ -192,7 +192,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         { title: "大元の公式（期待値の線形性）", tex: al(["E(W)&=a\\,p+b\\,(1-p)", "E(W_1+\\cdots+W_n)&=E(W_1)+\\cdots+E(W_n)=n\\,E(W)"]), text: "1回の値 W は、成功なら a、失敗なら b。合計の期待値は、1回の期待値を足したもの（独立でなくても成り立つ）。" },
         { title: "値を入れる", tex: al([`E(W)&=${s.a}\\times${s.p}+(${s.b})\\times${f(1 - s.p)}`]) },
         { title: "計算する", tex: al([`E(W)&=${f(s.a * s.p)}+(${f(s.b * (1 - s.p))})=${f(ew)}`, `n\\,E(W)&=${s.n}\\times${f(ew)}=${tx(answer, NUM2)}`]) },
-        { title: "別の見方で確かめる", tex: al([`E(X)&=np=${f(s.n * s.p)}`, `aE(X)+b(n-E(X))&=${s.a}\\times${f(s.n * s.p)}+(${s.b})\\times${f(s.n - s.n * s.p)}`, `&=${tx(s.a * s.n * s.p + s.b * (s.n - s.n * s.p), NUM2)}`]), text: "E(X) は成功の回数の平均。成功の回数の平均 np を使っても同じ。期待値は線形なので、値を付け替えても平均から計算できる。" },
+        { title: "別の見方で検証", tex: al([`E(X)&=np=${f(s.n * s.p)}`, `aE(X)+b(n-E(X))&=${s.a}\\times${f(s.n * s.p)}+(${s.b})\\times${f(s.n - s.n * s.p)}`, `&=${tx(s.a * s.n * s.p + s.b * (s.n - s.n * s.p), NUM2)}`]), text: "E(X) は成功の回数の平均。成功の回数の平均 np を使っても同じ。期待値は線形なので、値を付け替えても平均から計算できる。" },
       ];
     }
     case "compare-var": {
@@ -202,7 +202,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         { title: "大元の公式", tex: al(["E(X)&=np", "V(X)&=np(1-p)"]), text: "1回の分散 p(1−p) を n 回分足す（各回は独立）。" },
         { title: "平均", tex: al([`A&:${s.a.n}\\times${s.a.p}=${tx(s.a.n * s.a.p, NUM2)}`, `B&:${s.b.n}\\times${s.b.p}=${tx(s.b.n * s.b.p, NUM2)}`]) },
         { title: "分散", tex: al([`A&:${s.a.n}\\times${s.a.p}\\times${f(1 - s.a.p)}=${tx(va, NUM2)}`, `B&:${s.b.n}\\times${s.b.p}\\times${f(1 - s.b.p)}=${tx(vb, NUM2)}`]) },
-        { title: "比べる", text: `${va > vb * 1.1 ? "A" : vb > va * 1.1 ? "B" : "ほぼ同じ"}${va > vb * 1.1 || vb > va * 1.1 ? ` の方が大きい（${fa(Math.max(va, vb) / Math.min(va, vb), NUM2)} 倍）` : ""}。平均だけではばらつきは決まらない。p が 0.5 に近いほど1回の p(1−p) は大きいが、回数 n が多いほど足す数も増える。` },
+        { title: "比較", text: `${va > vb * 1.1 ? "A" : vb > va * 1.1 ? "B" : "ほぼ同じ"}${va > vb * 1.1 || vb > va * 1.1 ? ` の方が大きい（${fa(Math.max(va, vb) / Math.min(va, vb), NUM2)} 倍）` : ""}。平均だけではばらつきは決まらない。p が 0.5 に近いほど1回の p(1−p) は大きいが、回数 n が多いほど足す数も増える。` },
       ];
     }
   }
