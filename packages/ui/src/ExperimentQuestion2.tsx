@@ -193,7 +193,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
     const mkS = fitS.mark({ n: app.n, p: app.p, k: app.k, m: app.m });
     body = <>
       {props.apply && <ApplyTask spec={props.apply} state={app} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, k: at.k!, m: at.m! }); setSel("m"); fitS.setFit({ at, mark }); }} />}
-      <Card title={`${app.n} 回中 ${evText(e)}・${app.m.toLocaleString()} 回`} sub={`理論 ${pctSig(Pa)}`} testid="exp-app">
+      <Card title={`${app.n} 回中 ${evText(e)}・${app.m.toLocaleString()} セット`} sub={`理論 ${pctSig(Pa)}`} testid="exp-app">
         <div className={s.tiles}>
           <div>理論の確率<b>{pctSig(Pa)}</b><i>P</i></div>
           <div {...MK(mkS.read === "band")}>ゆれの目安 ±2SE<b data-testid="exp-app-band">{formatApply(Math.max(0, Pa - 2 * sa), PCT1)}〜{formatApply(Math.min(1, Pa + 2 * sa), PCT1)}</b><i>P±2√(P(1−P)÷m)</i></div>

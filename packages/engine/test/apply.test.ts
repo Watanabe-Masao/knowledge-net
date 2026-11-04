@@ -61,7 +61,7 @@ describe("解き方の段（答えのあとに出す）", () => {
     expect(a).toContain("33 回で 7.98%（8% 以下）");
     const c = last(solveApply({ method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01, unit: 100 }));
     expect(c).toContain("9,100 セットでは");
-    const [x, y] = [...c.matchAll(/±([\d.]+)%/g)].map((m) => Number(m[1]));
+    const [x, y] = [...c.matchAll(/±([\d.]+) ポイント/g)].map((m) => Number(m[1]));
     expect(x).toBeGreaterThan(1);
     expect(y).toBeLessThanOrEqual(1);
     expect(last(solveApply({ method: "min-total", n: 10, ratio: 0.8, step: 2 }))).toMatch(/44 個では 0\.79 倍、46 個で 0\.8 倍/);

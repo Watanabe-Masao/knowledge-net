@@ -551,7 +551,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
 // ---------------- 前提崩し：成り立つ条件を崩してみる ----------------
 type Cx = NonNullable<BinomDef["counterexamples"]>[number];
 const STRENGTH: Record<string, [string, number, number, number, keyof Cx["mechanism"]]> = {
-  streak: ["引きずる強さ", 0.05, 0.6, 0.05, "carry"], mix: ["ずれ幅 d", 0.05, 0.4, 0.05, "spread"], fatigue: ["下がる幅 d", 0.05, 0.4, 0.05, "drop"], urn: ["箱の中の玉の数", 12, 60, 2, "total"],
+  streak: ["引きずる強さ", 0.05, 0.6, 0.05, "carry"], mix: ["ずれ幅 d", 0.05, 0.4, 0.05, "spread"], fatigue: ["ずれ幅 d", 0.05, 0.4, 0.05, "drop"], urn: ["箱の中の玉の数", 12, 60, 2, "total"],
 };
 /** 反例の定義から起き方を作る（比べる二項分布は、戻さずに取るだけ箱の当たりの割合にそろえる） */
 export function mechOfCx(cx: Cx, c: Cond, x?: number): Mechanism {
@@ -611,7 +611,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
           note={`平均はどちらも ${r2(b.n * b.p)} の近くに落ち着くが、散らばりは別の値に落ち着いていく（条件どおり ${r2(vb)}・崩した ${r2(vm)}）。はじめの数セットでは、どちらが大きいかが入れ替わることもある。`} />
       </Card>
     </>;
-    cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ{["広くなる", "変わらない", "狭くなる"][ans]}のか 理由を考える</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ{["広くなる", "変わらない", "狭くなる"][ans]}のか、理由を考える</button>;
   } else if (stage === 3) {
     body = <Card title={`崩した条件：${cx.breaks}`}><p className={qs.note} data-testid="exp-cx-text">{cx.text}</p><p className={qs.note}>二項分布の式（分散 np(1−p)）を使えるのは、各回が独立で、毎回同じ確率のときだけ。</p>{cx.concept && props.conceptLink?.(cx.concept)}</Card>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "崩す強さを変える"}</button>;
