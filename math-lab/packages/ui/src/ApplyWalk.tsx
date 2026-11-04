@@ -5,7 +5,7 @@
 // 原本（walk）は文の区切り・情報の言葉と記号・公式の当てはめ方・問いだけ。
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { NUM4, PCT0, WALK_FORMULAS, formatApply, walkCompute, type WalkRow, type ApplyCheck, type ApplyMark, type ApplySolve, type ApplyState, type ApplyStep } from "@math-lab/engine";
+import { NUM4, PCT0, WALK_FORMULAS, formatApply, solveValue, walkCompute, type WalkRow, type ApplyCheck, type ApplyMark, type ApplySolve, type ApplyState, type ApplyStep } from "@math-lab/engine";
 import { haptic } from "./motion";
 import { RichText, tex } from "./labParts";
 import s from "./Experiment.module.css";
@@ -69,25 +69,6 @@ const SHOW: Record<string, (v: number) => string> = { n: (v) => `n ${v} 回`, p:
 const showAt0 = (t: ApplyState, names?: Record<string, string>) => Object.entries(t).filter(([k]) => SHOW[k]).map(([k, v]) => (k === "s" && names?.s ? `${names.s} ${v}` : SHOW[k]!(v!))).join("・");
 const same = (t: ApplyState, cur: ApplyState) => Object.entries(t).every(([k, v]) => cur[k] === undefined || Math.abs(cur[k]! - v!) < 1e-9);
 
-/** solve の値（a.n のように . でたどる）。文に出る数が solve の数の足し引き・掛け算のときは式で書ける
- *  （例：最初の確率 mechanism.p+mechanism.drop・平均 mechanism.n*mechanism.p。掛け算が先） */
-export const solveValue = (sv: ApplySolve, path: string): number | undefined => {
-  const one = (t: string): number | undefined => {
-    if (/^-?[0-9]+(\.[0-9]+)?$/.test(t)) return Number(t);
-    let v: unknown = sv;
-    for (const k of t.split(".")) v = v && typeof v === "object" ? (v as Record<string, unknown>)[k] : undefined;
-    return typeof v === "number" ? v : undefined;
-  };
-  const terms = path.replace(/\s+/g, "").split(/(?=[+-])/);
-  let sum = 0;
-  for (const term of terms) {
-    const sign = term.startsWith("-") ? -1 : 1, body = term.replace(/^[+-]/, "");
-    let prod = 1;
-    for (const f of body.split("*")) { const x = one(f); if (x === undefined) return undefined; prod *= x; }
-    sum += sign * prod;
-  }
-  return sum;
-};
 const infoValues = (w: ApplyWalkSpec, sv: ApplySolve) => Object.fromEntries(Object.entries(w.info).flatMap(([k, v]) => { const x = v.of ? solveValue(sv, v.of) : undefined; return x === undefined ? [] : [[k, x]]; }));
 
 /** 段を、中の手（部品）の並びに開く */

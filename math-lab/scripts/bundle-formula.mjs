@@ -21,10 +21,14 @@ async function contracts() {
   const dir = mkdtempSync(join(tmpdir(), "mlc-"));
   try {
     writeFileSync(join(dir, "e.mjs"), r.output[0].code);
-    const { WALK_FORMULAS, WALK_TEXT_SPEC, APPLY_FIELDS, APPLY_TEXT_SPEC, APPLY_TEXT_WORDS } = await import(pathToFileURL(join(dir, "e.mjs")).href);
+    const { WALK_FORMULAS, WALK_TEXT_SPEC, APPLY_FIELDS, APPLY_TEXT_SPEC, APPLY_TEXT_WORDS, solveValue } = await import(pathToFileURL(join(dir, "e.mjs")).href);
     const walk = Object.fromEntries(Object.entries(WALK_FORMULAS).map(([k, d]) => [k, d.syms]));
     const apply = Object.fromEntries(Object.entries(APPLY_FIELDS).map(([k, f]) => [k, { required: f.required, optional: f.optional ?? [], ...(f.choices ? { choices: f.choices } : {}) }]));
-    return JSON.stringify({ _: "生成物：packages/engine/src（walk.ts・apply.ts）から scripts/bundle-formula.mjs で作る。手で直さない（npm run lab:bundle）", walk_formulas: walk, walk_rows: WALK_TEXT_SPEC, apply_methods: apply, apply_steps: APPLY_TEXT_SPEC, apply_words: APPLY_TEXT_WORDS }, null, 1) + "\n";
+    // 情報の of（solve の値の小さな式）の見本：engine の solveValue で求めた値。教材の Python の写し（network.py の solve_value）がこれと同じかを教材のテストが照らす（#212）
+    const SV = { method: "x", n: 10, p: 0.3, a: { n: 20, p: 0.25, k: 5 }, mechanism: { n: 10, p: 0.5, drop: 0.3 }, unit: 100, flag: true };
+    const solve_value_cases = ["n", "p", "a.n", "a.k", "unit", "mechanism.n*mechanism.p", "mechanism.p+mechanism.drop", "mechanism.p-mechanism.drop",
+      "2*a.p+p", "-n+3", "1.5*n", " n * p ", "flag", "a", "nothing", "a.nothing", "n*nothing"].map((path) => ({ path, value: solveValue(SV, path) ?? null }));
+    return JSON.stringify({ _: "生成物：packages/engine/src（walk.ts・apply.ts）から scripts/bundle-formula.mjs で作る。手で直さない（npm run lab:bundle）", walk_formulas: walk, walk_rows: WALK_TEXT_SPEC, apply_methods: apply, apply_steps: APPLY_TEXT_SPEC, apply_words: APPLY_TEXT_WORDS, solve_value_cases: { solve: SV, cases: solve_value_cases } }, null, 1) + "\n";
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 let bad = 0;

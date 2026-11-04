@@ -2,7 +2,7 @@
 // どれも 予測 → 実験 → 観察 → 理由 → 応用 の5段。予想の答えは定義に書かず、理論（modelPmf）から求める。
 // 応用は ApplyTask（答えは engine の solveApply）。「グラフを問いに合わせる」で下の道具が問いの値になり、答えの所に色が付く。
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { NUM2, PCT1, createRandom, formatApply, runningMean, summarize, type Random } from "@math-lab/engine";
+import { NUM2, PCT1, comb, createRandom, formatApply, runningMean, summarize, type Random } from "@math-lab/engine";
 import { haptic } from "./motion";
 import { LabShell, peak, useRuns, useStages } from "./labParts";
 import { CompareRows, CompareTable, Dock, Field, RunChart, TheoryRows, pc, pctSig, qs, r2 } from "./QuestionParts";
@@ -10,7 +10,6 @@ import { AppExtra, ApplyTask, Card, Lane, MK, RunButtons, STAGES_Q, Verdict, des
 import s from "./Experiment.module.css";
 
 type Cond = { n: number; p: number };
-const comb = (n: number, k: number) => { let c = 1; for (let i = 1; i <= k; i++) c = (c * (n - k + i)) / i; return Math.round(c); };
 const HI = { fontWeight: 700, color: "var(--data-hi)" };   // 表の中で注目する行（色は変数で）
 const newSeed = (seed?: number) => seed ?? Date.now() % 100000;
 
