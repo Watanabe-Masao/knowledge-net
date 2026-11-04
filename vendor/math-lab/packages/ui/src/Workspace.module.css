@@ -164,3 +164,30 @@
 .linear legend { padding: 0; font-size: 13.5px; font-weight: 600; }
 .linearOut { margin: 0; font-size: 13px; color: var(--ink-2); }
 .linearOut b { color: var(--ink); }
+/* 読み方（意味・構造・計算。stats2-course #188 07b）。部品の色は式の囲みと同じ */
+.read { display: grid; gap: 8px; }
+.symList { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.symRow { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: grid; grid-template-columns: 2.4em minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 12px; border-radius: var(--r-m); background: var(--surface-2); cursor: pointer; }
+.symRow[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.symRow:focus-visible, .part:focus-visible, .partVal:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.symRowSym { font-family: "Times New Roman", serif; font-style: italic; font-size: 19px; text-align: center; }
+.symRowText b { font-size: 14px; font-weight: 600; }
+.symRowVal { font-size: 15px; font-variant-numeric: tabular-nums; }
+.parts, .partVals { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.4em, 1fr)); gap: 6px; }
+.part, .partVal { all: unset; box-sizing: border-box; display: grid; justify-items: center; align-content: start; gap: 2px; padding: 8px 6px; border-radius: var(--r-m); text-align: center; cursor: pointer; }
+.part b { font-size: 13px; color: var(--ink); }
+.partMeaning { font-size: 11.5px; color: var(--ink-2); line-height: 1.45; text-align: left; }
+.partTex { font-size: 15px; min-height: 1.6em; display: grid; place-items: center; }
+.partNum { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.partName { font-size: 11.5px; color: var(--ink-2); }
+
+/* 部品の色（1つ目＝データの1色目・2つ目＝操作の色・3つ目＝データの2色目） */
+.box.tint0 { background: color-mix(in srgb, var(--data-1) 12%, transparent); box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--data-1) 55%, transparent); }
+.part.tint0, .partVal.tint0 { background: color-mix(in srgb, var(--data-1) 12%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--data-1) 30%, transparent); }
+.part.tint0[aria-pressed="true"], .partVal.tint0[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--data-1); }
+.box.tint1 { background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+.part.tint1, .partVal.tint1 { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.part.tint1[aria-pressed="true"], .partVal.tint1[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
+.box.tint2 { background: color-mix(in srgb, var(--data-2) 12%, transparent); box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--data-2) 55%, transparent); }
+.part.tint2, .partVal.tint2 { background: color-mix(in srgb, var(--data-2) 12%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--data-2) 30%, transparent); }
+.part.tint2[aria-pressed="true"], .partVal.tint2[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--data-2); }
