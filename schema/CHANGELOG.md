@@ -35,3 +35,4 @@
 | 27 | 2026-11-04 | ラボへの参照（`$defs.labs`）に任意の `play`（画面が JS の部品で描く形：mode・modes・set・task・kmax・decimals・steps〔title・text・states〔段の状態。set と frames を重ねたもの〕・focus・gist・ms〕）。教材の build がラボの版から作り、予想の答えは入れない（stats2-course #188 04b・#192）。任意 |
 | 28 | 2026-11-04 | 関係に任意の `question`（このつながりで考える問い。概念のページのつながりで、選ぶと最初に出る）（stats2-course #188 07c）。任意 |
 | 29 | 2026-11-04 | 関係に任意の `focus`（このつながりが効く式の部品：両端の概念の式の id と、その式の parts の番号）。つながりを選ぶと、その部品を光らせる（stats2-course #188 07c）。任意 |
+| 30 | 2026-11-04 | 概念の式に任意の `why`（この式でなぜその値が求まるかの段：steps〔title・text・parts＝その段で効く式の部品の番号〕と note〔前提が崩れたとき、どの段が成り立たなくなるか〕）。作業台の読み方「構造」で順に出す（stats2-course #188）。任意 |

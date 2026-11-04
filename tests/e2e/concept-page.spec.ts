@@ -124,7 +124,7 @@ test("式の読み方：意味は記号と今の値、構造は部品と意味�
   expect(errs).toEqual([]);
 });
 
-// 確かめる対象：構造の「並びを作ってみる」（#188 07b）。想定する故障：成功と失敗の確率の取り違え（p と 1−p）・並びの数を n で数え直さない。
+// 確かめる対象：構造の補助「並びを作ってみる」（#188 07b。開いて試す）。想定する故障：成功と失敗の確率の取り違え（p と 1−p）・並びの数を n で数え直さない。
 // 見つけ方：n＝10・p＝0.3・k＝3 の初めの並び（成功 3 回）の確率が手の値 0.3³×0.7⁷＝0.0022235、並びの数が 120。1つを失敗にすると
 // 成功 2 回・0.3²×0.7⁸＝0.0051883・45 通りに変わる。既存の「式の読み方」は部品の値だけを見る
 test("並びを作ってみる：札を押すと成功の回数・1通りの確率・並びの数が変わる（手の値と照らす）", async ({ page }) => {
@@ -133,6 +133,7 @@ test("並びを作ってみる：札を押すと成功の回数・1通りの確�
   const d = page.getByTestId("detail");
   await d.getByRole("radio", { name: "式" }).click();
   await d.getByTestId("ws-read").getByRole("radio", { name: "構造" }).click();
+  await d.getByTestId("ws-seq-more").locator("summary").click();   // 補助なので、初めはたたんである
   const q = d.getByTestId("ws-seq");
   const num = async (id: string) => Number(await q.getByTestId(id).getAttribute("data-value"));
   await expect(q.getByTestId("ws-seq-count")).toHaveText("成功 3 回");
@@ -142,6 +143,69 @@ test("並びを作ってみる：札を押すと成功の回数・1通りの確�
   await expect(q.getByTestId("ws-seq-count")).toHaveText("成功 2 回");
   expect(await num("ws-seq-one")).toBeCloseTo(0.3 ** 2 * 0.7 ** 8, 10);
   expect(await num("ws-seq-ways")).toBe(45);
+});
+
+// 確かめる対象：構造は「なぜこの式で確率になるか」の段（原本の式の why）で読み、段ごとに効く部品だけを強く見せる（#188。渡辺さん 2026-11-04）。
+// 補助として、結果を全部ならべ、事象（成功 k 回）に入る結果の行を強く見せる。
+// 想定する故障：段の部品の番号と式の囲み・札の対応がずれる（掛け算の段で組合せが光る）・段が進まない・前提が崩れたときの一言が出ない・
+// 結果の数え方の誤り（行の数が二項係数にならない・強く見せる行が k でない・n が大きいときの小さい例の切り替えの誤り）。
+// 見つけ方：段 1（部品なし）は何も薄くない、段 2 は成功・失敗の部品（1・2）だけ濃く組合せ（0）が薄い、段 4 は組合せだけ濃い。式の上の囲みも同じ。
+// 結果の行の数は手の値（n＝4：1・4・6・4・1、n＝5：1・5・10・10・5・1）と照らす。既存の「式の読み方」は部品の名前と値だけを見る
+test("構造：なぜこの式で求まるかを段で読み、段ごとに効く部品だけが濃い。結果を全部ならべ、成功 k 回の行を強く見せる", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByRole("radio", { name: "式" }).click();
+  const r = d.getByTestId("ws-read");
+  await r.getByRole("radio", { name: "構造" }).click();
+  const w = r.getByTestId("ws-why");
+  const dim = async () => {
+    const card = await Promise.all([0, 1, 2].map(async (i) => (await r.getByTestId(`ws-read-part-${i}`).getAttribute("data-dim")) !== null));
+    const box = await Promise.all([0, 1, 2].map(async (i) => (await d.locator(`[data-part-tint="${i}"]`).getAttribute("data-dim")) !== null));
+    expect(box, "式の囲みと部品の札で、薄い部品が食い違う").toEqual(card);
+    return card;
+  };
+  await expect(w.getByTestId("ws-why-no")).toHaveText("1 / 4");
+  await expect(w.getByTestId("ws-why-title")).toContainText("結果の集まり");
+  expect(await dim(), "部品を書かない段で部品が薄い").toEqual([false, false, false]);
+  await expect(w.getByTestId("ws-why-note")).toHaveCount(0);
+  await w.getByTestId("ws-why-next").click();
+  await expect(w.getByTestId("ws-why-title")).toContainText("掛け算");
+  expect(await dim(), "掛け算の段で成功・失敗の部品だけが濃くない").toEqual([true, false, false]);
+  await w.getByTestId("ws-why-next").click(); await w.getByTestId("ws-why-next").click();
+  await expect(w.getByTestId("ws-why-no")).toHaveText("4 / 4");
+  expect(await dim(), "個数の段で組合せだけが濃くない").toEqual([false, true, true]);
+  await expect(w.getByTestId("ws-why-note")).toContainText("独立");
+  await expect(w.getByTestId("ws-why-next")).toBeDisabled();
+  // 結果を全部ならべる：n＝10 は並べきれないので n＝4 の小さい例（k＝3）
+  const o = r.getByTestId("ws-outs");
+  const rows = async () => Promise.all(Array.from({ length: Number(await o.getAttribute("data-n")) + 1 }, async (_, j) => Number(await o.getByTestId(`ws-outs-row-${j}`).getAttribute("data-count"))));
+  await expect(o).toHaveAttribute("data-n", "4");
+  expect(await rows()).toEqual([1, 4, 6, 4, 1]);
+  await expect(o.getByTestId("ws-outs-row-3")).toHaveAttribute("data-on", "true");
+  await d.getByTestId("ws-chip-n").click(); await d.getByTestId("ws-slider-n").fill("5");
+  await expect(o).toHaveAttribute("data-n", "5");
+  expect(await rows()).toEqual([1, 5, 10, 10, 5, 1]);
+  await expect(o.getByTestId("ws-outs-row-3")).toHaveAttribute("data-on", "true");
+  await expect(o.getByTestId("ws-outs-row-2")).not.toHaveAttribute("data-on", "true");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  expect(errs).toEqual([]);
+});
+
+// 確かめる対象：帯の札（記号と今の値）が1行に収まる（渡辺さんの iPhone で 2 行に割れた）。想定する故障：札の中で記号と値が改行する。
+// 見つけ方：いちばん狭い iPhone の幅（320px）で、札の中の記号と値の中心の高さが同じであること。既存のテストは札を押す操作だけを見る
+test("帯の札は、狭い幅でも記号と値が1行に並ぶ", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByRole("radio", { name: "式" }).click();
+  for (const k of ["n", "p", "k"]) {
+    const c = d.getByTestId(`ws-chip-${k}`);
+    // 記号（斜体・大きめ）と値は字の高さが違うので、上端ではなく中心の高さで比べる（同じ行なら差は数 px）
+    const mids = await c.evaluate((el) => { const rg = document.createRange(); rg.selectNodeContents(el); return [...rg.getClientRects()].map((x) => x.top + x.height / 2); });
+    expect(Math.max(...mids) - Math.min(...mids), `札 ${k} が2行に割れる`).toBeLessThan(6);
+  }
 });
 
 // 確かめる対象：つながりの地図（#188 07c）。想定する故障：つながりの種類と置き場所が食い違う（変換が上に・対比が右に出る）・
