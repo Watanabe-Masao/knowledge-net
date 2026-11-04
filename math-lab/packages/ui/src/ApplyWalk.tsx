@@ -1,13 +1,36 @@
 // 解き方を組み立てる（stats2-course #181、渡辺さんの「解法の段 骨格設計」2026-11-03）。応用の段から開く下からのシート。
 // 思考の段（問い → 単位 → 事象 → 情報 → 関係 → 公式 → 当てはめ → 道具で確かめる）を、原本に書いた段だけ順に進む。
 // 操作の部品：mark（文の区切りを押す）・collect（必要な情報を見分ける）・choose（選ぶ）・bind（記号の枠へ運ぶ）・derive（導いた値を運ぶ）・probe（道具で確かめる）。
-// 式・記号の意味・計算の行とその意味・値は engine（walkCompute）が作る。原本（walk）は文の区切り・情報の言葉と記号・公式の当てはめ方・問いだけ。
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+// 式・計算の行・値は engine（walkCompute）が作る。言葉（記号の意味・呼び名・選び肢の形・行の題と文）は教材の walk_texts（stats2-course #211）。
+// 原本（walk）は文の区切り・情報の言葉と記号・公式の当てはめ方・問いだけ。
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { NUM4, PCT0, SYM_MEAN, WALK_FORMULAS, formatApply, walkCompute, type ApplyCheck, type ApplyMark, type ApplySolve, type ApplyState, type ApplyStep } from "@math-lab/engine";
+import { NUM4, PCT0, WALK_FORMULAS, formatApply, walkCompute, type WalkRow, type ApplyCheck, type ApplyMark, type ApplySolve, type ApplyState, type ApplyStep } from "@math-lab/engine";
 import { haptic } from "./motion";
 import { RichText, tex } from "./labParts";
 import s from "./Experiment.module.css";
+
+/** 解き方の公式の文（教材の walk_texts。型は kn-experiment-v1.json の walkTexts） */
+export type WalkTexts = {
+  symbols: Record<string, string>;
+  formulas: Record<string, { word: string; pick: string; mean?: Record<string, string>; rows: Record<string, { title: string; why: string; variants?: Record<string, { title?: string; why?: string }> }> }>;
+};
+/** 実験室が教材の walk_texts を渡す（Experiment の walkTexts） */
+export const WalkTextsContext = createContext<WalkTexts | undefined>(undefined);
+const fillText = (s: string, v: Record<string, string> = {}) => s.replace(/\{(\w+)\}/g, (m, k: string) => v[k] ?? m);
+/** 公式の言葉（文がないときは記号の名前で出す。教材の build が文の漏れを止める） */
+function useWords() {
+  const T = useContext(WalkTextsContext);
+  return {
+    word: (ref: string) => T?.formulas[ref]?.word ?? WALK_FORMULAS[ref]!.out,
+    pick: (ref: string) => T?.formulas[ref]?.pick ?? ref,
+    mean: (ref: string, sy: string) => T?.formulas[ref]?.mean?.[sy] ?? T?.symbols[sy] ?? "",
+    row: (ref: string, row: WalkRow) => {
+      const t = T?.formulas[ref]?.rows[row.tid ?? row.key], alt = row.variant ? t?.variants?.[row.variant] : undefined;
+      return { title: fillText(alt?.title ?? t?.title ?? row.key, row.vars), why: fillText(alt?.why ?? t?.why ?? "", row.vars) };
+    },
+  };
+}
 
 export type WalkQuiz = { ask?: string; todo?: string; opts: string[]; ok: number; fb: string[]; math?: boolean };
 export type WalkKind = "ask" | "unit" | "event" | "info" | "relate" | "formula" | "build" | "probe";
@@ -109,6 +132,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
   onFit?: (at: ApplyState, mark: ApplyMark) => void;
   /** シートを開いているか（開いている間、応用の段の課題の文はそのまま） */ onMode?: (open: boolean) => void;
 }) {
+  const W = useWords();
   const subs = useMemo(() => walkSubs(walk), [walk]);
   const showAt = (t: ApplyState) => showAt0(t, names);
   /** 「n を」「引きずる強さを」：記号なら空白を挟み、言葉ならそのまま「を」を付ける */
@@ -260,7 +284,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
     if (!wrong.length) { say("全部の枠が合っている。式の中の同じ記号すべてに入る。", true); return; }
     missHere();
     const sy = wrong[0]!, a = valOf(put[slotKey(f, sy)]!), b = valOf(fu.bind[sy]!);
-    say(`${wrong.length === syms.length ? "全部" : `${wrong.length} つ`}の枠が違う（✗ の枠を入れ直す）。${WALK_FORMULAS[fu.ref]!.mean?.[sy] ?? SYM_MEAN[sy] ?? ""}${a !== undefined && b !== undefined && Math.abs(a - b) < 1e-12 ? "値が同じでも、意味が違う。" : ""}`);
+    say(`${wrong.length === syms.length ? "全部" : `${wrong.length} つ`}の枠が違う（✗ の枠を入れ直す）。${W.mean(fu.ref, sy)}${a !== undefined && b !== undefined && Math.abs(a - b) < 1e-12 ? "値が同じでも、意味が違う。" : ""}`);
   };
   const go = (c: number) => { setCur(c); setSub(c < cur ? subs[c]!.length - 1 : 0); setMsg(null); setSlotAsk(null); setPick([]); setFull(false); };
   const restart = () => {
@@ -281,7 +305,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
   /** 枠に入れられる値：見つけた情報と、前の公式で出てきた値の全部（どの枠でも同じ並び。要るものだけを出すと答えになる） */
   const candidates = (f: number) => [
     ...foundKeys.map((k) => ({ k, word: walk.info[k]!.word, value: seg(k)?.text ?? r4(vals[k]!) })),
-    ...walk.formulas.slice(0, f).map((fu, g) => ({ k: fu.id, word: fu.word ?? WALK_FORMULAS[fu.ref]!.outWord, value: `${Math.abs(computed[g]!.value - Number(r4(computed[g]!.value))) > 1e-12 ? "≈" : "="} ${r4(computed[g]!.value)}` })),
+    ...walk.formulas.slice(0, f).map((fu, g) => ({ k: fu.id, word: fu.word ?? W.word(fu.ref), value: `${Math.abs(computed[g]!.value - Number(r4(computed[g]!.value))) > 1e-12 ? "≈" : "="} ${r4(computed[g]!.value)}` })),
   ];
   const taskCard = <section className={s.wTask} data-testid="exp-walk-task">
     <div className={s.wTaskHead}><span>応用の課題</span>{!sheetMarks && !review && <button type="button" className={s.link} onClick={() => setFull(!full)} data-testid="exp-walk-full">{full ? "要点だけ表示" : "全文を表示"}</button>}</div>
@@ -304,7 +328,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
     if (x.kind === "probe") { const d = stepDir(); return <p>{check.probe === "boundary" && d ? `${showAt(check.targets[0]!)} では条件を満たし、${keyName(d.k)}を1刻み${d.dir.replace("して", "す")}と満たさない（境目）。` : `${showAt(check.targets[0]!)} にすると、答えの所に色が付く。`}</p>; }
     return <p>{x.sum ?? ""}</p>;
   };
-  const shortOf = (i: number) => { const x = walk.steps[i]!; return x.short ?? (x.kind === "formula" ? walk.formulas.map((fu) => WALK_FORMULAS[fu.ref]!.pick).join("・") : x.kind === "build" ? `≈ ${r4(computed[computed.length - 1]!.value)}` : KIND[x.kind][0]); };
+  const shortOf = (i: number) => { const x = walk.steps[i]!; return x.short ?? (x.kind === "formula" ? walk.formulas.map((fu) => W.pick(fu.ref)).join("・") : x.kind === "build" ? `≈ ${r4(computed[computed.length - 1]!.value)}` : KIND[x.kind][0]); };
   /** 式の形に、入れた値か記号を入れる（入れた値は太字） */
   function fillTex(fu: ApplyWalkSpec["formulas"][number], isFilled: (sym: string) => boolean) {
     const def = WALK_FORMULAS[fu.ref]!;
@@ -355,7 +379,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
       const bindDone = def.syms.every((sy) => filled[slotKey(f, sy)]), shown = calc[f] ?? 0;
       const used = walk.formulas.slice(f + 1).some((g) => Object.values(g.bind).includes(fu.id));
       return <div key={fu.id} className={s.wBlock} data-testid={`exp-walk-formula-${fu.id}`}>
-        <p className={s.wBlockTitle}>{fu.word ?? def.outWord}</p>
+        <p className={s.wBlockTitle}>{fu.word ?? W.word(fu.ref)}</p>
         <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(fillTex(fu, (sy) => !!filled[slotKey(f, sy)])) }} />
         {!bindDone && <div className={s.wSlots}>{def.syms.filter((sy, i, a) => a.indexOf(sy) === i).map((sy) => {
           const k = slotKey(f, sy), src = fu.bind[sy]!;
@@ -365,13 +389,14 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
         {!bindDone && here?.t === "bind" && here.f === f && <button type="button" className={s.secondary} disabled={!def.syms.every((sy) => filled[slotKey(f, sy)] || put[slotKey(f, sy)])} onClick={() => answerBind(f)} data-testid="exp-walk-answer">これで答える</button>}
         {bindDone && shown > 0 && <ol className={s.wCalc}>{c.rows.slice(0, shown).map((row, i) => {
           const q = st.rowQuiz?.[`${fu.id}.${row.key}`], qid = `row-${fu.id}.${row.key}`, opened = !q || sel[qid] === q.ok;
-          return <li key={row.key} className={i === shown - 1 ? s.wNew : undefined} data-testid={`exp-walk-row-${fu.id}-${row.key}`}><b>{row.title}</b>
-            {opened ? <><div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(row.tex) }} /><p>{row.why}</p></>
+          const words = W.row(fu.ref, row);
+          return <li key={row.key} className={i === shown - 1 ? s.wNew : undefined} data-testid={`exp-walk-row-${fu.id}-${row.key}`}><b>{words.title}</b>
+            {opened ? <><div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(row.tex) }} /><p>{words.why}</p></>
               : <><p className={s.walkAsk}><RichText text={q!.ask ?? ""} /></p>{choices(q!, qid, "exp-walk-rowq", false)}</>}
           </li>;
         })}</ol>}
-        {bindDone && shown < c.rows.length && <button type="button" className={s.secondary} disabled={!rowQuizOk(cur, f, shown)} onClick={() => { haptic(); setCalc({ ...calc, [f]: shown + 1 }); setMsg(null); }} data-testid="exp-walk-calc">{shown === 0 ? "計算する" : shown + 1 < c.rows.length ? "次の計算へ" : `${fu.word ?? def.outWord}を出す`}</button>}
-        {bindDone && shown >= c.rows.length && rowQuizOk(cur, f, shown) && used && <div className={s.wMade}><span>出てきた値</span>{chip(fu.id, def.out, `${Math.abs(c.value - Number(r4(c.value))) > 1e-12 ? "≈" : "="} ${r4(c.value)}`, fu.word ?? def.outWord)}</div>}
+        {bindDone && shown < c.rows.length && <button type="button" className={s.secondary} disabled={!rowQuizOk(cur, f, shown)} onClick={() => { haptic(); setCalc({ ...calc, [f]: shown + 1 }); setMsg(null); }} data-testid="exp-walk-calc">{shown === 0 ? "計算する" : shown + 1 < c.rows.length ? "次の計算へ" : `${fu.word ?? W.word(fu.ref)}を出す`}</button>}
+        {bindDone && shown >= c.rows.length && rowQuizOk(cur, f, shown) && used && <div className={s.wMade}><span>出てきた値</span>{chip(fu.id, def.out, `${Math.abs(c.value - Number(r4(c.value))) > 1e-12 ? "≈" : "="} ${r4(c.value)}`, fu.word ?? W.word(fu.ref))}</div>}
       </div>;
     })}
     {here?.t === "quiz" && <>

@@ -212,7 +212,7 @@ export default function App() {
     };
     return (
       <main className={st.app}>
-        <Experiment key={`${xdef.id}-${q ?? ""}`} def={xdef} open={(xdef.model === "binom" && q ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open : undefined)} cards={cards ?? undefined} onCards={(e) => setCards(e || null)} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
+        <Experiment key={`${xdef.id}-${q ?? ""}`} def={xdef} walkTexts={net.walkTexts.get(xdef.id.split(":")[0]!)} open={(xdef.model === "binom" && q ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open : undefined)} cards={cards ?? undefined} onCards={(e) => setCards(e || null)} reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)} mainFormula={formulaOf(xdef.links.concepts?.[0])}
           onConcept={(id) => net.concepts.has(id) && setSel(id)} conceptName={(id) => name(net, id)}
           onBack={() => (history.length > 1 ? history.back() : setExp(null))}
           definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map((f) => formulaOf(id, (net.concepts.get(id)?.formulas ?? []).indexOf(f))!)}
