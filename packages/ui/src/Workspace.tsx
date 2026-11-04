@@ -24,7 +24,9 @@ import s from "./Workspace.module.css";
 /** 部品の色（式の囲み・構造・計算で同じ。1つ目＝データの1色目…） */
 const PART_TINT = [s.tint0, s.tint1, s.tint2] as const;
 
-export type WorkspaceData = FormulaData & { parts?: FormulaPart[] };
+/** この式でなぜその値が求まるかの段（原本の式の why。kn 型 rev30）。parts はその段で効く式の部品の番号 */
+export type FormulaWhy = { steps: { title: string; text: string; parts?: number[] }[]; note?: string };
+export type WorkspaceData = FormulaData & { parts?: FormulaPart[]; why?: FormulaWhy };
 export type ValueTable = { id: string; name: string; icon?: string; unit?: string; values: number[]; weights: number[]; labels?: string[] };
 export type TableWorkspaceData = { formula: number; linear?: number; tables: ValueTable[] };
 
@@ -373,7 +375,12 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   // ---- 読み方（stats2-course #188 07b・03）：式を 意味（記号は何を表すか）・構造（部品に分ける）・計算（今の値を入れた部品ごとの値）で読む。
   // 部品の分け方と意味は原本の式の parts、記号の意味は記号の表から（画面に手で書かない）。部品の色は3つの見方と式の囲みで同じ ----
   const [readAs, setReadAs] = useState<"meaning" | "structure" | "calc">("meaning");
-  const [band, setBand] = useState<string>("");   // 帯で開いている記号（初めは横軸の記号）
+  const [band, setBand] = useState<string>("");
+  // 構造の段（原本の why）：今どの段か。段で効く部品だけを式の囲み・部品の札で強く見せ、ほかは薄くする（動きは使わない）
+  const why = original.why;
+  const [whyStep, setWhyStep] = useState(0);
+  const stepNo = why ? Math.min(whyStep, why.steps.length - 1) : 0;
+  const stepParts = readAs === "structure" && why?.steps[stepNo]!.parts?.length ? new Set(why.steps[stepNo]!.parts) : null;   // 部品を書かない段（式全体の話）は薄くしない   // 帯で開いている記号（初めは横軸の記号）
   const inTree = new Set(symbolsIn(tree));
   const valueSyms = [...(model.kind === "formula" ? [...vary, over] : []), ...inTree].filter((k, i, a) => a.indexOf(k) === i && inTree.has(k)).map((k) => symOf(k, symbols)).filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
   const partList = parts.map((p, i) => ({ p, i, node: nodeAt(tree, p.path) })).filter((x): x is { p: FormulaPart; i: number; node: FormulaNode } => !!x.node);
@@ -399,17 +406,33 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
             ))}
           </ul>
         )}
-        {mode === "structure" && seqOk && <Sequence n={values.n!} k={values[over]!} p={values.p!} />}
+        {mode === "structure" && why && (
+          <div className={s.why} data-testid="ws-why" data-step={stepNo}>
+            <div className={s.whyHead}><span className={s.muted}>なぜこの式で求まるか</span><span className={s.whyNo} data-testid="ws-why-no">{stepNo + 1} / {why.steps.length}</span></div>
+            <b className={s.whyTitle} data-testid="ws-why-title">{why.steps[stepNo]!.title}</b>
+            <p className={s.whyText}>{why.steps[stepNo]!.text}</p>
+            {stepNo === why.steps.length - 1 && why.note && <p className={s.whyNote} data-testid="ws-why-note">{why.note}</p>}
+            <div className={s.whyNav}>
+              <button type="button" className={s.tool} disabled={stepNo === 0} onClick={() => { haptic(); setWhyStep(stepNo - 1); }} data-testid="ws-why-prev">前の段</button>
+              <span className={s.whyDots} aria-hidden="true">{why.steps.map((_, i) => <i key={i} data-on={i === stepNo || undefined} />)}</span>
+              <button type="button" className={s.tool} disabled={stepNo === why.steps.length - 1} onClick={() => { haptic(); setWhyStep(stepNo + 1); }} data-testid="ws-why-next">次の段</button>
+            </div>
+          </div>
+        )}
         {mode === "structure" && (
           <div className={s.parts} role="group" aria-label="式の部品">
             {partList.map(({ p, i, node }) => (
-              <button key={i} type="button" className={`${s.part} ${PART_TINT[i % PART_TINT.length]}`} aria-pressed={sel?.part === i} onClick={() => pickPart(i)} data-testid={`ws-read-part-${i}`}>
+              <button key={i} type="button" className={`${s.part} ${PART_TINT[i % PART_TINT.length]}`} data-dim={(stepParts && !stepParts.has(i)) || undefined} aria-pressed={sel?.part === i} onClick={() => pickPart(i)} data-testid={`ws-read-part-${i}`}>
                 <span className={s.partTex} dangerouslySetInnerHTML={{ __html: tex(node) }} />
                 <b>{p.name}</b>
                 <span className={s.partMeaning}>{p.meaning}</span>
               </button>
             ))}
           </div>
+        )}
+        {mode === "structure" && seqOk && <Outcomes n={values.n!} k={values[over]!} p={values.p!} />}
+        {mode === "structure" && seqOk && (
+          <details className={s.more} data-testid="ws-seq-more"><summary>並びを作ってみる</summary><Sequence n={values.n!} k={values[over]!} p={values.p!} /></details>
         )}
         {mode === "calc" && (
           <div className={s.partVals} role="group" aria-label="部品ごとの今の値">
@@ -541,7 +564,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
       )}</>}
       <div ref={wrap} className={s.stageWrap}>
         <div className={s.boxes} aria-hidden="true">
-          {boxes.map((b) => <span key={b.i} className={`${s.box} ${PART_TINT[b.i % PART_TINT.length]}`} data-part-tint={b.i} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
+          {boxes.map((b) => <span key={b.i} className={`${s.box} ${PART_TINT[b.i % PART_TINT.length]}`} data-part-tint={b.i} data-dim={(stepParts && !stepParts.has(b.i)) || undefined} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
           {selBox && <span ref={selEl} className={s.boxSel} data-on={sel?.part !== undefined || undefined} style={{ left: selBox.x, top: selBox.y, width: selBox.w, height: selBox.h }} />}
         </div>
         <div ref={stage} className={s.stage} onClick={onStage} dangerouslySetInnerHTML={{ __html: html }} data-testid="ws-formula" />
@@ -721,6 +744,27 @@ function Sequence({ n, k, p }: { n: number; k: number; p: number }) {
       ))}</div>
       <p className={s.seqText}>この並びの確率 ＝ p<sup>{succ}</sup>(1−p)<sup>{n - succ}</sup> ＝ <b data-testid="ws-seq-one" data-value={one}>{fmt(one, 5)}</b><br />
         成功 {succ} 回の並びは、どれも同じ確率。並びは全部で <b data-testid="ws-seq-ways" data-value={c}>{n}C{succ} ＝ {c} 通り</b>{succ === k ? "（いまの k の棒）" : ""}</p>
+    </div>
+  );
+}
+
+/** 結果を全部ならべる（構造の補助。stats2-course issue 188）：n 回の成功・失敗の並び（2ⁿ 通り）を成功の回数ごとの行に分け、いまの k の行（＝事象に入る結果の集まり）を強く見せる。
+ *  n が 5 より大きいと並べきれないので、n＝4 の小さい例で見せる（k は 4 まで） */
+function Outcomes({ n, k, p }: { n: number; k: number; p: number }) {
+  const small = n > 5, m = small ? 4 : n, kk = Math.min(k, m);
+  const rows = Array.from({ length: m + 1 }, () => [] as boolean[][]);
+  for (let b = 0; b < 2 ** m; b++) { const q = Array.from({ length: m }, (_, i) => ((b >> (m - 1 - i)) & 1) === 1); rows[q.filter(Boolean).length]!.push(q); }
+  const one = p ** kk * (1 - p) ** (m - kk), ways = rows[kk]!.length;
+  return (
+    <div className={s.outs} data-testid="ws-outs" data-n={m} data-k={kk}>
+      <span className={s.muted}>{small ? `小さい例（n＝4・k＝${kk}）` : `n＝${m} の結果`}：全部で {2 ** m} 通り。成功の回数で行に分けた</span>
+      {rows.map((r, j) => (
+        <div key={j} className={s.outRow} data-on={j === kk || undefined} data-testid={`ws-outs-row-${j}`} data-count={r.length}>
+          <span className={s.outLabel}>成功 {j}</span>
+          <span className={s.outSeqs}>{r.map((q, i) => <span key={i} className={s.outSeq}>{q.map((x, t) => <i key={t} data-x={x ? 1 : 0} />)}</span>)}</span>
+        </div>
+      ))}
+      <p className={s.seqText}>「成功 {kk} 回」は行の {ways} 通りの集まり。どれも p<sup>{kk}</sup>(1−p)<sup>{m - kk}</sup>{small ? "" : <> ＝ <b data-testid="ws-outs-one">{fmt(one, 5)}</b></>} で同じなので、足すと {ways} × p<sup>{kk}</sup>(1−p)<sup>{m - kk}</sup></p>
     </div>
   );
 }
