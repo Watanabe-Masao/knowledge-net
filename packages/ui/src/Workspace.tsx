@@ -465,7 +465,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
     const foldable = (node ? marksIn(node) : []).sort((a, b) => lastOpen(b) - lastOpen(a));
     const v = selSym ? values[selSym.key] : undefined;
     return (
-      <div className={s.strip} data-testid="ws-strip">
+      <div className={p && sel.part !== undefined ? `${s.strip} ${PART_TINT[sel.part % PART_TINT.length]}` : s.strip} data-testid="ws-strip" data-part={sel.part}>
         {p && node && (
           <div className={s.ctx} key={`p${sel.part}`}>
             <span className={s.ctxTex} dangerouslySetInnerHTML={{ __html: render(toTex(node, { symbols }), false) }} />
