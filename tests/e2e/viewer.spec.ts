@@ -15,7 +15,7 @@ for (const scheme of ["light", "dark"] as const) {
     const errs = noErrors(page);
     await page.emulateMedia({ colorScheme: scheme });
     await page.setViewportSize({ width: 380, height: 800 });
-    await page.goto(`./?${SRC}&g=*`);   // 入口は分類の地図なので、全部の語の地図で押す
+    await page.goto(`./?${SRC}&g=*`);   // 入口は分類のライブラリなので、全部の語の地図（島の地図）で押す
     await expect(page.getByRole("heading", { name: "知識ネットワーク" })).toBeVisible();
     await expect(page.getByTestId("graph").locator("canvas").first()).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
@@ -25,7 +25,12 @@ for (const scheme of ["light", "dark"] as const) {
       const r = cy.container().getBoundingClientRect(); const p = n.renderedPosition();
       return { x: r.left + p.x, y: r.top + p.y };
     });
-    await page.mouse.click(pos.x, pos.y);
+    await page.mouse.click(pos.x, pos.y);   // 縮めた段（島の段）で押すと、まずその島に寄る（試作。docs/ui-review-2026-11.md）
+    const near = () => page.evaluate(() => { const cy = (window as any).kn; const n = cy.getElementById("stats2:TERM-binom");
+      const r = cy.container().getBoundingClientRect(); const p = n.renderedPosition(); return { x: r.left + p.x, y: r.top + p.y, lod: cy.container().getAttribute("data-lod") }; });
+    await expect.poll(async () => (await near()).lod).not.toBe("far");
+    const pos2 = await near();
+    await page.mouse.click(pos2.x, pos2.y);   // 語が読める倍率で押すと選ぶ
     await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
     await tab(page, /^式$/);
     await expect(page.getByTestId("detail").locator(".katex").first()).toBeVisible();
@@ -896,43 +901,36 @@ test("比べる（値の表）：URL のカードからテーマと重みを戻�
 });
 
 // 129語の骨格（#105）：全体図を分類で絞ると、その分類の概念と、1本の線でつながる外の点（薄く）だけになる
-test("全体図を分類で絞り、骨格の概念は定義1文と「定義だけ」を出す", async ({ page }) => {
-  test.setTimeout(60_000);   // 129語の見本を2回読み、全体図を3回描き直す。main でも単独で 26 秒かかり、全部を続けて走らせると 30 秒を超えることがある
+// 確かめる対象：探索の入口（分類のライブラリ。試作 2026-11-05）から分類を開き、全部の語の島の地図・骨格の概念へ進めること。
+// 想定する故障：タイルが分類の数だけ出ない・押せる範囲が 44px を下回る・分類を開くとほかの分類の点が混ざる（背景の線が残る）・「全部の語」で語が欠ける。
+// 見つけ方：タイルの数と押せる大きさ、開いた分類の語の数とほかの分類の点の数、全部の語の地図の語の数を数える。既存との違い：前は入口が分類の地図（12の点）だった
+test("分類のライブラリから分類を開き、骨格の概念は定義1文と「定義だけ」を出す", async ({ page }) => {
+  test.setTimeout(60_000);   // 129語の見本を2回読み、地図を何度か描き直す
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json");
   await expect(page.getByText(/（定義だけ 110）/)).toBeVisible();
-  const sel = page.getByTestId("group-select");
-  await expect(sel.locator("option")).toHaveCount(14);   // 分類の地図・全部の語 ＋ 12の分類
-  const count = () => page.evaluate(() => (window as unknown as { kn: { nodes: () => { length: number } } }).kn.nodes().length);
-  // 入口は分類の地図：点は12の分類。押すとその分類で絞る
-  await expect.poll(count).toBe(12);
-  // 390px で：左上の選ぶ欄が「収める」ボタンに重ならず、点が左上の操作の下に隠れない
-  const fitBox = (await page.getByRole("button", { name: "図を枠に収める" }).boundingBox())!;
-  const selBox = (await sel.boundingBox())!;
-  expect(selBox.x + selBox.width).toBeLessThanOrEqual(fitBox.x);
-  const hidden = () => page.evaluate((bottom) => {
-    const c = (window as unknown as { kn: { container: () => HTMLElement; nodes: () => { toArray: () => { renderedBoundingBox: () => { y1: number } }[] } } }).kn;
-    const top = c.container().getBoundingClientRect().top;
-    return c.nodes().toArray().filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
-  }, selBox.y + selBox.height);
-  await expect.poll(hidden, { timeout: 10000 }).toBe(0);   // 文字の読み込み・枠の大きさが決まってから収め直すのを待つ
-  await sel.selectOption("*");
-  await expect.poll(count).toBeGreaterThan(129);   // 全部の語＋導出の点
-  const all = await count();
-  await sel.selectOption("確率");
+  const lib = page.getByTestId("library");
+  await expect(lib.locator("[data-testid^=lib-]")).toHaveCount(12);   // 12の分類のタイル
+  const small = await lib.locator("button").evaluateAll((bs) => bs.filter((b) => { const r = b.getBoundingClientRect(); return r.width < 44 || r.height < 44; }).length);
+  expect(small).toBe(0);
+  // タイルの4つ目（ほかの語）を押すと、その分類の語だけの地図
+  await lib.getByRole("button", { name: "確率の語をすべて地図で見る" }).click();
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87/);
-  await expect.poll(count).toBeLessThan(all);
-  const kinds = await page.evaluate(() => { const c = (window as unknown as { kn: { nodes: () => { toArray: () => { hasClass: (k: string) => boolean; id: () => string }[] } } }).kn; const ns = c.nodes().toArray(); return { outer: ns.filter((n) => n.hasClass("outer")).length, core: ns.filter((n) => !n.hasClass("outer") && n.id().startsWith("stats2:TERM-")).length }; });
-  expect(kinds.core).toBe(14);   // 確率の分類の14語（標本空間・事象・確率・ベイズの定理・事後確率など）。導出の点は数えない
-  expect(kinds.outer).toBeGreaterThan(0);
+  const sel = page.getByTestId("group-select");
+  await expect(sel).toHaveValue("確率");
+  const terms = () => page.evaluate(() => { const ns = (window as any).kn.nodes().toArray(); return {
+    core: ns.filter((n: any) => n.id().startsWith("stats2:TERM-") && n.data("cat") === "確率").length,
+    other: ns.filter((n: any) => n.id().startsWith("stats2:TERM-") && n.data("cat") !== "確率").length } });
+  await expect.poll(async () => (await terms()).core).toBe(14);   // 確率の分類の14語（標本空間・事象・確率・ベイズの定理・事後確率など）
+  expect((await terms()).other).toBe(0);   // ほかの分類の点は出さない
+  // 全部の語：語を分類の島に入れた地図。語は129すべて
   await sel.selectOption("*");
-  await expect.poll(count).toBe(all);
+  await expect.poll(() => page.evaluate(() => (window as any).kn.nodes().toArray().filter((n: any) => n.id().startsWith("stats2:TERM-")).length)).toBe(129);
+  expect(await page.evaluate(() => (window as any).kn.nodes('[kind = "isle"]').length)).toBe(12);
+  // 一覧に戻る
   await sel.selectOption("");
-  await expect.poll(count).toBe(12);
-  // 分類の地図で点を押すと、その分類で絞る
-  await page.evaluate(() => (window as unknown as { kn: { getElementById: (id: string) => { emit: (e: string) => void } } }).kn.getElementById("group:検定").emit("tap"));
-  await expect(sel).toHaveValue("検定");
+  await expect(lib).toBeVisible();
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-bayes");
   const det = page.getByTestId("detail");
   await expect(det).toContainText("条件付き確率を逆向きにして");   // 骨格の概念（#105・P1）：定義1文と分類と「定義だけ」
@@ -1174,6 +1172,11 @@ test("点を長押しすると、名前・分類・定義1文の札が出る", a
   await expect(page).not.toHaveURL(/c=stats2/);
   await expect(tip).toContainText("二項分布");
   // 画面を動かすと札は点について動き、指を置くと消える
+  // 点を枠の真ん中へ寄せてから動かす（枠の上の方では札が点の下に回るので、動いた量を比べられない。分類の地図は縦に長い）
+  await page.evaluate(() => { const cy = (window as any).kn; cy.center(cy.getElementById("stats2:TERM-binom")); });
+  // 札が出る動きが終わるまで待つ（2回続けて同じ位置）
+  let prev = -1;
+  await expect.poll(async () => { const y = Math.round((await tip.boundingBox())?.y ?? -1); const same = y === prev; prev = y; return same && y > 0; }).toBe(true);
   const y0 = (await tip.boundingBox())!.y;
   await page.evaluate(() => { (window as any).kn.panBy({ x: 0, y: 40 }); });
   await expect.poll(async () => Math.round((await tip.boundingBox())!.y - y0)).toBe(40);

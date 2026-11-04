@@ -1,0 +1,38 @@
+/* 分類のライブラリ（試作）。色は柱の色（--tint）をタイルの面にごく淡く混ぜるだけ。実験の数だけ主の色の文字 */
+.lib { display: grid; gap: var(--sp-4); margin: var(--sp-3) 0 var(--sp-5); }   /* 柱の間 */
+.band { display: grid; gap: var(--sp-2); }
+.bandName { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--fs-head); font-weight: 700; color: var(--ink); letter-spacing: .02em; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--tint); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2) var(--sp-3); align-items: start; }   /* 行の間は名前の下の余白で足りる */
+
+.tileWrap { display: grid; gap: 0; min-width: 0; }
+.tile { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px; border-radius: 24px;
+  background: color-mix(in srgb, var(--tint) 9%, var(--surface)); }
+/* 枠線：光らせず、上の縁だけ柱の色を少し濃く、下へ向かって中立の線に溶かす（どの柱のタイルかが縁でも分かる） */
+.tile::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tint) 55%, var(--line)), var(--line) 55%);
+  -webkit-mask: linear-gradient(var(--ink) 0 0) content-box, linear-gradient(var(--ink) 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+
+/* 語の枠：正方形に近い形。説明のある語は実線、定義だけの語は点線（地図と同じ見分け方） */
+.cell { all: unset; box-sizing: border-box; position: relative; aspect-ratio: 1 / 1; min-height: 44px; display: grid; align-content: center; justify-items: center; gap: 3px;
+  padding: 8px 5px 6px; border-radius: 16px; background: color-mix(in srgb, var(--tint) 6%, var(--surface)); box-shadow: 0 0 0 1px var(--line); text-align: center; cursor: pointer; color: var(--ink); overflow: hidden; }
+.cell:active { background: var(--surface-2); }
+.cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.skeleton { box-shadow: none; outline: 1px dashed var(--line-strong); outline-offset: -1px; }
+.icon { position: absolute; top: 7px; left: 7px; width: 13px; height: 13px; opacity: .8; }
+.cellName { font-size: var(--fs-tag); font-weight: 500; line-height: 1.2; color: var(--ink-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 語の絵：柱の色で、枠の6割ほど。分類の印（img）も同じ大きさ */
+.glyph { width: 58%; aspect-ratio: 1 / 1; display: grid; place-items: center; color: var(--tint); }
+.glyph svg, .glyph img { width: 100%; height: 100%; display: block; }
+.glyph img { width: 62%; height: 62%; opacity: .7; }
+.shape { width: 70%; height: 16px; fill: var(--data-1); opacity: .85; }
+
+/* 4つ目の枠：ほかの語の数。押すと分類の地図 */
+.more { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 25%, var(--line)); }
+.moreNum { font-size: var(--fs-display); line-height: 1; }
+.moreUnit { font-size: var(--fs-tag); color: var(--ink-3); }
+
+/* 分類の名前（タイルの下）。押す所は 44px */
+.tileName { display: grid; justify-items: center; gap: 0; padding-top: 6px; text-align: center; font-size: var(--fs-small); color: var(--ink-2); word-break: keep-all; overflow-wrap: anywhere; }
+.labs { font-size: var(--fs-tag); font-weight: 600; color: var(--accent); }
+

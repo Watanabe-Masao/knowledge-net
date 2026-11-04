@@ -3,6 +3,7 @@
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
+import Library from "./Library";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
@@ -143,6 +144,14 @@ export default function App() {
     return { only, numbers, seq };
   }, [tr, sel, net]);
   const highlight = useMemo(() => new Set<string>(), []);
+  const [isleFocus, setIsleFocus] = useState<string | null>(null);   // ライブラリで押した分類（島の地図をその島から開く。試作）
+  // ライブラリから分類を開いたとき：その分類の語と、その中の導出だけ（ほかの分類の点と線は出さない。試作）
+  const catOnly = useMemo(() => {
+    if (!net || !group || group === "*") return undefined;
+    const core = new Set([...net.concepts.values()].filter((c) => c.category === group).map((c) => c.id));
+    for (const d of net.derivations) if (core.has(d.conclusion)) core.add(d.id);
+    return core.size ? core : undefined;
+  }, [net, group]);
   // 分類（データに出てくる順）と、絞ったときに出す点：分類の概念 ＋ 1本の線でつながる点（薄く）＋ その間の導出
   const groups = useMemo(() => (net ? [...new Set([...net.concepts.values()].map((c) => c.category).filter((x): x is string => !!x))] : []), [net]);
   // 選んだ概念があって分類を決めていないときは、その概念の分類で絞る（全体図でも迷わないように）
@@ -247,14 +256,17 @@ export default function App() {
           ]} />
         </div>
       ) : null}
+      {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ（試作）。分類を押すとその分類の地図、語を押すと概念 */}
+      {!sel && !group ? <Library net={net} onConcept={setSel} onGroup={(cat) => { setIsleFocus(cat); setGroup(cat); }} /> : <>
       <Graph net={net} selected={sel} highlight={highlight} hidden={hidden} positions={positions} numbers={path?.numbers} height={mapH} recenter={recenter} onFocus={(id) => { setView("around"); setSel(id); }}
         onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))} onEdge={(id) => { if (!id.startsWith("ge:")) setEdgeSel(id); }} edgeSel={edgeSel}
-        only={positions ? undefined : path ? path.only : grouped.only} outer={positions || path ? undefined : grouped.outer}
+        only={positions ? undefined : path ? path.only : catOnly ?? grouped.only} outer={positions || path || catOnly ? undefined : grouped.outer}
         overview={positions || path ? undefined : overview}
+        isles={(eff === "*" || !!catOnly) && !positions && !path} isleFocus={isleFocus}
         topLeft={<>
           {!positions && !path && groups.length > 1 ? (
             <select className={st.groupSel} value={eff ?? ""} onChange={(e) => setGroup(e.target.value || null)} aria-label="分類で絞る" data-testid="group-select">
-              <option value="">分類の地図</option>
+              <option value="">分類の一覧に戻る</option>
               <option value="*">全部の語（{[...net.concepts.values()].length}）</option>
               {groups.map((g) => <option key={g} value={g}>{g}（{[...net.concepts.values()].filter((c) => c.category === g).length}）</option>)}
             </select>
@@ -264,6 +276,7 @@ export default function App() {
           <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `（${hidden.size} 種類を非表示中）` : ""}</button>
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比較 {cmp.length}</button> : null}
         </>} />
+      </>}
       {concept && path ? <PathList net={net} target={concept.id} seq={path.seq} onOpen={(id) => { setView("around"); setSel(id); }}
         sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} /> :
         concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
@@ -328,7 +341,7 @@ export default function App() {
         </FullView>
       )}
       {edgeSel ? <Panel net={net} edgeId={edgeSel} onClose={() => setEdgeSel(null)} onSelect={(id) => setSel(id)} page={narrow && !!concept && !path && detent === "full"} /> : null}
-      {narrow && concept ? null : <Muted as="div" className={st.footer}>データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</Muted>}
+      {(narrow && concept) || catOnly ? null : <Muted as="div" className={st.footer}>データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</Muted>}
       <TabBar tab="explore" onTab={(t) => { if (t === "explore" && sel) { setDetent("min"); setRecenter((n) => n + 1); } else setTab(t); }} badges={badges} focusName={focus?.name} />
     </main>
   );
