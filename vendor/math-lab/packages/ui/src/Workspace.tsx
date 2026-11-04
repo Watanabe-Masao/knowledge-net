@@ -553,7 +553,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   return (
     <section className={s.ws} data-testid="workspace" data-pattern={model.kind} data-only={only} aria-label="式の作業台">
       {/* 1 見出し：式の名前・場面の選択（場面が2つ以上のとき）・初期値に戻す */}
-      {!only && <><div className={s.head}><b>{given.label ?? "式を動かす"}</b>
+      {!only && <><div className={s.head}><b>{given.label ?? "式の操作"}</b>
         <button type="button" className={s.reset} onClick={reset} data-testid="ws-reset">初期値に戻す</button></div>
       {model.kind === "table" && model.tables.length > 1 && (
         <label className={s.scene}><span className={s.muted}>場面</span>
