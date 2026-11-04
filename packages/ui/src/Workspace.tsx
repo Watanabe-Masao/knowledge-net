@@ -506,7 +506,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
                     <span dangerouslySetInnerHTML={{ __html: render(toTex((d.formula.tree as { args: FormulaNode[] }).args[d.side]!, { symbols: d.formula.symbols }), false) }} />
                   </button>
                 ))}
-                {selSym.concept && onConcept && <button type="button" className={s.link} onClick={() => onConcept(selSym.concept!)}>{conceptName?.(selSym.concept) ?? selSym.concept} を見る</button>}
+                {selSym.concept && onConcept && <button type="button" className={s.link} onClick={() => onConcept(selSym.concept!)}>{conceptName?.(selSym.concept) ?? selSym.concept} を開く</button>}
               </div>
             )}
           </div>
@@ -718,7 +718,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
         </p>
         <div className={s.expFoot}>
           <span>種 {seed}</span>
-          <button type="button" className={s.clear} onClick={clearRec} disabled={!rec.values.length}>記録を消す</button>
+          <button type="button" className={s.clear} onClick={clearRec} disabled={!rec.values.length}>記録を削除</button>
         </div>
       </div>}
       </>}

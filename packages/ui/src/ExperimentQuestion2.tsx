@@ -21,9 +21,9 @@ function Choices({ items, value, onChange, label }: { items: string[]; value: nu
   </div>;
 }
 const Predict = ({ ready, go }: { ready: boolean; go: () => void }) =>
-  <button type="button" className={s.primary} disabled={!ready} onClick={go}>{ready ? "この予想で実験する" : "まず予想を選ぶ"}</button>;
+  <button type="button" className={s.primary} disabled={!ready} onClick={go}>{ready ? "この予測で実験する" : "まず予測を選ぶ"}</button>;
 const Ws = ({ props, c, k, sub }: { props: QProps; c: Cond; k: number; sub?: string }) =>
-  props.workspace ? <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる{sub && <span>{sub}</span>}</p>{props.workspace(c, k)}</section> : null;
+  props.workspace ? <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を操作して検証{sub && <span>{sub}</span>}</p>{props.workspace(c, k)}</section> : null;
 const nField = (props: QProps, v: number, set: (n: number) => void) =>
   <Field id="exp-app-n" label="1セットの回数 n" value={v} min={props.def.vary.n.min} max={props.def.vary.n.max} step={1} show={(x) => `${x} 回`} onChange={set} />;
 const pField = (v: number, set: (p: number) => void) =>
@@ -59,7 +59,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
   if (stage === 0) {
     body = <Card title="どちらが起こりやすい？" sub={`n＝${n}・p＝${pc(c.p)}`}>
       <p className={qs.muted}>{theme.story?.replace("n 回", `${n} 回`)}。1回ごとの確率は {pc(c.p)}。</p>
-      <Choices items={opts} value={guess} onChange={setGuess} label="起こりやすさの予想" />
+      <Choices items={opts} value={guess} onChange={setGuess} label="起こりやすさの予測" />
     </Card>;
     cta = <Predict ready={guess !== null} go={() => go(1)} />;
   } else if (stage === 1) {
@@ -119,7 +119,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
 }
 
 // ---------------- くり返し：理論分布と実験結果は一致する？（C-01） ----------------
-const REPEAT3 = ["毎回、理論とぴったり一致する", "一致するとは限らず、実験ごとにゆれる", "いつも同じ向きにずれる"] as const;
+const REPEAT3 = ["毎回、理論とぴったり一致する", "一致するとは限らず、実験ごとにばらつく", "いつも同じ向きにずれる"] as const;
 export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "repeat" }> }) {
   const { def, q } = props, c = q.set, ev = q.events[0]!, m = q.sets;
   const { stage, reached, go } = useStages(0);
@@ -147,7 +147,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
   if (stage === 0) {
     body = <Card title="理論と実測は一致する？" sub={`理論 ${pctSig(P)}`}>
       <p className={qs.muted}>1セット＝{c.n} 回（成功確率 {pc(c.p)}）。{m} セットを1回の実験として、{evText(ev)}になったセットの割合を理論の {pctSig(P)} と比べる。同じ条件の実験を何回もくり返すと？</p>
-      <Choices items={[...REPEAT3]} value={guess} onChange={setGuess} label="くり返したときの予想" />
+      <Choices items={[...REPEAT3]} value={guess} onChange={setGuess} label="くり返したときの予測" />
     </Card>;
     cta = <Predict ready={guess !== null} go={() => go(1)} />;
   } else if (stage === 1) {
@@ -167,25 +167,25 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
   } else if (stage === 2) {
     const shares = exps.map((e) => e.share), nin = shares.filter(inside).length, up = shares.filter((x) => x > P).length, down = shares.filter((x) => x < P).length;
     body = <>
-      <Verdict ok={guess === 1}>理論の確率は {pctSig(P)} の1つに決まっているが、実測の割合は実験のたびに変わる。この {exps.length} 回では、理論より多い回が {up}、少ない回が {down}（予想は「{REPEAT3[guess!]}」）。</Verdict>
-      <Card title="ゆれの目安と比べる" sub={`±2SE＝${formatApply(lo, PCT1)}〜${formatApply(hi, PCT1)}`}>
+      <Verdict ok={guess === 1}>理論の確率は {pctSig(P)} の1つに決まっているが、実測の割合は実験のたびに変わる。この {exps.length} 回では、理論より多い回が {up}、少ない回が {down}（予測は「{REPEAT3[guess!]}」）。</Verdict>
+      <Card title="ばらつきの目安と比較" sub={`±2SE＝${formatApply(lo, PCT1)}〜${formatApply(hi, PCT1)}`}>
         {table(exps, true)}
         <p className={qs.note} data-testid="exp-repeat-in">{exps.length} 回のうち {nin} 回が ±2SE の中（理論が正しければ、およそ 95% が中に入る）。帯から少し出る実験があっても、それだけで理論が誤りとは言えない。</p>
       </Card>
       <Card title="実験ごとの割合" sub="横の線が理論">
-        <RunChart title="実験ごとの割合" ylab="その実験の割合" fmt={(v) => formatApply(v, PCT1)} series={[{ name: "実験", path: shares, th: P, se: () => 2 * se }]} note="線は1回ごとの実験の割合（ならした平均ではない）。理論のまわりに上下にゆれ、たいていは ±2SE の帯の中にある。" />
+        <RunChart title="実験ごとの割合" ylab="その実験の割合" fmt={(v) => formatApply(v, PCT1)} series={[{ name: "実験", path: shares, th: P, se: () => 2 * se }]} note="線は1回ごとの実験の割合（ならした平均ではない）。理論のまわりに上下にばらつき、たいていは ±2SE の帯の中にある。" />
       </Card>
     </>;
-    cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜゆれる？ 理由を考える</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜばらつく？ 理由を考える</button>;
   } else if (stage === 3) {
-    body = <Card title="実測の割合＝理論の確率＋標本のゆれ">
+    body = <Card title="実測の割合＝理論の確率＋標本のばらつき">
       <table className={qs.table}><thead><tr><th>量</th><th>式</th><th>値</th></tr></thead><tbody>
         <tr><td>理論の確率</td><td>P</td><td>{pctSig(P)}</td></tr>
-        <tr><td>ゆれの目安</td><td>SE＝√(P(1−P)÷m)</td><td>{formatApply(se, PCT1)}</td></tr>
+        <tr><td>ばらつきの目安</td><td>SE＝√(P(1−P)÷m)</td><td>{formatApply(se, PCT1)}</td></tr>
         <tr><td>±2SE の幅</td><td>P±2SE</td><td>{formatApply(lo, PCT1)}〜{formatApply(hi, PCT1)}</td></tr>
       </tbody></table>
-      <p className={qs.note}>{m} セットのうち{evText(ev)}になるセットの数は、確率 {pctSig(P)} で起きる回数そのもので、それ自体がゆれる。理論が合っていても、実測がぴったり一致することはまずない。逆に、目安を大きく外れることが何度も続くなら、前提（各回が独立・p が同じ）を疑う。</p>
-      <p className={qs.note}>セットを増やすとゆれの目安がどう縮むかは「実験セット数を増やすと誤差はどう変わる？」で確かめる。ここは同じ条件の実験どうしの違いを、標本のゆれとして説明する。</p>
+      <p className={qs.note}>{m} セットのうち{evText(ev)}になるセットの数は、確率 {pctSig(P)} で起きる回数そのもので、それ自体がばらつく。理論が合っていても、実測がぴったり一致することはまずない。逆に、目安を大きく外れることが何度も続くなら、前提（各回が独立・p が同じ）を疑う。</p>
+      <p className={qs.note}>セットを増やすとばらつきの目安がどう縮むかは「実験セット数を増やすと誤差はどう変わる？」で確かめる。ここは同じ条件の実験どうしの違いを、標本のばらつきとして説明する。</p>
     </Card>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "条件を自由に変える"}</button>;
   } else {
@@ -196,9 +196,9 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
       <Card title={`${app.n} 回中 ${evText(e)}・${app.m.toLocaleString()} セット`} sub={`理論 ${pctSig(Pa)}`} testid="exp-app">
         <div className={s.tiles}>
           <div>理論の確率<b>{pctSig(Pa)}</b><i>P</i></div>
-          <div {...MK(mkS.read === "band")}>ゆれの目安 ±2SE<b data-testid="exp-app-band">{formatApply(Math.max(0, Pa - 2 * sa), PCT1)}〜{formatApply(Math.min(1, Pa + 2 * sa), PCT1)}</b><i>P±2√(P(1−P)÷m)</i></div>
+          <div {...MK(mkS.read === "band")}>ばらつきの目安 ±2SE<b data-testid="exp-app-band">{formatApply(Math.max(0, Pa - 2 * sa), PCT1)}〜{formatApply(Math.min(1, Pa + 2 * sa), PCT1)}</b><i>P±2√(P(1−P)÷m)</i></div>
         </div>
-        <p className={qs.note}>実測の割合がこの幅の中なら、理論どおりでも起こるくらいのゆれ。外なら、偶然だけとは言いにくい。</p>
+        <p className={qs.note}>実測の割合がこの幅の中なら、理論どおりでも起こるくらいのばらつき。外なら、偶然だけとは言いにくい。</p>
       </Card>
       <AppExtra m={{ kind: "bernoulli", n: app.n, p: app.p }} from={q.title} onKeep={props.onKeep} desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })} />
     </>;
@@ -242,16 +242,16 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
   } else if (stage === 1) {
     body = <>
       <Card title="いまの1セット"><div className={s.lanes}><Lane tag={`n＝${c.n}・p＝${pc(c.p)}`} last={rec.last} n={c.n} theme={theme} testid="exp-set" /></div></Card>
-      <Card title="平均の移り変わり" sub={`${N.toLocaleString()} セット`}>{N > 0 ? chart("セット数が少ないうちは平均が大きく揺れる。くり返すほど1つの値の近くに落ち着いていく様子を見る。") : <p className={qs.muted}>まだ実験していない</p>}
+      <Card title="平均の移り変わり" sub={`${N.toLocaleString()} セット`}>{N > 0 ? chart("セット数が少ないうちは平均が大きくばらつく。くり返すほど1つの値の近くに落ち着いていく様子を見る。") : <p className={qs.muted}>まだ実験していない</p>}
         {N > 0 && <p className={qs.muted}>いまの平均 <b data-testid="exp-mean-now">{r2(path[N - 1])}</b> {unit}</p>}</Card>
     </>;
     cta = <RunButtons run={run} sets={N} need={100} go={() => go(2)} />;
   } else if (stage === 2) {
     const ok = guess !== null && Math.abs(guess - np) <= 0.5;
     body = <>
-      <Verdict ok={ok} big={`${r2(np)} ${unit}`}>平均は {r2(path[N - 1])} {unit}で、n×p＝{c.n}×{c.p}＝{r2(np)} に近い（予想は {guess} {unit}）。</Verdict>
+      <Verdict ok={ok} big={`${r2(np)} ${unit}`}>平均は {r2(path[N - 1])} {unit}で、n×p＝{c.n}×{c.p}＝{r2(np)} に近い（予測は {guess} {unit}）。</Verdict>
       <Card title="理論と実験" sub="差が目安の中か"><CompareTable rows={[{ label: "成功回数の平均", exp: summarize(rec).mean, th: np, se: (2 * sd) / Math.sqrt(N) }]} /></Card>
-      <Card title="平均の移り変わり" sub="何セット目までか（倍々）">{chart(`平均は ${r2(np)} に向かって一直線に近づくわけではない。上下しながら、セットが増えるほどゆれ幅が小さくなる。`)}</Card>
+      <Card title="平均の移り変わり" sub="何セット目までか（倍々）">{chart(`平均は ${r2(np)} に向かって一直線に近づくわけではない。上下しながら、セットが増えるほどばらつき幅が小さくなる。`)}</Card>
       <p className={qs.note}>平均の {r2(np)} {unit}は、1セットでちょうど起きる回数ではない（{Number.isInteger(np) ? "" : "取れない値でもある。"}ちょうど {Math.round(np)} {unit}になるのは {pctSig(f[Math.round(np)]!)}）。分布の重心の位置を表す。</p>
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ n×p？ 理由を考える</button>;
@@ -316,8 +316,8 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
     body = <Card title="分散がいちばん大きくなる p は？" sub={`n＝${n} に決めておく`}>
-      <p className={qs.muted}>回数は {n} 回のまま、成功確率 p だけを変える。成功回数の分散（散らばり）がいちばん大きいのは？</p>
-      <Choices items={ps.map(pc)} value={guess} onChange={setGuess} label="分散がいちばん大きい p の予想" />
+      <p className={qs.muted}>回数は {n} 回のまま、成功確率 p だけを変える。成功回数の分散（ばらつき）がいちばん大きいのは？</p>
+      <Choices items={ps.map(pc)} value={guess} onChange={setGuess} label="分散がいちばん大きい p の予測" />
     </Card>;
     cta = <Predict ready={guess !== null} go={() => go(1)} />;
   } else if (stage === 1) {
@@ -332,9 +332,9 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
   } else if (stage === 2) {
     const mi = vars!.indexOf(Math.max(...vars!));
     body = <>
-      <Verdict ok={guess === best} big={`p＝${pc(ps[best]!)}`}>理論の分散 np(1−p) は p＝{pc(ps[best]!)} で最大の {r2(th[best])}（予想は p＝{pc(ps[guess!]!)}）。p と 1−p を入れ替えても同じ値で、左右対称。</Verdict>
+      <Verdict ok={guess === best} big={`p＝${pc(ps[best]!)}`}>理論の分散 np(1−p) は p＝{pc(ps[best]!)} で最大の {r2(th[best])}（予測は p＝{pc(ps[guess!]!)}）。p と 1−p を入れ替えても同じ値で、左右対称。</Verdict>
       <Card title="理論の分散と実測の分散">{rows(vars, true, mi)}
-        <p className={qs.note}>この実験で実測の分散がいちばん大きかったのは p＝{pc(ps[mi]!)}（色の行）。実測の分散も標本なのでゆれる。理論の差が小さい p どうしは、実験によって大小が入れ替わることがある。</p>
+        <p className={qs.note}>この実験で実測の分散がいちばん大きかったのは p＝{pc(ps[mi]!)}（色の行）。実測の分散も標本なのでばらつく。理論の差が小さい p どうしは、実験によって大小が入れ替わることがある。</p>
       </Card>
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ真ん中で最大？ 理由を考える</button>;

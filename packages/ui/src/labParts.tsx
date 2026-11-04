@@ -7,7 +7,7 @@ import { haptic, reduced, useTween } from "./motion";
 import { useRunner } from "./runner";
 import s from "./Experiment.module.css";
 
-export const STAGES = ["予測", "実験", "観察", "理由", "応用", "比べる"] as const;
+export const STAGES = ["予測", "実験", "観察", "理由", "応用", "比較"] as const;
 export const tex = (t: string) => { try { return katex.renderToString(t, { throwOnError: false, output: "html" }); } catch { return t; } };
 export const pct = (v: number) => `${Math.round(v * 100)}%`;
 export const r2 = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? "—" : String(Number(v.toFixed(2))));
@@ -25,7 +25,7 @@ const padTo = (f: number[] | undefined, n: number) => (f ? [...f, ...Array(Math.
 
 /** 棒（実験の割合）・点（理論）・点線（前の条件）・線（あなたの予想）を重ねる図。横軸の文字は labels（なければ番号）。高さは前の値から動く。
  *  pair（前の条件の実験の割合）があると、各値に「前」と「後」の棒を左右に並べる（issue 121）。点線（前の理論）は前の棒、点（後の理論）は後の棒に乗る */
-export function Bars({ freq: freq0, pair: pair0, series, theory: theory0, ghost: ghost0, guess, curve, hi, hiIn, mark, markLabel = "予想", marker, at, labels, height = 150, label }: {
+export function Bars({ freq: freq0, pair: pair0, series, theory: theory0, ghost: ghost0, guess, curve, hi, hiIn, mark, markLabel = "予測", marker, at, labels, height = 150, label }: {
   freq?: number[]; pair?: number[]; theory?: number[]; ghost?: number[]; guess?: number[]; hi?: number;
   /** 棒に重ねるなめらかな曲線（正規近似など。stats2-course #188 04）。棒の番号 k（小数も）での高さを返す。値で置く図（at）には出さない */
   curve?: (k: number) => number;
@@ -335,12 +335,12 @@ export function Replay({ rec, theory, before, labels, unit = "", per = "セッ�
         {MARKS.filter((m) => m <= Math.max(10, N)).map((m) => <text key={m} x={lx(m)} y={B + 13} textAnchor="middle" className={s.tick}>{m}</text>)}
         <text x={(L + W - Rm) / 2} y={H - 3} textAnchor="middle" className={s.axisTitle}>{per}数（対数目盛：1・3・10・30…と倍々に進む）</text>
       </svg>
-      <button type="button" className={s.toggle} aria-pressed={showBand} onClick={() => { haptic(); setShowBand((v) => !v); }} data-testid="exp-run-band-toggle">{showBand ? "平均の揺れの目安を隠す" : "平均の揺れの目安を見る"}</button>
-      {showBand && <p className={s.note}>帯＝平均の揺れの目安（期待値 ±2×標準偏差÷√{per}数。4倍集めると幅は半分）。いつも必ずこの中に入る範囲ではない。</p>}
+      <button type="button" className={s.toggle} aria-pressed={showBand} onClick={() => { haptic(); setShowBand((v) => !v); }} data-testid="exp-run-band-toggle">{showBand ? "平均のばらつきの目安を非表示" : "平均のばらつきの目安を表示"}</button>
+      {showBand && <p className={s.note}>帯＝平均のばらつきの目安（期待値 ±2×標準偏差÷√{per}数。4倍集めると幅は半分）。いつも必ずこの中に入る範囲ではない。</p>}
       <p className={s.note} data-testid="exp-run-note">{b
-        ? `${per}数が少ないうちは、平均が大きく揺れる。繰り返したとき、変更前は ${about(b.th.mean)}${unit}、変更後は ${about(a.th.mean)}${unit} の近くに落ち着いていくかを見る。途中では、2本の線が近づいたり交差したりすることもある。`
-        : `${per}数が少ないうちは、平均が大きく揺れる。繰り返したとき、期待値 ${about(a.th.mean)}${unit} の近くに落ち着いていくかを見る。`}
-        {wild && "この表は散らばりが非常に大きい（まれな大当たりがある）。しばらく低い平均が続き、当たりが出ると急に跳ねる。その跳ね方そのものが観察どころで、この回数では期待値の近くに落ち着くとは限らない。"}</p>
+        ? `${per}数が少ないうちは、平均が大きくばらつく。くり返したとき、変更前は ${about(b.th.mean)}${unit}、変更後は ${about(a.th.mean)}${unit} の近くに落ち着いていくかを見る。途中では、2本の線が近づいたり交差したりすることもある。`
+        : `${per}数が少ないうちは、平均が大きくばらつく。くり返したとき、期待値 ${about(a.th.mean)}${unit} の近くに落ち着いていくかを見る。`}
+        {wild && "この表はばらつきが非常に大きい（まれな大当たりがある）。しばらく低い平均が続き、当たりが出ると急に跳ねる。その跳ね方そのものが観察どころで、この回数では期待値の近くに落ち着くとは限らない。"}</p>
       <p className={s.h}>なぜ平均が変わったか<span>値ごとの割合（{upto} {per}まで）</span></p>
       <div className={s.legend} data-testid="exp-replay-legend">
         {b ? <><span><i className={s.kBarB} />変更前の実験の割合</span><span><i className={s.kBar} />変更後の実験の割合</span><span><i className={s.kGhost} />変更前の理論確率</span><span><i className={s.kDot} />変更後の理論確率</span></>
