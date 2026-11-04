@@ -143,3 +143,29 @@ test("並びを作ってみる：札を押すと成功の回数・1通りの確�
   expect(await num("ws-seq-one")).toBeCloseTo(0.3 ** 2 * 0.7 ** 8, 10);
   expect(await num("ws-seq-ways")).toBe(45);
 });
+
+// 確かめる対象：つながりの地図（#188 07c）。想定する故障：つながりの種類と置き場所が食い違う（変換が上に・対比が右に出る）・
+// 選んでも問いと段が出ない・ほかの点が薄くならない（どれを選んだか分からない）・解説の「やめる」で閉じない。
+// 見つけ方：点の位置を中心と比べる（前提は上・変換は右・対比は下）。超幾何との対比を選ぶと問い「戻さずに取ると、何が変わる？」と解説の1段目、
+// ほかの点が薄く、やめるで閉じる。既存の「つながりのまとまり」のテストは一覧の分け方だけを見る
+test("つながりの地図：置き場所で種類が分かり、点を選ぶと問いと段がその場に出る", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByRole("radio", { name: "つながり" }).click();
+  const map = d.getByTestId("rel-map");
+  const center = async (id: string) => { const b = (await map.getByTestId(`rel-node-stats2:${id}`).boundingBox())!; return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; };
+  const mb = (await map.boundingBox())!, mid = { x: mb.x + mb.width / 2, y: mb.y + mb.height / 2 };
+  expect((await center("REL-comb-binom")).y).toBeLessThan(mid.y - 40);           // 前提は上
+  expect((await center("REL-binom-normal")).x).toBeGreaterThan(mid.x + 60);       // 変換は右
+  expect((await center("REL-binom-hyper-contrast")).y).toBeGreaterThan(mid.y + 40); // 対比は下
+  await map.getByTestId("rel-node-stats2:REL-binom-hyper-contrast").click();
+  const dig = d.getByTestId("rel-dig");
+  await expect(dig.getByTestId("rel-question")).toHaveText("戻さずに取ると、何が変わる？");
+  await expect(dig.getByTestId("tour")).toContainText("1／4");
+  expect(Number(await map.getByTestId("rel-node-stats2:REL-binom-normal").getAttribute("opacity"))).toBeLessThan(1);
+  await dig.getByTestId("tour-prev").click();   // 1段目の「やめる」で閉じる
+  await expect(dig).toHaveCount(0);
+  expect(errs).toEqual([]);
+});

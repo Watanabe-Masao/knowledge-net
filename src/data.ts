@@ -42,6 +42,7 @@ export type Relation = {
   conditions?: string[]; mode?: "exact" | "approximation" | "limit"; premise?: "learning" | "mathematical";
   derivation?: string; units: string[]; labs?: LabRef[]; figures?: FigRef[];
   /** 開いたときの段（型の改訂26）。対比は same・differ・so、変換は origin・operation・result */
+  /** このつながりで考える問い（型の改訂28） */ question?: string;
   stages?: { same?: string; differ?: string; so?: string; origin?: string; operation?: string; result?: string };
   /** 開いたときの図（型の改訂26）。数は engine から */
   chart?: { kind: "pair"; a: ChartDist; b: ChartDist; note?: string } | { kind: "normal"; n: number; p: number; note?: string };

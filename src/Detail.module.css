@@ -120,3 +120,26 @@
 .back::before { content: ""; position: absolute; inset: -4px; }
 .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .page { animation: none; } }
+
+/* つながりの地図と、選んだつながりを掘る欄（#188 07c） */
+.relMap { display: block; width: 100%; height: auto; border-radius: var(--r-l); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.relMapSide { font-size: 10.5px; fill: var(--ink-3); }
+.relMapTag { font-size: 10px; font-weight: 600; }
+.relMapNode { cursor: pointer; outline: none; }
+.relMapNode:focus-visible { outline: none; }
+.relMapNode:focus-visible rect { stroke-width: 3; }
+.relMapLabel { font-size: 12px; fill: var(--ink); pointer-events: none; }
+.relMapLabelOn { font-size: 12px; font-weight: 700; fill: var(--surface); pointer-events: none; }
+.relMapCenter { fill: var(--accent); }
+.relMapCenterText { font-size: 14px; font-weight: 700; fill: var(--surface); }
+.dig { display: grid; gap: var(--sp-2); padding: 12px 14px; border-radius: var(--r-l); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); animation: digIn var(--dur) var(--ease); }
+@keyframes digIn { from { opacity: 0; } to { opacity: 1; } }
+.digHead { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--sp-2); }
+.digTitle { font-size: var(--fs-body); line-height: 1.4; }
+.digQ { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.45; color: var(--ink); }
+.digText { margin: 0; font-size: var(--fs-body); line-height: 1.6; color: var(--ink-2); }
+.digSteps { margin: 0; padding-left: 1.2em; font-size: var(--fs-small); color: var(--ink-2); }
+.digOpen { all: unset; justify-self: end; min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--accent); cursor: pointer; }
+.digOpen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.digHint { margin: 0; text-align: center; font-size: var(--fs-small); }
+@media (prefers-reduced-motion: reduce) { .dig { animation: none; } }

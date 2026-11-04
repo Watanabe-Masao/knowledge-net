@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 27,
+ "schema_revision": 28,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -4803,7 +4803,8 @@
    "units": [
     "stats2:U14"
    ],
-   "premise": "mathematical"
+   "premise": "mathematical",
+   "question": "なぜ ₙCₖ を掛けるのか？"
   },
   {
    "id": "stats2:REL-indep-binom",
@@ -4815,7 +4816,8 @@
    "units": [
     "stats2:U14"
    ],
-   "premise": "mathematical"
+   "premise": "mathematical",
+   "question": "なぜ並び1つの確率を掛け算で出せるのか？"
   },
   {
    "id": "stats2:REL-binom-poisson",
@@ -4981,7 +4983,8 @@
      "label": "ポアソン分布 λ＝3"
     },
     "note": "どちらも平均は3回。n＝50 でも棒の高さはほとんど同じで、n を大きくするほど差が縮む。"
-   }
+   },
+   "question": "めったに起きない事を、たくさんの機会で数えると？"
   },
   {
    "id": "stats2:REL-binom-normal",
@@ -5135,7 +5138,8 @@
     "n": 30,
     "p": 0.3,
     "note": "平均 9 回・標準偏差 約 2.5 回。np＝9 と n(1−p)＝21 がどちらも5以上なので、棒の頭が曲線に沿う。"
-   }
+   },
+   "question": "回数を増やすと、形はどうなる？"
   },
   {
    "id": "stats2:REL-binom-poisson-contrast",
@@ -5260,7 +5264,8 @@
      "label": "ポアソン分布 λ＝3"
     },
     "note": "どちらも平均は3回。二項分布は6回で切れ、ポアソン分布は7回より先にも続く。"
-   }
+   },
+   "question": "回数に上限があると、何が違う？"
   },
   {
    "id": "stats2:REL-var-std",
@@ -5692,7 +5697,8 @@
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-geom-contrast-tour-2.svg",
      "caption": "幾何：当たり1回に決めて、そこまでの回数 1, 2, 3, … を数える。上限はない。"
     }
-   ]
+   ],
+   "question": "何を数えているかが、どう違う？"
   },
   {
    "id": "stats2:REL-hyper-binom",
@@ -5805,7 +5811,8 @@
      "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-hyper-tour-2.svg",
      "caption": "割合0.3のまま箱を大きくすると、補正 (N−n)/(N−1) が 1に近づく。"
     }
-   ]
+   ],
+   "question": "箱を大きくすると、戻さない取り方はどう近づく？"
   },
   {
    "id": "stats2:REL-binom-hyper-contrast",
@@ -5953,7 +5960,8 @@
      "label": "戻さない（20個のうち当たり6個から10個）"
     },
     "note": "どちらも平均は3個。戻さない方が3個の近くに集まり、山が細い。"
-   }
+   },
+   "question": "戻さずに取ると、何が変わる？"
   },
   {
    "id": "stats2:REL-poisson-expo",
