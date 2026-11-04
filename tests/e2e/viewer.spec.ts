@@ -1,5 +1,6 @@
 // 画面のテスト（見本のデータ public/sample/stats2.json で）。スマホ幅・ライト／ダーク・Notion の埋め込み（360×320）。
 import { expect, test, type Page } from "@playwright/test";
+import { WALK_FORMULAS } from "../../math-lab/packages/engine/src";
 
 // 教材の公開サイトの図・ラボは外に取りに行かない（テストの速さと安定のため。中身は教材側のテストで確かめる）
 test.beforeEach(async ({ page }) => {
@@ -1536,12 +1537,6 @@ test("応用の課題：全部の問いで、グラフを問いに合わせる�
 type WalkQ = { ok: number };
 type WalkData = { segments: { text: string; role: string; key?: string }[]; formulas: { id: string; ref: string; bind: Record<string, string> }[];
   steps: { kind: string; mark?: string; collect?: { need: string[] }; choose?: WalkQ[]; rowQuiz?: Record<string, WalkQ> }[] };
-const SYMS: Record<string, string[]> = {   // engine の WALK_FORMULAS の記号（枠の順）
-  "binom.pmf": ["n", "k", "p"], "binom.mean": ["n", "p"], "binom.mean-p": ["E", "n"], "binom.var": ["n", "p"],
-  "share.sd-n": ["p", "s"], "binom.mode": ["n", "p"], ratio: ["A", "B"], "share.se": ["P", "m"], "share.z": ["x", "m", "P", "S"],
-  "binom.ge": ["k", "n", "p"], "sets.n": ["P", "e", "u"], "lin.sum": ["a", "E", "b", "n"], "fatigue.var": ["n", "F", "L"],
-  "streak.max": ["n", "r", "h"], "fpc.N": ["n", "r", "u"], "mix.d": ["V", "B", "n"],
-};
 // 確かめる段（probe）で道具を合わせる先。probe のない課題は []（応用の全部の課題を最後まで組み立てる）
 const WALK_TARGETS: Record<string, Record<string, number>[]> = {
   // 最小・最大を求める課題（A-02・C-02・E-02・E-03）は境目の前後：答えと1刻み外
@@ -1613,7 +1608,7 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
           // 枠を押すと、入れられる値を下から選ぶ（上の課題カードまで戻らない）。選び肢はどの枠でも同じ並び（要るものだけを出すと、それが答えになる）
           const picker = page.getByTestId("exp-walk-picker");
           const put = async (sym: string, src: string) => { await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); await picker.getByTestId(`exp-walk-pick-${src}`).click(); await expect(picker).toHaveCount(0); };
-          const syms = [...new Set(SYMS[fu.ref]!)];
+          const syms = [...new Set(WALK_FORMULAS[fu.ref]!.syms)];   // 記号の枠の順は engine から（書き写さない。stats2-course #208）
           const listOf = async (sym: string) => { await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click(); const ids = await picker.locator("[data-testid^=exp-walk-pick-]").evaluateAll((es) => es.map((e) => e.getAttribute("data-testid"))); await picker.getByTestId("exp-walk-picker-close").click(); return ids; };
           // 値を選ぶ欄には、見出しと値の札だけを出す。記号の意味を書くと、どの値を入れるかの答えになる（故障：SYM_MEAN を欄に出す）
           await sh.getByTestId(`exp-walk-slot-${fu.id}-${syms[0]}`).click();
