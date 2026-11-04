@@ -220,7 +220,9 @@ export function compare(net: Network, ids: string[]) {
 export function allowedSource(src: string, base: string, registered: string[]): boolean {
   let u: URL; try { u = new URL(src, base); } catch { return false; }
   if (u.protocol !== "https:" && u.protocol !== "http:") return false;
-  if (u.origin === new URL(base).origin) return true;
+  // 同じ origin でも、このサイトの置き場所（GitHub Pages ならリポジトリの名前の下）の外は読まない。github.io は同じ持ち主のどのリポジトリのページも同じ origin になるため
+  const home = new URL(".", base);
+  if (u.origin === home.origin && u.pathname.startsWith(home.pathname)) return true;
   return registered.some((r) => { try { return new URL(r, base).href === u.href; } catch { return false; } });
 }
 
