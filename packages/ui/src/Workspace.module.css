@@ -198,3 +198,13 @@
 .bandChip i { font-family: "Times New Roman", serif; font-size: 16px; margin-right: 4px; }
 .bandChip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .bandChip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* 並びを作ってみる（#188 07b） */
+.seq { display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--r-m); background: var(--surface-2); }
+.seqHead { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: var(--fs-small); }
+.seqRow { display: flex; flex-wrap: wrap; gap: 6px; }
+.seqItem { all: unset; box-sizing: border-box; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; color: var(--ink); cursor: pointer; }
+.seqItem:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.seqItem.tint1 { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.seqItem.tint2 { background: color-mix(in srgb, var(--data-2) 12%, var(--surface)); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.seqText { margin: 0; font-size: var(--fs-small); line-height: 1.7; color: var(--ink-2); }
+.seqText b { color: var(--ink); font-variant-numeric: tabular-nums; }

@@ -378,6 +378,8 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   const valueSyms = [...(model.kind === "formula" ? [...vary, over] : []), ...inTree].filter((k, i, a) => a.indexOf(k) === i && inTree.has(k)).map((k) => symOf(k, symbols)).filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
   const partList = parts.map((p, i) => ({ p, i, node: nodeAt(tree, p.path) })).filter((x): x is { p: FormulaPart; i: number; node: FormulaNode } => !!x.node);
   const pickPart = (i: number) => { haptic(); setSel((x) => (x?.part === i && !x.sym ? null : { part: i })); };
+  // 成功・失敗をくり返して数える式（二項分布：n 回・成功確率 p・成功の回数 k を横軸）だけ、並びを自分で作る札を出す
+  const seqOk = model.kind === "formula" && over === "k" && values.n !== undefined && values.p !== undefined && partList.length >= 3;
   const reading = () => {
     if (!partList.length && !valueSyms.length) return null;
     const items: ["meaning" | "structure" | "calc", string][] = [["meaning", "意味"], ...(partList.length ? [["structure", "構造"], ["calc", "計算"]] as ["structure" | "calc", string][] : [])];
@@ -397,6 +399,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
             ))}
           </ul>
         )}
+        {mode === "structure" && seqOk && <Sequence n={values.n!} k={values[over]!} p={values.p!} />}
         {mode === "structure" && (
           <div className={s.parts} role="group" aria-label="式の部品">
             {partList.map(({ p, i, node }) => (
@@ -697,5 +700,27 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
       </div>}
       </>}
     </section>
+  );
+}
+
+/** 並びを作ってみる（stats2-course #188 07b）：成功・失敗の札を押して並びを作り、その1通りの確率と、同じ成功の回数の並びの数を見る。
+ *  どの並びも確率が同じ（独立で毎回 p）こと、並びの数が ₙCₖ であることを、自分で作った並びから確かめる。n が 10 より大きいときは作らない */
+function Sequence({ n, k, p }: { n: number; k: number; p: number }) {
+  const [seq, setSeq] = useState<boolean[]>(() => Array.from({ length: n }, (_, i) => i < k));
+  useEffect(() => { setSeq(Array.from({ length: n }, (_, i) => i < k)); }, [n, k]);
+  if (n > 10) return <p className={s.hint} data-testid="ws-seq">n を 10 以下にすると、並びを自分で作れる。</p>;
+  const succ = seq.filter(Boolean).length;
+  const one = p ** succ * (1 - p) ** (n - succ);
+  let c = 1; for (let i = 1; i <= succ; i++) c = (c * (n - succ + i)) / i;
+  return (
+    <div className={s.seq} data-testid="ws-seq">
+      <div className={s.seqHead}><span className={s.muted}>並びを作ってみる（押すと成功・失敗が入れ替わる）</span><b data-testid="ws-seq-count">成功 {succ} 回</b></div>
+      <div className={s.seqRow}>{seq.map((x, i) => (
+        <button key={i} type="button" className={x ? `${s.seqItem} ${s.tint1}` : `${s.seqItem} ${s.tint2}`} aria-pressed={x} aria-label={`${i + 1} 回目：${x ? "成功" : "失敗"}`}
+          onClick={() => { haptic(); setSeq((q) => q.map((y, j) => (j === i ? !y : y))); }} data-testid={`ws-seq-${i}`}>{x ? "成" : "失"}</button>
+      ))}</div>
+      <p className={s.seqText}>この並びの確率 ＝ p<sup>{succ}</sup>(1−p)<sup>{n - succ}</sup> ＝ <b data-testid="ws-seq-one" data-value={one}>{fmt(one, 5)}</b><br />
+        成功 {succ} 回の並びは、どれも同じ確率。並びは全部で <b data-testid="ws-seq-ways" data-value={c}>{n}C{succ} ＝ {c} 通り</b>{succ === k ? "（いまの k の棒）" : ""}</p>
+    </div>
   );
 }
