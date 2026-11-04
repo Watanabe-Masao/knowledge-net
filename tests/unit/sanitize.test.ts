@@ -21,6 +21,11 @@ describe("読むデータは、同じサイトの中か教材の一覧にある�
     expect(allowedSource("javascript:alert(1)", BASE, REG)).toBe(false);
     expect(allowedSource("//evil.example/x.json", BASE, REG)).toBe(false);
   });
+  it("同じ origin でも、このサイトの置き場所の外（同じ持ち主の別のリポジトリのページ）は、一覧になければ読まない", () => {
+    expect(allowedSource("/other-repo/x.json", BASE, REG)).toBe(false);
+    expect(allowedSource("../stats2-labs/net/other.json", BASE, REG)).toBe(false);
+    expect(allowedSource("../stats2-labs/net/stats2.json", BASE, REG)).toBe(true);   // 一覧にある所は読む
+  });
 });
 
 describe("関係の式の KaTeX は部品の印だけを許す", () => {

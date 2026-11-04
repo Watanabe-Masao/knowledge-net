@@ -3,6 +3,7 @@
 // 言葉（記号の意味・呼び名・選び肢の形・行の題と「何を計算しているか」の文）は教材の原本（walk_texts）に置き、ここは文の型の id・穴の値・別の言い方だけを返す（stats2-course #211）。
 import { NUM4, formatApply } from "./applyFormat";
 import { mechanismMoments } from "./lab";
+import { comb } from "./formula/evaluate";
 
 /** 計算の1行：key は原本が選ぶ問いを付ける所（例：fail に「0.3⁰ はいくつ？」） */
 export type WalkRow = {
@@ -29,7 +30,6 @@ const r4 = (x: number) => (x !== 0 && Math.abs(x) < 1e-3 ? String(Number(x.toPre
 /** TeX の中の大きな整数は3桁ごとに区切る（14{,}307{,}150） */
 const big = (x: number) => (Number.isInteger(x) && Math.abs(x) >= 10000 ? String(x).replace(/\B(?=(\d{3})+(?!\d))/g, "{,}") : r4(x));
 const approx = (x: number) => (Math.abs(x - Number(r4(x))) > 1e-12 ? "\\approx" : "=");
-const comb = (n: number, k: number) => { let c = 1; for (let i = 1; i <= k; i++) c = (c * (n - k + i)) / i; return Math.round(c); };
 const C = (n: number | string, k: number | string) => `{}_{${n}}\\mathrm{C}_{${k}}`;
 /** TeX の中の数（負は括弧に入れる） */
 const t4 = (x: number) => (x < 0 ? `(${r4(x)})` : r4(x));

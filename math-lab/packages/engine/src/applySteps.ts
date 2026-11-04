@@ -2,6 +2,7 @@
 // どの課題も 何を求めるか → 大元の公式 → 値を入れる → 計算の過程（途中の値を1行ずつ）→ 答え（→ グラフで確かめる）の順。
 // 数は理論から求めた値だけ（原本に書かない）。答えと、道具（グラフ・表）に出る量は、答えと同じ形（applyFormat）で出す。途中の値は4桁。
 // 式は1行を短くし（スマホ幅で横に流れない）、aligned で＝をそろえる。
+import { comb } from "./formula/evaluate";
 import { mechanismMoments, modelPmf, fatigueP, mixSpread, type Mechanism } from "./lab";
 import { INT, NUM2, PCT0, PCT1, PCT2, PCT4, SIG3, formatApply as fa, texApply as tx } from "./applyFormat";
 import type { ApplyEvent, ApplySolve, ApplyStep } from "./apply";
@@ -16,7 +17,6 @@ const f = (x: number, d = 4) => String(Number(x.toPrecision(d)));
 const EPS = 1e-12;
 const al = (rows: string[]) => `\\begin{aligned}${rows.join("\\\\ ")}\\end{aligned}`;
 const C = (n: number, k: number) => `{}_{${n}}\\mathrm{C}_{${k}}`;
-function comb(n: number, k: number): number { let c = 1; for (let i = 1; i <= k; i++) c = (c * (n - k + i)) / i; return Math.round(c); }
 const pmf = (n: number, p: number) => modelPmf({ kind: "binom", n, p });
 const inEv = (e: ApplyEvent) => (k: number) => (e.op === "eq" ? k === e.k : e.op === "ge" ? k >= e.k : e.op === "le" ? k <= e.k : k > e.k);
 const OPT = { eq: "=", ge: "\\ge", le: "\\le", gt: ">" } as const;
