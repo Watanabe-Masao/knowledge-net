@@ -95,10 +95,10 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
       {lab && sceneSupported(lab.play) && createPortal(
         /* JS の部品で描く（旧版のラボの iframe にしない。issue 192）。解説・触るは面の中に入れず、全画面のページで開く（実験室と同じ骨組み。issue 188 07・モック 07-2・07-5）。
            面（シート）の中は位置の基準が変わるので、body に出す。← で閉じて元の所へ戻る */
-        <section className={`${s.page} ${s.mediaPage}`} data-testid={`labs-${context}`} data-native="" role="region" aria-label={value === "tour" ? "解説" : "操作して確かめる"}>
+        <section className={`${s.page} ${s.mediaPage}`} data-testid={`labs-${context}`} data-native="" role="region" aria-label={value === "tour" ? "解説" : "操作して確認"}>
           <div className={s.pageHead}>
             <button type="button" className={s.back} onClick={() => choose("")} aria-label="戻る" data-testid="media-back">←</button>
-            <div className={s.pageTitle}><b>{lab.purpose ?? lab.title ?? (value === "tour" ? "解説" : "操作して確かめる")}</b><span>{value === "tour" ? "解説" : "操作して確かめる"}</span></div>
+            <div className={s.pageTitle}><b>{lab.purpose ?? lab.title ?? (value === "tour" ? "解説" : "操作して確認")}</b><span>{value === "tour" ? "解説" : "操作して確認"}</span></div>
           </div>
           <div className={s.pageBody}>
             {value === "tour" ? <Tour key={lab.url} play={lab.play!} onDone={() => choose("")} /> : <Explore key={lab.url} play={lab.play!} />}
@@ -115,7 +115,7 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
             {value === "check" && checks.length > 1 && checks.map((c, i) => i !== ci && (
               <Button key={c.url} variant="quiet" onClick={() => setCi(i)}>ほかの版</Button>
             ))}
-            <Button variant="quiet" className={s.more} onClick={() => openLab(lab.url, lab.title ?? lab.id)}>大きく開く</Button>
+            <Button variant="quiet" className={s.more} onClick={() => openLab(lab.url, lab.title ?? lab.id)}>拡大表示</Button>
             <Button variant="quiet" className={s.close} onClick={() => choose("")}>閉じる</Button>
           </div>
         </div>

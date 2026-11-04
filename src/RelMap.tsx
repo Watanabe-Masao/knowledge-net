@@ -15,7 +15,7 @@ export const KATEX_TRUST = (c: { command: string }) => c.command === "\\htmlData
 export type MapRow = { id: string; other: string; tag?: string; der?: boolean };
 type Side = "before" | "change" | "contrast" | "after";
 const COLOR: Record<Side, string> = { before: "var(--k-pre)", change: "var(--k-conv)", contrast: "var(--k-con)", after: "var(--k-der)" };
-const SIDE_LABEL: Record<Side, string> = { before: "前に知っておく", change: "姿を変える", contrast: "比べる", after: "この先で使う" };
+const SIDE_LABEL: Record<Side, string> = { before: "前提", change: "変換", contrast: "対比", after: "応用" };
 
 export function RelMap({ center, groups, sel, onSel }: { center: string; groups: { key: string; rows: MapRow[] }[]; sel: string | null; onSel: (id: string) => void }) {
   const W = 340, H = 290, cx = W / 2, cy = H / 2;
@@ -33,7 +33,7 @@ export function RelMap({ center, groups, sel, onSel }: { center: string; groups:
   const nodes = sides.flatMap((k) => place(k, rowsOf(k)).map((p) => ({ ...p, k, x: Math.min(W - wOf(p.r) / 2 - 4, Math.max(wOf(p.r) / 2 + 4, p.x)) })));
   const dim = (id: string) => !!sel && sel !== id;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={st.relMap} role="group" aria-label="つながりの地図" data-testid="rel-map">
+    <svg viewBox={`0 0 ${W} ${H}`} className={st.relMap} role="group" aria-label="関係の地図" data-testid="rel-map">
       <defs>{sides.map((k) => (
         <marker key={k} id={`m-${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill={COLOR[k]} /></marker>
       ))}</defs>

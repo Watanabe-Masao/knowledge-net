@@ -105,7 +105,7 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
         );
       })}</tbody>
     </table>
-    <p className={s.muted}>「中」：差が揺れの目安（±2×標準誤差）の中。このずれは偶然の揺れと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。たまたまか、理論の前提が合っていないかを考える。</p>
+    <p className={s.muted}>「中」：差がばらつきの目安（±2×標準誤差）の中。このずれは偶然のばらつきと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。たまたまか、理論の前提が合っていないかを考える。</p>
   </>;
 }
 
@@ -162,8 +162,8 @@ export function RunChart({ title, ylab, fmt = r2, series, note }: { title: strin
         <text x={(L + W - RR) / 2} y={H - 3} textAnchor="middle">セット数（対数目盛：1・3・10・30…と倍々に進む）</text>
       </svg>
       {series.some((x) => x.se) && <>
-        <button type="button" className={s.toggle} onClick={() => setBand(!band)} data-testid="q-run-band-toggle">{band ? "揺れの目安を隠す" : "揺れの目安を見る"}</button>
-        {band && <p className={s.muted}>色の帯は揺れの目安（理論 ±2×標準誤差）。多くはこの中に入るが、いつも必ずこの中に入る範囲ではない。</p>}
+        <button type="button" className={s.toggle} onClick={() => setBand(!band)} data-testid="q-run-band-toggle">{band ? "ばらつきの目安を非表示" : "ばらつきの目安を表示"}</button>
+        {band && <p className={s.muted}>色の帯はばらつきの目安（理論 ±2×標準誤差）。多くはこの中に入るが、いつも必ずこの中に入る範囲ではない。</p>}
       </>}
       <p className={s.note} data-testid="q-run-note">{note}</p>
     </div>

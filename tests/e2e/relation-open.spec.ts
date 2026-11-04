@@ -5,7 +5,7 @@ const URL = "./?src=sample/stats2-w0.json&c=stats2%3ATERM-binom";
 async function open(page: Page, name: RegExp) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
-  await page.getByRole("radio", { name: "つながり" }).click();
+  await page.getByRole("radio", { name: "関係" }).click();
   await page.getByTestId("edge-list").getByRole("button", { name }).click();
   const panel = page.getByTestId("edge-panel");
   await expect(panel.locator("article")).toBeVisible();

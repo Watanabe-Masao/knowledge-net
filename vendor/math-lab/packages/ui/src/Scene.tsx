@@ -260,7 +260,7 @@ export function Explore({ play }: { play: ScenePlay }) {
   const show = (x: FieldDef, v: number) => (x.show ? x.show(v) : String(Number(v.toFixed(4))));
   const value = (x: FieldDef) => (x.key === "p" && mode === "approx" ? pOf(cur) : getAt(cur, x.key));
   return (
-    <section className={s.explore} data-testid="explore" aria-label="触る">
+    <section className={s.explore} data-testid="explore" aria-label="操作">
       {modes.length > 1 && <Seg name="モード" items={modes.map((m) => [m, MODES[m]!.name] as [string, string])} value={mode} onChange={(m) => { setMode(m); setSt((o) => (o[m] ? o : { ...o, [m]: { ...MODES[m]!.defaults } })); setSel(fieldsOf(MODES[m]!, MODES[m]!.defaults)[0]!.key); }} />}
       {play.task && <p className={s.task}><Rich text={play.task} /></p>}
       <Scene mode={mode} state={cur} decimals={play.decimals} />

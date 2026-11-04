@@ -186,7 +186,7 @@ export default function App() {
         <div className={st.embedCard} data-testid="embed-card">
           <b>{concept ? concept.name : "知識ネットワーク"}</b>
           <Muted className={st.clamp}>{concept?.definition ?? "概念を押すと説明が出る"}</Muted>
-          <a href={full} target="_blank" rel="noreferrer">大きく開く ↗</a>
+          <a href={full} target="_blank" rel="noreferrer">拡大表示 ↗</a>
         </div>
       </main>
     );
@@ -230,7 +230,7 @@ export default function App() {
     <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <div className={st.top}>
         <Header title="知識ネットワーク" sub={<>{sub}{compact ? null : <>　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}{(() => { const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length; return k ? `（定義だけ ${k}）` : ""; })()}・関係 {net.relations.length}・導出 {net.derivations.length}</>}</>}>
-          {compact ? <Button variant="quiet" icon aria-label="探す" aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Icon name="search" size={20} /></Button> : null}
+          {compact ? <Button variant="quiet" icon aria-label="検索" aria-expanded={searchOpen} onClick={() => setSearchOpen(!searchOpen)}><Icon name="search" size={20} /></Button> : null}
         </Header>
         {!compact || searchOpen ? <Search concepts={[...net.concepts.values()]} onPick={(id) => { setSearchOpen(false); setSel(id); }} /> : null}
         <Crumbs items={concept ? [
@@ -262,7 +262,7 @@ export default function App() {
         </>}
         bottomLeft={<>
           <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `（${hidden.size} 種類を非表示中）` : ""}</button>
-          {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
+          {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比較 {cmp.length}</button> : null}
         </>} />
       {concept && path ? <PathList net={net} target={concept.id} seq={path.seq} onOpen={(id) => { setView("around"); setSel(id); }}
         sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} /> :
@@ -271,7 +271,7 @@ export default function App() {
         null}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">
-          <Muted>矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。チェックを外すと、その種類の線を隠す。</Muted>
+          <Muted>矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。チェックを外すと、その種類の線を非表示にする。</Muted>
           <ul className={st.kinds}>{Object.entries(KINDS).map(([t, k]) => (
             <li key={t}>
               <label>
@@ -291,21 +291,21 @@ export default function App() {
           .filter((x, i, xs) => xs.findIndex((y) => y.id === x.id) === i);
         const add = (id: string) => setCmp([...cmp, id].slice(0, 3));
         return (
-          <Sheet label="比べる相手を選ぶ" title={`${cmp.map((id) => name(net, id)).join("・")} と比べる`} onClose={() => { if (cmp.length >= 2) setModal("compare"); else { setCmp([]); setModal(null); } }} data-testid="pick">
+          <Sheet label="比較する概念を選ぶ" title={`${cmp.map((id) => name(net, id)).join("・")} と比較`} onClose={() => { if (cmp.length >= 2) setModal("compare"); else { setCmp([]); setModal(null); } }} data-testid="pick">
             <Muted>定義・条件・期待値と分散などを同じ並びで比べ、2つの関係と共通の前提を出す。</Muted>
             {near.length ? <>
-              <h4>つながりのある概念</h4>
+              <h4>関係のある概念</h4>
               <ul className={st.pick}>{near.map((x) => (
                 <li key={x.id}><button type="button" className={st.pickItem} onClick={() => add(x.id)}><b>{name(net, x.id)}</b><span>{x.why}</span></button></li>
               ))}</ul>
             </> : null}
-            <h4>ほかの概念から探す</h4>
+            <h4>ほかの概念から検索</h4>
             <Search concepts={[...net.concepts.values()].filter((c) => !cmp.includes(c.id))} onPick={add} />
           </Sheet>
         );
       })() : null}
       {modal === "compare" && cmp.length ? (
-        <Sheet label="比べる" title={`比べる：${cmp.map((id) => name(net, id)).join(" と ")}`} onClose={() => setModal(null)} data-testid="compare">
+        <Sheet label="比較" title={`比較：${cmp.map((id) => name(net, id)).join(" と ")}`} onClose={() => setModal(null)} data-testid="compare">
           {cmpData ? <>
             {cmpData.rows.map((r) => (
               <div key={r.label} className={st.compareRow}>
@@ -314,16 +314,16 @@ export default function App() {
               </div>))}
             {cmpData.between.length ? <div className={st.compareRow}><h4>この組の関係</h4>{cmpData.between.map((r) => <p key={r.id}>{sentence(net, r)}：{r.description}</p>)}</div> : null}
             {cmpData.common.length ? <div className={st.compareRow}><h4>共通の前提</h4><p>{cmpData.common.map((id) => name(net, id)).join("・")}</p></div> : null}
-          </> : <Muted>比べる相手を選ぶ。</Muted>}
+          </> : <Muted>比較する概念を選ぶ。</Muted>}
           <div className={st.cmpActs}>
-            {cmp.length < 3 && <Button onClick={() => setModal("pick")}>＋ もう1つ足す</Button>}
-            <Button variant="quiet" onClick={() => { setCmp([]); setModal(null); }}>比べるのをやめる</Button>
+            {cmp.length < 3 && <Button onClick={() => setModal("pick")}>＋ もう1つ追加</Button>}
+            <Button variant="quiet" onClick={() => { setCmp([]); setModal(null); }}>比較を終了</Button>
           </div>
         </Sheet>
       ) : null}
       {full && (
         <FullView label="ラボ" title={full.title ?? "ラボ"} onClose={() => setFull(null)}
-          aside={<a href={full.url} target="_blank" rel="noreferrer">別の画面 ↗</a>}>
+          aside={<a href={full.url} target="_blank" rel="noreferrer">別画面で開く ↗</a>}>
           <iframe src={full.url} title={full.title ?? "ラボ"} />
         </FullView>
       )}
