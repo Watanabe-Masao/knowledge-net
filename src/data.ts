@@ -195,13 +195,22 @@ export function compare(net: Network, ids: string[]) {
 }
 
 /** 教材の一覧（courses.json）を読み、各教材のデータを取ってくる。src があればそれだけを読む（確かめ用）。 */
+/** ?src= で読んでよいデータか（stats2-course issue 206）：同じサイトの中か、教材の一覧（courses.json）に載っている URL だけ。
+ *  ほかの所のデータは、中の文字が画面に出るので読まない（同じ origin のラボの保存まで書き換えられるため） */
+export function allowedSource(src: string, base: string, registered: string[]): boolean {
+  let u: URL; try { u = new URL(src, base); } catch { return false; }
+  if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+  if (u.origin === new URL(base).origin) return true;
+  return registered.some((r) => { try { return new URL(r, base).href === u.href; } catch { return false; } });
+}
+
 export async function load(src?: string | null): Promise<{ net: Network; errors: string[] }> {
   let list: { id: string; data: string }[];
-  if (src) list = [{ id: src, data: src }];
-  else {
-    const reg = await (await fetch("courses.json", { cache: "no-cache" })).json();
-    list = reg.courses;
-  }
+  const reg = await (await fetch("courses.json", { cache: "no-cache" })).json() as { courses: { id: string; data: string }[] };
+  if (src) {
+    if (!allowedSource(src, location.href, reg.courses.map((c) => c.data))) return { net: merge([]).net, errors: [`${src}：このサイトの外のデータは読まない（教材の一覧にある所だけ）`] };
+    list = [{ id: src, data: src }];
+  } else list = reg.courses;
   const got = await Promise.all(list.map(async (c) => {
     try {
       const r = await fetch(c.data, { cache: "no-cache" });   // 教材を更新したらすぐ見えるように（GitHub Pages は10分ほど覚えている）

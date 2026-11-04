@@ -9,6 +9,9 @@ import { RelationOpen, Badges, relationParts } from "./Relation";
 import { type Network, type Relation } from "./data";
 import st from "./Detail.module.css";
 
+/** KaTeX で許すのは部品の印（\\htmlData）だけ。\\href などで javascript: のリンクを作らせない（stats2-course issue 206） */
+export const KATEX_TRUST = (c: { command: string }) => c.command === "\\htmlData";
+
 export type MapRow = { id: string; other: string; tag?: string; der?: boolean };
 type Side = "before" | "change" | "contrast" | "after";
 const COLOR: Record<Side, string> = { before: "var(--k-pre)", change: "var(--k-conv)", contrast: "var(--k-con)", after: "var(--k-der)" };
@@ -93,7 +96,7 @@ function FocusFormula({ net, r }: { net: Network; r: Relation }) {
   const nodes = new Map(f.parts.map((p, i) => [nodeAt(f.tree as FormulaNode, p.path), i] as const).filter(([n]) => !!n));
   const on = new Set(r.focus.parts);
   const tex = toTex(f.tree as FormulaNode, { symbols: f.symbols as never, data: (n) => (nodes.has(n) ? `part=${nodes.get(n)},on=${on.has(nodes.get(n)!) ? 1 : 0}` : undefined) });
-  let html = ""; try { html = katex.renderToString(tex, { throwOnError: false, trust: true, strict: false, displayMode: true }); } catch { /* 描けない式は出さない */ }
+  let html = ""; try { html = katex.renderToString(tex, { throwOnError: false, trust: KATEX_TRUST, strict: false, displayMode: true }); } catch { /* 描けない式は出さない */ }
   return (
     <div className={st.focus} data-testid="rel-focus">
       <div className={st.focusTex} dangerouslySetInnerHTML={{ __html: html }} />

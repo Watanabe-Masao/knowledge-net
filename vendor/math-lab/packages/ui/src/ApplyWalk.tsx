@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { NUM4, PCT0, SYM_MEAN, WALK_FORMULAS, formatApply, walkCompute, type ApplyCheck, type ApplyMark, type ApplySolve, type ApplyState, type ApplyStep } from "@math-lab/engine";
 import { haptic } from "./motion";
-import { tex } from "./labParts";
+import { RichText, tex } from "./labParts";
 import s from "./Experiment.module.css";
 
 export type WalkQuiz = { ask?: string; todo?: string; opts: string[]; ok: number; fb: string[]; math?: boolean };
@@ -367,7 +367,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
           const q = st.rowQuiz?.[`${fu.id}.${row.key}`], qid = `row-${fu.id}.${row.key}`, opened = !q || sel[qid] === q.ok;
           return <li key={row.key} className={i === shown - 1 ? s.wNew : undefined} data-testid={`exp-walk-row-${fu.id}-${row.key}`}><b>{row.title}</b>
             {opened ? <><div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(row.tex) }} /><p>{row.why}</p></>
-              : <><p className={s.walkAsk} dangerouslySetInnerHTML={{ __html: q!.ask ?? "" }} />{choices(q!, qid, "exp-walk-rowq", false)}</>}
+              : <><p className={s.walkAsk}><RichText text={q!.ask ?? ""} /></p>{choices(q!, qid, "exp-walk-rowq", false)}</>}
           </li>;
         })}</ol>}
         {bindDone && shown < c.rows.length && <button type="button" className={s.secondary} disabled={!rowQuizOk(cur, f, shown)} onClick={() => { haptic(); setCalc({ ...calc, [f]: shown + 1 }); setMsg(null); }} data-testid="exp-walk-calc">{shown === 0 ? "計算する" : shown + 1 < c.rows.length ? "次の計算へ" : `${fu.word ?? def.outWord}を出す`}</button>}
