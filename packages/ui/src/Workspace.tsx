@@ -703,7 +703,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   );
 }
 
-/** 並びを作ってみる（stats2-course #188 07b）：成功・失敗の札を押して並びを作り、その1通りの確率と、同じ成功の回数の並びの数を見る。
+/** 並びを作ってみる（stats2-course issue 188 07b）：成功・失敗の札を押して並びを作り、その1通りの確率と、同じ成功の回数の並びの数を見る。
  *  どの並びも確率が同じ（独立で毎回 p）こと、並びの数が ₙCₖ であることを、自分で作った並びから確かめる。n が 10 より大きいときは作らない */
 function Sequence({ n, k, p }: { n: number; k: number; p: number }) {
   const [seq, setSeq] = useState<boolean[]>(() => Array.from({ length: n }, (_, i) => i < k));
