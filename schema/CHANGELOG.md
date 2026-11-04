@@ -36,3 +36,12 @@
 | 28 | 2026-11-04 | 関係に任意の `question`（このつながりで考える問い。概念のページのつながりで、選ぶと最初に出る）（stats2-course #188 07c）。任意 |
 | 29 | 2026-11-04 | 関係に任意の `focus`（このつながりが効く式の部品：両端の概念の式の id と、その式の parts の番号）。つながりを選ぶと、その部品を光らせる（stats2-course #188 07c）。任意 |
 | 30 | 2026-11-04 | 概念の式に任意の `why`（この式でなぜその値が求まるかの段：steps〔title・text・parts＝その段で効く式の部品の番号〕と note〔前提が崩れたとき、どの段が成り立たなくなるか〕）。作業台の読み方「構造」で順に出す（stats2-course #188）。任意 |
+| 31 | 2026-11-05 | 型を芯と実験室の拡張に分けた（stats2-course #211）：実験室の定義（experiment・experimentBinom・experimentTable・walkQuiz）を `kn-experiment-v1.json` へ移し、芯の `experiments` はそれを指す。中身は変わらない。`$id` を URL にした（2つのファイルを互いに指すため）。書き出しに任意の `experiment_revision`（使った拡張の改訂） |
+
+## 実験室の拡張（kn-experiment-v1.json）
+
+芯とは別に改訂する（x-revision）。教材は `experiment_revision` に書き、画面は自分より新しい改訂のデータに警告を出す。拡張の中から芯の共通の部品（gid・text・valueTable など）を指す。
+
+| 改訂 | 日付 | 変更 |
+| --- | --- | --- |
+| 1 | 2026-11-05 | 芯の改訂30までの実験室の定義をそのまま移した（stats2-course #211） |

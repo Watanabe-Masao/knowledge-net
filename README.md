@@ -3,7 +3,7 @@
 知識ネットワーク：教材が書き出す概念・関係・導出のデータ（型 kn-schema v1）を読み、概念と関係を表示する画面。教材に依らない土台で、最初の教材は統計検定2級（stats2-course）。
 
 - 画面：https://watanabe-masao.github.io/knowledge-net/
-- 型：`schema/kn-schema-v1.json`（JSON Schema）、関係の種類：`schema/relation-types.yaml`
+- 型：`schema/kn-schema-v1.json`（JSON Schema。芯）と `schema/kn-experiment-v1.json`（実験室の拡張）、関係の種類：`schema/relation-types.yaml`
 - つないでいる教材：`public/courses.json`
 - 計画：`docs/plan.md`
 

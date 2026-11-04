@@ -146,6 +146,21 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(r.errors[0]).toMatch(/改訂/);
     expect(r.net.concepts.size).toBeGreaterThan(0);
   });
+  // 確かめる対象：型を芯と実験室の拡張に分けた（stats2-course issue 211）あとも、実験室の定義は拡張の型で検査され、拡張だけ新しい改訂も知らせる。
+  // 想定する故障：芯から拡張への参照が解けず、実験室の中身を検査しないまま通る（形の違う実験室が画面まで届く）・拡張の改訂だけ上がったのを見落とす。
+  // 見つけ方：実験室の必須の項目を消すと止まる／拡張の改訂を画面より1つ上げると知らせる。既存との違い：model の値を変えるテストは if／then の枝を見るだけ
+  it("実験室は拡張の型で検査し、拡張だけ新しい改訂も知らせる（芯と拡張に分けた型）", async () => {
+    const { EXPERIMENT_REVISION } = await import("../../src/data");
+    const d = sample();
+    expect(d.experiments.length).toBeGreaterThan(0);
+    delete d.experiments[0].model;
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+    const e = sample();
+    e.experiment_revision = EXPERIMENT_REVISION + 1;
+    const r = merge([{ id: "stats2", data: e }]);
+    expect(r.errors[0]).toMatch(/実験室 \d+/);
+    expect(r.net.experiments.size).toBeGreaterThan(0);
+  });
 });
 
 // 確かめる対象：画面は、型の改訂より新しいデータ（画面が知らない任意の項目がある）を教材ごと外さず、知っている項目だけで表示する（stats2-course issue 207）。
