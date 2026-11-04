@@ -38,7 +38,7 @@ test("型の欄は二項分布と同じ順に並ぶ（入力と図の棒の操�
     .map((t) => ({ "ws-reset": "見出し", "ws-formula": "式", "ws-strip": "帯", "ws-result": "結果", "ws-calc": "計算過程", "ws-band": "入力", "ws-rows": "入力", "ws-chart": "図", "ws-linear": "変換", "ws-exp": "実験" } as Record<string, string>)[t])
     .filter((t, i, a) => t && a.indexOf(t) === i));
   const expect1 = await order(await open(page));
-  const binom = await order(await openSheet(page, "src=sample/stats2-w0.json", "TERM-binom"));
+  const binom = await order(await openSheet(page, "src=sample/stats2.json", "TERM-binom"));
   expect(expect1.filter((t) => t !== "変換")).toEqual(binom.filter((t) => t !== "変換"));
   expect(expect1).toEqual(["見出し", "式", "帯", "結果", "計算過程", "入力", "図", "変換", "実験"]);
   expect(await page.getByTestId("workspace").getAttribute("data-pattern")).toBe("formula");
@@ -104,13 +104,13 @@ test("変換中は Y＝aX＋b の式・結果・表・計算過程・図が同�
 test("変換の欄は二項分布（パターン1）にも出て、期待値の線と E(aX＋b) が同じ値を指す", async ({ page }) => {
   // 故障：新しい欄（変換）が片方の作業台にしか出ない。教材の期待値の概念の E(aX＋b) の式を二項分布の作業台に渡して確かめる
   const linear = concept.formulas.find((f: { id?: string }) => f.id === "F-expect-linear");
-  await page.route("**/sample/stats2-w0.json", async (r) => {
+  await page.route("**/sample/stats2.json", async (r) => {
     const d = await (await r.fetch()).json();
     d.concepts = d.concepts.map((c: { id: string; formulas: unknown[]; workspace: Record<string, unknown> }) =>
       c.id === "stats2:TERM-binom" ? { ...c, formulas: [...c.formulas, linear], workspace: { ...c.workspace, linear: c.formulas.length } } : c);
     await r.fulfill({ json: d });
   });
-  const w = await openSheet(page, "src=sample/stats2-w0.json", "TERM-binom");
+  const w = await openSheet(page, "src=sample/stats2.json", "TERM-binom");
   await expect(w.getByTestId("ws-linear")).toBeVisible();
   expect(await num(w, "ws-mean")).toBeCloseTo(3, 9);   // n＝10・p＝0.3 の np
   await w.getByTestId("ws-a").fill("2");

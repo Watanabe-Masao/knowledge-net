@@ -14,7 +14,7 @@ const plays = (file: string) => {
   for (const kind of ["concepts", "relations"]) for (const x of d[kind] ?? []) for (const l of x.labs ?? []) if (l.play) out.push([`${x.id} ${l.id}@${l.preset}`, l.play]);
   return out;
 };
-const all = plays("public/sample/stats2-w0.json");
+const all = plays("public/sample/stats2.json");
 const native = all.filter(([, p]) => sceneSupported(p));
 
 describe("解説・触るの場面", () => {

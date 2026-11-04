@@ -2,7 +2,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { modelPmf } from "../../math-lab/packages/engine/src";
 
-const URL = "./?src=sample/stats2-w0.json&c=stats2%3ATERM-binom";
+const URL = "./?src=sample/stats2.json&c=stats2%3ATERM-binom";
 const noErrors = (page: Page) => { const errs: string[] = []; page.on("pageerror", (e) => errs.push(e.message)); return errs; };
 
 // 確かめる対象：概要の最初の画面の情報階層（問い → つまり → 図 → 定義）と、原理・条件・例と反例が「開いて読む段」にあること。
@@ -281,7 +281,7 @@ test("前提のつながりを選ぶと、二項分布の式のどの部品で�
 // 見つけ方：倍率が読める倍率（0.9）以上で、選んだ点の位置が地図の枠の中。既存の LOD のテストは倍率ごとの見せ方だけを見る
 test("iPhone の幅で全体図を開くと、選んだ概念の近くを名前の読める倍率で見せる", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom&view=all");
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom&view=all");
   await page.waitForFunction(() => (window as any).kn?.nodes().length > 5);
   await expect.poll(() => page.evaluate(() => (window as any).kn.zoom())).toBeGreaterThanOrEqual(0.9);
   const inside = await page.evaluate(() => { const c = (window as any).kn, p = c.getElementById("stats2:TERM-binom").renderedPosition(); return p.x > 0 && p.y > 0 && p.x < c.width() && p.y < c.height(); });

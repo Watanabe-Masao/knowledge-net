@@ -11,7 +11,7 @@ URL で状態を指定できる：`?c=stats2:TERM-binom`（選ぶ概念）・`&t
 
 ```sh
 npm ci
-npm run dev      # 手元で表示（public/sample/stats2.json を ?src=sample/stats2.json で）
+npm run dev      # 手元で表示（public/sample/stats2.json を ?src=sample/stats2.json で。見本は教材の公開データの写し：node scripts/sync-sample.mjs）
 npm run check    # 単体テスト → build → 画面のテスト
 ```
 
