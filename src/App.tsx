@@ -327,7 +327,7 @@ export default function App() {
           <iframe src={full.url} title={full.title ?? "ラボ"} />
         </FullView>
       )}
-      {edgeSel ? <Panel net={net} edgeId={edgeSel} onClose={() => setEdgeSel(null)} onSelect={(id) => setSel(id)} /> : null}
+      {edgeSel ? <Panel net={net} edgeId={edgeSel} onClose={() => setEdgeSel(null)} onSelect={(id) => setSel(id)} page={narrow && !!concept && !path && detent === "full"} /> : null}
       {narrow && concept ? null : <Muted as="div" className={st.footer}>データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。</Muted>}
       <TabBar tab="explore" onTab={(t) => { if (t === "explore" && sel) { setDetent("min"); setRecenter((n) => n + 1); } else setTab(t); }} badges={badges} focusName={focus?.name} />
     </main>

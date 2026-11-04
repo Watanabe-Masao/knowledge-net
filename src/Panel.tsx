@@ -1,5 +1,6 @@
 // 線（関係・導出）の説明パネル。画面の下から開く。閉じても選んだ概念はそのまま。
-import { RelationOpen } from "./Relation";
+import { RelationOpen, relationParts } from "./Relation";
+import s from "./Relation.module.css";
 import { Button, Muted, Row, Sheet } from "@math-lab/ui";
 import { name } from "./Detail";
 import { type Network } from "./data";
@@ -13,11 +14,24 @@ export function resolveEdge(net: Network, id: string) {
   return der ? { der } : null;
 }
 
-type Props = { net: Network; edgeId: string; onClose: () => void; onSelect: (id: string) => void };
+type Props = { net: Network; edgeId: string; onClose: () => void; onSelect: (id: string) => void;
+  /** 概念のページ（全画面）から開いたとき：面を重ねず、全画面のページで開く（← で概念へ戻る。stats2-course #188 07a） */ page?: boolean };
 
-export default function Panel({ net, edgeId, onClose, onSelect }: Props) {
+export default function Panel({ net, edgeId, onClose, onSelect, page }: Props) {
   const found = resolveEdge(net, edgeId);
   if (!found) return null;
+  if (page && found.rel) return (
+    <section className={s.page} data-testid="edge-panel" data-detent="full" role="region" aria-label="関係の説明">
+      <div className={s.pageHead}>
+        <button type="button" className={s.back} onClick={onClose} aria-label="概念へ戻る" data-testid="edge-back">←</button>
+        <div className={s.pageTitle}><b>{relationParts(net, found.rel).text}</b><span>つながり</span></div>
+      </div>
+      <div className={s.pageBody}>
+        <RelationOpen net={net} r={found.rel} context={`panel-${found.rel.id}`} titled={false} />
+        <Row>{[found.rel.from, found.rel.to].map((c) => <Button key={c} onClick={() => onSelect(c)}>{name(net, c)} へ</Button>)}</Row>
+      </div>
+    </section>
+  );
   return (
     <Sheet label="関係の説明" data-testid="edge-panel" onClose={onClose} title={found.rel ? "つながり" : "導出"}>
       {found.rel ? <>

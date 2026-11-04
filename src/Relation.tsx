@@ -191,14 +191,14 @@ function RelChart({ r }: { r: Relation }) {
 }
 
 /** 関係を開いたときの面の中身（線の説明パネル） */
-export function RelationOpen({ net, r, context }: { net: Network; r: Relation; context: string }) {
+export function RelationOpen({ net, r, context, titled = true }: { net: Network; r: Relation; context: string; /** 見出しにもう関係の文があるとき（全画面のページ）は札だけ */ titled?: boolean }) {
   const p = relationParts(net, r);
   const rows = (STAGE_LABEL[r.type] ?? []).filter(([k]) => r.stages?.[k as keyof NonNullable<Relation["stages"]>]);
   return (
     <article className={s.open} data-testid={`rel-${r.id}`}>
       <div className={s.head}>
         <Badges net={net} r={r} />
-        <b className={s.title}>{p.text}</b>
+        {titled && <b className={s.title}>{p.text}</b>}
       </div>
       {r.gist && <section className={s.block} data-testid="gist"><span className={s.lab}>つまり</span><p className={s.gistText}>{r.gist}</p></section>}
       {rows.length ? (

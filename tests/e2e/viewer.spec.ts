@@ -380,12 +380,12 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
   await page.setViewportSize({ width: 390, height: 800 });
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
-  await fullSheet(page);
-  await tab(page, /つながり/);
-  await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
+  // 地図の線から開くと下からの面（概念のページ〔全画面〕から開くと全画面のページ。#188 07a）
+  await page.evaluate(() => (window as any).kn.getElementById("stats2:REL-binom-poisson").emit("tap"));
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toHaveAttribute("data-detent", "half");
-  const still = () => page.waitForFunction(() => !document.querySelector("[data-testid=edge-panel]")?.getAnimations().length);
+  // 面の動きが止まるまで待つ：位置が 150ms 変わらない（getAnimations は中の部品の動きも数え、待ちが伸びて時間切れになることがあった）
+  const still = () => expect.poll(async () => { const a = (await panel.boundingBox())?.y; await page.waitForTimeout(150); return a === (await panel.boundingBox())?.y; }).toBe(true);
   await still();
   const grab = panel.getByRole("button", { name: "全体に広げる" });
   const b = (await grab.boundingBox())!;
@@ -397,7 +397,7 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
   };
   await drag(-300);
   await expect(panel).toHaveAttribute("data-detent", "full");
-  await expect(page.getByTestId("sheet-scrim")).toHaveCSS("opacity", "1");
+  await expect.poll(async () => Number(await page.getByTestId("sheet-scrim").evaluate((e) => getComputedStyle(e).opacity))).toBeGreaterThan(0.95);   // 暗くなる（動きの終わりの値は丸めで 1 にならないことがある）
   await page.getByTestId("sheet-scrim").click({ position: { x: 20, y: 10 } });   // 暗い所を押すと半分に戻る
   await expect(panel).toHaveAttribute("data-detent", "half");
   await panel.getByRole("button", { name: "全体に広げる" }).click();   // つまみを押すと広がる
@@ -772,7 +772,7 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   await page.clock.setFixedTime(new Date("2026-11-01T13:00:55.555Z"));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&c=stats2:TERM-expect`);
-  await fullSheet(page);
+  // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
   await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   const x = page.getByTestId("experiment");
@@ -1150,9 +1150,11 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   for (const dy of [20, 60, 140]) await page.mouse.move(h.x + 4, h.y + 4 - dy);
   await page.mouse.up();
   await expect(s).toHaveAttribute("data-detent", "full");
-  await expect(page.getByTestId("bottomsheet-scrim")).toHaveCSS("opacity", "1");
-  await page.getByTestId("bottomsheet-scrim").click({ position: { x: 10, y: 10 } });
-  await expect(s).toHaveAttribute("data-detent", "half");
+  // 上まで上げると面を重ねず全画面のページ。← で地図（少しの段）へ戻る（#188 07a）
+  // 下のタブの上に重なり、押しても下のタブに届かない（画面の下の端の点がページの中）
+  expect(await page.evaluate(() => { const t = document.querySelector("[data-testid=tabbar]")!.getBoundingClientRect(); return !!document.elementFromPoint(t.x + t.width / 2, t.y + t.height / 2)?.closest("[data-testid=detail]"); })).toBe(true);
+  await s.getByTestId("detail-to-map").click();
+  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
   // 別の概念を選ぶと少しの段から
   await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-poisson");
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
@@ -1296,7 +1298,7 @@ test("値の表の実験室：横は値に比例し、▲（期待値）と予�
   // ▲・予想の線がその直線の 38 円・予想の値に立つかを見る（画面の計算式は使わない）。既存のテストは ▲ の有無だけを見ていた
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${W0}&c=stats2:TERM-expect`);
-  await fullSheet(page);
+  // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
   await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   const x = page.getByTestId("experiment");
@@ -1317,7 +1319,7 @@ test("実験室の基本の面は型どおり：式は記号を押せる・本�
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [cid, eid, mainName, related] of [["TERM-binom", "EXP-binom-p", "二項分布", ["期待値"]], ["TERM-expect", "EXP-expect-table", "期待値", []]] as const) {
     await page.goto(`./?${W0}&c=stats2:${cid}`);
-    await fullSheet(page);
+    // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
     await page.getByTestId("tabbar").getByRole("link", { name: /^実験室/ }).click();
     await page.getByTestId(`open-stats2:${eid}`).click();
     await page.getByTestId("experiment").getByRole("button", { name: "基本と用語" }).click();
