@@ -169,3 +169,50 @@ test("つながりの地図：置き場所で種類が分かり、点を選ぶ�
   await expect(dig).toHaveCount(0);
   expect(errs).toEqual([]);
 });
+
+// 確かめる対象：前提のつながりが効く式の部品を光らせる（関係の focus。#188 07c）。想定する故障：部品の番号と式の木の位置がずれて、違う部品が光る。
+// 見つけ方：組合せを選ぶと、光る部品が ₙCₖ（並び方の数）の1つだけ、独立を選ぶと成功・失敗の2つ。既存の「つながりの地図」のテストは問いと段だけを見る
+test("前提のつながりを選ぶと、二項分布の式のどの部品で効くかを光らせる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByRole("radio", { name: "つながり" }).click();
+  await d.getByTestId("rel-node-stats2:REL-comb-binom").click();
+  const f = d.getByTestId("rel-focus");
+  await expect(f.locator('[data-on="1"]')).toHaveCount(1);
+  await expect(f.locator('[data-on="1"]')).toHaveAttribute("data-part", "0");
+  // 光っている所の字が ₙCₖ（C を含み p を含まない）。番号と木の位置がずれると pᵏ などが光る
+  const lit = (await f.locator('[data-on="1"] .katex-html, [data-on="1"]').first().textContent()) ?? "";
+  expect(lit).toContain("C");
+  expect(lit).not.toContain("p");
+  await expect(f).toContainText("並び方の数");
+  await d.getByTestId("rel-node-stats2:REL-indep-binom").click();
+  await expect(d.getByTestId("rel-focus").locator('[data-on="1"]')).toHaveCount(2);
+});
+
+// 確かめる対象：iPhone の幅で全体図（俯瞰）を開いたとき、名前の読める倍率から始まること（#194 の差の6）。
+// 想定する故障：全体を枠に収めて名前が読めない倍率（印だけ）になる・選んだ概念が枠の外に出る。
+// 見つけ方：倍率が読める倍率（0.9）以上で、選んだ点の位置が地図の枠の中。既存の LOD のテストは倍率ごとの見せ方だけを見る
+test("iPhone の幅で全体図を開くと、選んだ概念の近くを名前の読める倍率で見せる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom&view=all");
+  await page.waitForFunction(() => (window as any).kn?.nodes().length > 5);
+  await expect.poll(() => page.evaluate(() => (window as any).kn.zoom())).toBeGreaterThanOrEqual(0.9);
+  const inside = await page.evaluate(() => { const c = (window as any).kn, p = c.getElementById("stats2:TERM-binom").renderedPosition(); return p.x > 0 && p.y > 0 && p.x < c.width() && p.y < c.height(); });
+  expect(inside).toBe(true);
+});
+
+// 確かめる対象：解説・触るは全画面のページで開く（モック 07-2・07-5）。想定する故障：面の中に入れたまま（面の高さで切れる）・← で閉じない。
+// 見つけ方：解説のページの大きさが画面いっぱい、← で閉じる。既存の scene.spec は中身（段と数）を見る
+test("解説・触るは全画面のページで開き、← で閉じる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const m = page.getByTestId("media-concept");
+  await m.getByRole("radio", { name: /解説/ }).click();
+  const pg = page.getByTestId("labs-concept");
+  const b = (await pg.boundingBox())!;
+  expect(b.width).toBeGreaterThanOrEqual(389);
+  expect(b.height).toBeGreaterThanOrEqual(843);
+  await page.getByTestId("media-back").click();
+  await expect(pg).toHaveCount(0);
+});

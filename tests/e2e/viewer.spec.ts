@@ -308,21 +308,23 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   // 解説・触るは旧版のラボの iframe ではなく JS の部品（#192）
   await sw.getByRole("radio", { name: /解説/ }).click();
   await expect(figs).toHaveCount(0);
-  await expect(panel.getByTestId("tour")).toBeVisible();
-  await expect(panel.locator("iframe")).toHaveCount(0);
+  await expect(page.getByTestId("tour")).toBeVisible();   // 解説・触るは全画面のページで開く（#188 07）
+  await expect(page.locator("iframe")).toHaveCount(0);
+  await page.getByTestId("media-back").click();
   await sw.getByRole("radio", { name: /触る/ }).click();
-  await expect(panel.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pois");
+  await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pois");
+  await page.getByTestId("media-back").click();
   await sw.getByRole("radio", { name: /解説/ }).click();
-  await panel.getByTestId("tour-prev").click();   // 1段目の「やめる」で閉じる
-  await expect(panel.getByTestId("tour")).toHaveCount(0);
+  await page.getByTestId("tour-prev").click();   // 1段目の「やめる」で閉じる
+  await expect(page.getByTestId("tour")).toHaveCount(0);
   // 選んだ形（触る）を覚え、別の線も同じ形で開く
   await sw.getByRole("radio", { name: /触る/ }).click();
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
   await tab(page, /つながり/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると 正規分布/ }).click();
-  await expect(panel.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pmf");
-  await expect(panel.getByTestId("explore").getByTestId("exp-curve")).toBeVisible();   // s5-norm は正規分布の曲線を重ねた版
+  await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pmf");
+  await expect(page.getByTestId("explore").getByTestId("exp-curve")).toBeVisible();   // s5-norm は正規分布の曲線を重ねた版
 });
 
 test("つながりは「💡 つまり」を説明より先に出す（対比・変換）", async ({ page }) => {
@@ -357,6 +359,7 @@ test("切り替えの印は選んだ項目の上に滑って重なる", async ({
       expect(Math.abs(a!.x - b!.x)).toBeLessThan(1);
       expect(Math.abs(a!.width - b!.width)).toBeLessThan(1);
     }).toPass({ timeout: 2000 });
+    if (await page.getByTestId("media-back").count()) await page.getByTestId("media-back").click();   // 解説・触るは全画面で開くので戻る（#188 07）
   }
   await media.getByRole("radio", { name: /図/ }).click();   // もう一度押すと閉じ、印も消える
   await expect(mark).toHaveCSS("opacity", "0");

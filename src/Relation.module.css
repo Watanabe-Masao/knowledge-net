@@ -60,3 +60,4 @@
 .back::before { content: ""; position: absolute; inset: -4px; }
 .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .page { animation: none; } }
+.mediaPage { z-index: 50; }

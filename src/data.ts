@@ -22,7 +22,7 @@ export type FormulaNode =
 export type LabRef = { id: string; preset?: string; purpose?: string; title?: string; url: string; kind?: "tour" | "check";
   /** JS の部品で描く形（型の改訂27）。あれば iframe ではなく場面の部品で描く */ play?: import("@math-lab/ui").ScenePlay };
 export type FigRef = { id: string; url: string; caption?: string };
-export type Formula = { tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode; parts?: { path: number[]; name: string; meaning: string }[] };
+export type Formula = { id?: string; tex: string; label?: string; symbols?: Symbol[]; tree?: FormulaNode; parts?: { path: number[]; name: string; meaning: string }[] };
 export type Concept = {
   id: string; name: string; en?: string; status: "filled" | "skeleton" | "stub"; version: number;
   /** 定義1文と分類（骨格の段から。#105） */ short?: string; category?: string;
@@ -43,6 +43,7 @@ export type Relation = {
   derivation?: string; units: string[]; labs?: LabRef[]; figures?: FigRef[];
   /** 開いたときの段（型の改訂26）。対比は same・differ・so、変換は origin・operation・result */
   /** このつながりで考える問い（型の改訂28） */ question?: string;
+  /** このつながりが効く式の部品（型の改訂29） */ focus?: { formula: string; parts: number[] };
   stages?: { same?: string; differ?: string; so?: string; origin?: string; operation?: string; result?: string };
   /** 開いたときの図（型の改訂26）。数は engine から */
   chart?: { kind: "pair"; a: ChartDist; b: ChartDist; note?: string } | { kind: "normal"; n: number; p: number; note?: string };

@@ -3,8 +3,10 @@
 // 点を押すと、そのつながりを選ぶ（色と太さだけで示す。線を描き直す・点を流す・弾ませる動きは使わない：渡辺さん 2026-11-04「アニメーションが大袈裟」）。
 // 選んだつながりは、下に「問い → 段（解説）」で出す（RelDig）。
 import { Tour, sceneSupported } from "@math-lab/ui";
+import { nodeAt, toTex, type FormulaNode } from "@math-lab/engine";
+import katex from "katex";
 import { RelationOpen, Badges, relationParts } from "./Relation";
-import { type Network } from "./data";
+import { type Network, type Relation } from "./data";
 import st from "./Detail.module.css";
 
 export type MapRow = { id: string; other: string; tag?: string; der?: boolean };
@@ -77,8 +79,25 @@ export function RelDig({ net, id, onOpen, onClose }: { net: Network; id: string;
     <section className={st.dig} data-testid="rel-dig" aria-live="polite">
       <div className={st.digHead}><b className={st.digTitle}>{relationParts(net, r).text}</b><Badges net={net} r={r} /></div>
       {r.question && <p className={st.digQ} data-testid="rel-question">{r.question}</p>}
+      {r.focus && <FocusFormula net={net} r={r} />}
       {tour ? <Tour key={r.id} play={tour.play!} onDone={onClose} /> : r.stages || r.chart ? <RelationOpen net={net} r={r} context={`dig-${r.id}`} titled={false} /> : <p className={st.digText}>{r.gist ?? r.description}</p>}
       <button type="button" className={st.digOpen} onClick={() => onOpen(r.id)} data-testid="rel-dig-open">全画面で開く ›</button>
     </section>
+  );
+}
+
+/** つながりが効く式の部品を光らせる（関係の focus。式と部品の分け方は概念の原本から。#188 07c）。光らない部品は薄く */
+function FocusFormula({ net, r }: { net: Network; r: Relation }) {
+  const f = [r.from, r.to].flatMap((id) => net.concepts.get(id)?.formulas ?? []).find((x) => x.id === r.focus?.formula);
+  if (!f?.tree || !f.parts?.length || !r.focus) return null;
+  const nodes = new Map(f.parts.map((p, i) => [nodeAt(f.tree as FormulaNode, p.path), i] as const).filter(([n]) => !!n));
+  const on = new Set(r.focus.parts);
+  const tex = toTex(f.tree as FormulaNode, { symbols: f.symbols as never, data: (n) => (nodes.has(n) ? `part=${nodes.get(n)},on=${on.has(nodes.get(n)!) ? 1 : 0}` : undefined) });
+  let html = ""; try { html = katex.renderToString(tex, { throwOnError: false, trust: true, strict: false, displayMode: true }); } catch { /* 描けない式は出さない */ }
+  return (
+    <div className={st.focus} data-testid="rel-focus">
+      <div className={st.focusTex} dangerouslySetInnerHTML={{ __html: html }} />
+      <p className={st.focusNote}>{r.focus.parts.map((i) => f.parts![i]?.name).filter(Boolean).join("・")}：{r.focus.parts.map((i) => f.parts![i]?.meaning).filter(Boolean)[0]}</p>
+    </div>
   );
 }
