@@ -55,16 +55,16 @@ describe("原本の10の課題（手計算の値と照らす）", () => {
 describe("解き方の段（答えのあとに出す）", () => {
   // 確かめる対象：境目の前後を言う段が、1つ手前と答えの両方の値を、区別できる桁で言うこと（「±1%、±1%」のように同じに見えると、なぜその数かが伝わらない）
   it("最小の数を求める課題は、1つ手前と答えの値を別の値として言う", () => {
-    const last = (r: ReturnType<typeof solveApply>) => r.steps[r.steps.length - 1]!.text ?? "";
+    // 文は教材の apply_texts（stats2-course #211）。engine が穴に渡す値で見る
+    const last = (r: ReturnType<typeof solveApply>) => r.steps[r.steps.length - 1]!.vars;
     const a = last(solveApply({ method: "min-n-share-sd", p: 0.3, sd: 0.08 }));
-    expect(a).toContain("32 回では 8.1%（8% を超える）");
-    expect(a).toContain("33 回で 7.98%（8% 以下）");
+    expect([a.prev, a.sdPrev, a.sd, a.n, a.sdN]).toEqual(["32", "8.1%", "8%", "33", "7.98%"]);
     const c = last(solveApply({ method: "sets-for-error", n: 10, p: 0.3, event: { op: "ge", k: 4 }, err: 0.01, unit: 100 }));
-    expect(c).toContain("9,100 セットでは");
-    const [x, y] = [...c.matchAll(/±([\d.]+) ポイント/g)].map((m) => Number(m[1]));
-    expect(x).toBeGreaterThan(1);
-    expect(y).toBeLessThanOrEqual(1);
-    expect(last(solveApply({ method: "min-total", n: 10, ratio: 0.8, step: 2 }))).toMatch(/44 個では 0\.79 倍、46 個で 0\.8 倍/);
+    expect(c.prev).toBe("9,100");
+    expect(Number(c.sePrev)).toBeGreaterThan(1);   // ±ポイント（1 ポイントを超える）
+    expect(Number(c.seN)).toBeLessThanOrEqual(1);
+    const m = last(solveApply({ method: "min-total", n: 10, ratio: 0.8, step: 2 }));
+    expect([m.prev, m.fp, m.N, m.fN]).toEqual(["44", "0.79", "46", "0.8"]);
   });
 });
 
@@ -126,11 +126,14 @@ const onGrid = (x: number, v: { min: number; max: number; step: number }) => x >
 describe("解き方は 大元の公式 → 値を入れる → 計算の過程 → 答え（渡辺さん 2026-11-03）", () => {
   // 確かめる対象：結果だけを並べず、公式・代入・途中の値が段にあること。想定する故障：「P(X≧3)＝61.7%」のように途中のない段に戻る。見つけ方：B-02 で手計算の途中の値（₁₀C₃＝120・0.3³＝0.027・0.7⁷）が段に出るか
   it("B-02（境目）：公式・代入・₁₀C₃＝120・0.3³＝0.027・掛け算が段に出る", () => {
-    const all = solveApply({ method: "boundary", n: 10, p: 0.3, k: 3 }).steps.map((x) => `${x.title}|${x.tex ?? ""}|${x.text ?? ""}`).join("\n");
-    for (const want of ["大元の公式", "{}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}", "{}_{10}\\mathrm{C}_{3}\\times0.3^{3}\\times0.7^{7}", "\\dfrac{10\\times9\\times8}{3\\times2\\times1}=120", "0.3^{3}&=0.027", "120\\times0.027\\times0.08235", "26.7\\%"]) expect(all).toContain(want);
+    const steps = solveApply({ method: "boundary", n: 10, p: 0.3, k: 3 }).steps, all = steps.map((x) => x.tex ?? "").join("\n");
+    expect(steps.map((x) => x.tid)).toContain("boundary.formula");   // 大元の公式の段（題は教材の apply_texts）
+    for (const want of ["{}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}", "{}_{10}\\mathrm{C}_{3}\\times0.3^{3}\\times0.7^{7}", "\\dfrac{10\\times9\\times8}{3\\times2\\times1}=120", "0.3^{3}&=0.027", "120\\times0.027\\times0.08235", "26.7\\%"]) expect(all).toContain(want);
   });
   it("全部の課題に「大元の公式」の段がある", () => {
-    for (const t of TASKS) expect(solveApply(t).steps.some((x) => x.title.includes("大元の公式")), t.method).toBe(true);
+    // 大元の公式の段の文の型（題は教材の apply_texts。題に「大元の公式」が入るのは教材の側で確かめる）
+    const FORMULA = /\.formula$|^expected-observers\.one$|^sets-for-error\.prob$|^ratio\.mix$|^mech\.(mix|streak)$/;
+    for (const t of TASKS) expect(solveApply(t).steps.some((x) => FORMULA.test(x.tid)), t.method).toBe(true);
   });
 });
 

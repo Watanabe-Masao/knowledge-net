@@ -34,7 +34,7 @@ describe("応用の段の文の型", () => {
     const seen = new Set<string>();
     for (const s of CASES) for (const st of solveApply(s).steps) {
       const spec = APPLY_TEXT_SPEC[st.tid!];
-      expect(spec, `${s.method} の段「${st.title}」の文の型 ${st.tid} が表にない`).toBeDefined();
+      expect(spec, `${s.method} の段の文の型 ${st.tid} が表にない`).toBeDefined();
       expect(Object.keys(st.vars ?? {}).sort(), `${st.tid} の穴`).toEqual([...spec!.vars].sort());
       if (st.variant) expect(spec!.variants, `${st.tid} の別の言い方`).toContain(st.variant);
       for (const [w, list] of Object.entries(APPLY_TEXT_WORDS)) if (st.vars?.[w] !== undefined) expect(list, `${st.tid} の語の穴 ${w}`).toContain(st.vars[w]);
