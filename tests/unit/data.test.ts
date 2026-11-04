@@ -149,3 +149,36 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(r.net.concepts.size).toBeGreaterThan(0);
   });
 });
+
+// 確かめる対象：画面は、型の改訂より新しいデータ（画面が知らない任意の項目がある）を教材ごと外さず、知っている項目だけで表示する（stats2-course issue 207）。
+// 想定する故障：教材が画面より先に新しい改訂で公開すると、型の検査で教材ごと外れて本番が空になる（レビューで、見本に項目を1つ足すと概念20語が0語になった）・
+// 読み方をゆるめたせいで、本当に型の違うデータ（名前が数・式の木の形が違う）まで通る・知らない項目を消すつもりで、知っている項目（式の木）まで消す。
+// 見つけ方：見本の全体・概念・式の木に知らない項目を足しても概念の数が変わらず、警告が1つ出る。型の違うデータは今までどおり外れる。
+// 既存との違い：既存の「型」のテストは書き出す側の厳しい型（schemaErrors）だけを見ていた
+describe("型の改訂より新しいデータも、知っている項目だけで読む", () => {
+  const w0 = () => JSON.parse(readFileSync("public/sample/stats2-w0.json", "utf8"));
+  it("知らない項目があっても教材を外さず、式の木も消さない", () => {
+    const base = merge([{ id: "stats2", data: w0() }]);
+    expect(base.errors).toEqual([]);
+    const d = w0();
+    d.future_top = { a: 1 };
+    d.concepts[0].future_field = 1;
+    const f = d.concepts.find((c: { formulas?: { tree?: object }[] }) => c.formulas?.[0]?.tree).formulas[0];
+    const before = JSON.stringify(f.tree);
+    f.tree.future = 2;
+    const r = merge([{ id: "stats2", data: d }]);
+    expect(r.net.concepts.size).toBe(base.net.concepts.size);
+    expect(r.errors.length).toBe(1);
+    expect(r.errors[0]).toContain("知っている項目だけで表示");
+    const got = [...r.net.concepts.values()].flatMap((c) => c.formulas ?? []).find((x) => x.id === f.id)!;
+    const { future: _f, ...tree } = got.tree as Record<string, unknown>;
+    expect(JSON.stringify(tree)).toBe(before);   // 知っている形（式の木）は消えていない
+  });
+  it("本当に型の違うデータは今までどおり外す", () => {
+    const d = w0();
+    d.concepts[0].name = 123;
+    const r = merge([{ id: "stats2", data: d }]);
+    expect(r.net.concepts.size).toBe(0);
+    expect(r.errors[0]).toContain("型が合わない");
+  });
+});

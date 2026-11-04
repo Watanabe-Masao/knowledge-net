@@ -74,6 +74,13 @@ export const REVISION = (schema as { "x-revision"?: number })["x-revision"] ?? 1
 
 const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false });
 const validateCourse = ajv.compile(schema);
+/** 読むときの型（stats2-course issue 207）：知らない項目を拒む指定（additionalProperties: false）だけを外した写し。
+ *  教材が画面より先に新しい改訂（任意の項目の追加）で公開しても、教材ごと外さずに、知っている項目だけで表示する。
+ *  型は1か所のまま（元の型から作る）。Ajv の removeAdditional は、どれか1つに合う形（式の木など）の検査の途中で
+ *  知っている項目まで消すので使わない。書き出す側（教材の build）は元の厳しい型で検査する */
+export const relaxSchema = (x: unknown): unknown => Array.isArray(x) ? x.map(relaxSchema)
+  : x && typeof x === "object" ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, k === "additionalProperties" && v === false ? true : relaxSchema(v)])) : x;
+const validateRead = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false }).compile(relaxSchema(schema) as object);
 
 /** 型に合わなければ、どこが合わないかの一覧を返す（空なら合っている）。 */
 export function schemaErrors(data: unknown): string[] {
@@ -99,14 +106,14 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
   const net: Network = { courses: [], concepts: new Map(), relations: [], derivations: [], experiments: new Map(), units: new Map(), missing: new Set(), problems: [] };
   const errors: string[] = [];
   for (const { id, data } of list) {
-    const errs = schemaErrors(data);
-    if (errs.length) {
+    if (!validateRead(data)) {
+      const errs = (validateRead.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
       errors.push(`${id}：データの型が合わない（${errs.slice(0, 3).join("／")}${errs.length > 3 ? "…" : ""}）`);
       continue;
     }
     const d = data as CourseData;
-    if ((d.schema_revision ?? 1) > REVISION)
-      errors.push(`${id}：データの型の改訂（${d.schema_revision}）がこの画面（${REVISION}）より新しい。画面の更新を待つ（表示はできる範囲で行う）`);
+    if ((d.schema_revision ?? 1) > REVISION || schemaErrors(data).length)
+      errors.push(`${id}：データの型の改訂（${d.schema_revision ?? 1}）がこの画面（${REVISION}）より新しいか、画面が知らない項目がある。知っている項目だけで表示する（画面の更新を待つ）`);
     net.courses.push({ id: d.course.id, title: d.course.title });
     for (const u of d.course.units) net.units.set(u.id, u);
     for (const c of d.concepts) net.concepts.set(c.id, c);
