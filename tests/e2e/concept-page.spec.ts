@@ -1,6 +1,6 @@
 // 概念のページ（stats2-course #188 R1c：概要・つながりを実験室と同じ質に）。スマホの幅（390px）で見る。
 import { test, expect, type Page } from "@playwright/test";
-import { modelPmf } from "../../vendor/math-lab/packages/engine/src";
+import { modelPmf } from "../../math-lab/packages/engine/src";
 
 const URL = "./?src=sample/stats2-w0.json&c=stats2%3ATERM-binom";
 const noErrors = (page: Page) => { const errs: string[] = []; page.on("pageerror", (e) => errs.push(e.message)); return errs; };
