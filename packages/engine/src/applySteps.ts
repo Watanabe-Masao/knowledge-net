@@ -5,6 +5,8 @@
 import { mechanismMoments, modelPmf, fatigueP, mixSpread, type Mechanism } from "./lab";
 import { INT, NUM2, PCT0, PCT1, PCT2, PCT4, SIG3, formatApply as fa, texApply as tx } from "./applyFormat";
 import type { ApplyEvent, ApplySolve, ApplyStep } from "./apply";
+/** 割合どうしの差（ずれの目安）は「ポイント」で言う（stats2-course issue 199。% と書くと相対的な増え方と取り違える） */
+const pt = (x: number, f: Parameters<typeof fa>[1]) => fa(x, f).replace(/%$/, " ポイント");
 
 const f = (x: number, d = 4) => String(Number(x.toPrecision(d)));
 const EPS = 1e-12;
@@ -112,13 +114,13 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
       const fm = pmf(s.n, s.p), P = fm.reduce((t, x, k) => t + (inEv(s.event)(k) ? x : 0), 0), v = P * (1 - P), u = s.unit ?? 1;
       const exact = (4 * v) / (s.err * s.err), N = answer, se = (x: number) => 2 * Math.sqrt(v / x);
       return [
-        { title: "何を求めるか", text: `何セットも実験して「${s.event.k} 回${OPW[s.event.op]}」（n＝${s.n}・p＝${s.p}）になったセットの割合を数える。その割合と理論の確率とのずれの目安（±2 標準誤差）を ${fa(s.err, PCT0)} 以内にする、いちばん少ないセット数 N${u > 1 ? `（${u} セット単位）` : ""}。` },
+        { title: "何を求めるか", text: `何セットも実験して「${s.event.k} 回${OPW[s.event.op]}」（n＝${s.n}・p＝${s.p}）になったセットの割合を数える。その割合と理論の確率とのずれの目安（±2 標準誤差）を ${pt(s.err, PCT0)} 以内にする、いちばん少ないセット数 N${u > 1 ? `（${u} セット単位）` : ""}。` },
         { title: "理論の確率 P（大元の公式）", tex: "P(X=k)={}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}" },
         ...eventSteps(s.n, s.p, s.event),
         { title: "ずれの目安（大元の公式）", tex: al(["SE&=\\sqrt{\\dfrac{P(1-P)}{N}}", "\\text{目安}&=2\\times SE"]), text: "1セットごとに「当てはまる・当てはまらない」の 0 か 1。割合はその平均なので、標準誤差は √(P(1−P)÷N)。" },
         { title: "値を入れる", tex: al([`2\\sqrt{\\dfrac{${f(P)}\\times${f(1 - P)}}{N}}&\\le ${f(s.err)}`]) },
         { title: "計算する", tex: al([`${f(P)}\\times${f(1 - P)}&=${f(v)}`, `\\sqrt{\\dfrac{${f(v)}}{N}}&\\le ${f(s.err / 2)}`, `\\dfrac{${f(v)}}{N}&\\le ${f((s.err / 2) ** 2)}`, `N&\\ge ${f(v)}\\div${f((s.err / 2) ** 2)}`, `&=${f(exact, 6)}`]), text: "両辺を2で割り、2乗して √ を外し、N について解く。" },
-        { title: u > 1 ? `答え（${u} セット単位に切り上げる）` : "答え（整数に切り上げる）", text: `${fa(N, INT)} セット。確かめ：${fa(N - u, INT)} セットでは ±${fa(se(N - u), PCT4)}（${fa(s.err, PCT0)} を超える）、${fa(N, INT)} セットで ±${fa(se(N), PCT4)}（${fa(s.err, PCT0)} 以内）。` },
+        { title: u > 1 ? `答え（${u} セット単位に切り上げる）` : "答え（整数に切り上げる）", text: `${fa(N, INT)} セット。確かめ：${fa(N - u, INT)} セットでは ±${pt(se(N - u), PCT4)}（${pt(s.err, PCT0)} を超える）、${fa(N, INT)} セットで ±${pt(se(N), PCT4)}（${pt(s.err, PCT0)} 以内）。` },
       ];
     }
     case "binom-judge": {
@@ -136,7 +138,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
       const m = s.mechanism as Extract<Mechanism, { p: number }>, bv = m.n * m.p * (1 - m.p);
       const r = (x: number) => mechanismMoments({ ...m, [s.param]: x } as Mechanism).variance / bv;
       const next = Number((answer + s.step).toFixed(10));
-      const name = { carry: "引きずる強さ", spread: "ずれ幅 d", drop: "下がる幅 d" }[s.param];
+      const name = { carry: "引きずる強さ", spread: "ずれ幅 d", drop: "ずれ幅 d" }[s.param];
       return [
         { title: "何を求めるか", text: `分散が二項分布の ${f(s.ratio)} 倍以内なら近似してよいとする。そのときに許される、いちばん大きい${name}（${f(s.step)} 刻み）。` },
         ...ratioSteps(m, s.param, answer, bv, r),
