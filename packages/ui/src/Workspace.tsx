@@ -17,8 +17,12 @@ import {
 } from "@math-lab/engine";
 import { flash, haptic, reduced, tokenMs, useTween } from "./motion";
 import { useRunner } from "./runner";
+import { Seg } from "./QuestionParts";
 import type { FormulaData } from "./Formula";
 import s from "./Workspace.module.css";
+
+/** 部品の色（式の囲み・構造・計算で同じ。1つ目＝データの1色目…） */
+const PART_TINT = [s.tint0, s.tint1, s.tint2] as const;
 
 export type WorkspaceData = FormulaData & { parts?: FormulaPart[] };
 export type ValueTable = { id: string; name: string; icon?: string; unit?: string; values: number[]; weights: number[]; labels?: string[] };
@@ -366,6 +370,60 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
     return kept;
   }); };
 
+  // ---- 読み方（stats2-course #188 07b・03）：式を 意味（記号は何を表すか）・構造（部品に分ける）・計算（今の値を入れた部品ごとの値）で読む。
+  // 部品の分け方と意味は原本の式の parts、記号の意味は記号の表から（画面に手で書かない）。部品の色は3つの見方と式の囲みで同じ ----
+  const [readAs, setReadAs] = useState<"meaning" | "structure" | "calc">("meaning");
+  const valueSyms = [...new Set(symbolsIn(tree))].map((k) => symOf(k, symbols)).filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
+  const partList = parts.map((p, i) => ({ p, i, node: nodeAt(tree, p.path) })).filter((x): x is { p: FormulaPart; i: number; node: FormulaNode } => !!x.node);
+  const pickPart = (i: number) => { haptic(); setSel((x) => (x?.part === i && !x.sym ? null : { part: i })); };
+  const reading = () => {
+    if (!partList.length && !valueSyms.length) return null;
+    const items: ["meaning" | "structure" | "calc", string][] = [["meaning", "意味"], ...(partList.length ? [["structure", "構造"], ["calc", "計算"]] as ["structure" | "calc", string][] : [])];
+    const mode = items.some(([k]) => k === readAs) ? readAs : "meaning";
+    const tex = (n: FormulaNode) => render(toTex(n, { symbols }), false);
+    return (
+      <div className={s.read} data-testid="ws-read" data-mode={mode}>
+        {items.length > 1 && <Seg name="式の読み方" items={items} value={mode} onChange={setReadAs} />}
+        {mode === "meaning" && (
+          <ul className={s.symList} aria-label="記号は何を表すか">
+            {valueSyms.map((y) => (
+              <li key={y.key}><button type="button" className={s.symRow} aria-pressed={sel?.sym === y.key} onClick={() => pickSym(y.key)} data-testid={`ws-read-sym-${y.key}`}>
+                <span className={s.symRowSym}>{y.symbol}</span>
+                <span className={s.symRowText}><b>{y.meaning.split("（")[0]}</b></span>
+                <b className={s.symRowVal}>{fmt(values[y.key], 4)}</b>
+              </button></li>
+            ))}
+          </ul>
+        )}
+        {mode === "structure" && (
+          <div className={s.parts} role="group" aria-label="式の部品">
+            {partList.map(({ p, i, node }) => (
+              <button key={i} type="button" className={`${s.part} ${PART_TINT[i % PART_TINT.length]}`} aria-pressed={sel?.part === i} onClick={() => pickPart(i)} data-testid={`ws-read-part-${i}`}>
+                <span className={s.partTex} dangerouslySetInnerHTML={{ __html: tex(node) }} />
+                <b>{p.name}</b>
+                <span className={s.partMeaning}>{p.meaning}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {mode === "calc" && (
+          <div className={s.partVals} role="group" aria-label="部品ごとの今の値">
+            {partList.map(({ p, i, node }) => {
+              const v = evaluate(node, env);
+              return (
+                <button key={i} type="button" className={`${s.partVal} ${PART_TINT[i % PART_TINT.length]}`} aria-pressed={sel?.part === i} onClick={() => pickPart(i)} data-testid={`ws-read-val-${i}`} data-value={v}>
+                  <span className={s.partTex} dangerouslySetInnerHTML={{ __html: render(toTex(substitute(node, { values }), { symbols, num: short }), false) }} />
+                  <Tween className={s.partNum} v={v} show={(x) => fmt(x, 4)} />
+                  <span className={s.partName}>{p.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // ---- 帯：上から「かたまり」→「この中の記号」→「選んだ記号」。下の段を選んでも上の段は残る（パンくず） ----
   const strip = () => {
     if (!sel) return <div className={`${s.strip} ${s.stripEmpty}`} data-testid="ws-strip"><p className={s.hint}>{parts.length ? "式のかたまり（ₙCₖ・pᵏ など）を押すと、意味と今の値がここに出る。" : "式の記号を押すと、意味と今の値がここに出る。"}</p></div>;
@@ -478,12 +536,13 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
       )}</>}
       <div ref={wrap} className={s.stageWrap}>
         <div className={s.boxes} aria-hidden="true">
-          {boxes.map((b) => <span key={b.i} className={s.box} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
+          {boxes.map((b) => <span key={b.i} className={`${s.box} ${PART_TINT[b.i % PART_TINT.length]}`} data-part-tint={b.i} style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />)}
           {selBox && <span ref={selEl} className={s.boxSel} data-on={sel?.part !== undefined || undefined} style={{ left: selBox.x, top: selBox.y, width: selBox.w, height: selBox.h }} />}
         </div>
         <div ref={stage} className={s.stage} onClick={onStage} dangerouslySetInnerHTML={{ __html: html }} data-testid="ws-formula" />
       </div>
       {strip()}
+      {reading()}
       {(restKeys.length > 0 || opens.length > 1) && (
         <div className={s.tools}>
           {restKeys.map((k) => <button key={k} type="button" className={s.tool} onClick={() => close(k)} data-testid={`ws-close-${k}`}>{symOf(k, symbols)?.symbol ?? k} をたたむ</button>)}

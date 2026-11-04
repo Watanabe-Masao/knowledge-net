@@ -164,3 +164,25 @@
 .linear legend { padding: 0; font-size: 13.5px; font-weight: 600; }
 .linearOut { margin: 0; font-size: 13px; color: var(--ink-2); }
 .linearOut b { color: var(--ink); }
+/* 読み方（意味・構造・計算。stats2-course #188 07b）。部品の色は式の囲みと同じ */
+.tint0 { --tint: var(--data-1); }
+.tint1 { --tint: var(--accent); }
+.tint2 { --tint: var(--data-2); }
+.box.tint0, .box.tint1, .box.tint2 { background: color-mix(in srgb, var(--tint) 12%, transparent); box-shadow: inset 0 -1.5px 0 color-mix(in srgb, var(--tint) 55%, transparent); }
+.read { display: grid; gap: 8px; }
+.symList { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.symRow { all: unset; box-sizing: border-box; width: 100%; min-height: 44px; display: grid; grid-template-columns: 2.4em minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 12px; border-radius: var(--r-m); background: var(--surface-2); cursor: pointer; }
+.symRow[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); background: var(--accent-soft); }
+.symRow:focus-visible, .part:focus-visible, .partVal:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.symRowSym { font-family: var(--font-math, serif); font-style: italic; font-size: 19px; text-align: center; }
+.symRowText b { font-size: 14px; font-weight: 600; }
+.symRowVal { font-size: 15px; font-variant-numeric: tabular-nums; }
+.parts, .partVals { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.4em, 1fr)); gap: 6px; }
+.part, .partVal { all: unset; box-sizing: border-box; display: grid; justify-items: center; align-content: start; gap: 2px; padding: 8px 6px; border-radius: var(--r-m); text-align: center; cursor: pointer;
+  background: color-mix(in srgb, var(--tint) 12%, var(--surface)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 30%, transparent); }
+.part[aria-pressed="true"], .partVal[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--tint); }
+.part b { font-size: 13px; color: var(--ink); }
+.partMeaning { font-size: 11.5px; color: var(--ink-2); line-height: 1.45; text-align: left; }
+.partTex { font-size: 17px; min-height: 1.6em; display: grid; place-items: center; }
+.partNum { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+.partName { font-size: 11.5px; color: var(--ink-2); }
