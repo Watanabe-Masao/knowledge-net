@@ -17,7 +17,7 @@ import {
 } from "@math-lab/engine";
 import { flash, haptic, reduced, tokenMs, useTween } from "./motion";
 import { useRunner } from "./runner";
-import { Seg } from "./QuestionParts";
+import { Field, Seg } from "./QuestionParts";
 import type { FormulaData } from "./Formula";
 import s from "./Workspace.module.css";
 
@@ -373,6 +373,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   // ---- 読み方（stats2-course #188 07b・03）：式を 意味（記号は何を表すか）・構造（部品に分ける）・計算（今の値を入れた部品ごとの値）で読む。
   // 部品の分け方と意味は原本の式の parts、記号の意味は記号の表から（画面に手で書かない）。部品の色は3つの見方と式の囲みで同じ ----
   const [readAs, setReadAs] = useState<"meaning" | "structure" | "calc">("meaning");
+  const [band, setBand] = useState<string>("");   // 帯で開いている記号（初めは横軸の記号）
   const inTree = new Set(symbolsIn(tree));
   const valueSyms = [...(model.kind === "formula" ? [...vary, over] : []), ...inTree].filter((k, i, a) => a.indexOf(k) === i && inTree.has(k)).map((k) => symOf(k, symbols)).filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
   const partList = parts.map((p, i) => ({ p, i, node: nodeAt(tree, p.path) })).filter((x): x is { p: FormulaPart; i: number; node: FormulaNode } => !!x.node);
@@ -567,23 +568,25 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
           <div className={s.calcTex} data-testid="ws-calc-tex" dangerouslySetInnerHTML={{ __html: render(`${toTex(display(steps[shownStep]!), { symbols, num: short })}${shownStep < steps.length - 1 ? `=${toTex(display(steps[steps.length - 1]!), { symbols, num: short })}` : ""}`, false) }} />
         </div>
       )}
-      {/* 6 入力：パターン1＝記号のつまみ／パターン2＝値の表の行 */}
-      {model.kind === "formula" && <div className={s.sliders}>
-        {[...vary, over].map((k) => {
-          const sym = symOf(k); if (!sym) return null;
-          const r = sliderRange(sym, values, FALLBACK);
-          const fill = r.max > r.min ? ((values[k]! - r.min) / (r.max - r.min)) * 100 : 0;
-          return (
-            <label key={k} className={s.slider}>
-              <span className={s.sliderSym}>{sym.symbol}</span>
-              <span className={s.sliderName}>{sym.meaning.split("（")[0]}</span>
-              <b className={s.sliderVal}>{fmt(values[k], 2)}</b>
-              <input type="range" min={r.min} max={r.max} step={r.step} value={values[k]} onChange={(e) => set(k, Number(e.target.value))}
-                style={{ "--fill": `${fill}%` } as React.CSSProperties} aria-label={`${sym.symbol}（${sym.meaning}）`} data-testid={`ws-slider-${k}`} />
-            </label>
-          );
-        })}
-      </div>}
+      {/* 6 入力：パターン1＝実験室と同じ帯（値の出た札を押すと、その1本のつまみが札の上に出る。#188 07b）／パターン2＝値の表の行 */}
+      {model.kind === "formula" && (() => {
+        const keys = [...vary, over].filter((k) => symOf(k));
+        const cur = keys.includes(band) ? band : over;
+        const sym = symOf(cur)!, r = sliderRange(sym, values, FALLBACK);
+        return (
+          <div className={s.band} data-testid="ws-band">
+            <Field id={`ws-slider-${cur}`} label={`${sym.symbol}　${sym.meaning.split("（")[0]}`} value={values[cur]!} min={r.min} max={r.max} step={r.step}
+              show={(v) => fmt(v, 2)} onChange={(v) => set(cur, v)} />
+            <div className={s.bandChips} role="group" aria-label="動かす記号">
+              {keys.map((k) => (
+                <button key={k} type="button" className={s.bandChip} aria-pressed={k === cur} onClick={() => { haptic(); setBand(k); }} data-testid={`ws-chip-${k}`}>
+                  <i>{symOf(k)!.symbol}</i> {fmt(values[k], 2)}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       {model.kind === "table" && table && (
         <div className={s.rows} role="group" aria-label="値ごとの重み" data-testid="ws-rows">
           <div className={s.rowHead}><span>{transformed ? "y＝ax＋b" : "値 x"}</span><span>重み</span><span>確率</span></div>
