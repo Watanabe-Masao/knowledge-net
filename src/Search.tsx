@@ -34,7 +34,7 @@ export default function Search({ concepts, onPick }: Props) {
   };
   return (
     <div className={s.root}>
-      <input ref={input} type="search" className={s.field} placeholder="概念を探す（名前・英語名）" aria-label="概念を探す" value={q}
+      <input ref={input} type="search" className={s.field} placeholder="概念を検索（名前・英語名）" aria-label="概念を検索" value={q}
         role="combobox" aria-expanded={open} aria-controls={list} aria-autocomplete="list" aria-activedescendant={open && hits[at] ? `${list}-${at}` : undefined}
         onChange={(e) => { setQ(e.target.value); setOpen(true); setAt(0); }} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 120)} onKeyDown={onKey} />
       {open && (

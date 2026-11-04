@@ -64,7 +64,7 @@ function useDraws(values: number[], weights: number[]) {
 
 /** 反例：成り立つ条件を崩した表で、平均が落ち着くかを予想 → 引き続ける → 照らす。答えは表（モデル）の散らばりから */
 function TableCounter({ cx, unit, onConcept, name }: { cx: NonNullable<TableDef["counterexamples"]>[number]; unit: string; onConcept?: (id: string) => void; name: (id: string) => string }) {
-  const SETTLE = ["落ち着く", "揺れ続ける"] as const;
+  const SETTLE = ["落ち着く", "ばらつき続ける"] as const;
   const [guess, setGuess] = useState<number | undefined>();
   const { rec, run } = useDraws(cx.values, cx.weights);
   const mm = modelMoments(tbl(cx.values, cx.weights)), support = rec.support, theory = modelPmf(tbl(cx.values, cx.weights));
@@ -76,7 +76,7 @@ function TableCounter({ cx, unit, onConcept, name }: { cx: NonNullable<TableDef[
     <div className={s.cx} data-testid="exp-cx">
       <p className={s.how}><b>表</b>{shown}</p>
       <p className={s.h}>何度も引くと、平均は…</p>
-      <div className={s.choice} role="radiogroup" aria-label="反例の予想" style={{ gridTemplateColumns: "1fr 1fr" }}>
+      <div className={s.choice} role="radiogroup" aria-label="反例の予測" style={{ gridTemplateColumns: "1fr 1fr" }}>
         {SETTLE.map((t, i) => <button key={t} type="button" role="radio" aria-checked={guess === i} onClick={() => { haptic(); setGuess(i); }}>{t}</button>)}
       </div>
       {guess !== undefined && <>
@@ -87,11 +87,11 @@ function TableCounter({ cx, unit, onConcept, name }: { cx: NonNullable<TableDef[
         {rec.sets > 1 && <Replay rec={rec} theory={theory} labels={labelsFor(cx, support, unit)} unit={unit} per="回" />}
         {!enough ? <p className={s.muted}>あと {300 - rec.sets} 回で、表と照らす</p> : <>
           <div className={guess === answer ? s.ok : s.ng} data-testid="exp-cx-verdict">
-            <b>{guess === answer ? "✓ 予想どおり" : "✗ 予想と違った"}</b>　平均は{SETTLE[answer]}（期待値 {num3(mm.mean)}{unit}・標準偏差 {num3(Math.sqrt(mm.variance))}{unit}）
+            <b>{guess === answer ? "✓ 予測どおり" : "✗ 予測と違った"}</b>　平均は{SETTLE[answer]}（期待値 {num3(mm.mean)}{unit}・標準偏差 {num3(Math.sqrt(mm.variance))}{unit}）
           </div>
           <p className={s.breaks}>崩した条件：{cx.breaks}</p>
           <p className={s.note}>{cx.text}</p>
-          {cx.concept && onConcept && <button type="button" className={s.link} onClick={() => onConcept(cx.concept!)}>{name(cx.concept)} を見る</button>}
+          {cx.concept && onConcept && <button type="button" className={s.link} onClick={() => onConcept(cx.concept!)}>{name(cx.concept)} を開く</button>}
         </>}
       </>}
     </div>
@@ -185,17 +185,17 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
       </section>
       <section className={s.card}>
         <p className={s.h}>{theme.change}と、平均（▲）は…</p>
-        <div className={s.choice} role="radiogroup" aria-label="予想">
+        <div className={s.choice} role="radiogroup" aria-label="予測">
           {DIRS.map((d, i) => <button key={d} type="button" role="radio" aria-checked={pred.dir === i} onClick={() => { haptic(); chooseDir(i); }}>{d}</button>)}
         </div>
         <label className={s.peak}>
           <span>平均はいくつになる？<small className={s.muted}>　今は {r2(mStart)}{unit}</small></span><b>{r2(pred.value)}{unit}</b>
           <input type="range" min={lo} max={hi} step={step} value={pred.value} onChange={(e) => { const v = Number(e.target.value); setPred({ dir: dirOfV(v), value: v }); }}
-            style={{ "--fill": `${((pred.value - lo) / Math.max(1e-9, hi - lo)) * 100}%` } as CSSProperties} aria-label="予想する平均" />
+            style={{ "--fill": `${((pred.value - lo) / Math.max(1e-9, hi - lo)) * 100}%` } as CSSProperties} aria-label="予測する平均" />
         </label>
       </section>
     </>;
-    cta = <button type="button" className={s.primary} disabled={pred.dir === undefined} onClick={() => go(1)}>{pred.dir === undefined ? "まず予想を選ぶ" : "この予想で引いてみる"}</button>;
+    cta = <button type="button" className={s.primary} disabled={pred.dir === undefined} onClick={() => go(1)}>{pred.dir === undefined ? "まず予測を選ぶ" : "この予測で引いてみる"}</button>;
   } else if (stage === 1) {
     body = <>
       <section className={s.card}>
@@ -239,12 +239,12 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
     const notAValue = !theme.values.some((v) => Math.abs(v - mNext) < 1e-9);
     body = <>
       <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
-        <b>{ok ? "✓ 予想どおり" : "✗ 予想と違った"}</b>　平均は{DIRS[actual]}（期待値 {r2(mStart)} → <b>{r2(mNext)}</b>{unit}。予想は {r2(pred.value)}{unit}）
+        <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>　平均は{DIRS[actual]}（期待値 {r2(mStart)} → <b>{r2(mNext)}</b>{unit}。予測は {r2(pred.value)}{unit}）
         {notAValue && <span className={s.shape}>期待値の読み方：{r2(mNext)}{unit} は、表の中の値としては<b>一度も出ない</b>。「よく出る値」ではなく、何度も引いたときの平均の行き着く先</span>}
       </div>
       <section className={s.card}>
-        <div className={s.legend}><span><i className={s.kBarB} />前の表で引いた</span><span><i className={s.kBar} />変えた表で引いた</span><span><i className={s.kGhost} />前の表の確率</span><span><i className={s.kDot} />変えた表の確率</span><span><i className={s.kGuess} />あなたの予想</span></div>
-        <Bars freq={sum.freq} pair={sumB.freq} theory={thNext} ghost={thStart} labels={labels} at={support} marker={mNext} mark={pred.value} height={170} label="前と変えた表で引いた割合と表の確率と予想" />
+        <div className={s.legend}><span><i className={s.kBarB} />前の表で引いた</span><span><i className={s.kBar} />変えた表で引いた</span><span><i className={s.kGhost} />前の表の確率</span><span><i className={s.kDot} />変えた表の確率</span><span><i className={s.kGuess} />あなたの予測</span></div>
+        <Bars freq={sum.freq} pair={sumB.freq} theory={thNext} ghost={thStart} labels={labels} at={support} marker={mNext} mark={pred.value} height={170} label="前と変えた表で引いた割合と表の確率と予測" />
       </section>
       <div className={s.tiles}>
         <div data-testid="exp-tile-exp">平均（引いた）<b>{r2(sumB.mean)} → {r2(sum.mean)}{unit}</b><i>差 {r2((sum.mean ?? 0) - (sumB.mean ?? 0))}・各 {rec.sets} 回</i></div>
@@ -257,7 +257,7 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
     const shownStep = Math.min(si, Math.max(0, steps.length - 1));
     body = <>
       <section className={s.card}>
-        <p className={s.h}>{def.reason?.title ?? "式で確かめる"}<span>{steps.length > 1 ? `${shownStep + 1}／${steps.length}` : ""}</span></p>
+        <p className={s.h}>{def.reason?.title ?? "式で検証"}<span>{steps.length > 1 ? `${shownStep + 1}／${steps.length}` : ""}</span></p>
         {steps.length > 0 && <div className={s.math} data-testid="exp-expand" dangerouslySetInnerHTML={{ __html: tex(`${lhs}=${toTex(steps[shownStep]!, { symbols: reasonFormula?.symbols, num })}`) }} />}
         {steps.length > 1 && (
           <div className={s.two}>
@@ -291,7 +291,7 @@ export function TableLab({ def, reasonFormula, onConcept, conceptName, definitio
         </section>
       ) : null}
     </>;
-    cta = <button type="button" className={s.primary} onClick={() => go(5)} data-testid="exp-to-compare">自分で表を決めて比べる →</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(5)} data-testid="exp-to-compare">自分で表を決めて比較</button>;
   }
 
   return (

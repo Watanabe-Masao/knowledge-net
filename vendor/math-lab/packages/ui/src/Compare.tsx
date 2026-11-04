@@ -81,7 +81,7 @@ export function CompareStage({ deck, describe, editor, draft, unit = "", labels,
         <button type="button" className={s.secondary} onClick={() => save(20)} disabled={cards.length >= MAX_CARDS} data-testid="cmp-save-20">20セットで保存</button>
         <button type="button" className={s.primary} onClick={() => save(100)} disabled={cards.length >= MAX_CARDS} data-testid="cmp-save-100">▶ 100セットで保存</button>
       </div>
-      {cards.length >= MAX_CARDS && <p className={s.muted}>カードは {MAX_CARDS} 枚まで。いらないカードを × で消すと保存できる</p>}
+      {cards.length >= MAX_CARDS && <p className={s.muted}>カードは {MAX_CARDS} 枚まで。不要なカードを × で削除すると保存できる</p>}
     </section>
     <section className={s.card}>
       <p className={s.h}>記録カード<span>重ねて見るのは {MAX_SHOWN} つまで</span></p>
@@ -96,7 +96,7 @@ export function CompareStage({ deck, describe, editor, draft, unit = "", labels,
                   <span>{describe(c.mechanism)}<small>{c.sets} セット・平均 {num3(m.mean)}{unit}・種 {c.seed}</small></span>
                 </button>
                 <button type="button" className={s.cardDel} onClick={() => { haptic(); more(i, 100); }} aria-label={`${describe(c.mechanism)} をあと100セット`}>＋100</button>
-                <button type="button" className={s.cardDel} onClick={() => { haptic(); remove(i); }} aria-label={`${describe(c.mechanism)} を消す`}>×</button>
+                <button type="button" className={s.cardDel} onClick={() => { haptic(); remove(i); }} aria-label={`${describe(c.mechanism)} を削除`}>×</button>
               </div>
             );
           })}
@@ -105,11 +105,11 @@ export function CompareStage({ deck, describe, editor, draft, unit = "", labels,
     </section>
     {view.length > 0 && (
       <section className={s.card} data-testid="cmp-view">
-        <p className={s.h}>重ねて比べる</p>
+        <p className={s.h}>重ねて比較</p>
         <div className={s.legend}>{view.map((i, j) => <span key={i}><i className={`${s.kBar} ${SERIES[j]}`} style={{ opacity: 1 }} />{describe(cards[i]!.mechanism)}</span>)}</div>
         <Bars series={freqs.map((f) => [...f, ...Array(Math.max(0, len - f.length)).fill(0)])} labels={labels} height={150} label="選んだカードの実験の割合" />
         <table className={s.cmpTable} data-testid="cmp-table">
-          <thead><tr><th scope="col">条件</th><th scope="col">平均<small>実験（理論）</small></th><th scope="col">散らばり<small>実験（理論）</small></th></tr></thead>
+          <thead><tr><th scope="col">条件</th><th scope="col">平均<small>実験（理論）</small></th><th scope="col">ばらつき<small>実験（理論）</small></th></tr></thead>
           <tbody>
             {view.map((i, j) => {
               const m = summarize(recs[i]!), t = theoryOf(cards[i]!.mechanism);
@@ -123,7 +123,7 @@ export function CompareStage({ deck, describe, editor, draft, unit = "", labels,
             })}
           </tbody>
         </table>
-        <p className={s.note}>散らばりは分散（ずれの2乗の平均）。条件を1つずつ変えたカードを並べると、平均と散らばりがどう動くかの決まりが見えてくる。</p>
+        <p className={s.note}>ばらつきは分散（ずれの2乗の平均）。条件を1つずつ変えたカードを並べると、平均とばらつきがどう動くかの決まりが見えてくる。</p>
         {onShare && <button type="button" className={s.share} onClick={() => { onShare(); setCopied(true); setTimeout(() => setCopied(false), 2000); }} data-testid="cmp-share" aria-live="polite">{copied ? "✓ コピーした" : "この組を URL でコピー"}<span>開けば同じ結果に戻る</span></button>}
       </section>
     )}

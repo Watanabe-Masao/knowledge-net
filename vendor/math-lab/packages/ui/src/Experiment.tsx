@@ -109,7 +109,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
     onKeep: (m: CardMechanism) => deck.add({ mechanism: m, sets: 100, seed: Date.now() % 100000 }),
     workspace: qws ? (c: { n: number; p: number }, k: number) => <Workspace key={`${c.n}-${c.p}-${k}`} formula={qws.formula} mean={qws.mean} vary={qws.vary} over={qws.over} initial={{ n: c.n, p: c.p, [qws.over]: k }} definitions={props.definitions} onConcept={props.onConcept} conceptName={props.conceptName} experiment={false} /> : undefined,
     apply: item?.apply,
-    conceptLink: (id: string) => props.onConcept && <button type="button" className={s.link} onClick={() => props.onConcept!(id)}>{name(id)} を見る</button>,
+    conceptLink: (id: string) => props.onConcept && <button type="button" className={s.link} onClick={() => props.onConcept!(id)}>{name(id)} を開く</button>,
   };
   if (pick === null) {
     if (def.catalog?.length) {
@@ -117,14 +117,14 @@ function BinomEntry(props: Props & { def: BinomDef }) {
       const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1");   // stats2:binom-A-01 → A-01（まとまりの中の番号）
       const groups: MenuGroup[] = def.catalog.map((g) => ({ id: g.id, title: g.title, items: g.items.filter((it) => !it.retired).map((it): MenuItem => it.open ? { id: it.open, key: short(it.id), form: formOf(it.open), title: it.title } : { id: it.id, key: short(it.id), form: "shift", title: it.title, draft: true }) }));
       // 比べるは A〜F の後ろに、まとまりの1つとして置く（下に別のカードで重ねない。渡辺さん 2026-11-02）
-      groups.push({ id: "compare", title: "自分で条件を決めて比べる", note: `カード ${deck.cards.length} 枚`, items: [{ id: "compare", form: "compare", title: "自分で条件を決めて比べる", sub: `記録カード ${deck.cards.length} 枚。条件や起き方を変えて残し、4 つまで重ねる` }] });
+      groups.push({ id: "compare", title: "自分で条件を決めて比較", note: `カード ${deck.cards.length} 枚`, items: [{ id: "compare", form: "compare", title: "自分で条件を決めて比較", sub: `記録カード ${deck.cards.length} 枚。条件や起き方を変えて残し、4 つまで重ねる` }] });
       return <QuestionMenu title={def.title} groups={groups} group={grp ?? undefined} onGroup={setGrp} onPick={setPick} onBack={props.onBack} onInfo={() => setInfo(true)}>{infoSheet}</QuestionMenu>;
     }
     const items: MenuItem[] = [
       { id: "shift", form: "shift", title: def.question },
       ...(def.questions ?? []).map((q) => ({ id: q.id, form: q.form, title: q.title, sub: q.question })),
       ...(def.counterexamples?.length ? [{ id: "break", form: "break" as const, title: "成り立つ条件を崩してみる", sub: def.counterexamples.map((x) => x.name).join("・") }] : []),
-      { id: "compare", form: "compare", title: "自分で条件を決めて比べる", sub: `記録カード ${deck.cards.length} 枚。条件や起き方を変えて残し、4 つまで重ねる` },
+      { id: "compare", form: "compare", title: "自分で条件を決めて比較", sub: `記録カード ${deck.cards.length} 枚。条件や起き方を変えて残し、4 つまで重ねる` },
     ];
     return <QuestionMenu title={def.title} items={items} onPick={setPick} onBack={props.onBack} onInfo={() => setInfo(true)}>{infoSheet}</QuestionMenu>;
   }
@@ -168,10 +168,10 @@ function BinomCompare({ def, deck, onBack, onInfo, children }: { def: BinomDef; 
         {(["n", "p"] as const).map((key) => {
           const r = def.vary[key], v = d[key];
           return <label key={key} className={s.peak}><span>{key === "n" ? "回数 n" : "成功確率 p"}</span><b>{key === "p" ? r2(v) : v}</b>
-            <input type="range" min={r.min} max={r.max} step={r.step} value={v} onChange={(e) => setD({ ...d, [key]: Number(e.target.value) })} style={{ "--fill": `${((v - r.min) / (r.max - r.min)) * 100}%` } as CSSProperties} aria-label={`比べる条件の ${key}`} data-testid={`cmp-${key}`} /></label>;
+            <input type="range" min={r.min} max={r.max} step={r.step} value={v} onChange={(e) => setD({ ...d, [key]: Number(e.target.value) })} style={{ "--fill": `${((v - r.min) / (r.max - r.min)) * 100}%` } as CSSProperties} aria-label={`比較する条件の ${key}`} data-testid={`cmp-${key}`} /></label>;
         })}
         {sg && <label className={s.peak}><span>{sg[0]}</span><b>{d.x}</b><input type="range" min={sg[1]} max={sg[2]} step={sg[3]} value={d.x} onChange={(e) => setD({ ...d, x: Number(e.target.value) })} style={{ "--fill": `${((d.x - sg[1]) / (sg[2] - sg[1])) * 100}%` } as CSSProperties} aria-label={sg[0]} data-testid="cmp-x" /></label>}
       </div>} />
   </>;
-  return <LabShell title={def.title} question="自分で条件を決めて実験し、カードに残して重ねる" qLabel="比べる" stepper={false} stage={0} reached={0} go={() => {}} onBack={onBack} onInfo={onInfo} body={body} cta={null}>{children}</LabShell>;
+  return <LabShell title={def.title} question="自分で条件を決めて実験し、カードに残して重ねる" qLabel="比較" stepper={false} stage={0} reached={0} go={() => {}} onBack={onBack} onInfo={onInfo} body={body} cta={null}>{children}</LabShell>;
 }

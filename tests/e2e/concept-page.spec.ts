@@ -49,7 +49,7 @@ test("実験室への入口は下の主ボタン1つで、この概念に絞っ�
   await expect(d.getByTestId("detail-to-map"), "読んでも全画面にならない").toBeVisible();
   await d.locator("summary", { hasText: "なぜその形か" }).click();
   await expect(d.locator("details", { hasText: "なぜその形か" })).toHaveAttribute("open", "");
-  await expect(d.getByTestId("page-cta")).toHaveText(/実験室で確かめる/);
+  await expect(d.getByTestId("page-cta")).toHaveText(/実験室で検証/);
   await d.getByTestId("page-cta").click();
   await expect(page).toHaveURL(/t=lab/);
   await expect(page.getByTestId("page-lab")).toBeVisible();
@@ -61,7 +61,7 @@ test("実験室への入口は下の主ボタン1つで、この概念に絞っ�
 test("つながりは 前に知っておく・姿を変えると・比べる に分かれ、前提にも理由が出る", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
-  await page.getByTestId("detail").getByRole("radio", { name: "つながり" }).click();
+  await page.getByTestId("detail").getByRole("radio", { name: "関係" }).click();
   const g = (k: string) => page.getByTestId(`rel-group-${k}`);
   await expect(g("before")).toContainText("組合せ");
   await expect(g("before")).toContainText("同じ確率");
@@ -84,7 +84,7 @@ test("読むときは全画面のページ：下のタブに重なり、次の1�
   await d.getByTestId("concept-gist").click();
   await expect(d).toHaveAttribute("data-detent", "full");
   expect(await page.evaluate(() => { const t = document.querySelector("[data-testid=tabbar]")!.getBoundingClientRect(); return !!document.elementFromPoint(t.x + t.width / 2, t.y + t.height / 2)?.closest("[data-testid=detail]"); })).toBe(true);
-  await d.getByRole("radio", { name: "つながり" }).click();
+  await d.getByRole("radio", { name: "関係" }).click();
   await d.getByTestId("edge-list").getByRole("button", { name: /と 超幾何分布 を比べる/ }).click();
   const rel = page.getByTestId("edge-panel");
   await expect(rel).toHaveAttribute("data-detent", "full");
@@ -110,8 +110,10 @@ test("式の読み方：意味は記号と今の値、構造は部品と意味�
   await expect(r.getByTestId("ws-read-sym-k")).toContainText("3");
   await expect(r.getByTestId("ws-read-sym-n")).toContainText("10");
   await r.getByRole("radio", { name: "構造" }).click();
-  await expect(r.getByTestId("ws-read-part-0")).toContainText("並び方の数");
-  await expect(r.getByTestId("ws-read-part-2")).toContainText("失敗");
+  // 部品の名前と意味は式の真下の帯1か所だけ（構造に部品の札を重ねて置かない。渡辺さん 2026-11-04）
+  await expect(r.locator("[data-testid^=ws-read-part-]"), "構造に部品の説明が重なっている").toHaveCount(0);
+  await d.getByTestId("ws-formula").locator('[data-part="2"]').first().click();
+  await expect(d.getByTestId("ws-strip")).toContainText("失敗");
   await r.getByRole("radio", { name: "計算" }).click();
   const val = async (i: number) => Number(await r.getByTestId(`ws-read-val-${i}`).getAttribute("data-value"));
   expect(await val(0)).toBe(120);
@@ -146,9 +148,9 @@ test("並びを作ってみる：札を押すと成功の回数・1通りの確�
 
 // 確かめる対象：構造は「なぜこの式で確率になるか」の段（原本の式の why）で読み、段ごとに効く部品だけを強く見せる（#188。渡辺さん 2026-11-04）。
 // 補助として、結果を全部ならべ、事象（成功 k 回）に入る結果の行を強く見せる。
-// 想定する故障：段の部品の番号と式の囲み・札の対応がずれる（掛け算の段で組合せが光る）・段が進まない・前提が崩れたときの一言が出ない・
+// 想定する故障：段の部品の番号と式の囲みの対応がずれる（掛け算の段で組合せが光る）・段が進まない・前提が崩れたときの一言が出ない・
 // 結果の数え方の誤り（行の数が二項係数にならない・強く見せる行が k でない・n が大きいときの小さい例の切り替えの誤り）。
-// 見つけ方：段 1（部品なし）は何も薄くない、段 2 は成功・失敗の部品（1・2）だけ濃く組合せ（0）が薄い、段 4 は組合せだけ濃い。式の上の囲みも同じ。
+// 見つけ方：式の上の囲みで、段 1（部品なし）は何も薄くない、段 2 は成功・失敗の部品（1・2）だけ濃く組合せ（0）が薄い、段 4 は組合せだけ濃い。
 // 結果の行の数は手の値（n＝4：1・4・6・4・1、n＝5：1・5・10・10・5・1）と照らす。既存の「式の読み方」は部品の名前と値だけを見る
 test("構造：なぜこの式で求まるかを段で読み、段ごとに効く部品だけが濃い。結果を全部ならべ、成功 k 回の行を強く見せる", async ({ page }) => {
   const errs = noErrors(page);
@@ -159,12 +161,7 @@ test("構造：なぜこの式で求まるかを段で読み、段ごとに効�
   const r = d.getByTestId("ws-read");
   await r.getByRole("radio", { name: "構造" }).click();
   const w = r.getByTestId("ws-why");
-  const dim = async () => {
-    const card = await Promise.all([0, 1, 2].map(async (i) => (await r.getByTestId(`ws-read-part-${i}`).getAttribute("data-dim")) !== null));
-    const box = await Promise.all([0, 1, 2].map(async (i) => (await d.locator(`[data-part-tint="${i}"]`).getAttribute("data-dim")) !== null));
-    expect(box, "式の囲みと部品の札で、薄い部品が食い違う").toEqual(card);
-    return card;
-  };
+  const dim = async () => Promise.all([0, 1, 2].map(async (i) => (await d.locator(`[data-part-tint="${i}"]`).getAttribute("data-dim")) !== null));   // 式の上の囲み
   await expect(w.getByTestId("ws-why-no")).toHaveText("1 / 4");
   await expect(w.getByTestId("ws-why-title")).toContainText("結果の集まり");
   expect(await dim(), "部品を書かない段で部品が薄い").toEqual([false, false, false]);
@@ -216,7 +213,7 @@ test("つながりの地図：置き場所で種類が分かり、点を選ぶ�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "つながり" }).click();
+  await d.getByRole("radio", { name: "関係" }).click();
   const map = d.getByTestId("rel-map");
   const center = async (id: string) => { const b = (await map.getByTestId(`rel-node-stats2:${id}`).boundingBox())!; return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; };
   const mb = (await map.boundingBox())!, mid = { x: mb.x + mb.width / 2, y: mb.y + mb.height / 2 };
@@ -239,7 +236,7 @@ test("前提のつながりを選ぶと、二項分布の式のどの部品で�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "つながり" }).click();
+  await d.getByRole("radio", { name: "関係" }).click();
   await d.getByTestId("rel-node-stats2:REL-comb-binom").click();
   const f = d.getByTestId("rel-focus");
   await expect(f.locator('[data-on="1"]')).toHaveCount(1);

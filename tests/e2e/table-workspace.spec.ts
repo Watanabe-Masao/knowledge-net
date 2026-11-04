@@ -146,6 +146,6 @@ test("作業台に出した式は下の一覧に重ねて出さない", async ({
 test("埋め込みから作業台を開く経路を維持する", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 320 });
   await page.goto("./?src=sample/stats2.json&embed=1&c=stats2%3ATERM-expect");
-  await expect(page.getByRole("link", { name: "大きく開く ↗" })).toHaveAttribute("href", /TERM-expect/);
+  await expect(page.getByRole("link", { name: "拡大表示 ↗" })).toHaveAttribute("href", /TERM-expect/);
   expect(await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.scrollHeight])).toEqual([360, 320]);
 });
