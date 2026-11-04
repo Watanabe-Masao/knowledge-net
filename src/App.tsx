@@ -3,6 +3,7 @@
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
+import Bone from "./Bone";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
@@ -19,6 +20,7 @@ import { fromUrl, toUrl, type Tab, type View } from "./urlState";
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
 const SRC = params.get("src");
+const BONE = params.get("bone") === "1";   // 成り立ちのボーン（試作）：?bone=1&c=概念
 
 function useUrlState() {
   // 保存と復元は urlState.ts の1つの定義から（#142）
@@ -177,6 +179,11 @@ export default function App() {
   const positions = useMemo(() => (net && sel && (view === "around" || EMBED) && net.concepts.has(sel) ? neighborhood(net, sel) : undefined), [net, sel, view]);
   if (!net) return <main className={st.app}><Muted>読み込み中…</Muted>{errors.map((e) => <ErrorText key={e}>{e}</ErrorText>)}</main>;
   const concept = sel ? net.concepts.get(sel) : undefined;
+
+  if (BONE && concept) {
+    const href = (q: Record<string, string>) => `?${new URLSearchParams({ ...(SRC ? { src: SRC } : {}), ...q }).toString()}`;
+    return <main className={st.app}><Bone net={net} concept={concept} href={href} onBack={() => { location.href = href({ c: concept.id }); }} /></main>;
+  }
 
   if (EMBED) {
     const full = `${location.pathname}?${new URLSearchParams({ ...(sel ? { c: sel } : {}), ...(SRC ? { src: SRC } : {}) }).toString()}`;
