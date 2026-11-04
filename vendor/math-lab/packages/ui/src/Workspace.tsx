@@ -17,7 +17,7 @@ import {
 } from "@math-lab/engine";
 import { flash, haptic, reduced, tokenMs, useTween } from "./motion";
 import { useRunner } from "./runner";
-import { Seg } from "./QuestionParts";
+import { Field, Seg } from "./QuestionParts";
 import type { FormulaData } from "./Formula";
 import s from "./Workspace.module.css";
 
@@ -373,10 +373,13 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   // ---- 読み方（stats2-course #188 07b・03）：式を 意味（記号は何を表すか）・構造（部品に分ける）・計算（今の値を入れた部品ごとの値）で読む。
   // 部品の分け方と意味は原本の式の parts、記号の意味は記号の表から（画面に手で書かない）。部品の色は3つの見方と式の囲みで同じ ----
   const [readAs, setReadAs] = useState<"meaning" | "structure" | "calc">("meaning");
+  const [band, setBand] = useState<string>("");   // 帯で開いている記号（初めは横軸の記号）
   const inTree = new Set(symbolsIn(tree));
   const valueSyms = [...(model.kind === "formula" ? [...vary, over] : []), ...inTree].filter((k, i, a) => a.indexOf(k) === i && inTree.has(k)).map((k) => symOf(k, symbols)).filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
   const partList = parts.map((p, i) => ({ p, i, node: nodeAt(tree, p.path) })).filter((x): x is { p: FormulaPart; i: number; node: FormulaNode } => !!x.node);
   const pickPart = (i: number) => { haptic(); setSel((x) => (x?.part === i && !x.sym ? null : { part: i })); };
+  // 成功・失敗をくり返して数える式（二項分布：n 回・成功確率 p・成功の回数 k を横軸）だけ、並びを自分で作る札を出す
+  const seqOk = model.kind === "formula" && over === "k" && values.n !== undefined && values.p !== undefined && partList.length >= 3;
   const reading = () => {
     if (!partList.length && !valueSyms.length) return null;
     const items: ["meaning" | "structure" | "calc", string][] = [["meaning", "意味"], ...(partList.length ? [["structure", "構造"], ["calc", "計算"]] as ["structure" | "calc", string][] : [])];
@@ -396,6 +399,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
             ))}
           </ul>
         )}
+        {mode === "structure" && seqOk && <Sequence n={values.n!} k={values[over]!} p={values.p!} />}
         {mode === "structure" && (
           <div className={s.parts} role="group" aria-label="式の部品">
             {partList.map(({ p, i, node }) => (
@@ -567,23 +571,25 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
           <div className={s.calcTex} data-testid="ws-calc-tex" dangerouslySetInnerHTML={{ __html: render(`${toTex(display(steps[shownStep]!), { symbols, num: short })}${shownStep < steps.length - 1 ? `=${toTex(display(steps[steps.length - 1]!), { symbols, num: short })}` : ""}`, false) }} />
         </div>
       )}
-      {/* 6 入力：パターン1＝記号のつまみ／パターン2＝値の表の行 */}
-      {model.kind === "formula" && <div className={s.sliders}>
-        {[...vary, over].map((k) => {
-          const sym = symOf(k); if (!sym) return null;
-          const r = sliderRange(sym, values, FALLBACK);
-          const fill = r.max > r.min ? ((values[k]! - r.min) / (r.max - r.min)) * 100 : 0;
-          return (
-            <label key={k} className={s.slider}>
-              <span className={s.sliderSym}>{sym.symbol}</span>
-              <span className={s.sliderName}>{sym.meaning.split("（")[0]}</span>
-              <b className={s.sliderVal}>{fmt(values[k], 2)}</b>
-              <input type="range" min={r.min} max={r.max} step={r.step} value={values[k]} onChange={(e) => set(k, Number(e.target.value))}
-                style={{ "--fill": `${fill}%` } as React.CSSProperties} aria-label={`${sym.symbol}（${sym.meaning}）`} data-testid={`ws-slider-${k}`} />
-            </label>
-          );
-        })}
-      </div>}
+      {/* 6 入力：パターン1＝実験室と同じ帯（値の出た札を押すと、その1本のつまみが札の上に出る。#188 07b）／パターン2＝値の表の行 */}
+      {model.kind === "formula" && (() => {
+        const keys = [...vary, over].filter((k) => symOf(k));
+        const cur = keys.includes(band) ? band : over;
+        const sym = symOf(cur)!, r = sliderRange(sym, values, FALLBACK);
+        return (
+          <div className={s.band} data-testid="ws-band">
+            <Field id={`ws-slider-${cur}`} label={`${sym.symbol}　${sym.meaning.split("（")[0]}`} value={values[cur]!} min={r.min} max={r.max} step={r.step}
+              show={(v) => fmt(v, 2)} onChange={(v) => set(cur, v)} />
+            <div className={s.bandChips} role="group" aria-label="動かす記号">
+              {keys.map((k) => (
+                <button key={k} type="button" className={s.bandChip} aria-pressed={k === cur} onClick={() => { haptic(); setBand(k); }} data-testid={`ws-chip-${k}`}>
+                  <i>{symOf(k)!.symbol}</i> {fmt(values[k], 2)}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
       {model.kind === "table" && table && (
         <div className={s.rows} role="group" aria-label="値ごとの重み" data-testid="ws-rows">
           <div className={s.rowHead}><span>{transformed ? "y＝ax＋b" : "値 x"}</span><span>重み</span><span>確率</span></div>
@@ -694,5 +700,27 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
       </div>}
       </>}
     </section>
+  );
+}
+
+/** 並びを作ってみる（stats2-course issue 188 07b）：成功・失敗の札を押して並びを作り、その1通りの確率と、同じ成功の回数の並びの数を見る。
+ *  どの並びも確率が同じ（独立で毎回 p）こと、並びの数が ₙCₖ であることを、自分で作った並びから確かめる。n が 10 より大きいときは作らない */
+function Sequence({ n, k, p }: { n: number; k: number; p: number }) {
+  const [seq, setSeq] = useState<boolean[]>(() => Array.from({ length: n }, (_, i) => i < k));
+  useEffect(() => { setSeq(Array.from({ length: n }, (_, i) => i < k)); }, [n, k]);
+  if (n > 10) return <p className={s.hint} data-testid="ws-seq">n を 10 以下にすると、並びを自分で作れる。</p>;
+  const succ = seq.filter(Boolean).length;
+  const one = p ** succ * (1 - p) ** (n - succ);
+  let c = 1; for (let i = 1; i <= succ; i++) c = (c * (n - succ + i)) / i;
+  return (
+    <div className={s.seq} data-testid="ws-seq">
+      <div className={s.seqHead}><span className={s.muted}>並びを作ってみる（押すと成功・失敗が入れ替わる）</span><b data-testid="ws-seq-count">成功 {succ} 回</b></div>
+      <div className={s.seqRow}>{seq.map((x, i) => (
+        <button key={i} type="button" className={x ? `${s.seqItem} ${s.tint1}` : `${s.seqItem} ${s.tint2}`} aria-pressed={x} aria-label={`${i + 1} 回目：${x ? "成功" : "失敗"}`}
+          onClick={() => { haptic(); setSeq((q) => q.map((y, j) => (j === i ? !y : y))); }} data-testid={`ws-seq-${i}`}>{x ? "成" : "失"}</button>
+      ))}</div>
+      <p className={s.seqText}>この並びの確率 ＝ p<sup>{succ}</sup>(1−p)<sup>{n - succ}</sup> ＝ <b data-testid="ws-seq-one" data-value={one}>{fmt(one, 5)}</b><br />
+        成功 {succ} 回の並びは、どれも同じ確率。並びは全部で <b data-testid="ws-seq-ways" data-value={c}>{n}C{succ} ＝ {c} 通り</b>{succ === k ? "（いまの k の棒）" : ""}</p>
+    </div>
   );
 }

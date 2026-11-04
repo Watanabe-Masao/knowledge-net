@@ -118,8 +118,28 @@ test("式の読み方：意味は記号と今の値、構造は部品と意味�
   expect(await val(0)).toBe(120);
   expect(await val(1)).toBeCloseTo(0.027, 10);
   expect(await val(2)).toBeCloseTo(0.0823543, 7);
-  await d.getByTestId("ws-slider-k").fill("4");
+  await d.getByTestId("ws-chip-k").click(); await d.getByTestId("ws-slider-k").fill("4");
   await expect.poll(() => val(0)).toBe(210);
   expect(await val(1)).toBeCloseTo(0.0081, 10);
   expect(errs).toEqual([]);
+});
+
+// 確かめる対象：構造の「並びを作ってみる」（#188 07b）。想定する故障：成功と失敗の確率の取り違え（p と 1−p）・並びの数を n で数え直さない。
+// 見つけ方：n＝10・p＝0.3・k＝3 の初めの並び（成功 3 回）の確率が手の値 0.3³×0.7⁷＝0.0022235、並びの数が 120。1つを失敗にすると
+// 成功 2 回・0.3²×0.7⁸＝0.0051883・45 通りに変わる。既存の「式の読み方」は部品の値だけを見る
+test("並びを作ってみる：札を押すと成功の回数・1通りの確率・並びの数が変わる（手の値と照らす）", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByRole("radio", { name: "式" }).click();
+  await d.getByTestId("ws-read").getByRole("radio", { name: "構造" }).click();
+  const q = d.getByTestId("ws-seq");
+  const num = async (id: string) => Number(await q.getByTestId(id).getAttribute("data-value"));
+  await expect(q.getByTestId("ws-seq-count")).toHaveText("成功 3 回");
+  expect(await num("ws-seq-one")).toBeCloseTo(0.3 ** 3 * 0.7 ** 7, 10);
+  expect(await num("ws-seq-ways")).toBe(120);
+  await q.getByTestId("ws-seq-0").click();
+  await expect(q.getByTestId("ws-seq-count")).toHaveText("成功 2 回");
+  expect(await num("ws-seq-one")).toBeCloseTo(0.3 ** 2 * 0.7 ** 8, 10);
+  expect(await num("ws-seq-ways")).toBe(45);
 });

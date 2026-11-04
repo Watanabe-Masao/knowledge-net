@@ -35,7 +35,7 @@ const xOf = (v: number, values: number[]) => {
 test("型の欄は二項分布と同じ順に並ぶ（入力と図の棒の操作だけがパターンで替わる）", async ({ page }) => {
   // 故障：作業台ごとに欄の並び・部品がずれる（期待値だけ別の部品・別の順になっていた）。両方の作業台の欄の順を同じ物差しで読む
   const order = (w: Locator) => w.evaluate((el) => [...el.querySelectorAll("[data-testid]")].map((e) => e.getAttribute("data-testid")!)
-    .map((t) => ({ "ws-reset": "見出し", "ws-formula": "式", "ws-strip": "帯", "ws-result": "結果", "ws-calc": "計算過程", "ws-slider-n": "入力", "ws-rows": "入力", "ws-chart": "図", "ws-linear": "変換", "ws-exp": "実験" } as Record<string, string>)[t])
+    .map((t) => ({ "ws-reset": "見出し", "ws-formula": "式", "ws-strip": "帯", "ws-result": "結果", "ws-calc": "計算過程", "ws-band": "入力", "ws-rows": "入力", "ws-chart": "図", "ws-linear": "変換", "ws-exp": "実験" } as Record<string, string>)[t])
     .filter((t, i, a) => t && a.indexOf(t) === i));
   const expect1 = await order(await open(page));
   const binom = await order(await openSheet(page, "src=sample/stats2-w0.json", "TERM-binom"));
