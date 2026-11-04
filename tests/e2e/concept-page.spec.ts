@@ -71,3 +71,28 @@ test("つながりは 前に知っておく・姿を変えると・比べる に
   await expect(g("before")).not.toContainText("正規分布");
   await expect(page.getByTestId("rel-map")).toBeVisible();
 });
+
+// 確かめる対象：読むときの骨組みを実験室にそろえる（#188 07a・#194）。想定する故障：全画面にしても面が重なったまま（下のタブが押せる・地図が透ける）・
+// 次の1手が実験室の問いを開かない・つながりを開くと面が重なり、戻ると地図まで戻ってしまう。
+// 見つけ方：下のタブの中心の点がページの中か・次の1手で実験室のその問いの URL になるか・つながりのページの ← で概念のページ（全画面）に戻るか。
+// 既存との違い：上の「問いの札」のテストは札から開く。ここはページの骨組み（重ならない・次の1手・戻り先）
+test("読むときは全画面のページ：下のタブに重なり、次の1手で実験室の問いへ、つながりも全画面で ← で概念へ", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByTestId("concept-gist").click();
+  await expect(d).toHaveAttribute("data-detent", "full");
+  expect(await page.evaluate(() => { const t = document.querySelector("[data-testid=tabbar]")!.getBoundingClientRect(); return !!document.elementFromPoint(t.x + t.width / 2, t.y + t.height / 2)?.closest("[data-testid=detail]"); })).toBe(true);
+  await d.getByRole("radio", { name: "つながり" }).click();
+  await d.getByTestId("edge-list").getByRole("button", { name: /と 超幾何分布 を比べる/ }).click();
+  const rel = page.getByTestId("edge-panel");
+  await expect(rel).toHaveAttribute("data-detent", "full");
+  await rel.getByTestId("edge-back").click();
+  await expect(rel).toHaveCount(0);
+  await expect(d).toHaveAttribute("data-detent", "full");   // 地図ではなく概念のページへ戻る
+  await d.getByTestId("page-cta").click();
+  await expect(page).toHaveURL(/q=stats2%3Abinom-/);
+  await expect(page.getByTestId("experiment")).toBeVisible();
+  expect(errs).toEqual([]);
+});

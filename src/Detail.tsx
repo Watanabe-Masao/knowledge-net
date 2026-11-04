@@ -1,5 +1,5 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as RPE } from "react";
 import { Media, relationParts } from "./Relation";
 import { Bars, BottomSheet, Button, Card, Disclosure, Formula, Muted, Segmented, Workspace, TableWorkspace, type Detent } from "@math-lab/ui";
 import { modelPmf, modelMoments } from "@math-lab/engine";
@@ -124,7 +124,8 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   const reading = () => { if (sheet && sheet.detent !== "full") sheet.onDetent("full"); };
   const setTab = (t: Tab) => { setTabRaw(t); reading(); };
   // 少しの段で中身に触れたら、読むために上まで上げる（押した所の操作はそのまま）
-  const touch = () => { if (sheet && (sheet.detent === "peek" || sheet.detent === "min")) reading(); };
+  // 押す所（問いの札・開く段・ボタン）は、その操作をそのまま通す（全画面のページに切り替えると、押した所が入れ替わって押しても効かなかった。#188 07a）
+  const touch = (e: RPE) => { if ((e.target as HTMLElement).closest("button, a, summary, input, select")) return; if (sheet && (sheet.detent === "peek" || sheet.detent === "min")) reading(); };
   // この概念を主にする実験室の問い（問いの側で一元管理。#163）
   const qs = useMemo(() => [...net.experiments.values()].flatMap((x) => ("catalog" in x ? x.catalog ?? [] : []).flatMap((g) => g.items)
     .filter((it) => !it.retired && it.open && it.concept === c.id).map((it) => ({ x: x.id, id: it.id, title: it.title }))), [net, c.id]);
@@ -151,8 +152,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   ) : null;
   const head = <>
       <header className={st.head}>
-        {sheet?.detent === "full" && <button type="button" className={st.toMap} onClick={() => sheet.onDetent("peek")} data-testid="detail-to-map" aria-label="地図へ戻る">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>地図</button>}
+        {sheet?.detent === "full" && <button type="button" className={st.back} onClick={() => sheet.onDetent("peek")} data-testid="detail-to-map" aria-label="地図へ戻る">←</button>}
         <div className={st.titles}>
           <h2>{c.name}</h2>
           <Muted as="div" className={st.kicker}>{[c.category, units.map((u) => `U${u!.number}`).join(" ")].filter(Boolean).join("・")}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
@@ -252,6 +252,20 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
       </div>}
   </>;
   if (!sheet) return <Card data-testid="detail">{head}{rest}</Card>;
+  // 読むときは面を重ねず全画面のページ（実験室と同じ骨組み：上に「←・題・…」、中は指で送る、下に次の1手。stats2-course #188 07a・#194）
+  if (sheet.detent === "full") {
+    const next = qs[0];
+    return (
+      <section className={st.page} data-testid="detail" data-detent="full" role="region" aria-label={`${c.name} のページ`}>
+        <div className={st.pageHead}>{head}</div>
+        <div className={st.pageBody}>{rest}</div>
+        {next && onQuestion && <div className={st.pageBar}>
+          <Button variant="primary" className={st.pageCta} onClick={() => onQuestion(next.x, next.id)} data-testid="page-cta">この問いを実験室で確かめる</Button>
+          {qs.length > 1 && <Muted as="div" className={st.pageNote}>ほかの問い {qs.length - 1}</Muted>}
+        </div>}
+      </section>
+    );
+  }
   const peek = peekOut;
   // スマホ：地図の上に重なる下からの面。見出し・切り替え・定義が「少し」の段で見え、広げると面の残り全部で中身を送る（#42）
   return (
