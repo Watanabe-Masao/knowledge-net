@@ -150,7 +150,7 @@ test("並びを作ってみる：札を押すと成功の回数・1通りの確�
 // 補助として、結果を全部ならべ、事象（成功 k 回）に入る結果の行を強く見せる。
 // 想定する故障：段の部品の番号と式の囲みの対応がずれる（掛け算の段で組合せが光る）・段が進まない・前提が崩れたときの一言が出ない・
 // 結果の数え方の誤り（行の数が二項係数にならない・強く見せる行が k でない・n が大きいときの小さい例の切り替えの誤り）。
-// 見つけ方：式の上の囲みで、段 1（部品なし）は何も薄くない、段 2 は成功・失敗の部品（1・2）だけ濃く組合せ（0）が薄い、段 4 は組合せだけ濃い。
+// 見つけ方：式の上の囲みで、段 1（部品なし）は何も薄くない、段 2 は成功・失敗の部品（1・2）だけ濃く組合せ（0）が薄い、段 4（式全体を組み立てる段）は全部濃い。
 // 結果の行の数は手の値（n＝4：1・4・6・4・1、n＝5：1・5・10・10・5・1）と照らす。既存の「式の読み方」は部品の名前と値だけを見る
 test("構造：なぜこの式で求まるかを段で読み、段ごとに効く部品だけが濃い。結果を全部ならべ、成功 k 回の行を強く見せる", async ({ page }) => {
   const errs = noErrors(page);
@@ -171,7 +171,7 @@ test("構造：なぜこの式で求まるかを段で読み、段ごとに効�
   expect(await dim(), "掛け算の段で成功・失敗の部品だけが濃くない").toEqual([true, false, false]);
   await w.getByTestId("ws-why-next").click(); await w.getByTestId("ws-why-next").click();
   await expect(w.getByTestId("ws-why-no")).toHaveText("4 / 4");
-  expect(await dim(), "個数の段で組合せだけが濃くない").toEqual([false, true, true]);
+  expect(await dim(), "式全体を組み立てる段で、どれかの部品が薄い").toEqual([false, false, false]);
   await expect(w.getByTestId("ws-why-note")).toContainText("独立");
   await expect(w.getByTestId("ws-why-next")).toBeDisabled();
   // 結果を全部ならべる：n＝10 は並べきれないので n＝4 の小さい例（k＝3）
@@ -187,6 +187,32 @@ test("構造：なぜこの式で求まるかを段で読み、段ごとに効�
   await expect(o.getByTestId("ws-outs-row-2")).not.toHaveAttribute("data-on", "true");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
+});
+
+// 確かめる対象：説明（帯）の置き場所と、「なぜ」の段と式の色のつながり（渡辺さん 2026-11-04）。
+// 想定する故障：帯が式と見方の切り替えの間に戻る（式 → 切り替え → 説明 の順でない）・計算で部品の説明が札と二重に出る・
+// 段の文の部品の札・説明の帯が式の囲みと違う色になる・押しても部品が選ばれない。見つけ方：画面の縦の位置で順を比べ、計算では帯がないこと、
+// 段 2 の文の札（成功・失敗の部品）が式の囲みと同じ色の印（tint）を持ち、押すと帯にその部品の名前が出ることを見る。既存の「構造」のテストは段と囲みの濃さだけを見る
+test("説明は 式 → 見方の切り替え → 説明 の順。段の文の部品は式と同じ色の札で、押すとその部品を選ぶ", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByRole("radio", { name: "式" }).click();
+  const r = d.getByTestId("ws-read");
+  const y = async (l: import("@playwright/test").Locator) => (await l.boundingBox())!.y;
+  const ys = [await y(d.getByTestId("ws-formula")), await y(r.getByRole("radio", { name: "構造" })), await y(d.getByTestId("ws-strip"))];
+  expect(ys, "式 → 切り替え → 説明 の順でない").toEqual([...ys].sort((a, b) => a - b));
+  await r.getByRole("radio", { name: "構造" }).click();
+  await r.getByTestId("ws-why-next").click();
+  const chip = r.getByTestId("ws-why-part-1");
+  await expect(chip).toBeVisible();
+  const tint = async (l: import("@playwright/test").Locator) => (await l.getAttribute("class"))!.split(" ").find((c) => /tint\d/.test(c))!.replace(/^.*(tint\d).*$/, "$1");
+  expect(await tint(chip), "段の札と式の囲みで色が違う").toBe(await tint(d.locator('[data-part-tint="1"]')));
+  await chip.click();
+  await expect(d.getByTestId("ws-strip")).toContainText("全部成功");
+  expect(await tint(d.getByTestId("ws-strip")), "説明の帯が、選んだ部品と同じ色でない").toBe(await tint(chip));
+  await r.getByRole("radio", { name: "計算" }).click();
+  await expect(d.getByTestId("ws-strip"), "計算で部品の説明が札と二重に出る").toHaveCount(0);
 });
 
 // 確かめる対象：帯の札（記号と今の値）が1行に収まる（渡辺さんの iPhone で 2 行に割れた）。想定する故障：札の中で記号と値が改行する。
