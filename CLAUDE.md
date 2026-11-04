@@ -6,7 +6,7 @@
 
 ## 守ること
 
-1. **型は1か所**。`schema/kn-schema-v1.json` と `schema/relation-types.yaml` が元。画面は Ajv でこの JSON Schema をそのまま使う（型を書き写さない）。教材の側（stats2-course の docs/knowledge-net/schema/）は写しで、元とずれたら教材側のテストで止める。
+1. **型は1か所**。`schema/kn-schema-v1.json`（芯：概念・関係・導出・単元）・`schema/kn-experiment-v1.json`（実験室の拡張。芯とは別の改訂番号。stats2-course #211）・`schema/relation-types.yaml` が元。画面は Ajv でこの JSON Schema をそのまま使う（型を書き写さない）。教材の側（stats2-course の docs/knowledge-net/schema/）は写しで、元とずれたら教材側のテストで止める。
 2. **型を変えるときは版を考える**。任意の項目を足すのは v1 のまま、改訂番号（型の `x-revision`）を1つ上げて `schema/CHANGELOG.md` に書く。必須の項目・項目の意味を変えるなら v2 にし、教材側を先に対応させる。 画面は、知らない項目を拒む指定（additionalProperties: false）だけを外した型で読み、知らない項目は無視して表示する（教材が画面より先に新しい改訂で公開しても、教材ごと外さない。stats2-course #207）。書き出す側（教材の build）は元の厳しい型で検査する。項目の形を置き換えるとき（例：改訂24の walk）は v2 にするか、古い形も読める期間を置く
 3. **ラボはリンクと定義を分ける**。概念・関係が持つのはラボへの参照（`labs`）だけ。値・学習目標はラボの側（stats2-course の tools/）。開くのは共通の起動（src/Lab.tsx）。
 4. **画面は教材の原本を読まない**。各教材が公開した JSON（`public/courses.json` の一覧）だけを読む。

@@ -2,6 +2,7 @@
 // 型は schema/kn-schema-v1.json の1か所だけ（Ajv でそのまま検査する）。下の TypeScript の型はそれを写したもの。
 import Ajv2020 from "ajv/dist/2020";
 import schema from "../schema/kn-schema-v1.json";
+import experimentSchema from "../schema/kn-experiment-v1.json";
 import kinds from "./generated/relation-types.json";
 
 export type Symbol = {
@@ -60,7 +61,7 @@ export type Unit = { id: string; number: string; title: string; url?: string;
 /** 実験室の定義（型の改訂9。中身は math-lab の ExperimentDef と同じ形） */
 export type ExperimentData = import("@math-lab/ui").ExperimentDef;
 export type CourseData = {
-  schema: "kn-schema"; version: 1; schema_revision?: number;
+  schema: "kn-schema"; version: 1; schema_revision?: number; experiment_revision?: number;
   course: { id: string; title: string; units: Unit[] };
   concepts: Concept[]; relations: Relation[]; derivations: Derivation[]; experiments?: ExperimentData[];
 };
@@ -71,8 +72,12 @@ export const PREMISES = kinds.premises as Record<string, string>;
 
 /** この画面が知っている型の改訂番号（schema/kn-schema-v1.json の x-revision）。 */
 export const REVISION = (schema as { "x-revision"?: number })["x-revision"] ?? 1;
+/** この画面が知っている実験室の拡張の改訂番号（schema/kn-experiment-v1.json の x-revision。stats2-course issue 211） */
+export const EXPERIMENT_REVISION = (experimentSchema as { "x-revision"?: number })["x-revision"] ?? 1;
 
+// 型は芯（kn-schema-v1.json）と実験室の拡張（kn-experiment-v1.json）の2つ。芯の experiments が拡張を指し、拡張は芯の共通の部品を指す
 const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false });
+ajv.addSchema(experimentSchema);
 const validateCourse = ajv.compile(schema);
 /** 読むときの型（stats2-course issue 207）：知らない項目を拒む指定（additionalProperties: false）だけを外した写し。
  *  教材が画面より先に新しい改訂（任意の項目の追加）で公開しても、教材ごと外さずに、知っている項目だけで表示する。
@@ -80,7 +85,7 @@ const validateCourse = ajv.compile(schema);
  *  知っている項目まで消すので使わない。書き出す側（教材の build）は元の厳しい型で検査する */
 export const relaxSchema = (x: unknown): unknown => Array.isArray(x) ? x.map(relaxSchema)
   : x && typeof x === "object" ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, k === "additionalProperties" && v === false ? true : relaxSchema(v)])) : x;
-const validateRead = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false }).compile(relaxSchema(schema) as object);
+const validateRead = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false }).addSchema(relaxSchema(experimentSchema) as object).compile(relaxSchema(schema) as object);
 
 /** 型に合わなければ、どこが合わないかの一覧を返す（空なら合っている）。 */
 export function schemaErrors(data: unknown): string[] {
@@ -112,8 +117,8 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
       continue;
     }
     const d = data as CourseData;
-    if ((d.schema_revision ?? 1) > REVISION || schemaErrors(data).length)
-      errors.push(`${id}：データの型の改訂（${d.schema_revision ?? 1}）がこの画面（${REVISION}）より新しいか、画面が知らない項目がある。知っている項目だけで表示する（画面の更新を待つ）`);
+    if ((d.schema_revision ?? 1) > REVISION || (d.experiment_revision ?? 1) > EXPERIMENT_REVISION || schemaErrors(data).length)
+      errors.push(`${id}：データの型の改訂（芯 ${d.schema_revision ?? 1}・実験室 ${d.experiment_revision ?? 1}）がこの画面（芯 ${REVISION}・実験室 ${EXPERIMENT_REVISION}）より新しいか、画面が知らない項目がある。知っている項目だけで表示する（画面の更新を待つ）`);
     net.courses.push({ id: d.course.id, title: d.course.title });
     for (const u of d.course.units) net.units.set(u.id, u);
     for (const c of d.concepts) net.concepts.set(c.id, c);
