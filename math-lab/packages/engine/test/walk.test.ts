@@ -17,7 +17,7 @@ describe("解き方の公式の部品", () => {
       { id: "one", ref: "binom.pmf", bind: { n: "n", k: "k", p: "p" } },
       { id: "all", ref: "binom.mean", bind: { n: "N", p: "one" } },
     ], { n: 10, k: 10, p: 0.7, N: 50 });
-    expect(out[0]!.rows[2]!.why).toContain("0 でない数の 0 乗は 1");
+    expect(out[0]!.rows[2]!.variant).toBe("zero");   // 失敗が 0 回（文は教材の walk_texts の別の言い方）
     expect(out[1]!.value).toBeCloseTo(50 * 0.0282475249, 9);
   });
   it("逆算と分散", () => {

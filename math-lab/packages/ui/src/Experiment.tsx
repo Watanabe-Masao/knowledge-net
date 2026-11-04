@@ -14,6 +14,7 @@ import { MeanQ, PathsQ, RepeatQ, VarQ } from "./ExperimentQuestion2";
 import type { FormulaData } from "./Formula";
 import { Workspace, type WorkspaceData } from "./Workspace";
 import s from "./Experiment.module.css";
+import { WalkTextsContext, type WalkTexts } from "./ApplyWalk";
 
 type Cond = { n: number; p: number };
 type Range = { min: number; max: number; step: number };
@@ -68,6 +69,8 @@ export type Props = {
   definitions?: (conceptId: string) => FormulaData[];
   /** 理由の段に置く式の作業台（概念の workspace と同じもの。今の条件の値で始める）。テーマ体系の問いでは workspaceOf を先に使い、なければこれ */
   workspace?: WsSpec;
+  /** 解き方の公式の文（教材の walk_texts。stats2-course #211） */
+  walkTexts?: WalkTexts;
   /** 概念の作業台を引く（stats2-course issue 171）：理由の段は、問いの主概念 → 関連概念の順で最初に作業台を持つ概念のものを出す */
   workspaceOf?: (conceptId: string) => WsSpec | undefined;
   /** 比べるの記録カード（URL の cmp。あれば比べるの段から開く）。issue 122 */
@@ -82,7 +85,9 @@ export type Props = {
 
 
 export function Experiment(props: Props) {
-  return props.def.model === "table" ? <TableLab {...props} def={props.def} /> : <BinomEntry {...props} def={props.def} />;
+  return <WalkTextsContext.Provider value={props.walkTexts}>
+    {props.def.model === "table" ? <TableLab {...props} def={props.def} /> : <BinomEntry {...props} def={props.def} />}
+  </WalkTextsContext.Provider>;
 }
 
 /** 二項分布の実験室（stats2-course issue 161）：入口「何を確かめたい？」から問いを選ぶ。どの問いも 予測→実験→観察→理由→応用。
