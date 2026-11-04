@@ -143,3 +143,10 @@
 .digOpen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .digHint { margin: 0; text-align: center; font-size: var(--fs-small); }
 @media (prefers-reduced-motion: reduce) { .dig { animation: none; } }
+
+/* つながりが効く式の部品（#188 07c）。光らない部品は薄く、光る部品は1つ目の部品の色の輪 */
+.focus { display: grid; gap: 4px; padding: 8px 10px; border-radius: var(--r-m); background: var(--surface-2); }
+.focusTex { overflow-x: auto; font-size: 17px; }
+.focusTex [data-on="0"] { opacity: .3; }
+.focusTex [data-on="1"] { background: color-mix(in srgb, var(--data-1) 14%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--data-1) 70%, transparent); border-radius: 6px; }
+.focusNote { margin: 0; font-size: var(--fs-small); color: var(--ink-2); line-height: 1.55; }

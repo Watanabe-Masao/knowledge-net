@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 1,
- "schema_revision": 28,
+ "schema_revision": 29,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -4804,7 +4804,13 @@
     "stats2:U14"
    ],
    "premise": "mathematical",
-   "question": "なぜ ₙCₖ を掛けるのか？"
+   "question": "なぜ ₙCₖ を掛けるのか？",
+   "focus": {
+    "formula": "F-binom-pmf",
+    "parts": [
+     0
+    ]
+   }
   },
   {
    "id": "stats2:REL-indep-binom",
@@ -4817,7 +4823,14 @@
     "stats2:U14"
    ],
    "premise": "mathematical",
-   "question": "なぜ並び1つの確率を掛け算で出せるのか？"
+   "question": "なぜ並び1つの確率を掛け算で出せるのか？",
+   "focus": {
+    "formula": "F-binom-pmf",
+    "parts": [
+     1,
+     2
+    ]
+   }
   },
   {
    "id": "stats2:REL-binom-poisson",

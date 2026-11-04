@@ -57,6 +57,8 @@ function textWidth(text: string, size: number, max: number): number {
 
 /** 縮めたときの点の見せ方（CLAUDE.md「画面の決まり」）：近い＝印＋名前、中くらい＝名前だけ、遠い＝印だけ。境目は iPhone で決める */
 export const LOD = { mid: 0.55, far: 0.32 };
+/** iPhone の幅で名前が読める倍率（名前の字がおよそ 10px）。全体図を開いたとき、これより小さく収まるなら選んだ概念の近くをこの倍率で見せる */
+const READ_ZOOM = 0.9;
 export const lodOf = (zoom: number): "near" | "mid" | "far" => (zoom < LOD.far ? "far" : zoom < LOD.mid ? "mid" : "near");
 
 const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -88,6 +90,8 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
   const padOf = () => Math.max(20, (tl.current?.offsetHeight ?? 0) + 16, (bl.current?.offsetHeight ?? 0) + 16);   // 左下の「線の見方」にも隠れないように
   const cy = useRef<Core | null>(null);
   const select = useRef(onSelect);
+  const selNow = useRef(selected);   // 作り直したときに、選んでいる概念の近くから見せるため
+  selNow.current = selected;
   select.current = onSelect;
   const edge = useRef(onEdge);
   edge.current = onEdge;
@@ -200,11 +204,20 @@ export default function Graph({ net, selected, highlight, hidden, positions, onS
     // （iPhone の Notion から開くと、作った時点では枠の大きさが決まっていないことがある）
     let touched = false;
     c.on("tapstart", () => { touched = true; });
-    const refit = () => { if (!touched && box.current) { c.resize(); c.fit(undefined, padOf()); } };
+    // 収める：全体を枠に収める。ただし iPhone の幅で全体図（俯瞰）を開いたとき、収めると名前が読めない倍率になるなら、
+    // 選んでいる概念を真ん中に、名前の読める倍率（READ_ZOOM）から見せる（#188 07・#194：俯瞰が読めない）。全体は指で縮めるか「収める」で
+    const fitView = () => {
+      c.fit(undefined, padOf());
+      const sel = selNow.current ? c.getElementById(selNow.current) : null;
+      if (!positions && !overview && sel?.nonempty() && (box.current?.clientWidth ?? 999) < 520 && c.zoom() < READ_ZOOM) {
+        c.zoom(READ_ZOOM); c.center(sel);
+      }
+    };
+    const refit = () => { if (!touched && box.current) { c.resize(); fitView(); } };
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(refit) : null;
     ro?.observe(box.current);
     document.fonts?.ready.then(refit);
-    c.fit(undefined, padOf());   // 最初は全体が見えるように（左上の操作の下から）
+    fitView();   // 最初は全体が見えるように（左上の操作の下から。iPhone の全体図は選んだ概念の近くを読める倍率で）
     applyLod();
     // 周辺図（位置を指定して並べたとき）は、最初に線が描かれないことがある（Cytoscape 3.34）。線の見た目を一度変えて戻し、描き直させる
     const redraw = () => c.edges().style("arrow-scale", 0.91).removeStyle("arrow-scale");

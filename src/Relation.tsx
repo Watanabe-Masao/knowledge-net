@@ -3,6 +3,7 @@
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
 // 手触り：切り替えと前後の図は change() で、変わる所（この欄）だけを短くつなぐ。
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Badge, Badges as BadgeRow, Bars, Button, Explore, Lightbox, Segmented, Tour, change, sceneSupported } from "@math-lab/ui";
 import { modelPmf, normalDensity, poissonPmf } from "@math-lab/engine";
 import s from "./Relation.module.css";
@@ -91,16 +92,21 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
           <div className={s.row}><Button variant="quiet" className={s.close} onClick={() => choose("")}>閉じる</Button></div>
         </div>
       )}
-      {lab && sceneSupported(lab.play) && (
-        /* JS の部品で描く（旧版のラボの iframe にしない。stats2-course #188 04b・#192）。解説は段ごと、触るは帯で動かす */
-        <div className={s.media} data-testid={`labs-${context}`} data-native="">
-          {lab.purpose && <p className={s.purpose}>{lab.purpose}</p>}
-          {value === "tour" ? <Tour key={lab.url} play={lab.play!} onDone={() => choose("")} /> : <Explore key={lab.url} play={lab.play!} />}
-          {value === "check" && checks.length > 1 && <div className={s.row}>{checks.map((c, i) => i !== ci && (
-            <Button key={c.url} variant="quiet" onClick={() => setCi(i)}>ほかの版</Button>
-          ))}</div>}
-        </div>
-      )}
+      {lab && sceneSupported(lab.play) && createPortal(
+        /* JS の部品で描く（旧版のラボの iframe にしない。issue 192）。解説・触るは面の中に入れず、全画面のページで開く（実験室と同じ骨組み。issue 188 07・モック 07-2・07-5）。
+           面（シート）の中は位置の基準が変わるので、body に出す。← で閉じて元の所へ戻る */
+        <section className={`${s.page} ${s.mediaPage}`} data-testid={`labs-${context}`} data-native="" role="region" aria-label={value === "tour" ? "解説" : "触って確かめる"}>
+          <div className={s.pageHead}>
+            <button type="button" className={s.back} onClick={() => choose("")} aria-label="戻る" data-testid="media-back">←</button>
+            <div className={s.pageTitle}><b>{lab.purpose ?? lab.title ?? (value === "tour" ? "解説" : "触って確かめる")}</b><span>{value === "tour" ? "解説" : "触って確かめる"}</span></div>
+          </div>
+          <div className={s.pageBody}>
+            {value === "tour" ? <Tour key={lab.url} play={lab.play!} onDone={() => choose("")} /> : <Explore key={lab.url} play={lab.play!} />}
+            {value === "check" && checks.length > 1 && <div className={s.row}>{checks.map((c, i) => i !== ci && (
+              <Button key={c.url} variant="quiet" onClick={() => setCi(i)}>ほかの版</Button>
+            ))}</div>}
+          </div>
+        </section>, document.body)}
       {lab && !sceneSupported(lab.play) && (
         <div className={`${s.media} ${s.lab}`} data-testid={`labs-${context}`}>
           {lab.purpose && <p className={s.purpose}>{lab.purpose}</p>}
