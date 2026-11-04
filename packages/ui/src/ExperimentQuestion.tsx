@@ -130,7 +130,9 @@ export function ApplyTask({ spec, onFit, state, names }: { spec: ApplySpec; onFi
   if (res instanceof Error) return <Card title="応用の課題"><p className={qs.note} role="alert">課題の条件がおかしい：{res.message}</p></Card>;
   const { r, c } = res, a = spec.answer, fmt = c.answerFormat;
   const pctIn = fmt?.kind === "pct" || fmt?.kind === "sig";   // % の課題は % の値で入れ、0〜1 に直して照らす
-  const shown = a.type === "choice" ? a.options[r.answer] ?? "—" : `${formatApply(r.answer, fmt!)}${pctIn ? "" : a.unit ?? ""}`;
+  // 確率どうしの差は「ポイント」で言う（stats2-course issue 199：割合の差を % と書くと、相対的な増え方と取り違える）。値の入れ方は % と同じ
+  const pctUnit = pctIn && a.type === "number" && a.unit === "ポイント" ? "ポイント" : "%";
+  const shown = a.type === "choice" ? a.options[r.answer] ?? "—" : pctIn ? formatApply(r.answer, fmt!).replace(/%$/, pctUnit === "%" ? "%" : ` ${pctUnit}`) : `${formatApply(r.answer, fmt!)}${a.unit ?? ""}`;
   const x = Number(val.replace(/[,，]/g, "")), xin = pctIn ? x / 100 : x;
   const ok = a.type === "choice" ? pick === String(r.answer) : val.trim() !== "" && answerMatches(xin, r.answer, fmt!, a.tol);
   const ready = a.type === "choice" ? pick !== "" : val.trim() !== "" && Number.isFinite(x);
@@ -140,7 +142,7 @@ export function ApplyTask({ spec, onFit, state, names }: { spec: ApplySpec; onFi
     {!done && <p className={qs.muted}>下のつまみを課題の値に合わせ、図や表から読み取って答える。</p>}
     {!done && (a.type === "choice"
       ? <Seg name="答え" items={a.options.map((o, i) => [String(i), o] as [string, string])} value={pick} onChange={setPick} />
-      : <label className={s.applyIn}><input type="number" inputMode="decimal" step="any" value={val} onChange={(e) => setVal(e.target.value)} aria-label="答え" data-testid="exp-apply-input" />{(pctIn ? "%" : a.unit) && <span>{pctIn ? "%" : a.unit}</span>}</label>)}
+      : <label className={s.applyIn}><input type="number" inputMode="decimal" step="any" value={val} onChange={(e) => setVal(e.target.value)} aria-label="答え" data-testid="exp-apply-input" />{(pctIn ? pctUnit : a.unit) && <span>{pctIn ? pctUnit : a.unit}</span>}</label>)}
     {!done ? <button type="button" className={s.primary} disabled={!ready} onClick={() => { haptic(); setDone(true); }} data-testid="exp-apply-check">答え合わせ</button>
       : <>
         <div className={ok ? s.ok : s.ng} data-testid="exp-apply-verdict" data-ok={String(ok)}>
@@ -609,7 +611,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
           note={`平均はどちらも ${r2(b.n * b.p)} の近くに落ち着くが、散らばりは別の値に落ち着いていく（条件どおり ${r2(vb)}・崩した ${r2(vm)}）。はじめの数セットでは、どちらが大きいかが入れ替わることもある。`} />
       </Card>
     </>;
-    cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ{["広く", "変わらず", "狭く"][ans]}なる？ 理由を考える</button>;
+    cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ{["広くなる", "変わらない", "狭くなる"][ans]}のか 理由を考える</button>;
   } else if (stage === 3) {
     body = <Card title={`崩した条件：${cx.breaks}`}><p className={qs.note} data-testid="exp-cx-text">{cx.text}</p><p className={qs.note}>二項分布の式（分散 np(1−p)）を使えるのは、各回が独立で、毎回同じ確率のときだけ。</p>{cx.concept && props.conceptLink?.(cx.concept)}</Card>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "崩す強さを変える"}</button>;

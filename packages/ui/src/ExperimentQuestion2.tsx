@@ -206,7 +206,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
       {sel === "n" ? nField(props, app.n, (v) => setApp({ ...app, n: v, k: Math.min(app.k, v) }))
         : sel === "p" ? pField(app.p, (p) => setApp({ ...app, p }))
         : sel === "k" ? <Field id="exp-app-k" label={`k（${evText({ op: ev.op, k: 0 }).replace("0 ", "")}）`} value={e.k} min={0} max={app.n} step={1} show={(v) => `${v} 回`} onChange={(k) => setApp({ ...app, k })} />
-        : <Field id="exp-app-m" label="試す回数（セット数）m" value={app.m} min={10} max={2000} step={10} show={(v) => `${v.toLocaleString()} 回`} onChange={(v) => setApp({ ...app, m: v })} />}
+        : <Field id="exp-app-m" label="1回の実験のセット数 m" value={app.m} min={10} max={2000} step={10} show={(v) => `${v.toLocaleString()} セット`} onChange={(v) => setApp({ ...app, m: v })} />}
     </Dock>;
   }
   return <LabShell title={def.title} question={q.question} stage={stage} reached={reached} go={go} onBack={props.onBack} onInfo={props.onInfo} stages={STAGES_Q} body={body} cta={cta}>{props.children}</LabShell>;
