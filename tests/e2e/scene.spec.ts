@@ -37,7 +37,7 @@ test("解説：段ごとに状態が進み、注目する数が光り、最後�
 // 見つけ方：N を 20 → 21 にすると補正が手の値 (21−5)/(21−1)＝0.8。N を 5 に下げると当たり K（初めは6）が 5 に下がり、補正は 0。
 test("触る：帯で N を変えると数がその場で変わり、上限が追う", async ({ page }) => {
   const panel = await open(page);
-  await panel.getByRole("radio", { name: /触る/ }).click();
+  await panel.getByRole("radio", { name: /操作/ }).click();
   await expect(panel.locator("iframe")).toHaveCount(0);
   await expect(stat(panel, "fpc")).toHaveText("0.789");   // (20−5)/19
   await page.getByTestId("q-chip-N").click();

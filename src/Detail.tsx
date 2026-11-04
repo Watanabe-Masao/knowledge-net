@@ -30,6 +30,8 @@ type Props = {
   onEdge: (id: string) => void; edgeSel?: string | null;
   /** この概念を主にする実験室の問いを開く（stats2-course #188 05：概念から実験へ） */
   onQuestion?: (experiment: string, question: string) => void;
+  /** この概念で絞った実験室の一覧を開く（概念のページから実験室への入口は下の主ボタン1つ。渡辺さん 2026-11-04） */
+  onLab?: () => void;
   /** スマホでは下からの面にする（段と、下のタブの高さ） */
   sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
 };
@@ -86,7 +88,7 @@ function groupsOf(net: Network, id: string): Group[] {
   return Object.values(g).filter((x) => x.rows.length);
 }
 
-export default function Detail({ net, concept: c, inCompare, onCompare, onSelect, onEdge, edgeSel, onQuestion, sheet }: Props) {
+export default function Detail({ net, concept: c, inCompare, onCompare, onSelect, onEdge, edgeSel, onQuestion, onLab, sheet }: Props) {
   // 「少し」の段の高さ：見出し・定義・学ぶ行動がちょうど見える高さ（中身の量で変わるので測る）
   const headRef = useRef<HTMLDivElement>(null);
   const [peekH, setPeekH] = useState(240);
@@ -130,7 +132,6 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   // この概念を主にする実験室の問い（問いの側で一元管理。#163）
   const qs = useMemo(() => [...net.experiments.values()].flatMap((x) => ("catalog" in x ? x.catalog ?? [] : []).flatMap((g) => g.items)
     .filter((it) => !it.retired && it.open && it.concept === c.id).map((it) => ({ x: x.id, id: it.id, title: it.title }))), [net, c.id]);
-  const [allQ, setAllQ] = useState(false);
   const [pick, setPick] = useState<string | null>(null);   // つながりの地図で選んだつながり
   useEffect(() => { setPick(null); }, [c.id]);
   const chart = useMemo(() => {
@@ -173,13 +174,10 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
       {tab === "about" && <div className={st.pane} data-testid="tab-about" onPointerDown={touch}>
         {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
         <div ref={leadRef} className={st.lead}>
-          {(c.question || qs.length > 0) && <section className={st.ask} data-testid="concept-question">
+          {/* 問いは概念の問いの文だけ。実験室への入口は下の主ボタン1つ（同じ機能を2か所に置かない。渡辺さん 2026-11-04） */}
+          {c.question && <section className={st.ask} data-testid="concept-question">
             <span className={st.lab}>問い</span>
-            {c.question && <p className={st.askText}>{c.question}</p>}
-            {qs.length > 0 && <div className={st.qChips}>
-              {(allQ ? qs : qs.slice(0, 2)).map((q) => <button key={q.id} type="button" className={st.qChip} onClick={() => onQuestion?.(q.x, q.id)} data-testid={`concept-q-${q.id}`}>{LAB_ICON}{q.title}</button>)}
-              {!allQ && qs.length > 2 && <button type="button" className={st.qMore} onClick={() => setAllQ(true)} data-testid="concept-q-more">ほか {qs.length - 2} 問</button>}
-            </div>}
+            <p className={st.askText}>{c.question}</p>
           </section>}
           {c.gist && <section className={st.block} data-testid="concept-gist"><span className={st.lab}>つまり</span><p className={st.gist}>{c.gist}</p></section>}
           {!c.gist && c.short && c.definition ? <p className={st.short} data-testid="concept-short">{c.short}</p> : null}
@@ -247,20 +245,19 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
             </ul>
           </section>)}</div>
         </> : <Muted>まだつながりがない。</Muted>}
-        <Muted>押すと、下から説明（図・解説・触る）が開く。グラフの線を押すのと同じ。</Muted>
+        <Muted>押すと、下から説明（図・解説・操作）が開く。グラフの線を押すのと同じ。</Muted>
       </div>}
   </>;
   if (!sheet) return <Card data-testid="detail">{head}{rest}</Card>;
   // 読むときは面を重ねず全画面のページ（実験室と同じ骨組み：上に「←・題・…」、中は指で送る、下に次の1手。stats2-course #188 07a・#194）
   if (sheet.detent === "full") {
-    const next = qs[0];
+    const lab = qs.length > 0 && onLab;
     return (
       <section className={st.page} data-testid="detail" data-detent="full" role="region" aria-label={`${c.name} のページ`}>
         <div className={st.pageHead}>{head}</div>
         <div className={st.pageBody}>{rest}</div>
-        {next && onQuestion && <div className={st.pageBar}>
-          <Button variant="primary" className={st.pageCta} onClick={() => onQuestion(next.x, next.id)} data-testid="page-cta">この問いを実験室で確かめる</Button>
-          {qs.length > 1 && <Muted as="div" className={st.pageNote}>ほかの問い {qs.length - 1}</Muted>}
+        {lab && <div className={st.pageBar}>
+          <Button variant="primary" className={st.pageCta} onClick={onLab} data-testid="page-cta">{LAB_ICON} 実験室で確かめる</Button>
         </div>}
       </section>
     );

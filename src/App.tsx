@@ -261,13 +261,13 @@ export default function App() {
           ) : null}
         </>}
         bottomLeft={<>
-          <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `・${hidden.size} 種類を隠す` : ""}</button>
+          <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>線の見方{hidden.size ? `（${hidden.size} 種類を非表示中）` : ""}</button>
           {cmp.length ? <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>比べる {cmp.length}</button> : null}
         </>} />
       {concept && path ? <PathList net={net} target={concept.id} seq={path.seq} onOpen={(id) => { setView("around"); setSel(id); }}
         sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} /> :
         concept ? <Detail net={net} concept={concept} inCompare={cmp.includes(concept.id)}
-        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} onQuestion={(x, q) => setExp(x, q)} /> :
+        sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined} onCompare={() => { if (!cmp.includes(concept.id)) setCmp([concept.id]); setModal("pick"); }} onSelect={setSel} onEdge={setEdgeSel} edgeSel={edgeSel} onQuestion={(x, q) => setExp(x, q)} onLab={() => setTab("lab")} /> :
         null}
       {modal === "kinds" && (
         <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">

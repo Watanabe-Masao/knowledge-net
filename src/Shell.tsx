@@ -86,7 +86,7 @@ function FocusChip({ focus, on, onToggle }: { focus: Focus | null; on: boolean; 
   if (!focus) return null;
   return (
     <button type="button" className={s.focusChip} aria-pressed={on} onClick={onToggle} data-testid="focus-chip">
-      {on ? <>{focus.name} の分<span aria-hidden="true">✕</span></> : <>{focus.name} の分だけにする</>}
+      {on ? <>{focus.name} に絞り込み中<span aria-hidden="true">✕</span></> : <>{focus.name} に絞り込む</>}
     </button>
   );
 }

@@ -193,7 +193,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
     const mkS = fitS.mark({ n: app.n, p: app.p, k: app.k, m: app.m });
     body = <>
       {props.apply && <ApplyTask spec={props.apply} state={app} onFit={(at, mark) => { setApp({ n: at.n!, p: at.p!, k: at.k!, m: at.m! }); setSel("m"); fitS.setFit({ at, mark }); }} />}
-      <Card title={`${app.n} 回中 ${evText(e)}・${app.m.toLocaleString()} 回`} sub={`理論 ${pctSig(Pa)}`} testid="exp-app">
+      <Card title={`${app.n} 回中 ${evText(e)}・${app.m.toLocaleString()} セット`} sub={`理論 ${pctSig(Pa)}`} testid="exp-app">
         <div className={s.tiles}>
           <div>理論の確率<b>{pctSig(Pa)}</b><i>P</i></div>
           <div {...MK(mkS.read === "band")}>ゆれの目安 ±2SE<b data-testid="exp-app-band">{formatApply(Math.max(0, Pa - 2 * sa), PCT1)}〜{formatApply(Math.min(1, Pa + 2 * sa), PCT1)}</b><i>P±2√(P(1−P)÷m)</i></div>
@@ -206,7 +206,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
       {sel === "n" ? nField(props, app.n, (v) => setApp({ ...app, n: v, k: Math.min(app.k, v) }))
         : sel === "p" ? pField(app.p, (p) => setApp({ ...app, p }))
         : sel === "k" ? <Field id="exp-app-k" label={`k（${evText({ op: ev.op, k: 0 }).replace("0 ", "")}）`} value={e.k} min={0} max={app.n} step={1} show={(v) => `${v} 回`} onChange={(k) => setApp({ ...app, k })} />
-        : <Field id="exp-app-m" label="試す回数（セット数）m" value={app.m} min={10} max={2000} step={10} show={(v) => `${v.toLocaleString()} 回`} onChange={(v) => setApp({ ...app, m: v })} />}
+        : <Field id="exp-app-m" label="1回の実験のセット数 m" value={app.m} min={10} max={2000} step={10} show={(v) => `${v.toLocaleString()} セット`} onChange={(v) => setApp({ ...app, m: v })} />}
     </Dock>;
   }
   return <LabShell title={def.title} question={q.question} stage={stage} reached={reached} go={go} onBack={props.onBack} onInfo={props.onInfo} stages={STAGES_Q} body={body} cta={cta}>{props.children}</LabShell>;
