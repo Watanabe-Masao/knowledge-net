@@ -87,7 +87,7 @@ test("線の名前は選んだ概念の線だけに出る", async ({ page }) => 
 test("つながりから別の概念へ移る・教材へのリンク", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   const d = page.getByTestId("detail");
-  await tab(page, /つながり/);
+  await tab(page, /関係/);
   await d.getByTestId("rel-stats2:REL-binom-poisson").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
   await page.getByTestId("edge-panel").getByRole("button", { name: "ポアソン分布 へ" }).click();
   await expect(d.getByRole("heading", { name: "ポアソン分布", exact: true })).toBeVisible();
@@ -128,7 +128,7 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   await expect(full).toHaveCount(0);
   await expect(d.getByTestId("labs-concept")).toBeVisible();
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
-  await tab(page, /つながり/);
+  await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
   // 上で「触る」を選んだので、覚えた形（触る）で開いている
@@ -213,7 +213,7 @@ test("線を押すと下から説明が開き、閉じても選んだ概念は�
 
 test("つながり一覧からも同じ説明を開ける", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
-  await tab(page, /つながり/);
+  await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /超幾何分布 を変換すると 二項分布/ }).click();
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toContainText("集団 N を大きく");
@@ -269,7 +269,7 @@ test("周辺図では中心につながらない線を薄くし、説明を開�
   const faint = await page.evaluate(() => (window as any).kn.edges(".faint").map((e: any) => e.id()));
   expect(faint).toContain("stats2:REL-indep-geom");
   expect(faint).not.toContain("stats2:REL-indep-binom");
-  await tab(page, /つながり/);
+  await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /独立 は 二項分布 の前提/ }).click();
   await expect(page.locator("main")).toHaveClass(/has-panel/);
 });
@@ -294,7 +294,7 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
 test("図／解説／触る は切り替えて1つだけ出す。最初は図、選んだ形を覚える。一覧のカードは閉じておく", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-poisson`);
   await settle(page);
-  await tab(page, /つながり/);
+  await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /指数分布/ }).first().click();
   const panel = page.getByTestId("edge-panel");
   const sw = panel.getByTestId(/^media-panel-/);
@@ -321,7 +321,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await sw.getByRole("radio", { name: /操作/ }).click();
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
-  await tab(page, /つながり/);
+  await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると 正規分布/ }).click();
   await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pmf");
   await expect(page.getByTestId("explore").getByTestId("exp-curve")).toBeVisible();   // s5-norm は正規分布の曲線を重ねた版
@@ -330,7 +330,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
 test("つながりは「💡 つまり」を説明より先に出す（対比・変換）", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
-  await tab(page, /つながり/);
+  await tab(page, /関係/);
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 と ポアソン分布 を比べる/ }).click();
   const panel = page.getByTestId("edge-panel");
   const gist = panel.getByTestId("gist");
@@ -861,7 +861,7 @@ test("比べる（実験室に1か所）：起き方も選んでカードに残�
   await page.goto(url);
   await expect(x.getByTestId("cmp-card")).toHaveCount(2);
   await expect(x.getByTestId("cmp-table")).toHaveText(before!);
-  await x.getByTestId("cmp-card").nth(0).getByRole("button", { name: /を消す/ }).click();
+  await x.getByTestId("cmp-card").nth(0).getByRole("button", { name: /を削除/ }).click();
   await expect(page).not.toHaveURL(/b10_0\.5_/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
