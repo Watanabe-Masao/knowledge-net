@@ -117,7 +117,7 @@ test("読めないデータは知らせる", async ({ page }) => {
 test("概念と関係からラボを開く（図／解説／触る の切り替え）", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-std`);
   const d = page.getByTestId("detail");
-  await d.getByTestId("media-concept").getByRole("radio", { name: /触る/ }).click();
+  await d.getByTestId("media-concept").getByRole("radio", { name: /操作/ }).click();
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /host=kn/);   // ラボの中の「大きく開く ↗」は親に知らせる
   // 大きく開く：新しいタブではなく同じ画面の全面に出し、✕ で元の画面に戻る
@@ -132,7 +132,7 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ }).click();
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
   // 上で「触る」を選んだので、覚えた形（触る）で開いている
-  await expect(media.getByRole("radio", { name: /触る/ })).toHaveAttribute("aria-checked", "true");
+  await expect(media.getByRole("radio", { name: /操作/ })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByTestId("labs-panel-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute("src", /poisson\/\?p=s3-free&embed=1/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
 });
@@ -217,7 +217,7 @@ test("つながり一覧からも同じ説明を開ける", async ({ page }) => 
   await page.getByTestId("edge-list").getByRole("button", { name: /超幾何分布 を変換すると 二項分布/ }).click();
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toContainText("集団 N を大きく");
-  await expect(panel.getByRole("radio", { name: /触る/ })).toBeVisible();
+  await expect(panel.getByRole("radio", { name: /操作/ })).toBeVisible();
   await panel.getByRole("button", { name: "超幾何分布 へ" }).click();
   await expect(page.getByTestId("detail").getByRole("heading", { name: "超幾何分布", exact: true })).toBeVisible();
 });
@@ -298,7 +298,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await page.getByTestId("edge-list").getByRole("button", { name: /指数分布/ }).first().click();
   const panel = page.getByTestId("edge-panel");
   const sw = panel.getByTestId(/^media-panel-/);
-  await expect(sw.getByRole("radio")).toHaveText(["🖼 図 2", "▶ 解説", "🧪 触る"]);
+  await expect(sw.getByRole("radio")).toHaveText(["🖼 図 2", "▶ 解説", "🧪 操作"]);
   const figs = panel.getByTestId(/^figures-panel-/);
   await expect(figs.locator("img")).toHaveCount(1);
   await expect(figs).toContainText("1／2");
@@ -311,14 +311,14 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await expect(page.getByTestId("tour")).toBeVisible();   // 解説・触るは全画面のページで開く（#188 07）
   await expect(page.locator("iframe")).toHaveCount(0);
   await page.getByTestId("media-back").click();
-  await sw.getByRole("radio", { name: /触る/ }).click();
+  await sw.getByRole("radio", { name: /操作/ }).click();
   await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pois");
   await page.getByTestId("media-back").click();
   await sw.getByRole("radio", { name: /解説/ }).click();
   await page.getByTestId("tour-prev").click();   // 1段目の「やめる」で閉じる
   await expect(page.getByTestId("tour")).toHaveCount(0);
   // 選んだ形（触る）を覚え、別の線も同じ形で開く
-  await sw.getByRole("radio", { name: /触る/ }).click();
+  await sw.getByRole("radio", { name: /操作/ }).click();
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await settle(page);
   await tab(page, /つながり/);
@@ -338,7 +338,7 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
   // 面が開く動きの途中で2つの位置を別々に測ると、ずれて逆になることがある。同じ時点の位置で比べ、落ち着くまで待つ
   const desc = panel.getByText(/二項分布は回数に上限 n があり/);
   await expect.poll(async () => { const [g, d] = await Promise.all([gist.boundingBox(), desc.boundingBox()]); return g && d ? d.y - (g.y + g.height) : -1; }).toBeGreaterThanOrEqual(0);
-  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["▶ 解説", "🧪 触る"]);   // 図はその場で描くので、画像の図は出さない
+  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["▶ 解説", "🧪 操作"]);   // 図はその場で描くので、画像の図は出さない
   await expect(panel.getByTestId("rel-chart")).toBeVisible();
   await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
   await expect(panel.getByText("対比", { exact: false }).first()).toBeVisible();   // 種類は札で出す（括弧を重ねない）
@@ -351,7 +351,7 @@ test("切り替えの印は選んだ項目の上に滑って重なる", async ({
   await fullSheet(page);
   const media = page.getByTestId("media-concept");
   const mark = media.getByTestId("segmented-mark");
-  for (const name of [/触る/, /解説/, /図/]) {
+  for (const name of [/操作/, /解説/, /図/]) {
     const item = media.getByRole("radio", { name });
     await item.click();
     await expect(async () => {
@@ -375,7 +375,7 @@ test("押した瞬間に少し沈み、動きを減らす設定では動かな�
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(btn).toHaveCSS("transition-duration", /^0s/);
   const media = page.getByTestId("media-concept");
-  await media.getByRole("radio", { name: /触る/ }).click();   // 切り替えはすぐ変わる（View Transitions を使わない）
+  await media.getByRole("radio", { name: /操作/ }).click();   // 切り替えはすぐ変わる（View Transitions を使わない）
   await expect(page.getByTestId("labs-concept")).toBeVisible();
 });
 
@@ -603,7 +603,7 @@ test("線の見方は下から開く面で、種類を隠せる", async ({ page 
   await k.getByRole("checkbox").first().uncheck();
   await k.getByRole("button", { name: "説明を閉じる" }).click();
   await expect(k).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /線の見方・1 種類を隠す/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /線の見方（1 種類を非表示中）/ })).toBeVisible();
 });
 
 // 比べる（#42）：「ほかの概念と比べる」→ つながりのある概念から相手を選ぶ → そのまま比べる面が開く
@@ -1061,7 +1061,7 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   // 問題集：二項分布の問題だけ（17問）。札を押すと全部に戻る
   await bar.getByRole("link", { name: /^問題集/ }).click();
   const pp = page.getByTestId("page-problems");
-  await expect(pp.getByTestId("focus-chip")).toContainText("二項分布 の分");
+  await expect(pp.getByTestId("focus-chip")).toContainText("二項分布 に絞り込み中");
   let n = 0;   // 単元は1つずつ開く：開いて数える
   for (const u of await pp.locator("[data-testid^=unit-]").all()) {
     if ((await u.getAttribute("aria-expanded")) !== "true") await u.click();

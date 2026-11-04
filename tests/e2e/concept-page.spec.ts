@@ -37,23 +37,23 @@ test("概要の図は engine の値から描き、棒の高さが二項分布の
   expect(hs.indexOf(Math.max(...hs)), "いちばん高い棒が 3 回でない").toBe(3);
 });
 
-// 確かめる対象：概念から実験へ（05）・読むときは全画面（02）。想定する故障：問いの札が実験室のその問いを開かない・面が上まで上がらず地図に戻れない。
-// 見つけ方：問いの札を押して URL が実験室のその問いになるか、開いて読む段を開くと「地図」に戻るボタンが出て、押すと面が下がるかを見る
-test("問いの札は実験室のその問いを開き、読むと面が上まで上がって「地図」で戻れる", async ({ page }) => {
+// 確かめる対象：概念から実験室へ（05）・読むときは全画面（02）。概念のページから実験室への入口は下の主ボタン1つ（渡辺さん 2026-11-04：入口が重複）。
+// 想定する故障：主ボタンが実験室の一覧を開かない・一覧がこの概念で絞られていない・概要の中に問いの札（2つ目の入口）が戻る・面が上まで上がらず地図に戻れない。
+// 見つけ方：概要の中に実験室を開く札がないこと、主ボタンで実験室のタブ（この概念に絞った一覧）になること、開いて読む段を開くと「地図」に戻るボタンが出て、押すと面が下がるかを見る
+test("実験室への入口は下の主ボタン1つで、この概念に絞った一覧を開く。読むと面が上まで上がって「地図」で戻れる", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
+  await expect(d.locator("[data-testid^=concept-q-]"), "概要の中に実験室への2つ目の入口がある").toHaveCount(0);
   await d.getByTestId("concept-gist").click();   // 少しの段で中身に触れる
   await expect(d.getByTestId("detail-to-map"), "読んでも全画面にならない").toBeVisible();
   await d.locator("summary", { hasText: "なぜその形か" }).click();
   await expect(d.locator("details", { hasText: "なぜその形か" })).toHaveAttribute("open", "");
-  await d.getByTestId("detail-to-map").click();
-  await expect(d.getByTestId("detail-to-map")).toHaveCount(0);
-  const chip = d.locator("[data-testid^=concept-q-stats2]").first();
-  const qid = (await chip.getAttribute("data-testid"))!.replace("concept-q-", "");
-  await chip.click();
-  await expect(page).toHaveURL(new RegExp(`q=${encodeURIComponent(qid)}`));
-  await expect(page.getByTestId("experiment")).toBeVisible();
+  await expect(d.getByTestId("page-cta")).toHaveText(/実験室で確かめる/);
+  await d.getByTestId("page-cta").click();
+  await expect(page).toHaveURL(/t=lab/);
+  await expect(page.getByTestId("page-lab")).toBeVisible();
+  await expect(page.getByTestId("lab-sel-stats2:TERM-binom"), "一覧がこの概念で絞られていない").toBeVisible();
 });
 
 // 確かめる対象：つながりは種類ごとのまとまり（04）。想定する故障：変換・対比が「前に知っておく」に混ざる・前提の行に理由がない。
@@ -73,10 +73,10 @@ test("つながりは 前に知っておく・姿を変えると・比べる に
 });
 
 // 確かめる対象：読むときの骨組みを実験室にそろえる（#188 07a・#194）。想定する故障：全画面にしても面が重なったまま（下のタブが押せる・地図が透ける）・
-// 次の1手が実験室の問いを開かない・つながりを開くと面が重なり、戻ると地図まで戻ってしまう。
-// 見つけ方：下のタブの中心の点がページの中か・次の1手で実験室のその問いの URL になるか・つながりのページの ← で概念のページ（全画面）に戻るか。
+// 次の1手が実験室の一覧を開かない・つながりを開くと面が重なり、戻ると地図まで戻ってしまう。
+// 見つけ方：下のタブの中心の点がページの中か・次の1手で実験室の一覧になるか・つながりのページの ← で概念のページ（全画面）に戻るか。
 // 既存との違い：上の「問いの札」のテストは札から開く。ここはページの骨組み（重ならない・次の1手・戻り先）
-test("読むときは全画面のページ：下のタブに重なり、次の1手で実験室の問いへ、つながりも全画面で ← で概念へ", async ({ page }) => {
+test("読むときは全画面のページ：下のタブに重なり、次の1手で実験室へ、つながりも全画面で ← で概念へ", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
@@ -92,8 +92,7 @@ test("読むときは全画面のページ：下のタブに重なり、次の1�
   await expect(rel).toHaveCount(0);
   await expect(d).toHaveAttribute("data-detent", "full");   // 地図ではなく概念のページへ戻る
   await d.getByTestId("page-cta").click();
-  await expect(page).toHaveURL(/q=stats2%3Abinom-/);
-  await expect(page.getByTestId("experiment")).toBeVisible();
+  await expect(page.getByTestId("page-lab")).toBeVisible();
   expect(errs).toEqual([]);
 });
 

@@ -42,7 +42,7 @@ export function Badges({ net, r }: { net: Network; r: Relation }) {
 export const openLab = (url: string, title?: string) => window.dispatchEvent(new CustomEvent("kn:open-lab", { detail: { url, title } }));
 
 type MediaKey = "fig" | "tour" | "check";
-const LABEL: Record<MediaKey, string> = { fig: "🖼 図", tour: "▶ 解説", check: "🧪 触る" };
+const LABEL: Record<MediaKey, string> = { fig: "🖼 図", tour: "▶ 解説", check: "🧪 操作" };
 const KEY = "kn.media";
 const remembered = (): MediaKey | null => { try { return (localStorage.getItem(KEY) as MediaKey) || null; } catch { return null; } };
 const remember = (k: MediaKey) => { try { localStorage.setItem(KEY, k); } catch { /* 保存できない環境では覚えない */ } };
@@ -69,7 +69,7 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
   return (
     <div ref={box} data-testid={`media-${context}`}>
       <div className={s.switch}>
-        <Segmented value={value} onChange={choose} label="図・解説・触る"
+        <Segmented value={value} onChange={choose} label="図・解説・操作"
           items={have.map((k) => ({ value: k, label: `${LABEL[k]}${k === "fig" && figures!.length > 1 ? ` ${figures!.length}` : ""}` }))} />
       </div>
       {value === "fig" && f && (
@@ -95,10 +95,10 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
       {lab && sceneSupported(lab.play) && createPortal(
         /* JS の部品で描く（旧版のラボの iframe にしない。issue 192）。解説・触るは面の中に入れず、全画面のページで開く（実験室と同じ骨組み。issue 188 07・モック 07-2・07-5）。
            面（シート）の中は位置の基準が変わるので、body に出す。← で閉じて元の所へ戻る */
-        <section className={`${s.page} ${s.mediaPage}`} data-testid={`labs-${context}`} data-native="" role="region" aria-label={value === "tour" ? "解説" : "触って確かめる"}>
+        <section className={`${s.page} ${s.mediaPage}`} data-testid={`labs-${context}`} data-native="" role="region" aria-label={value === "tour" ? "解説" : "操作して確かめる"}>
           <div className={s.pageHead}>
             <button type="button" className={s.back} onClick={() => choose("")} aria-label="戻る" data-testid="media-back">←</button>
-            <div className={s.pageTitle}><b>{lab.purpose ?? lab.title ?? (value === "tour" ? "解説" : "触って確かめる")}</b><span>{value === "tour" ? "解説" : "触って確かめる"}</span></div>
+            <div className={s.pageTitle}><b>{lab.purpose ?? lab.title ?? (value === "tour" ? "解説" : "操作して確かめる")}</b><span>{value === "tour" ? "解説" : "操作して確かめる"}</span></div>
           </div>
           <div className={s.pageBody}>
             {value === "tour" ? <Tour key={lab.url} play={lab.play!} onDone={() => choose("")} /> : <Explore key={lab.url} play={lab.play!} />}
