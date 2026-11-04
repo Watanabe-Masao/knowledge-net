@@ -38,6 +38,34 @@ export type ApplySolve =
   /** 評価：2つの二項分布の分散 np(1−p) を比べる。answer は 0＝a が大きい・1＝ほぼ同じ（比 0.9〜1.1）・2＝b が大きい */
   | { method: "compare-var"; a: { n: number; p: number }; b: { n: number; p: number } };
 
+type ApplyMethod = ApplySolve["method"];
+type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
+type ReqKeys<T> = Exclude<{ [K in keyof T]-?: {} extends Pick<T, K> ? never : K }[keyof T], "method">;
+type OptKeys<T> = { [K in keyof T]-?: {} extends Pick<T, K> ? K : never }[keyof T];
+/** 課題の種類ごとの条件の項目と、選ぶ形の答えの選び肢の数（answer が番号）。教材の build が書き出した JSON（dist/contracts.json）で原本を確かめる（stats2-course #208）。
+ *  項目の名前は型（ApplySolve）から外れると型の検査で止まる */
+export const APPLY_FIELDS = {
+  "mean-to-p": { required: ["n", "mean"] },
+  "min-n-share-sd": { required: ["p", "sd"] },
+  "compare-eq": { required: ["a", "b"], choices: 3 },
+  boundary: { required: ["n", "p", "k"] },
+  "expected-observers": { required: ["n", "p", "event", "people"] },
+  "sets-for-error": { required: ["n", "p", "event", "err"], optional: ["unit"] },
+  "binom-judge": { required: ["mechanism"], choices: 2 },
+  "max-strength": { required: ["mechanism", "param", "min", "max", "step", "ratio"] },
+  "min-total": { required: ["n", "ratio"], optional: ["step"] },
+  "solve-spread": { required: ["n", "p", "variance"] },
+  mode: { required: ["n", "p"] },
+  "within-band": { required: ["P", "m", "x"], choices: 2 },
+  "linear-sum": { required: ["n", "p", "a", "b"] },
+  "compare-var": { required: ["a", "b"], choices: 3 },
+} as const satisfies { [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number } };
+// 項目の書き漏らしも型で止める（required・optional が型の項目とちょうど同じ）
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+type ListOf<M extends ApplyMethod, F extends "required" | "optional"> = (typeof APPLY_FIELDS)[M] extends { [P in F]: readonly (infer K)[] } ? K : never;
+const _fieldsComplete: { [M in ApplyMethod]: [Same<ListOf<M, "required">, ReqKeys<Of<M>>>, Same<ListOf<M, "optional">, OptKeys<Of<M>>>] } = {} as { [M in ApplyMethod]: [true, true] };
+void _fieldsComplete;
+
 /** 解き方の1段：題（何をする段か）・式（TeX）・文 */
 export type ApplyStep = { title: string; tex?: string; text?: string };
 export type ApplyResult = { answer: number; facts: Record<string, number>; steps: ApplyStep[] };
