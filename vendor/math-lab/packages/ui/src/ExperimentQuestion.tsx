@@ -17,7 +17,7 @@ type Op = "eq" | "ge" | "le";
 type Ev = { op: Op; k: number };
 export type BinomQuestion = NonNullable<BinomDef["questions"]>[number];
 export const STAGES_Q = ["予測", "実験", "観察", "理由", "応用"] as const;
-export const FORM_NAMES = { shift: "位置", spread: "広がり", prob: "確率の値", conv: "理論と実測", paths: "並び", repeat: "くり返し", mean: "平均", var: "ばらつき", break: "前提崩し", compare: "比べる" } as const;
+export const FORM_NAMES = { shift: "位置", spread: "広がり", prob: "確率の値", conv: "理論と実測", paths: "並び", repeat: "くり返し", mean: "平均", var: "ばらつき", break: "前提崩し", compare: "比較" } as const;
 /** id：開く入口、key：一覧の中の印（テーマ体系の B01 など。同じ入口を2つの問いが開くことがある）、draft：作成中（押せない） */
 export type MenuItem = { id: string; key?: string; form: keyof typeof FORM_NAMES; title: string; sub?: string; draft?: boolean };
 /** note：数の代わりに出す一言（比べるの「カード 6 枚」など）。id が1文字（A〜F）のときだけ印として出す */
@@ -107,7 +107,7 @@ export function RunButtons({ run, sets, need, go, big = 1000 }: { run: (c: numbe
 }
 export function Verdict({ ok, edge, head, big, children, testid = "exp-verdict" }: { ok: boolean; edge?: boolean; head?: string; big?: string; children: ReactNode; testid?: string }) {
   return <div className={ok ? s.ok : s.ng} data-testid={testid} data-ok={String(ok)}>
-    <b>{edge ? "△ ほぼ境目" : ok ? "✓ 予想どおり" : "✗ 予想と違った"}{head ? `　${head}` : ""}</b>
+    <b>{edge ? "△ ほぼ境目" : ok ? "✓ 予測どおり" : "✗ 予測と違った"}{head ? `　${head}` : ""}</b>
     {big && <span className={s.bigNum}>{big}</span>}
     <span className={s.shape} style={{ display: "block" }}>{children}</span>
   </div>;
@@ -183,10 +183,10 @@ export const MK = (on: boolean) => (on ? { className: s.tileMark, "data-mark": "
 export function AppExtra({ m, from, onKeep, desc }: { m: CardMechanism; from: string; onKeep: QProps["onKeep"]; desc: string }) {
   const [kept, setKept] = useState(false);
   return <>
-    <Card title="記録して比べる">
-      <p className={qs.muted}>今の条件（{desc}）で 100 セット起こしてカードに残す。カードは入口の「自分で条件を決めて比べる」で重ねて見る。</p>
-      <button type="button" className={s.secondary} onClick={() => { haptic(); onKeep(m, from); setKept(true); }} data-testid="exp-keep">この条件をカードに残す</button>
-      {kept && <p className={qs.muted} role="status">カードに残した。入口の「自分で条件を決めて比べる」で見る</p>}
+    <Card title="記録して比較">
+      <p className={qs.muted}>今の条件（{desc}）で 100 セット起こしてカードに保存する。カードは入口の「自分で条件を決めて比較」で重ねて見る。</p>
+      <button type="button" className={s.secondary} onClick={() => { haptic(); onKeep(m, from); setKept(true); }} data-testid="exp-keep">この条件をカードに保存</button>
+      {kept && <p className={qs.muted} role="status">カードに保存した。入口の「自分で条件を決めて比較」で見る</p>}
     </Card>
   </>;
 }
@@ -216,10 +216,10 @@ export function ShiftQ(props: QProps) {
           <b data-testid="exp-guess-peak">{guess === null ? "選ぶ" : `${guess} 回`}</b>
           <button type="button" aria-label="増やす" disabled={guess === next.n} onClick={() => setGuess(Math.min(next.n, (guess ?? k0) + 1))}>＋</button>
         </div>
-        <p className={qs.muted}>{guess === null ? "−／＋ で頂点を選ぶ" : ["山は左へ動くと予想", "山は動かないと予想", "山は右へ動くと予想"][dir(guess)]}</p>
+        <p className={qs.muted}>{guess === null ? "−／＋ で頂点を選ぶ" : ["山は左へ動くと予測", "山は動かないと予測", "山は右へ動くと予測"][dir(guess)]}</p>
       </Card>
     </>;
-    cta = <button type="button" className={s.primary} disabled={guess === null} onClick={() => go(1)}>{guess === null ? "まず予想を選ぶ" : "この予想で実験する"}</button>;
+    cta = <button type="button" className={s.primary} disabled={guess === null} onClick={() => go(1)}>{guess === null ? "まず予測を選ぶ" : "この予測で実験する"}</button>;
   } else if (stage === 1) {
     body = <>
       <Card title="いまの1セット" sub="前と後で同じ回数ずつ"><div className={s.lanes}><Lane tag={`前：p＝${pc(start.p)}`} last={A.last} n={start.n} theme={theme} testid="exp-set-before" cls={s.laneB} /><Lane tag={`後：p＝${pc(next.p)}`} last={B.last} n={next.n} theme={theme} testid="exp-set" cls={s.laneA} /></div></Card>
@@ -234,15 +234,15 @@ export function ShiftQ(props: QProps) {
       { label: "平均（前）", exp: summarize(A).mean, th: meanOf(f0), se: (2 * sdOf(f0)) / Math.sqrt(A.sets) },
       { label: "平均（後）", exp: summarize(B).mean, th: meanOf(f1), se: (2 * sdOf(f1)) / Math.sqrt(N) },
       { label: "頂点（後）", exp: peak(summarize(B).freq), th: k1, fmt: (v) => `${v} 回` },
-      { label: "散らばり（後）", exp: Math.sqrt(summarize(B).variance ?? NaN), th: sdOf(f1), se: (2 * sdOf(f1)) / Math.sqrt(2 * N) },
+      { label: "ばらつき（後）", exp: Math.sqrt(summarize(B).variance ?? NaN), th: sdOf(f1), se: (2 * sdOf(f1)) / Math.sqrt(2 * N) },
     ];
     body = <>
-      <Verdict ok={ok}>山は{["左へ動く", "動かない", "右へ動く"][dir(k1)]}。いちばん高いのは {k1} 回（予想は {guess} 回{guess === k1 ? "で、ぴったり" : ""}）。</Verdict>
+      <Verdict ok={ok}>山は{["左へ動く", "動かない", "右へ動く"][dir(k1)]}。いちばん高いのは {k1} 回（予測は {guess} 回{guess === k1 ? "で、ぴったり" : ""}）。</Verdict>
       <Card title="理論と実験" sub="差が目安の中か"><CompareTable rows={rows} /></Card>
       <Card title={`後（p＝${pc(next.p)}）の分布：実験と理論`} sub={`${N.toLocaleString()} セット`}><CompareRows counts={B.counts} sets={N} pmf={f1} inEvent={(k) => k === k1} /></Card>
       <Card title="平均の移り変わり" sub="何セット目までか（倍々）">
         <RunChart title="平均の移り変わり" ylab="ここまでの平均" series={[{ name: "前", path: runningMean(A.ks), th: meanOf(f0), se: (i) => (2 * sdOf(f0)) / Math.sqrt(i) }, { name: "後", path: runningMean(B.ks), th: meanOf(f1), se: (i) => (2 * sdOf(f1)) / Math.sqrt(i) }]}
-          note={`セット数が少ないうちは、平均が大きく揺れる。繰り返すほど、前は ${r2(meanOf(f0))}、後は ${r2(meanOf(f1))} の近くに落ち着く様子を見る。途中では、2本の線が近づいたり離れたりすることもある。`} />
+          note={`セット数が少ないうちは、平均が大きくばらつく。くり返すほど、前は ${r2(meanOf(f0))}、後は ${r2(meanOf(f1))} の近くに落ち着く様子を見る。途中では、2本の線が近づいたり離れたりすることもある。`} />
       </Card>
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ {r2(meanOf(f1))} が中心？ 理由を考える</button>;
@@ -254,7 +254,7 @@ export function ShiftQ(props: QProps) {
         </tbody></table>
         {def.reason?.steps.length ? <ol className={s.steps}>{def.reason.steps.map((t) => <li key={t}>{t}</li>)}</ol> : null}
       </Card>
-      {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる</p>{props.workspace(next, k1)}</section>}
+      {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を操作して検証</p>{props.workspace(next, k1)}</section>}
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "p を自由に変える"}</button>;
   } else {
@@ -288,11 +288,11 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
     body = <>
-      <Card title={`n を ${n0} から ${n1} に`} sub={`p＝${pc(p)}`}><p className={qs.muted}>成功の<b>回数</b>（何回成功したか）と、成功の<b>割合</b>（回数÷n）の、両方の散らばりを予想する。</p></Card>
-      <Card title="成功の回数の散らばりは？"><div className={s.choice} role="radiogroup" aria-label="回数の散らばりの予想">{SPREAD3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={gC === i} onClick={() => { haptic(); setGC(i); }}>{t}</button>)}</div></Card>
-      <Card title="成功の割合の散らばりは？"><div className={s.choice} role="radiogroup" aria-label="割合の散らばりの予想">{SPREAD3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={gR === i} onClick={() => { haptic(); setGR(i); }}>{t}</button>)}</div></Card>
+      <Card title={`n を ${n0} から ${n1} に`} sub={`p＝${pc(p)}`}><p className={qs.muted}>成功の<b>回数</b>（何回成功したか）と、成功の<b>割合</b>（回数÷n）の、両方のばらつきを予測する。</p></Card>
+      <Card title="成功の回数のばらつきは？"><div className={s.choice} role="radiogroup" aria-label="回数のばらつきの予測">{SPREAD3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={gC === i} onClick={() => { haptic(); setGC(i); }}>{t}</button>)}</div></Card>
+      <Card title="成功の割合のばらつきは？"><div className={s.choice} role="radiogroup" aria-label="割合のばらつきの予測">{SPREAD3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={gR === i} onClick={() => { haptic(); setGR(i); }}>{t}</button>)}</div></Card>
     </>;
-    cta = <button type="button" className={s.primary} disabled={gC === null || gR === null} onClick={() => go(1)}>{gC === null || gR === null ? "2つとも予想を選ぶ" : "この予想で実験する"}</button>;
+    cta = <button type="button" className={s.primary} disabled={gC === null || gR === null} onClick={() => go(1)}>{gC === null || gR === null ? "2つとも予測を選ぶ" : "この予測で実験する"}</button>;
   } else if (stage === 1) {
     body = <>
       <Card title="いまの1セット"><div className={s.lanes}><Lane tag={`n＝${n0}`} last={A.last} n={n0} theme={theme} testid="exp-set-before" cls={s.laneB} /><Lane tag={`n＝${n1}`} last={B.last} n={n1} theme={theme} testid="exp-set" cls={s.laneA} /></div></Card>
@@ -302,17 +302,17 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
   } else if (stage === 2) {
     const sdA = Math.sqrt(summarize(A).variance ?? NaN), sdB = Math.sqrt(summarize(B).variance ?? NaN), N = A.sets;
     body = <>
-      <Verdict ok={gC === ansC} head="成功の回数" big={`${r2(sd(n0))} → ${r2(sd(n1))}`} testid="exp-verdict-count">回数の標準偏差は {r2(sd(n1) / sd(n0))} 倍に<b>{SPREAD3[ansC]}</b>（実験 {r2(sdA)} → {r2(sdB)}）。予想は「{SPREAD3[gC!]}」。</Verdict>
-      <Verdict ok={gR === ansR} head="成功の割合" big={`${pShort(sd(n0) / n0)} → ${pShort(sd(n1) / n1)}`} testid="exp-verdict-share">割合の標準偏差は {r2((sd(n1) / n1) / (sd(n0) / n0))} 倍に<b>{SPREAD3[ansR]}</b>（実験 {pShort(sdA / n0)} → {pShort(sdB / n1)}）。予想は「{SPREAD3[gR!]}」。</Verdict>
+      <Verdict ok={gC === ansC} head="成功の回数" big={`${r2(sd(n0))} → ${r2(sd(n1))}`} testid="exp-verdict-count">回数の標準偏差は {r2(sd(n1) / sd(n0))} 倍に<b>{SPREAD3[ansC]}</b>（実験 {r2(sdA)} → {r2(sdB)}）。予測は「{SPREAD3[gC!]}」。</Verdict>
+      <Verdict ok={gR === ansR} head="成功の割合" big={`${pShort(sd(n0) / n0)} → ${pShort(sd(n1) / n1)}`} testid="exp-verdict-share">割合の標準偏差は {r2((sd(n1) / n1) / (sd(n0) / n0))} 倍に<b>{SPREAD3[ansR]}</b>（実験 {pShort(sdA / n0)} → {pShort(sdB / n1)}）。予測は「{SPREAD3[gR!]}」。</Verdict>
       <Card title="理論と実験" sub="差が目安の中か"><CompareTable rows={[
         { label: `回数の標準偏差（n＝${n0}）`, exp: sdA, th: sd(n0), se: (2 * sd(n0)) / Math.sqrt(2 * N) },
         { label: `回数の標準偏差（n＝${n1}）`, exp: sdB, th: sd(n1), se: (2 * sd(n1)) / Math.sqrt(2 * N) },
         { label: `割合の標準偏差（n＝${n0}）`, exp: sdA / n0, th: sd(n0) / n0, se: (2 * sd(n0)) / n0 / Math.sqrt(2 * N), fmt: pShort },
         { label: `割合の標準偏差（n＝${n1}）`, exp: sdB / n1, th: sd(n1) / n1, se: (2 * sd(n1)) / n1 / Math.sqrt(2 * N), fmt: pShort },
       ]} /></Card>
-      <Card title="割合の散らばりの移り変わり" sub="何セット目までか（倍々）">
-        <RunChart title="割合の散らばりの移り変わり" ylab="ここまでの標準偏差" fmt={pShort} series={[{ name: `n＝${n0}`, path: runningSd(A.ks, 1 / n0), th: sd(n0) / n0 }, { name: `n＝${n1}`, path: runningSd(B.ks, 1 / n1), th: sd(n1) / n1 }]}
-          note={`はじめの数セットでは散らばりの値そのものが大きく揺れる。セットを重ねると、n＝${n0} は ${pShort(sd(n0) / n0)}、n＝${n1} は ${pShort(sd(n1) / n1)} の近くに落ち着いていく。`} />
+      <Card title="割合のばらつきの移り変わり" sub="何セット目までか（倍々）">
+        <RunChart title="割合のばらつきの移り変わり" ylab="ここまでの標準偏差" fmt={pShort} series={[{ name: `n＝${n0}`, path: runningSd(A.ks, 1 / n0), th: sd(n0) / n0 }, { name: `n＝${n1}`, path: runningSd(B.ks, 1 / n1), th: sd(n1) / n1 }]}
+          note={`はじめの数セットではばらつきの値そのものが大きくばらつく。セットを重ねると、n＝${n0} は ${pShort(sd(n0) / n0)}、n＝${n1} は ${pShort(sd(n1) / n1)} の近くに落ち着いていく。`} />
       </Card>
       <Card title="成功の割合ごとのセット"><PairRows labels={binLabels} a={bins(A.ks, n0, N)} b={bins(B.ks, n1, N)} names={[`n＝${n0}`, `n＝${n1}`]} pk={Math.round(p * 10)} /></Card>
     </>;
@@ -326,7 +326,7 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
       </tbody></table>
       <p className={qs.note}>分散は n に比例するので、標準偏差は √n に比例する。割合は回数を n で割るので、標準偏差は √n÷n＝1/√n に比例する。たくさん集めると割合が落ち着くのはこのため。</p>
     </Card>
-    {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる<span>n を動かすと ±標準偏差の帯の幅が √n 倍</span></p>{props.workspace({ n: n1, p: q.set.p }, Math.round(n1 * q.set.p))}</section>}
+    {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を操作して検証<span>n を動かすと ±標準偏差の帯の幅が √n 倍</span></p>{props.workspace({ n: n1, p: q.set.p }, Math.round(n1 * q.set.p))}</section>}
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(4)}>{props.apply ? "応用の課題へ" : "n を自由に変える"}</button>;
   } else {
@@ -389,10 +389,10 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
           <p className={s.event} data-testid="exp-event">{cond.n} 回中 {evText(events[0]!)} 成功</p>
         </Card>
       </> : <Card title={`n＝${cond.n}・p＝${pc(cond.p)}`}><p className={qs.muted}>成功確率 {pc(cond.p)} の試行を {cond.n} 回。これを1セットとして何度も起こす。</p></Card>}
-      {events.map((e, i) => <Card key={i} title={`${evText(e)}になる確率は？`} sub="桁で選ぶ"><ScaleChoice name={`${evText(e)} の確率の予想`} scale={scale} value={guess[i]} onChange={(j) => setGuess(guess.map((g, x) => (x === i ? j : g)))} /></Card>)}
+      {events.map((e, i) => <Card key={i} title={`${evText(e)}になる確率は？`} sub="桁で選ぶ"><ScaleChoice name={`${evText(e)} の確率の予測`} scale={scale} value={guess[i]} onChange={(j) => setGuess(guess.map((g, x) => (x === i ? j : g)))} /></Card>)}
     </>;
     const ready = guess.every((g) => g !== undefined);
-    cta = <button type="button" className={s.primary} disabled={!ready} onClick={() => go(1)}>{ready ? "この予想で実験する" : "まず予想を選ぶ"}</button>;
+    cta = <button type="button" className={s.primary} disabled={!ready} onClick={() => go(1)}>{ready ? "この予測で実験する" : "まず予測を選ぶ"}</button>;
   } else if (stage === 1) {
     body = <>
       <Card title="いまの1セット"><div className={s.lanes}><Lane tag={`p＝${pc(cond.p)}・n＝${cond.n}`} last={rec.last} n={cond.n} theme={theme} testid="exp-set" /></div></Card>
@@ -408,7 +408,7 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
       {events.map((e, i) => {
         const P = Ps[i]!, ans = sc.of(P), g = guess[i]!, edge = sc.nearEdge(P) && Math.abs(g - ans) === 1, exp = N * P;
         return <Verdict key={i} ok={g === ans} edge={edge} head={evText(e)} big={pctSig(P)} testid={`exp-verdict-${i}`}>
-          {oneIn(P)}。目盛りでは「{sc.labels[ans]}」、予想は「{sc.labels[g]}」。この回数での見込み {fmtN(exp)} 回、実際は {hits[i]} 回{exp < 1 && hits[i] === 0 ? "（見込みが1回より少ないので、0 回がふつう。確率 0 ではない）" : ""}。
+          {oneIn(P)}。目盛りでは「{sc.labels[ans]}」、予測は「{sc.labels[g]}」。この回数での見込み {fmtN(exp)} 回、実際は {hits[i]} 回{exp < 1 && hits[i] === 0 ? "（見込みが1回より少ないので、0 回がふつう。確率 0 ではない）" : ""}。
         </Verdict>;
       })}
       {(rel || Ps.some((P) => P < 0.05)) && <Card title="読み方">
@@ -422,14 +422,14 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
       <Card title="分布：実験と理論" sub={`${N.toLocaleString()} セット`}>{focusSeg}<CompareRows counts={rec.counts} sets={N} pmf={f} inEvent={inEv(e0)} /></Card>
       <Card title="当てはまった割合の移り変わり" sub="何セット目までか（倍々）">
         <RunChart title="当てはまった割合の移り変わり" ylab="ここまでの割合" fmt={pShort} series={[{ name: "実験", path: runningShare(rec.ks.map(inEv(e0))), th: Ps[focus]!, se: (i) => 2 * Math.sqrt((Ps[focus]! * (1 - Ps[focus]!)) / i) }]}
-          note={Ps[focus]! < 0.05 ? `珍しい結果は、起きるたびに割合が跳ね上がり、起きないあいだは下がっていく。セットを重ねると ${pctSig(Ps[focus]!)} の近くに落ち着いていくが、少ない回数では大きく外れることが多い。` : `セット数が少ないうちは割合が大きく揺れる。繰り返すほど ${pctSig(Ps[focus]!)} の近くに落ち着いていく様子を見る。`} />
+          note={Ps[focus]! < 0.05 ? `珍しい結果は、起きるたびに割合が跳ね上がり、起きないあいだは下がっていく。セットを重ねると ${pctSig(Ps[focus]!)} の近くに落ち着いていくが、少ない回数では大きく外れることが多い。` : `セット数が少ないうちは割合が大きくばらつく。くり返すほど ${pctSig(Ps[focus]!)} の近くに落ち着いていく様子を見る。`} />
       </Card>
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜその確率？ 理由を考える</button>;
   } else if (stage === 3) {
     const ks = f.map((_, k) => k).filter(inEv(e0));
     body = <>
-      <Card title={`棒を足す：${evText(e0)}`} sub={`${ks.length} 本`}>{focusSeg}
+      <Card title={`棒を合計：${evText(e0)}`} sub={`${ks.length} 本`}>{focusSeg}
         <table className={qs.table} data-testid="exp-sum"><thead><tr><th>成功の回数</th><th>確率</th><th>セットに1回</th></tr></thead><tbody>
           {ks.slice(0, 12).map((k) => <tr key={k}><td>k＝{k}</td><td>{pctSig(f[k]!)}</td><td>{oneIn(f[k]!).replace("セットに1回", "")}</td></tr>)}
           {ks.length > 12 && <tr><td colSpan={3}>…ほか {ks.length - 12} 本</td></tr>}
@@ -437,7 +437,7 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
         </tbody></table>
         <p className={qs.note}>1本の棒は P(X＝k)＝ₙCₖ pᵏ(1−p)ⁿ⁻ᵏ。{e0.op === "eq" ? "ちょうど k 回は棒1本。" : "以上・以下は当てはまる棒を全部足す。"}{e0.op === "eq" && e0.k === cond.n ? `全部成功は並びが1通り（ₙCₙ＝1）なので、p を ${cond.n} 回掛けるだけ。` : ""}</p>
       </Card>
-      {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を動かして確かめる<span>k を動かすと棒1本の確率</span></p>{props.workspace(cond, ks[0] ?? 0)}</section>}
+      {props.workspace && <section className={s.ws} data-testid="exp-workspace"><p className={s.h}>式を操作して検証<span>k を動かすと棒1本の確率</span></p>{props.workspace(cond, ks[0] ?? 0)}</section>}
     </>;
     cta = <button type="button" className={s.primary} onClick={() => { setApp({ ...cond, ...e0 }); go(4); }}>{props.apply ? "応用の課題へ" : free ? "どこから珍しい？ を探す" : "k を自由に変える"}</button>;
   } else {
@@ -459,7 +459,7 @@ function ProbRun(props: QProps & { q: Extract<BinomQuestion, { form: "prob" }>; 
     </>;
     const chips: [string, string][] = [["n", `n ${app.n} 回`], ["p", `p ${pc(app.p)}`], ...(free ? [["op", { eq: "ちょうど", ge: "以上", le: "以下" }[app.op]] as [string, string]] : []), ["k", `k ${e.k} 回`]];
     cta = <Dock chips={chips} mark={mkS.chip} sel={sel} onSel={setSel} action={free
-      ? <button type="button" className={s.primary} data-testid="exp-app-go" onClick={() => props.onNew({ ...q, id: `${q.id}-own`, set: { n: app.n, p: app.p }, events: [e] })}>この条件で予想から</button>
+      ? <button type="button" className={s.primary} data-testid="exp-app-go" onClick={() => props.onNew({ ...q, id: `${q.id}-own`, set: { n: app.n, p: app.p }, events: [e] })}>この条件で予測から</button>
       : null}>
       {sel === "n" ? <Field id="exp-app-n" label="1セットの回数 n" value={app.n} min={def.vary.n.min} max={def.vary.n.max} step={1} show={(v) => `${v} 回`} onChange={(n) => setApp({ ...app, n, k: Math.min(app.k, n) })} />
         : sel === "p" ? <Field id="exp-app-p" label="1回の成功確率 p" value={app.p} min={0.01} max={0.99} step={0.01} show={pc} onChange={(p) => setApp({ ...app, p })} />
@@ -488,12 +488,12 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
   if (stage === 0) {
     body = <>
       <Card title={`${cond.n} 回中 ${evText(ev)}`} sub={`理論 ${pctSig(P)}`}><p className={qs.muted}>1セット＝{cond.n} 回（成功確率 {pc(cond.p)}）。{evText(ev)}になったセットの割合は、セットを重ねると理論の {pctSig(P)} に近づくか。近づくなら、どんな速さか。</p></Card>
-      <Card title="セットを 100 倍にすると、理論とのずれの目安は？"><div className={s.choice} role="radiogroup" aria-label="ずれの予想">{CONV3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={guess === i} onClick={() => { haptic(); setGuess(i); }}>{t}</button>)}</div></Card>
+      <Card title="セットを 100 倍にすると、理論とのずれの目安は？"><div className={s.choice} role="radiogroup" aria-label="ずれの予測">{CONV3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={guess === i} onClick={() => { haptic(); setGuess(i); }}>{t}</button>)}</div></Card>
     </>;
-    cta = <button type="button" className={s.primary} disabled={guess === null} onClick={() => go(1)}>{guess === null ? "まず予想を選ぶ" : "この予想で実験する"}</button>;
+    cta = <button type="button" className={s.primary} disabled={guess === null} onClick={() => go(1)}>{guess === null ? "まず予測を選ぶ" : "この予測で実験する"}</button>;
   } else if (stage === 1) {
     body = <>
-      {N > 0 && <Card title="割合の移り変わり" sub="何セット目までか（倍々）">{chart("セット数が少ないうちは割合が大きく揺れる。繰り返すほど理論の近くに落ち着いていく様子を見る。")}</Card>}
+      {N > 0 && <Card title="割合の移り変わり" sub="何セット目までか（倍々）">{chart("セット数が少ないうちは割合が大きくばらつく。くり返すほど理論の近くに落ち着いていく様子を見る。")}</Card>}
       <Card title="ここまで" sub={`${N.toLocaleString()} セット`}><div className={s.tiles}><div>ここまでの割合<b>{share === undefined ? "—" : pctSig(share)}</b><i>理論 {pctSig(P)}</i></div><div>理論とのずれ<b>{share === undefined ? "—" : pShort(Math.abs(share - P))}</b><i>目安 ±{N ? pShort(se(N)) : "—"}</i></div></div></Card>
     </>;
     cta = <>
@@ -507,13 +507,13 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
   } else if (stage === 2) {
     const at = [10, 100, 1000, 10000].filter((t) => t <= N);
     body = <>
-      <Verdict ok={guess === 1} big="10分の1">ずれの目安は √(セット数) に反比例する。セットを 100 倍にすると √100＝10 で、10分の1。予想は「{CONV3[guess!]}」。</Verdict>
+      <Verdict ok={guess === 1} big="10分の1">ずれの目安は √(セット数) に反比例する。セットを 100 倍にすると √100＝10 で、10分の1。予測は「{CONV3[guess!]}」。</Verdict>
       <Card title="理論と実験" sub="差が目安の中か"><CompareTable rows={[{ label: `${N.toLocaleString()} セットの割合`, exp: share, th: P, se: se(N), fmt: pShort }]} /></Card>
       <Card title="ずれと目安" sub={`理論 ${pctSig(P)}`}>
         <table className={qs.table} data-testid="exp-conv-table"><thead><tr><th>セット</th><th>実際のずれ</th><th>目安 ±2SE</th></tr></thead><tbody>
           {at.map((t) => <tr key={t}><td>{t.toLocaleString()}</td><td>{pShort(Math.abs(path[t - 1]! - P))}</td><td>±{pShort(se(t))}</td></tr>)}
         </tbody></table>
-        <p className={qs.note}>実際のずれは毎回ゆれる。目安より大きいこともあるし、たまたま小さいこともある。それでも、セットを増やすほど小さくなっていく。</p>
+        <p className={qs.note}>実際のずれは毎回ばらつく。目安より大きいこともあるし、たまたま小さいこともある。それでも、セットを増やすほど小さくなっていく。</p>
       </Card>
       <Card title="割合の移り変わり" sub="何セット目までか（倍々）">{chart("目安の帯は √(セット数) に反比例して細くなる。線は多くの場合この帯の中にあるが、外に出ることもある。")}</Card>
     </>;
@@ -585,9 +585,9 @@ export function BreakQ(props: QProps & { initial?: string }) {
       <Card title="どの条件を崩す？">
         <div className={s.menu}>{cxs.map((c) => <button key={c.id} type="button" className={s.menuItem} aria-pressed={c.id === cx.id} onClick={() => { haptic(); setCxId(c.id); setGuess(null); setX(xOf(c)); }} data-testid={`exp-bnd-${c.id}`}><span className={s.form}>崩す：{c.breaks}</span><b>{c.name}</b></button>)}</div>
       </Card>
-      <Card title={`二項分布（n＝${b.n}・p＝${pc(b.p)}）と比べて、山の広がりは？`}><div className={s.choice} role="radiogroup" aria-label="広がりの予想">{SPREAD3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={guess === i} onClick={() => { haptic(); setGuess(i); }}>{t}</button>)}</div></Card>
+      <Card title={`二項分布（n＝${b.n}・p＝${pc(b.p)}）と比べて、山の広がりは？`}><div className={s.choice} role="radiogroup" aria-label="広がりの予測">{SPREAD3.map((t, i) => <button key={t} type="button" role="radio" aria-checked={guess === i} onClick={() => { haptic(); setGuess(i); }}>{t}</button>)}</div></Card>
     </>;
-    cta = <button type="button" className={s.primary} disabled={guess === null} onClick={() => go(1)}>{guess === null ? "まず予想を選ぶ" : "この予想で実験する"}</button>;
+    cta = <button type="button" className={s.primary} disabled={guess === null} onClick={() => go(1)}>{guess === null ? "まず予測を選ぶ" : "この予測で実験する"}</button>;
   } else if (stage === 1) {
     body = <>
       <Card title="いまの1セット"><div className={s.lanes}><Lane tag="条件どおり（二項分布）" last={A.last} n={cond.n} theme={theme} testid="exp-cx-set-before" cls={s.laneB} /><Lane tag={`崩した：${cx.name}`} last={B.last} n={cond.n} theme={theme} testid="exp-cx-set" cls={s.laneA} /></div></Card>
@@ -597,7 +597,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
   } else if (stage === 2) {
     const vA = summarize(A).variance ?? NaN, vB = summarize(B).variance ?? NaN, N = A.sets;
     body = <>
-      <Verdict ok={guess === ans} testid="exp-cx-verdict">山は二項分布より<b>{["広くなる", "変わらない", "狭くなる"][ans]}</b>。理論の分散：崩した起き方 {r2(vm)}・二項分布 {r2(vb)}。実験：崩した {r2(vB)}・条件どおり {r2(vA)}。予想は「{SPREAD3[guess!]}」。</Verdict>
+      <Verdict ok={guess === ans} testid="exp-cx-verdict">山は二項分布より<b>{["広くなる", "変わらない", "狭くなる"][ans]}</b>。理論の分散：崩した起き方 {r2(vm)}・二項分布 {r2(vb)}。実験：崩した {r2(vB)}・条件どおり {r2(vA)}。予測は「{SPREAD3[guess!]}」。</Verdict>
       <Card title="理論と実験" sub="差が目安の中か"><CompareTable rows={[
         { label: "平均（条件どおり）", exp: summarize(A).mean, th: b.n * b.p, se: 2 * Math.sqrt(vb / N) },
         { label: "平均（崩した）", exp: summarize(B).mean, th: b.n * b.p, se: 2 * Math.sqrt(vm / N) },
@@ -606,9 +606,9 @@ export function BreakQ(props: QProps & { initial?: string }) {
         { label: "分散（崩した）と起き方の理論", exp: vB, th: vm, se: 2 * vm * Math.sqrt(2 / N) },
       ]} /><p className={qs.note}>崩した方の分散を二項分布の理論と比べると、目安の外に出やすい。二項分布の前提が合っていないしるし。目安は正規分布を仮定したおおよその幅。</p></Card>
       <Card title="崩した起き方の分布と二項分布" sub={`${N.toLocaleString()} セット`}><CompareRows counts={B.counts} sets={N} pmf={pmfOf(b)} thName="二項分布" /></Card>
-      <Card title="散らばり（分散）の移り変わり" sub="何セット目までか（倍々）">
-        <RunChart title="散らばり（分散）の移り変わり" ylab="ここまでの分散" series={[{ name: "条件どおり", path: runningSd(A.ks).map((v) => v * v), th: vb }, { name: "崩した", path: runningSd(B.ks).map((v) => v * v), th: vm }]}
-          note={`平均はどちらも ${r2(b.n * b.p)} の近くに落ち着くが、散らばりは別の値に落ち着いていく（条件どおり ${r2(vb)}・崩した ${r2(vm)}）。はじめの数セットでは、どちらが大きいかが入れ替わることもある。`} />
+      <Card title="ばらつき（分散）の移り変わり" sub="何セット目までか（倍々）">
+        <RunChart title="ばらつき（分散）の移り変わり" ylab="ここまでの分散" series={[{ name: "条件どおり", path: runningSd(A.ks).map((v) => v * v), th: vb }, { name: "崩した", path: runningSd(B.ks).map((v) => v * v), th: vm }]}
+          note={`平均はどちらも ${r2(b.n * b.p)} の近くに落ち着くが、ばらつきは別の値に落ち着いていく（条件どおり ${r2(vb)}・崩した ${r2(vm)}）。はじめの数セットでは、どちらが大きいかが入れ替わることもある。`} />
       </Card>
     </>;
     cta = <button type="button" className={s.primary} onClick={() => go(3)}>なぜ{["広くなる", "変わらない", "狭くなる"][ans]}のか、理由を考える</button>;

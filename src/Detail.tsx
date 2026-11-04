@@ -74,8 +74,8 @@ type Group = { key: string; title: string; rows: { id: string; other: string; ta
 function groupsOf(net: Network, id: string): Group[] {
   const { relations, derivations } = around(net, id);
   const g: Record<string, Group> = {
-    before: { key: "before", title: "前に知っておく", rows: [] }, change: { key: "change", title: "姿を変えると", rows: [] },
-    contrast: { key: "contrast", title: "比べる", rows: [] }, after: { key: "after", title: "この先で使う", rows: [] },
+    before: { key: "before", title: "前提", rows: [] }, change: { key: "change", title: "変換", rows: [] },
+    contrast: { key: "contrast", title: "対比", rows: [] }, after: { key: "after", title: "応用", rows: [] },
   };
   for (const r of relations) {
     const other = r.from === id ? r.to : r.from;
@@ -120,7 +120,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
   const tabs: { value: Tab; label: string }[] = [
     { value: "about", label: "概要" },
     ...(hasFormula ? [{ value: "formula" as Tab, label: "式" }] : []),
-    { value: "rel", label: "つながり" },
+    { value: "rel", label: "関係" },
   ];
   const [tabRaw, setTabRaw] = useState<Tab>("about");
   // 読むときは全画面（地図を隠す）。切り替えや開く行に触ったら面を上まで上げる（stats2-course #188 02）
@@ -162,7 +162,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
           <Muted as="div" className={st.kicker}>{[c.category, units.map((u) => `U${u!.number}`).join(" ")].filter(Boolean).join("・")}{c.status === "stub" ? "・まだ説明がない" : ""}</Muted>
         </div>
         <MoreMenu items={[
-          { label: inCompare ? "比べる面を開く" : "ほかの概念と比べる", onClick: onCompare, pressed: inCompare },
+          { label: inCompare ? "比較の面を開く" : "ほかの概念と比較", onClick: onCompare, pressed: inCompare },
           { label: "この概念の URL をコピー", onClick: copyUrl },
         ]} />
       </header>
@@ -199,7 +199,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         {c.conditions && <More title={<>成り立つ条件 <span className={st.n}>{c.conditions.math.length}{c.conditions.data?.length ? `＋データ ${c.conditions.data.length}` : ""}</span></>} onOpen={reading}>
           <h4>式が成り立つ条件</h4>
           <ul className={st.conds}>{c.conditions.math.map((x) => <li key={x}>{x}</li>)}</ul>
-          {c.conditions.data?.length ? <><h4>データで確かめること</h4><ul>{c.conditions.data.map((x) => <li key={x}>{x}</li>)}</ul></> : null}
+          {c.conditions.data?.length ? <><h4>データで確認すること</h4><ul>{c.conditions.data.map((x) => <li key={x}>{x}</li>)}</ul></> : null}
         </More>}
         {(c.example || c.counterexample || c.misconceptions?.length) ? <More title="例と反例・よくある誤解" onOpen={reading}>
           {(c.example || c.counterexample) && <div className={st.pair}>
@@ -231,7 +231,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         {groups.length ? <>
           {/* つながりの地図（#188 07c）：点を押すと、そのつながりを下に「問い → 段」で掘る。一覧の行を押すと全画面で開く */}
           <RelMap center={c.name} groups={groups} sel={pick} onSel={(id) => setPick((x) => (x === id ? null : id))} />
-          {pick ? <RelDig net={net} id={pick} onOpen={onEdge} onClose={() => setPick(null)} /> : <Muted as="p" className={st.digHint}>点を押すと、そのつながりを問いと段で掘る。</Muted>}
+          {pick ? <RelDig net={net} id={pick} onOpen={onEdge} onClose={() => setPick(null)} /> : <Muted as="p" className={st.digHint}>点を押すと、その関係を問いと段階に沿って掘り下げる。</Muted>}
           <div data-testid="edge-list">{groups.map((g) => <section key={g.key} data-testid={`rel-group-${g.key}`}>
             <h3 className={st.groupTitle}>{g.title}</h3>
             <ul className={st.rels}>
@@ -244,7 +244,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
               </li>)}
             </ul>
           </section>)}</div>
-        </> : <Muted>まだつながりがない。</Muted>}
+        </> : <Muted>まだ関係がない。</Muted>}
         <Muted>押すと、下から説明（図・解説・操作）が開く。グラフの線を押すのと同じ。</Muted>
       </div>}
   </>;
@@ -257,7 +257,7 @@ export default function Detail({ net, concept: c, inCompare, onCompare, onSelect
         <div className={st.pageHead}>{head}</div>
         <div className={st.pageBody}>{rest}</div>
         {lab && <div className={st.pageBar}>
-          <Button variant="primary" className={st.pageCta} onClick={onLab} data-testid="page-cta">{LAB_ICON} 実験室で確かめる</Button>
+          <Button variant="primary" className={st.pageCta} onClick={onLab} data-testid="page-cta">{LAB_ICON} 実験室で検証</Button>
         </div>}
       </section>
     );

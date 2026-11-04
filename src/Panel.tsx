@@ -24,7 +24,7 @@ export default function Panel({ net, edgeId, onClose, onSelect, page }: Props) {
     <section className={s.page} data-testid="edge-panel" data-detent="full" role="region" aria-label="関係の説明">
       <div className={s.pageHead}>
         <button type="button" className={s.back} onClick={onClose} aria-label="概念へ戻る" data-testid="edge-back">←</button>
-        <div className={s.pageTitle}><b>{relationParts(net, found.rel).text}</b><span>つながり</span></div>
+        <div className={s.pageTitle}><b>{relationParts(net, found.rel).text}</b><span>関係</span></div>
       </div>
       <div className={s.pageBody}>
         <RelationOpen net={net} r={found.rel} context={`panel-${found.rel.id}`} titled={false} />
@@ -33,7 +33,7 @@ export default function Panel({ net, edgeId, onClose, onSelect, page }: Props) {
     </section>
   );
   return (
-    <Sheet label="関係の説明" data-testid="edge-panel" onClose={onClose} title={found.rel ? "つながり" : "導出"}>
+    <Sheet label="関係の説明" data-testid="edge-panel" onClose={onClose} title={found.rel ? "関係" : "導出"}>
       {found.rel ? <>
         <RelationOpen net={net} r={found.rel} context={`panel-${found.rel.id}`} />
         <Row>{[found.rel.from, found.rel.to].map((c) => <Button key={c} onClick={() => onSelect(c)}>{name(net, c)} へ</Button>)}</Row>

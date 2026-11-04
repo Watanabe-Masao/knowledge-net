@@ -36,7 +36,7 @@ for (const scheme of ["light", "dark"] as const) {
 
 test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await page.goto(`./?${SRC}`);
-  await page.getByLabel("概念を探す").fill("標準");   // 打つたびに候補が絞られる（動的なドロップダウン）
+  await page.getByLabel("概念を検索").fill("標準");   // 打つたびに候補が絞られる（動的なドロップダウン）
   await expect(page.getByRole("listbox", { name: "候補" })).toBeVisible();
   await page.getByRole("option", { name: /標準化/ }).click();
   await expect(page.getByRole("listbox", { name: "候補" })).toHaveCount(0);
@@ -101,7 +101,7 @@ test("Notion の埋め込み（360×320）に収まり、大きく開ける", as
   await page.setViewportSize({ width: 360, height: 320 });
   await page.goto(`./?${SRC}&embed=1&c=stats2:TERM-binom`);
   await expect(page.getByTestId("embed-card")).toContainText("二項分布");
-  const link = page.getByRole("link", { name: "大きく開く ↗" });
+  const link = page.getByRole("link", { name: "拡大表示 ↗" });
   await expect(link).toHaveAttribute("href", /c=stats2%3ATERM-binom/);
   expect(await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.scrollHeight])).toEqual([360, 320]);
   const nodes = await page.evaluate(() => (window as any).kn.nodes().length);
@@ -121,7 +121,7 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /host=kn/);   // ラボの中の「大きく開く ↗」は親に知らせる
   // 大きく開く：新しいタブではなく同じ画面の全面に出し、✕ で元の画面に戻る
-  await d.getByTestId("labs-concept").getByRole("button", { name: "大きく開く" }).click();
+  await d.getByTestId("labs-concept").getByRole("button", { name: "拡大表示" }).click();
   const full = page.getByTestId("fullview");
   await expect(full.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z$/);
   await full.getByRole("button", { name: "閉じて戻る" }).click();
@@ -334,7 +334,7 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
   await page.getByTestId("edge-list").getByRole("button", { name: /二項分布 と ポアソン分布 を比べる/ }).click();
   const panel = page.getByTestId("edge-panel");
   const gist = panel.getByTestId("gist");
-  await expect(gist).toContainText("散らばりが小さい");
+  await expect(gist).toContainText("ばらつきが小さい");
   // 面が開く動きの途中で2つの位置を別々に測ると、ずれて逆になることがある。同じ時点の位置で比べ、落ち着くまで待つ
   const desc = panel.getByText(/二項分布は回数に上限 n があり/);
   await expect.poll(async () => { const [g, d] = await Promise.all([gist.boundingBox(), desc.boundingBox()]); return g && d ? d.y - (g.y + g.height) : -1; }).toBeGreaterThanOrEqual(0);
@@ -607,16 +607,16 @@ test("線の見方は下から開く面で、種類を隠せる", async ({ page 
 });
 
 // 比べる（#42）：「ほかの概念と比べる」→ つながりのある概念から相手を選ぶ → そのまま比べる面が開く
-test("ほかの概念と比べる：相手を選ぶとすぐ比べられる", async ({ page }) => {
+test("ほかの概念と比較：相手を選ぶとすぐ比べられる", async ({ page }) => {
   await page.goto(`./?${W0}&c=stats2:TERM-binom`);
   await page.getByRole("button", { name: "ほかの操作" }).click();
-  await page.getByRole("menuitem", { name: "ほかの概念と比べる" }).click();
+  await page.getByRole("menuitem", { name: "ほかの概念と比較" }).click();
   const pick = page.getByTestId("pick");
   await expect(pick).toContainText("二項分布 を変換すると ポアソン分布");   // どうつながるかの文つき
   await pick.getByRole("button", { name: /ポアソン分布/ }).first().click();
   const cmp = page.getByTestId("compare");
   await expect(cmp.getByRole("heading", { name: "この組の関係" })).toBeVisible();
-  await cmp.getByRole("button", { name: "比べるのをやめる" }).click();
+  await cmp.getByRole("button", { name: "比較を終了" }).click();
   await expect(cmp).toHaveCount(0);
   expect(page.url()).not.toContain("cmp=");
 });
@@ -636,7 +636,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x.getByTestId("exp-group-pick")).toContainText("分布の形と仕組み");
   await expect(x.getByTestId("exp-group-pick")).toContainText("3／4");
   await x.getByTestId("exp-group-pick").click();
-  await expect(x.getByTestId("exp-group-list").getByRole("option")).toHaveText([/A分布の形と仕組み3／4/, /B事象と確率計算3／4/, /C理論と実験2／3/, /D期待値・分散との接続2／3/, /E前提条件と反例4／4/, /F応用・発展0／4/, /自分で条件を決めて比べるカード 0 枚/]);
+  await expect(x.getByTestId("exp-group-list").getByRole("option")).toHaveText([/A分布の形と仕組み3／4/, /B事象と確率計算3／4/, /C理論と実験2／3/, /D期待値・分散との接続2／3/, /E前提条件と反例4／4/, /F応用・発展0／4/, /自分で条件を決めて比較カード 0 枚/]);
   await x.getByTestId("exp-group-A").click();
   await expect(x.getByTestId("exp-group-list")).toHaveCount(0);
   expect(await x.getByTestId("exp-items-A").locator("[data-testid^=exp-q-]").evaluateAll((els) => els.map((e) => [e.getAttribute("data-testid"), e.tagName]))).toEqual([["exp-q-A-01", "BUTTON"], ["exp-q-A-02", "BUTTON"], ["exp-q-A-03", "BUTTON"], ["exp-q-A-04", "DIV"]]);
@@ -647,10 +647,10 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   // 位置
   await x.getByTestId("exp-q-A-01").click();
   await expect(x.getByRole("list", { name: "段" }).getByRole("button")).toHaveText([/予測/, /実験/, /観察/, /理由/, /応用/]);
-  await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();
+  await expect(x.getByRole("button", { name: "まず予測を選ぶ" })).toBeDisabled();
   for (let i = 0; i < 3; i++) await x.getByRole("button", { name: "増やす" }).click();
   await expect(x.getByTestId("exp-guess-peak")).toHaveText("8 回");
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await expect(x.getByRole("radio", { name: /来店客が買う/ })).toHaveCount(0);   // 題材の切り替えは置かない（選んでも計算は同じ）
   await x.getByTestId("exp-run-1").click();
   await expect(x.getByTestId("exp-set").locator("span")).toHaveCount(10);
@@ -658,7 +658,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x).toContainText(/表 \d+ 回（10 回中）/);
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-verdict")).toContainText("いちばん高いのは 8 回");
   const cmp = x.getByTestId("q-cmp");
   await expect(cmp.locator("tr", { hasText: "平均（後）" }).locator("td").nth(2)).toHaveText("8");
@@ -736,10 +736,10 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await openQ(x, "E-01");   // 成功確率が毎回違っても二項分布になる？ → 疲れて下がるで開く
   await expect(x.getByTestId("exp-bnd-fatigue")).toHaveAttribute("aria-pressed", "true");
   await x.getByRole("radio", { name: "狭くなる" }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-cx-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-cx-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("崩した起き方 2.13・二項分布 2.5");
   await expect(x.getByTestId("q-cmp").locator("tr", { hasText: "分散（崩した）と起き方の理論" }).locator("td").nth(2)).toHaveText("2.13");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);   // 長い行の名前でも横にはみ出さない
@@ -756,7 +756,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await openQ(x, "E-03");   // 戻さずに抽出するとどうなる？ → 戻さずに取るで開く
   await expect(x.getByTestId("exp-bnd-urn")).toHaveAttribute("aria-pressed", "true");
   await x.getByRole("radio", { name: "狭くなる" }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("崩した起き方 1.92・二項分布 2.5");
@@ -768,7 +768,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
 
 
 // 値の表の実験室（#119）：平均（▲）の行き先を予想 → 1つずつ引く → 期待値は表の中の値でないこともある → Σ x p(x) を項に開く → 反例（和が有限でない表）
-test("値の表の実験室：平均の行き先を予想し、引いて照らし、式を項に開き、反例を実験する", async ({ page }) => {
+test("値の表の実験室：平均の行き先を予測し、引いて照らし、式を項に開き、反例を実験する", async ({ page }) => {
   const errs = noErrors(page);
   // 種は Date.now から作られる。時刻を固定して、引いた結果を毎回同じにする（種しだいで平均の移り変わりの線の高さが 15〜100px と変わり、落ちたり通ったりしていた）。
   // この時刻の種では大当たりが出て線は約 100px 動く。縦の幅を揺れの目安で広げる故障では 2px ほどにつぶれる
@@ -781,16 +781,16 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   const x = page.getByTestId("experiment");
   await expect(x).toContainText("表を変えると");
   await expect(x.getByTestId("exp-marker")).toHaveCount(1);   // ▲＝今の表の期待値
-  await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();
+  await expect(x.getByRole("button", { name: "まず予測を選ぶ" })).toBeDisabled();
   // 向きと値は連動する：値を今の平均に戻すと「動かない」、右へ動かすと「右へ動く」
-  const slider = x.getByRole("slider", { name: "予想する平均" });
+  const slider = x.getByRole("slider", { name: "予測する平均" });
   await x.getByRole("radio", { name: "右へ動く" }).click();
   await expect(slider).not.toHaveValue("3.5");
   await slider.fill("3.5");
   await expect(x.getByRole("radio", { name: "動かない" })).toHaveAttribute("aria-checked", "true");
   await slider.fill("4.5");
   await expect(x.getByRole("radio", { name: "右へ動く" })).toHaveAttribute("aria-checked", "true");
-  await x.getByRole("button", { name: "この予想で引いてみる" }).click();
+  await x.getByRole("button", { name: "この予測で引いてみる" }).click();
   await x.getByTestId("exp-run-1").click();
   await expect(x.getByTestId("exp-draws").locator("span")).toHaveCount(1);
   await expect(x.getByTestId("exp-draws-before").locator("span")).toHaveCount(1);   // 前の表からも同じ回数だけ引く（#121）
@@ -801,7 +801,7 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   expect(cols).toEqual([101, 101]);
   await x.getByRole("button", { name: "観察する →" }).click();
   // 6 の面を3倍：期待値 (1+2+3+4+5+6×3)÷8＝4.125。表の中の値としては出ない
-  await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-verdict")).toContainText("3.5 → 4.13");
   await expect(x.getByTestId("exp-tile-theory")).toContainText("3.5 → 4.13");   // 前の表と変えた表の期待値
   await expect(x.getByTestId("exp-replay").getByTestId("exp-run-line-b")).toHaveCount(1);
@@ -816,9 +816,9 @@ test("値の表の実験室：平均の行き先を予想し、引いて照ら�
   await expect(ex).toContainText("4.125");   // 最後は表から求めた期待値
   await x.getByRole("button", { name: "別の条件で試す" }).click();
   await x.getByTestId("exp-bnd-doubling").click();
-  await x.getByRole("radio", { name: "揺れ続ける" }).click();
+  await x.getByRole("radio", { name: "ばらつき続ける" }).click();
   await x.getByTestId("exp-cx-run-100").click();
-  await expect(x.getByTestId("exp-cx-verdict")).toContainText("予想どおり", { timeout: 15000 });
+  await expect(x.getByTestId("exp-cx-verdict")).toContainText("予測どおり", { timeout: 15000 });
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("期待値 41");   // どの項も 2^k×(1/2)^k＝1。40 項＋最後の 2
   // まれな大当たりの表でも平均の動きが見える（渡辺さん 2026-11-01：揺れの目安を縦の幅に入れて横線につぶれていた）。
   // 想定する故障：縦の幅が目安で広がり線が平らになる・線が再生した回数より先まで伸びる・縦軸の数が左で欠ける・「必ず近づく」と読ませる
@@ -1034,7 +1034,7 @@ test("詳しく：見出しは名前と切り替えだけ、ほかは「…」",
   await page.goto("./?src=sample/stats2-p1.json&c=stats2:TERM-binom");
   const det = page.getByTestId("detail");
   await expect(det).toContainText("確率分布・U14 U15 U19");
-  await expect(det.getByRole("radiogroup", { name: "概念の中身" }).getByRole("radio")).toHaveText(["概要", "式", "つながり"]);
+  await expect(det.getByRole("radiogroup", { name: "概念の中身" }).getByRole("radio")).toHaveText(["概要", "式", "関係"]);
   // 学ぶ行動（実験・問題・単元）は詳しくに置かない（下のタブと同じ機能を2か所に置かない）
   await expect(det.getByRole("button", { name: "実験してみる" })).toHaveCount(0);
   await expect(det.getByRole("link", { name: /問題を解く|単元で読む/ })).toHaveCount(0);
@@ -1078,7 +1078,7 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   // 故障：「または」で絞って問いが増える・主と関連の取り違え・作成中を押せる・問いを押しても入口のまま。見つけ方：数と並びを手で数えた値と照らす
   // 概念は下から出る面で選ぶ（渡辺さん 2026-11-02）。上には選んだ概念の札だけ。故障：面で選んでも絞れない・数が一覧とずれる・札で外せない
   await expect(lab.getByTestId("lab-sel-stats2:TERM-binom")).toBeVisible();
-  await expect(lab.getByTestId("lab-concept-pick")).toContainText("概念で探す：二項分布");
+  await expect(lab.getByTestId("lab-concept-pick")).toContainText("概念で検索：二項分布");
   await expect(lab.getByTestId("lab-rule")).toContainText("二項分布を使う問い");
   // 24 問のうち、使わない印の2問（C-03・D-04）は並べない。主が関係の問い（E-03：二項分布と超幾何分布の対比、C-01）も両端の概念から引く（#169）
   // 概念を1つだけ選ぶと、その概念が主の問いと関連の問いに分ける（#163・#171）。主が関係（E-03：二項分布と超幾何分布の対比）は両端の概念の主。
@@ -1200,7 +1200,7 @@ test("動きを減らす設定でも、移り変わりの再生は1セット目�
   const x = page.getByTestId("experiment");
   await openQ(x, "A-01");
   await x.getByRole("button", { name: "増やす" }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
   await x.getByTestId("exp-to-observe").click();
   const run = x.getByTestId("q-run");
@@ -1295,7 +1295,7 @@ test("作業台：実験の途中で初期値に戻すと、記録は空のま�
   await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
 });
 
-test("値の表の実験室：横は値に比例し、▲（期待値）と予想の線は値の位置に立つ（くじ 0・100・1000円）", async ({ page }) => {
+test("値の表の実験室：横は値に比例し、▲（期待値）と予測の線は値の位置に立つ（くじ 0・100・1000円）", async ({ page }) => {
   // 確かめる対象：値の間が不ぞろいな表の図（stats2-course issue 158 A1）。想定する故障：棒を番号で等間隔に並べ、▲を番号の間に割って置く
   // （38円の▲が 0 と 100 の間の 4 割に立ち、重心＝てんびんの支点に見えない）。見つけ方：棒の位置だけから値→位置の直線を作り、
   // ▲・予想の線がその直線の 38 円・予想の値に立つかを見る（画面の計算式は使わない）。既存のテストは ▲ の有無だけを見ていた
@@ -1312,7 +1312,7 @@ test("値の表の実験室：横は値に比例し、▲（期待値）と予�
   expect((x1000 - x100) / (x100 - x0)).toBeCloseTo(9, 3);   // 値の間 100 と 900 の比
   const at = (v: number) => x0 + (v / 100) * (x100 - x0);
   expect(Number(await x.getByTestId("exp-marker").getAttribute("data-x"))).toBeCloseTo(at(38), 3);   // (100×18＋1000×2)÷100＝38
-  await x.getByRole("slider", { name: "予想する平均" }).fill("200");
+  await x.getByRole("slider", { name: "予測する平均" }).fill("200");
   expect(Number(await x.getByTestId("exp-mark").getAttribute("data-x"))).toBeCloseTo(at(200), 3);
 });
 
@@ -1349,14 +1349,14 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   const x = page.getByTestId("experiment");
   // 広がり
   await openQ(x, "A-02");
-  await x.getByRole("radiogroup", { name: "回数の散らばりの予想" }).getByRole("radio", { name: "広くなる" }).click();
-  await x.getByRole("radiogroup", { name: "割合の散らばりの予想" }).getByRole("radio", { name: "広くなる" }).click();   // わざと外す
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("radiogroup", { name: "回数のばらつきの予測" }).getByRole("radio", { name: "広くなる" }).click();
+  await x.getByRole("radiogroup", { name: "割合のばらつきの予測" }).getByRole("radio", { name: "広くなる" }).click();   // わざと外す
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-verdict-count")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict-count")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-verdict-count")).toContainText("1.58 → 3.16");
-  await expect(x.getByTestId("exp-verdict-share")).toContainText("予想と違った");
+  await expect(x.getByTestId("exp-verdict-share")).toContainText("予測と違った");
   await expect(x.getByTestId("exp-verdict-share")).toContainText("15.8% → 7.9%");
   // 理由の段の作業台（stats2-course #171）：問いの主概念（二項分布）の作業台。±標準偏差の帯は n＝40 で √(40×0.25)＝3.16、n を 10 にすると 1.58（√4＝2 分の1）
   await x.getByRole("button", { name: /理由を考える/ }).click();
@@ -1386,10 +1386,10 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await openQ(x, "B-04");
   await expect(x.getByTestId("exp-event")).toHaveText("10 回中 ちょうど 10 回 成功");
   await x.getByRole("radio", { name: /^1%〜5%/ }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-verdict-0")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict-0")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-verdict-0")).toContainText("2.82%");
   await expect(x.getByTestId("exp-verdict-0")).toContainText("約 35 セットに1回");
   await expect(x.getByTestId("q-cmp")).toBeVisible();
@@ -1404,18 +1404,18 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-app-cut")).toHaveText("10 回以上");
   await x.getByTestId("exp-app-go").click();
   await expect(x.getByTestId("exp-question")).toContainText("8 回以上");
-  await expect(x.getByRole("button", { name: "まず予想を選ぶ" })).toBeDisabled();   // 前の予想は残らない
+  await expect(x.getByRole("button", { name: "まず予測を選ぶ" })).toBeDisabled();   // 前の予想は残らない
   await x.getByRole("button", { name: "戻る" }).click();
   // B-01 と B-02 は同じ形（確率の値）でも別の問い：初期の条件・予想する事象が違う（渡辺さん 2026-11-02。同じ画面を開くだけにしない）
   await openQ(x, "B-01");
   await expect(x.getByTestId("exp-question")).toContainText("ちょうど 3 回");
-  await expect(x.getByRole("radiogroup", { name: /の確率の予想/ })).toHaveCount(1);
+  await expect(x.getByRole("radiogroup", { name: /の確率の予測/ })).toHaveCount(1);
   await x.getByRole("button", { name: "戻る" }).click();
   // 確率の値（決まった問い）
   await openQ(x, "B-02");   // ちょうど k 回と k 回以上を比べる
-  await x.getByRole("radiogroup", { name: "ちょうど 5 回 の確率の予想" }).getByRole("radio", { name: /^20%〜50%/ }).click();
-  await x.getByRole("radiogroup", { name: "5 回以上 の確率の予想" }).getByRole("radio", { name: /^50%以上/ }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("radiogroup", { name: "ちょうど 5 回 の確率の予測" }).getByRole("radio", { name: /^20%〜50%/ }).click();
+  await x.getByRole("radiogroup", { name: "5 回以上 の確率の予測" }).getByRole("radio", { name: /^50%以上/ }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict-0")).toContainText("24.6%");
@@ -1426,11 +1426,11 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   // 理論と実測
   await openQ(x, "C-02");
   await x.getByRole("radio", { name: "10分の1" }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
   await expect(x.getByTestId("exp-to-observe")).toBeEnabled({ timeout: 15000 });
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-conv-table").locator("tbody tr")).toHaveCount(4);   // 10・100・1000・10000 セット
   await x.getByRole("button", { name: /理由を考える/ }).click();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -1447,19 +1447,19 @@ test("並び・ばらつきの問い：並びの数と分散の最大を理論�
   const x = page.getByTestId("experiment");
   await openQ(x, "A-03");
   await x.getByRole("radio", { name: "表が 3 回" }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
   await expect(x.getByTestId("exp-to-observe")).toBeEnabled({ timeout: 15000 });
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");
   expect(await x.getByTestId("exp-paths-count").locator("tbody tr td:nth-child(2)").allTextContents()).toEqual(["1 通り", "6 通り", "15 通り", "20 通り", "15 通り", "6 通り", "1 通り"]);
   await x.getByRole("button", { name: "戻る" }).click();
   await openQ(x, "D-02");
   await x.getByRole("radio", { name: "50%" }).click();
-  await x.getByRole("button", { name: "この予想で実験する" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-verdict")).toContainText("予想どおり");
+  await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-verdict")).toContainText("2.5");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
@@ -1495,8 +1495,8 @@ test("応用の課題：全部の問いで、グラフを問いに合わせる�
   for (const c of APPLY_CASES) {
     await openQ(x, c.key);
     for (const g of await x.getByRole("radiogroup").all()) await g.getByRole("radio").first().click({ timeout: 5000 });   // 予想（どれでもよい）
-    if (!(await x.getByRole("button", { name: "この予想で実験する" }).count())) await x.getByRole("button", { name: "増やす" }).click();   // 位置の問いは山の頂点を動かして予想
-    await x.getByRole("button", { name: "この予想で実験する" }).click();
+    if (!(await x.getByRole("button", { name: "この予測で実験する" }).count())) await x.getByRole("button", { name: "増やす" }).click();   // 位置の問いは山の頂点を動かして予想
+    await x.getByRole("button", { name: "この予測で実験する" }).click();
     await x.getByTestId((await x.getByTestId("exp-run-100").count()) ? "exp-run-100" : "exp-run-big").click();   // 理論と実測は大きい回数だけ
     await expect(x.getByTestId("exp-to-observe")).toBeEnabled({ timeout: 15000 });
     const wide = async (where: string) => expect(await page.evaluate(() => document.documentElement.scrollWidth), `${c.key} の${where}で横にはみ出す`).toBeLessThanOrEqual(390);
@@ -1561,8 +1561,8 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
     const w = items.get(`stats2:binom-${key}`)!.apply.walk;
     await openQ(x, key);
     for (const g of await x.getByRole("radiogroup").all()) await g.getByRole("radio").first().click();
-    if (!(await x.getByRole("button", { name: "この予想で実験する" }).count())) await x.getByRole("button", { name: "増やす" }).click();
-    await x.getByRole("button", { name: "この予想で実験する" }).click();
+    if (!(await x.getByRole("button", { name: "この予測で実験する" }).count())) await x.getByRole("button", { name: "増やす" }).click();
+    await x.getByRole("button", { name: "この予測で実験する" }).click();
     await x.getByTestId((await x.getByTestId("exp-run-100").count()) ? "exp-run-100" : "exp-run-big").click();
     await expect(x.getByTestId("exp-to-observe")).toBeEnabled({ timeout: 15000 });
     await x.getByTestId("exp-to-observe").click();

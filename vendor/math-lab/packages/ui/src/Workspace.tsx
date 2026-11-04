@@ -389,9 +389,8 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
   const seqOk = model.kind === "formula" && over === "k" && values.n !== undefined && values.p !== undefined && partList.length >= 3;
   const reading = () => {
     if (!partList.length && !valueSyms.length) return null;
-    const items: ["meaning" | "structure" | "calc", string][] = [["meaning", "意味"], ...(partList.length ? [["structure", "構造"], ["calc", "計算"]] as ["structure" | "calc", string][] : [])];
+    const items: ["meaning" | "structure" | "calc", string][] = [["meaning", "意味"], ...((why || seqOk) && partList.length ? [["structure", "構造"]] as ["structure", string][] : []), ...(partList.length ? [["calc", "計算"]] as ["calc", string][] : [])];
     const mode = items.some(([k]) => k === readAs) ? readAs : "meaning";
-    const tex = (n: FormulaNode) => render(toTex(n, { symbols }), false);
     return (
       <div className={s.read} data-testid="ws-read" data-mode={mode}>
         {items.length > 1 && <Seg name="式の読み方" items={items} value={mode} onChange={setReadAs} />}
@@ -419,17 +418,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
             </div>
           </div>
         )}
-        {mode === "structure" && (
-          <div className={s.parts} role="group" aria-label="式の部品">
-            {partList.map(({ p, i, node }) => (
-              <button key={i} type="button" className={`${s.part} ${PART_TINT[i % PART_TINT.length]}`} data-dim={(stepParts && !stepParts.has(i)) || undefined} aria-pressed={sel?.part === i} onClick={() => pickPart(i)} data-testid={`ws-read-part-${i}`}>
-                <span className={s.partTex} dangerouslySetInnerHTML={{ __html: tex(node) }} />
-                <b>{p.name}</b>
-                <span className={s.partMeaning}>{p.meaning}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* 部品の名前と意味は、式の真下の帯1か所で出す（式を押すと出る。渡辺さん 2026-11-04：説明を二重に置かない）。構造では段で効く部品を式の囲みで濃く見せる */}
         {mode === "structure" && seqOk && <Outcomes n={values.n!} k={values[over]!} p={values.p!} />}
         {mode === "structure" && seqOk && (
           <details className={s.more} data-testid="ws-seq-more"><summary>並びを作ってみる</summary><Sequence n={values.n!} k={values[over]!} p={values.p!} /></details>
@@ -506,7 +495,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
                     <span dangerouslySetInnerHTML={{ __html: render(toTex((d.formula.tree as { args: FormulaNode[] }).args[d.side]!, { symbols: d.formula.symbols }), false) }} />
                   </button>
                 ))}
-                {selSym.concept && onConcept && <button type="button" className={s.link} onClick={() => onConcept(selSym.concept!)}>{conceptName?.(selSym.concept) ?? selSym.concept} を見る</button>}
+                {selSym.concept && onConcept && <button type="button" className={s.link} onClick={() => onConcept(selSym.concept!)}>{conceptName?.(selSym.concept) ?? selSym.concept} を開く</button>}
               </div>
             )}
           </div>
@@ -718,7 +707,7 @@ function Frame({ formula: given, mean, linear, model, table, onScene, seed: seed
         </p>
         <div className={s.expFoot}>
           <span>種 {seed}</span>
-          <button type="button" className={s.clear} onClick={clearRec} disabled={!rec.values.length}>記録を消す</button>
+          <button type="button" className={s.clear} onClick={clearRec} disabled={!rec.values.length}>記録を削除</button>
         </div>
       </div>}
       </>}

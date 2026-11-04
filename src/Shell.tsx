@@ -175,19 +175,19 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
   return (
     <section className={s.page} data-testid="page-lab">
       <h2 className={s.pageTitle}>実験室</h2>
-      <Muted>予想してから、自分で起こして確かめる。</Muted>
+      <Muted>予測してから、自分で起こして確かめる。</Muted>
       {concepts.length ? <>
         {/* 概念は下から出る面で選ぶ（いくつでも。渡辺さん 2026-11-02）。上には選んだ概念の札だけを出す */}
         <button type="button" className={s.conceptPick} aria-haspopup="dialog" onClick={() => { setQuery(""); setSheet(true); }} data-testid="lab-concept-pick">
-          <span>概念で探す{picked.length ? <b>：{picked.map(nm).join("・")}</b> : null}</span><i aria-hidden="true">▾</i>
+          <span>概念で検索{picked.length ? <b>：{picked.map(nm).join("・")}</b> : null}</span><i aria-hidden="true">▾</i>
         </button>
         {picked.length ? <div className={s.picked} data-testid="lab-picked">{picked.map((id) => (
           <button key={id} type="button" onClick={() => toggle(id)} aria-label={`${nm(id)} を外す`} data-testid={`lab-sel-${id}`}>{nm(id)}<span aria-hidden="true">✕</span></button>
         ))}</div> : null}
         <Muted as="p" data-testid="lab-rule">{picked.length ? rule : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて A〜F から選ぶ。"}</Muted>
         {sheet ? (
-          <Sheet label="概念で探す" title="概念で探す" onClose={() => setSheet(false)} data-testid="lab-concept-sheet">
-            <input className={s.conceptSearch} type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="名前で探す" aria-label="概念を名前で探す" data-testid="lab-concept-search" />
+          <Sheet label="概念で検索" title="概念で検索" onClose={() => setSheet(false)} data-testid="lab-concept-sheet">
+            <input className={s.conceptSearch} type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="名前で検索" aria-label="概念を名前で検索" data-testid="lab-concept-search" />
             {cats.map(([cat, ids]) => (
               <section key={cat} className={s.conceptCat} aria-label={cat}>
                 <h4>{cat}</h4>
@@ -203,8 +203,8 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
             <div className={s.sheetFoot}>
               <Muted as="p" data-testid="lab-sheet-rule">{picked.length ? `${rule}：${total} 問` : "何も選ばないときは、実験室だけを並べる"}</Muted>
               <div>
-                <Button onClick={() => setPicked([])} disabled={!picked.length} data-testid="lab-clear">すべて外す</Button>
-                <Button variant="primary" onClick={() => setSheet(false)} data-testid="lab-show">{picked.length ? `${total} 問を見る` : "閉じる"}</Button>
+                <Button onClick={() => setPicked([])} disabled={!picked.length} data-testid="lab-clear">選択を解除</Button>
+                <Button variant="primary" onClick={() => setSheet(false)} data-testid="lab-show">{picked.length ? `${total} 問を表示` : "閉じる"}</Button>
               </div>
             </div>
           </Sheet>
@@ -238,7 +238,7 @@ export function LabPage({ net, onOpen, focus = null }: { net: Network; onOpen: (
               <button type="button" className={s.labCard} onClick={() => onOpen(x.id)} data-testid={`open-${x.id}`}>
                 <span className={s.labTag}>{x.title}</span>
                 {itemsOf(x).length
-                  ? <><b>{lead(x)}</b><Muted as="span">目的から問いを選ぶ（A〜F の問い {itemsOf(x).filter((it) => it.open).length}／{itemsOf(x).length}）・自分で条件を決めて比べる</Muted></>
+                  ? <><b>{lead(x)}</b><Muted as="span">目的から問いを選ぶ（A〜F の問い {itemsOf(x).filter((it) => it.open).length}／{itemsOf(x).length}）・自分で条件を決めて比較</Muted></>
                   : <><b>{x.question}</b><Muted as="span">実験室を開く</Muted></>}
               </button>
             </li>
