@@ -18,6 +18,21 @@ export type WalkTexts = {
 /** 実験室が教材の walk_texts を渡す（Experiment の walkTexts） */
 export const WalkTextsContext = createContext<WalkTexts | undefined>(undefined);
 const fillText = (s: string, v: Record<string, string> = {}) => s.replace(/\{(\w+)\}/g, (m, k: string) => v[k] ?? m);
+/** 応用の解き方の段の文（教材の apply_texts。型は kn-experiment-v1.json の applyTexts。stats2-course #211） */
+export type ApplyTexts = {
+  words: Record<string, Record<string, string>>;
+  steps: Record<string, { title: string; text?: string; variants?: Record<string, { title?: string; text?: string }> }>;
+};
+export const ApplyTextsContext = createContext<ApplyTexts | undefined>(undefined);
+/** 段の題と文（穴に値を入れ、語の穴 op・param は言葉にする。文がないときは文の型の id を題に出す。教材の build が文の漏れを止める） */
+export function useStepWords() {
+  const T = useContext(ApplyTextsContext);
+  return (st: ApplyStep) => {
+    const t = T?.steps[st.tid], alt = st.variant ? t?.variants?.[st.variant] : undefined;
+    const v = Object.fromEntries(Object.entries(st.vars).map(([k, x]) => [k, T?.words[k]?.[x] ?? x]));
+    return { title: fillText(alt?.title ?? t?.title ?? st.tid, v), text: fillText(alt?.text ?? t?.text ?? "", v) };
+  };
+}
 /** 公式の言葉（文がないときは記号の名前で出す。教材の build が文の漏れを止める） */
 function useWords() {
   const T = useContext(WalkTextsContext);
@@ -132,7 +147,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
   onFit?: (at: ApplyState, mark: ApplyMark) => void;
   /** シートを開いているか（開いている間、応用の段の課題の文はそのまま） */ onMode?: (open: boolean) => void;
 }) {
-  const W = useWords();
+  const W = useWords(), stepWords = useStepWords();
   const subs = useMemo(() => walkSubs(walk), [walk]);
   const showAt = (t: ApplyState) => showAt0(t, names);
   /** 「n を」「引きずる強さを」：記号なら空白を挟み、言葉ならそのまま「を」を付ける */
@@ -362,7 +377,7 @@ export function ApplyWalk({ walk, solve, steps: engineSteps, check, state, names
     </ol>
     <p className={s.applyGist} data-testid="exp-apply-why"><b>つまり</b>{why}</p>
     <details className={s.wDetail}><summary>式で見る（解き方の一覧）</summary>
-      <ol className={s.applySteps}>{engineSteps.map((x, i) => <li key={i}><b>{x.title}</b>{x.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(x.tex) }} />}{x.text && <p>{x.text}</p>}</li>)}</ol>
+      <ol className={s.applySteps}>{engineSteps.map((x, i) => { const w = stepWords(x); return <li key={i}><b>{w.title}</b>{x.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(x.tex) }} />}{w.text && <p>{w.text}</p>}</li>; })}</ol>
     </details>
   </section> : <section className={s.wWork}>
     <div className={s.walkHead}><span>STEP {cur + 1} / {N}・{KIND[st.kind][0]}</span><span className={s.walkDots} aria-hidden="true">{walk.steps.map((_, i) => <i key={i} className={i < cur || (i === cur && done) ? s.walkDotDone : i === cur ? s.walkDotCur : undefined} />)}</span></div>

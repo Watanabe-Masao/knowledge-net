@@ -6,7 +6,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { INT, NUM2, PCT2, PCT4, answerMatches, applyCheck, formatApply, mechanismMoments, modelPmf, runningMean, runningSd, runningShare, solveApply, summarize, type ApplyMark, type ApplySolve, type ApplyState, type CardMechanism, type Mechanism } from "@math-lab/engine";
 import { haptic } from "./motion";
-import { ApplyWalk, type ApplyWalkSpec } from "./ApplyWalk";
+import { ApplyWalk, useStepWords, type ApplyWalkSpec } from "./ApplyWalk";
 import { LabShell, peak, tex, useRuns, usePairRuns, useStages } from "./labParts";
 import { CompareRows, CompareTable, DistRows, Dock, Field, PairRows, RunChart, ScaleChoice, Seg, TheoryRows, fmtN, oneIn, pc, pctSig, pShort, qs, r2, scaleChoices, type CmpRow } from "./QuestionParts";
 import type { BinomDef, ExperimentTheme } from "./Experiment";
@@ -125,6 +125,7 @@ export type ApplySpec = {
 };
 /** state：下の道具の今の値（解き方の確かめる段で、問いの値になったかを見る） */
 export function ApplyTask({ spec, onFit, state, names }: { spec: ApplySpec; onFit?: (at: ApplyState, mark: ApplyMark) => void; state?: ApplyState; names?: Record<string, string> }) {
+  const stepWords = useStepWords();
   const res = useMemo(() => { try { return { r: solveApply(spec.solve), c: applyCheck(spec.solve) }; } catch (e) { return e as Error; } }, [spec]);
   const [val, setVal] = useState(""), [pick, setPick] = useState<string>(""), [done, setDone] = useState(false);
   if (res instanceof Error) return <Card title="応用の課題"><p className={qs.note} role="alert">課題の条件がおかしい：{res.message}</p></Card>;
@@ -159,11 +160,11 @@ export function ApplyTask({ spec, onFit, state, names }: { spec: ApplySpec; onFi
           : <>
             <p className={s.h} style={{ marginTop: 12 }}>解き方</p>
             <ol className={s.applySteps} data-testid="exp-apply-steps">
-              {r.steps.map((stp, i) => <li key={i}>
-                <b>{stp.title}</b>
+              {r.steps.map((stp, i) => { const w = stepWords(stp); return <li key={i}>
+                <b>{w.title}</b>
                 {stp.tex && <div className={s.applyTex} dangerouslySetInnerHTML={{ __html: tex(stp.tex) }} />}
-                {stp.text && <p>{stp.text}</p>}
-              </li>)}
+                {w.text && <p>{w.text}</p>}
+              </li>; })}
             </ol>
             <p className={s.applyGist} data-testid="exp-apply-why"><b>つまり</b>{spec.why}</p>
           </>}

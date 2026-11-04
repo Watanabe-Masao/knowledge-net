@@ -61,10 +61,11 @@ export type Unit = { id: string; number: string; title: string; url?: string;
 /** 実験室の定義（型の改訂9。中身は math-lab の ExperimentDef と同じ形） */
 export type ExperimentData = import("@math-lab/ui").ExperimentDef;
 export type WalkTexts = import("@math-lab/ui").WalkTexts;
+export type ApplyTexts = import("@math-lab/ui").ApplyTexts;
 export type CourseData = {
   schema: "kn-schema"; version: 1; schema_revision?: number; experiment_revision?: number;
   course: { id: string; title: string; units: Unit[] };
-  concepts: Concept[]; relations: Relation[]; derivations: Derivation[]; experiments?: ExperimentData[]; walk_texts?: WalkTexts;
+  concepts: Concept[]; relations: Relation[]; derivations: Derivation[]; experiments?: ExperimentData[]; walk_texts?: WalkTexts; apply_texts?: ApplyTexts;
 };
 export type Kind = { definition: string; reading: string; trace: boolean; required: string[] };
 export const KINDS = kinds.types as unknown as Record<string, Kind>;
@@ -103,6 +104,8 @@ export type Network = {
   experiments: Map<string, ExperimentData>;
   /** 解き方の公式の文（教材 id → walk_texts。実験室は自分の教材の文を使う。stats2-course issue 211） */
   walkTexts: Map<string, WalkTexts>;
+  /** 応用の解き方の段の文（教材 id → apply_texts。stats2-course issue 211） */
+  applyTexts: Map<string, ApplyTexts>;
   units: Map<string, Unit>;
   /** 指されているが、どの教材にもない概念（別の教材がまだつながっていない） */
   missing: Set<string>;
@@ -111,7 +114,7 @@ export type Network = {
 
 /** いくつかの教材のデータを1つのネットワークにする。型に合わない教材は errors に入れて外す。 */
 export function merge(list: { id: string; data: unknown }[]): { net: Network; errors: string[] } {
-  const net: Network = { courses: [], concepts: new Map(), relations: [], derivations: [], experiments: new Map(), walkTexts: new Map(), units: new Map(), missing: new Set(), problems: [] };
+  const net: Network = { courses: [], concepts: new Map(), relations: [], derivations: [], experiments: new Map(), walkTexts: new Map(), applyTexts: new Map(), units: new Map(), missing: new Set(), problems: [] };
   const errors: string[] = [];
   for (const { id, data } of list) {
     if (!validateRead(data)) {
@@ -129,6 +132,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     net.derivations.push(...d.derivations);
     for (const x of d.experiments ?? []) net.experiments.set(x.id, x);
     if (d.walk_texts) net.walkTexts.set(d.course.id, d.walk_texts);
+    if (d.apply_texts) net.applyTexts.set(d.course.id, d.apply_texts);
   }
   const ends = [...net.relations.flatMap((r) => [r.from, r.to]), ...net.derivations.flatMap((d) => [...d.premises, d.conclusion])];
   const relIds = new Set(net.relations.map((r) => r.id));
