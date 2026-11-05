@@ -415,6 +415,17 @@ export default function App() {
     return (
       <main className={`${st.app} ${st.withTabs}`}>
         <Header title="知識ネットワーク" sub={sub} />
+        {/* 概念から実験室・学習・問題集へ移ったときは、来た概念へ戻る ← を上に（下のタブだけにしない。UI レビュー「動線設計」2） */}
+        {focus && (
+          <button
+            type="button"
+            className={st.backTo}
+            onClick={() => setTab("explore")} // 履歴を戻すのでなく探索のタブへ（URL で直接開いたときにサイトの外へ戻らない）
+            data-testid="tab-back"
+          >
+            <span aria-hidden="true">←</span> {focus.name}
+          </button>
+        )}
         {tab === "learn" ? (
           <LearnPage net={net} focus={focus} />
         ) : tab === "lab" ? (
@@ -762,6 +773,7 @@ export default function App() {
           onClose={() => setEdgeSel(null)}
           onSelect={(id) => setSel(id)}
           page={narrow && !!concept && !path && detent === "full"}
+          onQuestion={(x, q) => setExp(x, q)}
         />
       ) : null}
       {(narrow && concept) || catOnly ? null : (
