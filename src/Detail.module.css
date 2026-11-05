@@ -39,7 +39,7 @@
   box-shadow:
     0 0 0 1px var(--line-strong),
     0 12px 32px var(--scrim);
-  animation: pop var(--dur-spring) var(--ease-spring);
+  animation: pop var(--dur) var(--ease);
   transform-origin: top right;
 }
 .menu button {
@@ -61,7 +61,6 @@
 @keyframes pop {
   from {
     opacity: 0;
-    transform: scale(0.94);
   }
 }
 /* 学ぶ行動：主の1つ（実験してみる）だけ色、ほかは中立の枠 */
@@ -96,7 +95,7 @@
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  transition: transform var(--dur-spring) var(--ease-bounce);
+  transition: transform var(--dur) var(--ease);
 }
 .act span {
   color: var(--ink-3);

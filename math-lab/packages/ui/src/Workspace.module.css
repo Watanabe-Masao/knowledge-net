@@ -541,6 +541,7 @@
   transform-origin: 50% 100%;
   animation: grow var(--dur-sheet) var(--ease-sheet);
 } /* 選んだ棒は少し伸びてから止まる */
+/* 変化を見せる動き：選んだ棒が伸びて、どの k を選んだかを示す */
 @keyframes grow {
   45% {
     transform: scale(1.18, 1.05);
@@ -568,6 +569,7 @@
   fill: var(--accent);
   animation: drop var(--dur-sheet) cubic-bezier(0.5, 0, 0.9, 0.4);
 } /* 1回：玉が上から落ちて、その k の点になる */
+/* 変化を見せる動き：1回の値の札が出る */
 @keyframes zoomIn {
   from {
     transform: scale(0.6);

@@ -1,9 +1,11 @@
 // デザインエンジンの決まりを確かめる（npm run check の中で走る）。
 // - 色の値（#fff・rgb()・hsl()）は math-lab の tokens.json にだけ書く（部品と値は math-lab/。その中の決まりは math-lab/scripts/check-design.mjs が確かめる）。画面は var(--…) を使う
+// - 跳ねる動き・拡大の動きは使わない（motion-rules.mjs）
 // - 動きの長さは変数（--dur-press・--dur・--dur-flash）だけ。ずっと動く飾り（infinite）は使わない
 // - 画面（src/*.tsx）は className="…"（グローバルな名前）を使わない。部品（@math-lab/ui）か CSS Modules を使う
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { motionIssues } from "../math-lab/scripts/motion-rules.mjs";
 const files = [];
 const walk = (d) => {
   for (const f of readdirSync(d)) {
@@ -16,6 +18,7 @@ const walk = (d) => {
 walk("src");
 const bad = [];
 for (const f of files) {
+  bad.push(...motionIssues(f, readFileSync(f, "utf8")));
   readFileSync(f, "utf8")
     .split("\n")
     .forEach((line, i) => {

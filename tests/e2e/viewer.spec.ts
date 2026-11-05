@@ -465,9 +465,10 @@ test("切り替えの印は選んだ項目の上に滑って重なる", async ({
 test("押した瞬間に少し沈み、動きを減らす設定では動かない", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   const btn = page.getByRole("button", { name: "ほかの操作" });
-  // 離すとばねで戻る（tokens 改訂4：dur-spring 0.48s・ease-bounce は linear()）。押している間は速く沈む（0.09s。:active）
-  await expect(btn).toHaveCSS("transition-duration", /0\.48s/);
-  await expect(btn).toHaveCSS("transition-timing-function", /linear\(/);
+  // 離すと --dur（0.2s）・--ease で戻る。跳ねる動き（ease-bounce は linear() の曲線で行き過ぎて戻る）は使わない（UI レビュー 5。stats2-course #224 U3）。
+  // 押している間は速く沈む（0.09s。:active）
+  await expect(btn).toHaveCSS("transition-duration", /^0\.2s/);
+  await expect(btn).not.toHaveCSS("transition-timing-function", /linear\(/);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(btn).toHaveCSS("transition-duration", /^0s/);
   const media = page.getByTestId("media-concept");

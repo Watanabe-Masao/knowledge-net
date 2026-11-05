@@ -12,7 +12,7 @@
     background var(--dur),
     border-color var(--dur),
     color var(--dur),
-    transform var(--dur-spring) var(--ease-bounce);
+    transform var(--dur) var(--ease);
 }
 .btn:active:not(:disabled) {
   transform: scale(var(--press-scale));

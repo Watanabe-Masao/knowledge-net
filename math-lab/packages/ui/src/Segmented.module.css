@@ -39,7 +39,7 @@
   cursor: pointer;
   transition:
     color var(--dur),
-    transform var(--dur-spring) var(--ease-bounce);
+    transform var(--dur) var(--ease);
 }
 .item:active {
   transform: scale(var(--press-scale));

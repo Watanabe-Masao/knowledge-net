@@ -299,7 +299,7 @@
   transition:
     background var(--dur) var(--ease),
     color var(--dur) var(--ease),
-    transform var(--dur-spring) var(--ease-bounce);
+    transform var(--dur) var(--ease);
 }
 .chips button::before {
   content: "";
@@ -335,7 +335,7 @@ button.row {
   box-shadow: 0 0 0 1px var(--line);
   color: var(--ink);
   cursor: pointer;
-  transition: transform var(--dur-spring) var(--ease-bounce);
+  transition: transform var(--dur) var(--ease);
 }
 button.row:active {
   transform: scale(var(--press-scale));
@@ -351,14 +351,14 @@ button.row:focus-visible {
 .chev {
   color: var(--ink-3);
   display: flex;
-  transition: transform var(--dur-spring) var(--ease-spring);
+  transition: transform var(--dur) var(--ease);
 }
 .chevOn {
   transform: rotate(90deg);
 }
 .probs {
   padding: var(--sp-2) 4px var(--sp-3);
-  animation: fade var(--dur-spring) var(--ease-spring);
+  animation: fade var(--dur) var(--ease);
 }
 @keyframes fade {
   from {
