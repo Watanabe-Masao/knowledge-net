@@ -389,3 +389,8 @@
   color: var(--ink-3);
   align-self: center;
 }
+.mediaTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}

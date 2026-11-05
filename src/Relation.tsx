@@ -18,6 +18,7 @@ import {
 } from "@math-lab/ui";
 import { modelPmf, normalDensity, poissonPmf } from "@math-lab/engine";
 import s from "./Relation.module.css";
+import { Icon } from "./Shell";
 import { KINDS, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
 const KIND_VAR: Record<string, string> = {
@@ -66,7 +67,9 @@ export const openLab = (url: string, title?: string) =>
   window.dispatchEvent(new CustomEvent("kn:open-lab", { detail: { url, title } }));
 
 type MediaKey = "fig" | "tour" | "check";
-const LABEL: Record<MediaKey, string> = { fig: "🖼 図", tour: "▶ 解説", check: "🧪 操作" };
+const LABEL: Record<MediaKey, string> = { fig: "図", tour: "解説", check: "操作" };
+/** 図・解説・操作の印（下のタブと同じ線の印。絵文字は使わない。UI レビュー「カラー設定」） */
+const MEDIA_ICON: Record<MediaKey, "figure" | "play" | "lab"> = { fig: "figure", tour: "play", check: "lab" };
 const KEY = "kn.media";
 const remembered = (): MediaKey | null => {
   try {
@@ -122,7 +125,12 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
           label="図・解説・操作"
           items={have.map((k) => ({
             value: k,
-            label: `${LABEL[k]}${k === "fig" && figures!.length > 1 ? ` ${figures!.length}` : ""}`,
+            label: (
+              <span className={s.mediaTab}>
+                <Icon name={MEDIA_ICON[k]} size={16} />
+                {`${LABEL[k]}${k === "fig" && figures!.length > 1 ? ` ${figures!.length}` : ""}`}
+              </span>
+            ),
           }))}
         />
       </div>
