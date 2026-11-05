@@ -1,8 +1,10 @@
 // URL に持つ状態（stats2-course #142：保存と復元を同じ状態の定義から作る）。
 // 書き込み（toUrl）と、最初の読み込み・ブラウザの「戻る」（fromUrl）は、どちらもこの1つの定義を使う。項目を足すときはここだけを直す。
-// ?c=選んだ概念 &view=around|path|all &cmp=比べる概念 &x=実験室 &q=実験室の問い（テーマ体系の id。概念から問いを直接開く） &cards=記録カード &g=分類 &t=タブ（探索は付けない）
+// ?c=選んだ概念 &view=around|path|all &cmp=比べる概念 &x=実験室 &q=実験室の問い（テーマ体系の id。概念から問いを直接開く） &cards=記録カード &g=分類 &lv=分類のページの並べ方（list|map。正方形は付けない） &t=タブ（探索は付けない）
 export type View = "around" | "path" | "all"; // フォーカス（まわり）・経路（前提をさかのぼる）・俯瞰（全体）
 export type Tab = "explore" | "learn" | "lab" | "problems";
+/** 分類のページの並べ方（stats2-course #228）：正方形（ふだん）・一覧・地図 */
+export type Layout = "grid" | "list" | "map";
 export const TAB_IDS: Tab[] = ["explore", "learn", "lab", "problems"];
 
 export type UrlState = {
@@ -13,6 +15,7 @@ export type UrlState = {
   q: string | null;
   cards: string | null;
   group: string | null;
+  layout: Layout;
   tab: Tab;
 };
 
@@ -37,6 +40,7 @@ export function fromUrl(p: URLSearchParams): UrlState {
     q: p.get("q"),
     cards: p.get("cards"),
     group: p.get("g"),
+    layout: p.get("lv") === "list" ? "list" : p.get("lv") === "map" ? "map" : "grid",
     tab: readTab(p),
   };
 }
@@ -53,6 +57,7 @@ export function toUrl(s: UrlState, base: URLSearchParams): URLSearchParams {
   set("q", s.exp ? s.q : null);
   set("cards", s.exp ? s.cards : null);
   set("g", s.group);
+  set("lv", s.group && !s.sel && s.layout !== "grid" ? s.layout : null);
   set("t", s.tab === "explore" || s.exp ? null : s.tab);
   return p;
 }

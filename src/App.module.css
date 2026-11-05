@@ -236,3 +236,10 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* 分類のページの並べ方の切り替え（上＝探す・分類の置き場所。右に寄せる） */
+.catBar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-2);
+}

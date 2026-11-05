@@ -1,0 +1,197 @@
+/* 分類のページのリストビュー（stats2-course #228）。語の印は柱の色（--tint）。正方形はライブラリの語の枠と同じ形 */
+.page {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-2) 0 var(--sp-5);
+}
+
+/* 並べ方の切り替え：正方形・一覧・地図（中立の色。選んだものだけ主の色） */
+.switch {
+  display: inline-flex;
+  border-radius: var(--r-m);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+}
+.switch button {
+  all: unset;
+  box-sizing: border-box;
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.switch button + button {
+  border-left: 1px solid var(--line);
+}
+.switch button[aria-checked="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.switch button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.switch svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 正方形：横4つ */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+.cellWrap {
+  position: relative;
+  min-width: 0;
+}
+.cell {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--tint) 6%, var(--surface));
+  box-shadow: 0 0 0 1px var(--line);
+  text-align: center;
+  cursor: pointer;
+  -webkit-touch-callout: none; /* 長押しで iPhone のメニューを出さない */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.cell:active {
+  background: var(--surface-2);
+}
+.cell:focus-visible,
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.skeleton {
+  box-shadow: none;
+  outline: 1px dashed var(--line-strong);
+  outline-offset: -1px;
+}
+.glyph {
+  width: 46%;
+  aspect-ratio: 1 / 1;
+  color: var(--tint);
+  display: grid;
+}
+.glyph img {
+  width: 100%;
+  height: 100%;
+}
+.name {
+  font-size: var(--fs-tag);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-all;
+}
+/* 長押しの説明：押した枠の下に重ねる（横は画面の中に収める） */
+.tip {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(260px, calc(100vw - 32px));
+  display: grid;
+  gap: 4px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-m);
+  background: var(--raised);
+  box-shadow:
+    0 0 0 1px var(--line-strong),
+    var(--shadow-raised);
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  line-height: 1.6;
+  pointer-events: none;
+}
+.tip b {
+  color: var(--ink);
+}
+.grid > li:nth-child(4n) .tip,
+.grid > li:nth-child(4n - 1) .tip {
+  left: auto;
+  right: 0;
+}
+
+/* 一覧：印・名前・定義1文 */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--r-l);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.list > li + li {
+  border-top: 1px solid var(--line);
+}
+.row {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 64px;
+  padding: var(--sp-2) var(--sp-3);
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 12px;
+  gap: var(--sp-3);
+  align-items: center;
+  cursor: pointer;
+}
+.row:active {
+  background: var(--surface-2);
+}
+.row.skeleton {
+  outline: none;
+}
+.rowGlyph {
+  width: 40px;
+  height: 40px;
+  color: var(--tint);
+  display: grid;
+}
+.rowGlyph img {
+  width: 100%;
+  height: 100%;
+}
+.rowText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.rowText b {
+  font-size: var(--fs-body);
+  color: var(--ink);
+}
+.rowText small {
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+.chev {
+  color: var(--ink-3);
+}
