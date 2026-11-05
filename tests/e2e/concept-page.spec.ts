@@ -170,6 +170,15 @@ test("式の読み方：意味は記号と今の値、構造は部品と意味�
   const r = d.getByTestId("ws-read");
   await expect(r.getByTestId("ws-read-sym-k")).toContainText("3");
   await expect(r.getByTestId("ws-read-sym-n")).toContainText("10");
+  // 値は意味の行と帯の札の2か所。つまみはふだん出さず、意味の行（か札）を押すとその記号で開き、触らないまま2秒でたたむ
+  // （UI レビュー「操作と入力」・帯の決まり 2026-11-03。故障：つまみが出しっぱなしで同じ値が3か所・行を押しても動かせない・たたまない）
+  const band = d.getByTestId("ws-band");
+  await expect(band.locator("input[type=range]")).toHaveCount(0);
+  await r.getByTestId("ws-read-sym-n").click();
+  await expect(d.getByTestId("ws-slider-n")).toBeVisible();
+  await expect(d.getByTestId("ws-chip-n")).toHaveAttribute("aria-pressed", "true");
+  await page.mouse.move(0, 0); // 帯の上に指を残さない（押さえている間はたたまない）
+  await expect(band.locator("input[type=range]")).toHaveCount(0, { timeout: 4000 });
   await r.getByRole("radio", { name: "構造" }).click();
   // 部品の名前と意味は式の真下の帯1か所だけ（構造に部品の札を重ねて置かない。渡辺さん 2026-11-04）
   await expect(r.locator("[data-testid^=ws-read-part-]"), "構造に部品の説明が重なっている").toHaveCount(0);

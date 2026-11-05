@@ -29,7 +29,10 @@ export function ReadPanel({ w }: { w: WsCtx }) {
     symbols,
     pickPart,
     pickSym,
+    vary,
+    model,
   } = w;
+  const moves = model.kind === "formula" ? [...vary, over] : [];
   // 段の文の中の [[番号]] は、その部品を式の囲みと同じ色の札で出す（押すとその部品を選ぶ。色で式とつなぐ。渡辺さん 2026-11-04）
   const whyText = (text: string) =>
     text.split(/\[\[(\d+)\]\]/g).map((x, j) => {
@@ -72,7 +75,11 @@ export function ReadPanel({ w }: { w: WsCtx }) {
                 type="button"
                 className={s.symRow}
                 aria-pressed={sel?.sym === y.key}
-                onClick={() => pickSym(y.key)}
+                onClick={() => {
+                  pickSym(y.key);
+                  // 動かせる記号は、帯のつまみをその記号で開く（行から動かせる。入力の場所は帯の1か所のまま）
+                  if (moves.includes(y.key) && sel?.sym !== y.key) patch({ band: y.key, bandOpen: true });
+                }}
                 data-testid={`ws-read-sym-${y.key}`}
               >
                 <span className={s.symRowSym}>{y.symbol}</span>

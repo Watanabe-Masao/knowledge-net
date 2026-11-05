@@ -27,6 +27,8 @@ export type WsState = {
   readAs: ReadAs;
   /** 帯で動かす記号 */
   band: string;
+  /** 帯のつまみを出しているか（ふだんは値の札だけ。札か意味の行を押すと出し、触らないまま2秒でたたむ。stats2-course #224 U6b） */
+  bandOpen: boolean;
   /** 構造の見方の「なぜ」の段（0から） */
   whyStep: number;
 };
@@ -42,6 +44,7 @@ export const initialState = (values: Record<string, number>, weights: number[]):
   step: 1,
   readAs: "meaning",
   band: "",
+  bandOpen: false,
   whyStep: 0,
 });
 
