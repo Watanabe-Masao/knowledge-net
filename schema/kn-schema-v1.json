@@ -533,6 +533,37 @@
               }
             }
           }
+        },
+        "groups": {
+          "type": "array",
+          "description": "意味のまとまり（分類の中の小さなまとまり。例：確率分布の「くり返して数える」）。並べた順が学ぶ順。分類のページで、まとまりごとに区切って語を並べる（stats2-course #228）。まとまりのない分類は区切らない",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "category",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/gid",
+                "description": "教材をまたいで一意（例：stats2:GRP-dist-count）"
+              },
+              "category": {
+                "type": "string",
+                "minLength": 1,
+                "description": "このまとまりが入る分類（概念の category の名前）"
+              },
+              "name": {
+                "$ref": "#/$defs/text"
+              },
+              "summary": {
+                "$ref": "#/$defs/text",
+                "description": "まとまりを1文で（何を学ぶまとまりか）"
+              }
+            }
+          }
         }
       }
     },
@@ -1000,6 +1031,10 @@
             "type": "string",
             "pattern": "^https://[^\"'()\\\\\\s<>]+\\.svg$",
             "description": "語の印（SVG の URL。教材の build が原本の印のファイルから作る。stats2-course #220）。48×48・線 2.4・色は柱の色で、画面は CSS の mask で読み、背景の色で塗る（SVG を本体に入れない）。引用符・括弧・空白を含む URL は型で止める"
+          },
+          "group": {
+            "$ref": "#/$defs/gid",
+            "description": "意味のまとまり（教材の groups の id）。まとまりの分類は概念の category と同じ（教材の build が確かめる。stats2-course #228）"
           }
         },
         "allOf": [
@@ -1551,5 +1586,5 @@
     }
   },
   "$comment": "改訂 2（2026-10-29）：概念・関係に任意の labs を追加。変更履歴は schema/CHANGELOG.md",
-  "x-revision": 34
+  "x-revision": 35
 }

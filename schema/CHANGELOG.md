@@ -40,6 +40,7 @@
 | 32 | 2026-11-05 | 書き出しに任意の `walk_texts`（解き方の公式の文。型は実験室の拡張の `walkTexts`）（stats2-course #211）。任意 |
 | 33 | 2026-11-05 | 書き出しに任意の `apply_texts`（応用の解き方の段の文。型は実験室の拡張の `applyTexts`）（stats2-course #211）。任意 |
 | 34 | 2026-11-05 | 概念に任意の `icon`（語の印の SVG の URL。引用符・括弧・空白を含む URL は型で止める）、教材に任意の `pillars`（柱：id・name・categories。色は画面が順に当てる）（stats2-course #220）。任意 |
+| 35 | 2026-11-05 | 教材に任意の `groups`（意味のまとまり：id〔教材名:…〕・category・name・summary。並べた順が学ぶ順）、概念に任意の `group`（まとまりの id）（stats2-course #228）。任意 |
 
 ## 実験室の拡張（kn-experiment-v1.json）
 

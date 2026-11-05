@@ -195,3 +195,28 @@
 .chev {
   color: var(--ink-3);
 }
+
+/* 意味のまとまりの区切り（stats2-course #228）：名前と1文。区切りの間はふつうの間隔より広く */
+.section {
+  display: grid;
+  gap: var(--sp-2);
+}
+.section + .section {
+  margin-top: var(--sp-3);
+}
+.secHead {
+  display: grid;
+  gap: 2px;
+}
+.secHead h3 {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--ink);
+}
+.secHead p {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+  line-height: 1.5;
+}
