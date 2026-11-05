@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { type Band, type Network, type Placed, TINTS, bandOfCat, bandsOf } from "./data";
 import { Button } from "@math-lab/ui";
 import { iconUri } from "./icons";
+import { loadTermSvgs, termIconUri } from "./termIcons";
 import s from "./Graph.module.css";
 import { Icon, labCountOf } from "./Shell";
 
@@ -369,6 +370,31 @@ export default function Graph({
   edge.current = onEdge;
   const around = !!positions;
   // 点の札（ツールチップ）：長押し（スマホ）・指を乗せる（マウス）で、名前・分類・定義1文を点のそばに出す。押すと選ぶのはそのまま
+  // 語の印（教材の SVG を取り寄せ、柱の色で塗る）。取り寄せが済んだら、作り直さずに点の絵だけを替える
+  const terms = useRef<Map<string, string>>(new Map());
+  const pillarColor = (cat: string) => {
+    const bands = bandsOf(net);
+    return css(bands.find((b) => b.id === bandOfCat(bands, cat))?.tint ?? "--mute");
+  };
+  useEffect(() => {
+    let live = true;
+    terms.current = new Map();
+    loadTermSvgs(net).then((m) => {
+      if (!live) return;
+      terms.current = m;
+      const c = cy.current;
+      if (!c) return;
+      c.batch(() =>
+        c.nodes().forEach((n) => {
+          const t = m.get(n.id());
+          if (t && n.data("icon")) n.data("icon", termIconUri(t, pillarColor(String(n.data("cat") ?? ""))));
+        }),
+      );
+    });
+    return () => {
+      live = false;
+    };
+  }, [net]); // eslint-disable-line react-hooks/exhaustive-deps
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   const [big, setBig] = useState(false);
   const isleView = useRef<(() => void) | null>(null); // 島の地図の「収める」（全部の島）
@@ -392,11 +418,15 @@ export default function Graph({
       maxW = around ? 110 : 96;
     // 分類の印：点の左に置く（名前の幅＋印の幅）。印は線だけの灰色（色は意味のある所だけ）
     const withIcon = (e: ElementDefinition): ElementDefinition => {
-      const icon =
-        !e.data.source && e.data.kind !== "derivation" && e.data.kind !== "missing"
+      const word = !e.data.source && e.data.kind !== "derivation" && e.data.kind !== "missing";
+      const term = word ? terms.current.get(e.data.id!) : undefined;
+      // 点の印は語の印（柱の色）。取り寄せる前・取り寄せられない語は分類の印（UI レビュー 18）
+      const icon = term
+        ? termIconUri(term, pillarColor((e.data.cat as string) || ""))
+        : word
           ? iconUri((e.data.cat as string) || undefined, mute)
           : undefined;
-      return icon ? { ...e, data: { ...e.data, icon, w: textWidth(String(e.data.label), fs, maxW) + 20 } } : e;
+      return icon ? { ...e, data: { ...e.data, icon, w: textWidth(String(e.data.label), fs, maxW) + 24 } } : e;
     };
     const labsOf = (cat: string) => labCountOf(net, cat); // 実験室のタブと同じ数え方（使わない問いを除く）
     const isle =
@@ -455,14 +485,14 @@ export default function Graph({
           selector: "node[icon]",
           style: {
             "background-image": "data(icon)",
-            "background-width": 14,
-            "background-height": 14,
+            "background-width": 18, // 語の印（48 の格子の線）が読める大きさ（UI レビュー 18）
+            "background-height": 18,
             "background-position-x": 0,
             "background-position-y": "50%",
             "background-clip": "none",
             "background-image-containment": "over",
             width: "data(w)",
-            "text-margin-x": 9,
+            "text-margin-x": 11,
           },
         },
         { selector: "node.mid", style: { "background-image-opacity": 0, width: "label", "text-margin-x": 0 } },
@@ -470,12 +500,12 @@ export default function Graph({
           selector: "node.far",
           style: {
             "text-opacity": 0,
-            width: 18,
-            height: 18,
+            width: 24,
+            height: 24,
             "background-position-x": "50%",
             "text-margin-x": 0,
-            "background-width": 16,
-            "background-height": 16,
+            "background-width": 22,
+            "background-height": 22,
           },
         },
         { selector: "node.farDot", style: { "text-opacity": 0, width: 14, height: 14 } },

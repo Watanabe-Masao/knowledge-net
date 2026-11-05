@@ -1,5 +1,5 @@
-// 概念の印（stats2-course #42・CLAUDE.md「画面の決まり」）：分類ごとの共通の形（12種）。129語すべてに別の印は作らない。
-// 地図の点（Cytoscape の背景の絵）と画面の印で同じ形を使う。線だけで描く（塗らない）。
+// 分類の印（stats2-course #42・CLAUDE.md「画面の決まり」）：分類ごとの共通の形（12種）。島の地図の島の名前と、語の印（教材の icon）を取り寄せられないときの点に使う。
+// 線だけで描く（塗らない）。地図の点はふだん語の印（src/termIcons.ts。stats2-course #224）。
 // 分類は教材の JSON の category（stats2-course の shared.yaml の concept_categories）。知らない分類は印なし。
 export const CATEGORY_ICON: Record<string, string> = {
   数学の道具: "M17 4H7l6 8-6 8h10",
