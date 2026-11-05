@@ -1,9 +1,10 @@
-// まとまりの関係図（stats2-course #235。設計書 3 のテスト）。
+// まとまりの関係図（stats2-course #235。設計書 3 のテスト）。点と線だけを描き、並べ方は ELK。
 // 見本は、確率分布を関係図に移した形に書き換えて読む（tests/fixtures/relmap-dist.ts。教材が S3 を公開して見本を取り込んだら要らない）
 import { test, expect, type Page } from "@playwright/test";
 import { asRelationMap } from "../fixtures/relmap-dist";
 
 const T = (x: string) => `stats2:TERM-${x}`;
+const G = (x: string) => `stats2:GRP-dist-${x}`;
 const URL = "./?src=sample/stats2.json&lv=map&g=";
 
 async function ready(page: Page) {
@@ -12,83 +13,92 @@ async function ready(page: Page) {
     await r.fulfill({ json: asRelationMap(d) });
   });
 }
+const laidOut = (page: Page) => expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
 
-// 確かめる対象：移した分類だけを関係図で開くこと（D5）と、まとまり・たたむ語の出し方。
-// 想定する故障：移していない分類まで関係図になる／移した分類が島の地図のまま。ほかのまとまりでも使う語を、まとまりの中にたたむ。
-// 見つけ方：確率分布の地図が関係図（4つのまとまり・13語）で、島の地図（graph）がないこと。階乗は待つのまとまりにたたみ、
-//   確率は上の「ほかの分類から使う語」に出ること。検定の地図は今の島の地図のままであること。
-// 既存との違い：単体テスト（relationMap.test.ts）はたたむ語の計算。ここは画面がその通りに置くか
-test("移した分類（確率分布）の地図は関係図、移していない分類は島の地図のまま", async ({ page }) => {
+// 確かめる対象：移した分類だけを関係図で開くこと（D5）と、地図に文章を置かないこと。
+// 想定する故障：移していない分類まで関係図になる／移した分類が島の地図のまま。地図の上に説明文や関係の文が出る。
+// 見つけ方：確率分布の地図が関係図（閉じたまとまり4つ）で、島の地図（graph）がないこと。まとまりを開き、語を押しても、
+//   地図の中に関係の文（「比べる」「変換すると」など）が出ないこと。検定の地図は今の島の地図のままであること。
+// 既存との違い：単体テスト（relationMap.test.ts）は点と線の計算。ここは画面の出し分けと、文章を置かないこと
+test("移した分類（確率分布）の地図は点と線の関係図で、文章を置かない。移していない分類は島の地図のまま", async ({
+  page,
+}) => {
   await ready(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL + encodeURIComponent("確率分布"));
   const m = page.getByTestId("relation-map");
-  await expect(m).toBeVisible();
+  await laidOut(page);
   await expect(page.getByTestId("graph")).toHaveCount(0);
-  await expect(m.locator("[data-testid^=rm-group-]")).toHaveCount(4);
-  await expect(m.locator("[data-testid^=rm-term-]")).toHaveCount(13);
-  await expect(m.getByTestId("rm-folded-stats2:GRP-dist-wait")).toContainText("階乗");
-  await expect(m.getByTestId("rm-shared")).toContainText("確率");
-  await expect(m.getByTestId("rm-group-stats2:GRP-dist-count")).not.toContainText("階乗");
+  await expect(m.locator("button[aria-expanded=false]")).toHaveCount(4);
+  await m.getByTestId(`rm-group-${G("count")}`).click();
+  await laidOut(page);
+  await m.getByTestId(`rm-term-${T("binom")}`).click();
+  const text = await m.getByTestId("rm-canvas").innerText();
+  for (const ng of ["比べる", "変換すると", "一般化すると", "材料"])
+    expect(text, `地図に文章「${ng}」`).not.toContain(ng);
 
   await page.goto(URL + encodeURIComponent("検定"));
   await expect(page.getByTestId("graph")).toBeVisible();
   await expect(page.getByTestId("relation-map")).toHaveCount(0);
 });
 
-// 確かめる対象：語を押したときのつながり（材料・横のつながり・線）と、段を飛ばさないこと。
-// 想定する故障：材料が出ない・学ぶ順（前提）が横のつながりに混ざる・対比の比べる軸が出ない。
-//   線が、外の分類の相手（標本比率など）へ伸びる・線の端が語の枠の外にある（段を飛ばした線）。
-// 見つけ方：二項分布を押し、材料に組合せ・確率、横のつながりに超幾何分布との対比（比べる軸：取り出し方）が出て、独立（学ぶ順）が出ないこと。
-//   線はどれも、同じ分類の語どうしを結び、両端が見えている語の枠の上か下の縁にあること。材料を押すと掘り下げ、語のページへ移れること。
-test("語を押すと、その語の中に材料と横のつながりを開き、同じ分類の相手へだけ線を引く", async ({ page }) => {
+// 確かめる対象：開く・選ぶの動きと、線の端が点の縁にあること（段を飛ばさない）。
+// 想定する故障：まとまりを押しても開かない。語を押しても、つながる線が濃くならない。
+//   線の端が、点の縁でない所（閉じたまとまりの中・何もない所）にある。語のページへ移れない。
+// 見つけ方：くり返して数えると待つを開き、二項分布を押す。濃い線は二項分布につながる線だけで、
+//   全部の線の両端が、data-from・data-to の点の外枠の上にあること（ELK の経路と描いた点がずれていない）。「›」で二項分布のページ。
+// 検出の確かめ（2026-11-06）：線の経路を縦に 10px ずらすと、縁の確かめで落ちることを見た（縁に沿ったずれは見つけないが、段を飛ばすことにはならない）
+test("まとまりを開いて語を押すと、つながる線だけを濃くし、どの線も両端が点の縁にある", async ({ page }) => {
   await ready(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL + encodeURIComponent("確率分布"));
   const m = page.getByTestId("relation-map");
+  await laidOut(page);
+  await m.getByTestId(`rm-group-${G("count")}`).click();
+  await laidOut(page);
+  await m.getByTestId(`rm-group-${G("wait")}`).click();
+  await laidOut(page);
+  await expect(m.getByTestId(`rm-term-${T("poisson")}`)).toBeVisible();
   await m.getByTestId(`rm-term-${T("binom")}`).click();
-  const open = m.getByTestId("rm-open");
-  await expect(open).toBeVisible();
-  await expect(m.getByTestId("rm-group-stats2:GRP-dist-count").getByTestId("rm-open")).toBeVisible(); // 自分のまとまりの中で開く
-  await expect(open.getByTestId("rm-materials")).toContainText("組合せ");
-  await expect(open.getByTestId("rm-materials")).toContainText("確率");
-  await expect(open.getByTestId("rm-lateral")).toContainText("取り出し方");
-  await expect(open.getByTestId("rm-lateral")).not.toContainText("独立");
-
-  const lines = m.getByTestId("rm-lines").locator("path");
-  await expect(lines).not.toHaveCount(0);
+  const lit = m.locator("[data-testid=rm-lines] path[data-state=lit]");
+  await expect(lit).not.toHaveCount(0);
+  for (const p of await lit.all()) {
+    const ends = [await p.getAttribute("data-from"), await p.getAttribute("data-to")];
+    expect(ends).toContain(T("binom"));
+  }
   const bad = await m.evaluate((el) => {
     const out: string[] = [];
-    const tiles = [...el.querySelectorAll<HTMLElement>("[data-tile]")].map((t) => t.getBoundingClientRect());
-    const base = el.getBoundingClientRect();
     for (const p of el.querySelectorAll<SVGPathElement>("[data-testid=rm-lines] path")) {
+      const ctm = p.getScreenCTM()!;
       const len = p.getTotalLength();
-      for (const at of [0, len]) {
-        const q = p.getPointAtLength(at);
-        const x = q.x + base.left,
-          y = q.y + base.top;
-        const onEdge = tiles.some(
-          (r) => x >= r.left - 1 && x <= r.right + 1 && (Math.abs(y - r.top) < 2 || Math.abs(y - r.bottom) < 2),
-        );
-        if (!onEdge) out.push(`${p.dataset.rel}@${Math.round(x)},${Math.round(y)}`);
+      for (const [at, id] of [
+        [0, p.dataset.from],
+        [len, p.dataset.to],
+      ] as const) {
+        const q = p.getPointAtLength(at).matrixTransform(ctm);
+        const n = el.querySelector<HTMLElement>(`[data-node="${CSS.escape(id!)}"]`);
+        if (!n) {
+          out.push(`${id} が描かれていない`);
+          continue;
+        }
+        const r = n.getBoundingClientRect();
+        const inside = q.x >= r.left - 2 && q.x <= r.right + 2 && q.y >= r.top - 2 && q.y <= r.bottom + 2;
+        const onEdge =
+          inside && [q.x - r.left, r.right - q.x, q.y - r.top, r.bottom - q.y].some((d) => Math.abs(d) < 3);
+        if (!onEdge) out.push(`${p.dataset.from}→${p.dataset.to} の端（${id}）`);
       }
     }
     return out;
   });
-  expect(bad, "線の端が語の枠の縁にない").toEqual([]);
-  const rels = await lines.evaluateAll((ps) => ps.map((p) => (p as SVGPathElement).dataset.rel));
-  expect(rels).toContain("stats2:REL-binom-hyper-contrast");
-  expect(rels).not.toContain("stats2:REL-binom-sampleprop"); // 標本比率は外の分類
+  expect(bad, "線の端が点の縁にない").toEqual([]);
 
-  await open.getByTestId(`rm-mat-${T("comb")}`).click();
-  await expect(open.getByTestId("rm-dig")).toContainText("組合せ");
-  await open.getByTestId("rm-page").click();
+  await m.getByTestId("rm-page").click();
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
 });
 
-// 確かめる対象：スマホ幅と埋め込みで横にはみ出さず、押す所が 44px 以上あること。
-// 想定する故障：3列の語や開いた中の札が、380px・360px で横にはみ出す。札や語が 44px より小さい。
-test("380px と埋め込み（360×320）で横にはみ出さず、押す所は 44px 以上", async ({ page }) => {
+// 確かめる対象：スマホ幅と埋め込みで、ページが横にはみ出さず、押す所が 44px 以上あること（キャンバスを縮めても）。
+// 想定する故障：広い図でページごと横にはみ出す。縮めたキャンバスで、点・まとまり・「›」が 44px を下回る。
+test("380px と埋め込み（360×320）でページが横にはみ出さず、押す所は 44px 以上", async ({ page }) => {
   await ready(page);
   for (const [w, h] of [
     [380, 800],
@@ -97,14 +107,16 @@ test("380px と埋め込み（360×320）で横にはみ出さず、押す所は
     await page.setViewportSize({ width: w, height: h });
     await page.goto(URL + encodeURIComponent("確率分布"));
     const m = page.getByTestId("relation-map");
+    await laidOut(page);
+    await m.getByTestId(`rm-group-${G("count")}`).click();
+    await laidOut(page);
     await m.getByTestId(`rm-term-${T("binom")}`).click();
     const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-    expect(over, `${w}px で横にはみ出す`).toBeLessThanOrEqual(0);
+    expect(over, `${w}px でページが横にはみ出す`).toBeLessThanOrEqual(0);
     const small = await m.evaluate((el) =>
       [...el.querySelectorAll<HTMLElement>("button")]
-        .filter((b) => b.offsetParent)
         .map((b) => b.getBoundingClientRect())
-        .filter((r) => r.height < 44)
+        .filter((r) => r.height < 44 || r.width < 44)
         .map((r) => `${Math.round(r.width)}×${Math.round(r.height)}`),
     );
     expect(small, `${w}px で 44px 未満の押す所`).toEqual([]);

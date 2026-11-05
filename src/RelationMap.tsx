@@ -1,17 +1,19 @@
 // まとまりの関係図（stats2-course #235。決まりは stats2-course の docs/relation-map.md、画面は設計書 3）。
-// 関係図に移した分類（教材の relation_map_ready）で、分類のページの「地図」に出す。
-//   まとまりの枠の中に語を並べる（入れ子なので、段を飛ばした線はできない）。
-//   語を押すと、その語の中に材料・種類・これを材料にする語・横のつながりを開き、横のつながりの相手へ線を引く。
-//   ほかの分類から使う材料は、1つのまとまりの語だけが使うならそのまとまりの下に「このまとまりの中で使われる語」として収め
-//   （部品の印は付けない。所有の関係ではない）、2つ以上のまとまりで使う基礎の語は、上にまとめて薄く出す。
-import { useLayoutEffect, useRef, useState } from "react";
-import { type Network, bandOfCat, bandsOf, KINDS } from "./data";
-import { categoryMap, nameOf, termLinks } from "./relationMap";
+// 関係図に移した分類（教材の relation_map_ready）の「地図」。1枚のキャンバスに点と線だけを描き、文章は置かない
+// （読む中身は語のページ。knowledge-net の CLAUDE.md「読むときは全画面のページ」）。
+//   まとまりは初めは1つの点。押すとその場で囲みに開き、中に語の点が並ぶ。閉じたまとまりの中の語への線は、まとまりの点で止まる。
+//   語を押すと、その語につながる点と線だけを濃くし、「›」で語のページへ。
+//   並べ方と線の経路は ELK（上から下へ：材料 → それを使う語。線は直線と直角だけ。src/relationMap.ts の layoutMap）
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type Network, bandOfCat, bandsOf } from "./data";
+import { type Laid, layoutMap, mapGraph, nameOf } from "./relationMap";
 import { conceptIcon } from "./conceptIcons";
 import { iconUri } from "./icons";
 import s from "./RelationMap.module.css";
 
+/** 線の色（関係の種類）。材料は中立の灰 */
 const KIND_VAR: Record<string, string> = {
+  材料: "--k-pre",
   導出: "--k-der",
   一般化: "--k-gen",
   特殊化: "--k-gen",
@@ -20,6 +22,7 @@ const KIND_VAR: Record<string, string> = {
   統合: "--k-int",
   応用: "--k-app",
 };
+const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation: "6 4", limit: "2 4" };
 
 type Props = {
   net: Network;
@@ -28,287 +31,206 @@ type Props = {
   onConcept: (id: string) => void;
 };
 
-type Line = { id: string; d: string; type: string; mode?: string };
-
 export default function RelationMap({ net, category, onConcept }: Props) {
-  const map = categoryMap(net, category);
+  const [open, setOpen] = useState<Set<string>>(() => new Set());
   const [sel, setSel] = useState<string | null>(null);
-  // 材料の掘り下げ：選んだ語から1段ずつ（道筋を上に残す）
-  const [dig, setDig] = useState<string[]>([]);
-  const box = useRef<HTMLDivElement>(null);
-  const [lines, setLines] = useState<Line[]>([]);
-  const inCat = new Set([...map.groups.flatMap((g) => g.terms), ...map.rest]);
-  const links = sel ? termLinks(net, sel) : null;
-  const near = new Set<string>(
-    links ? [...links.materials, ...links.usedBy, ...links.lateral.map((x) => x.other), ...links.children] : [],
-  );
-  if (links?.parent) near.add(links.parent);
+  const graph = useMemo(() => mapGraph(net, category, open), [net, category, open]);
+  const [laid, setLaid] = useState<Laid | null>(null);
+  useEffect(() => {
+    let live = true;
+    layoutMap(graph).then((l) => {
+      if (live) setLaid(l);
+    });
+    return () => {
+      live = false;
+    };
+  }, [graph]);
 
   const bands = bandsOf(net);
   const tint = bands.find((b) => b.id === bandOfCat(bands, category))?.tint ?? "--ink-3";
   const mute = getComputedStyle(document.documentElement).getPropertyValue("--ink-3").trim() || "gray";
   const fallback = iconUri(category, mute);
-  const glyph = (id: string) => {
-    const c = net.concepts.get(id);
-    return conceptIcon(c?.icon, net.iconRoots) ?? (fallback ? <img src={fallback} alt="" /> : null);
-  };
+  const glyph = (id: string) =>
+    conceptIcon(net.concepts.get(id)?.icon, net.iconRoots) ?? (fallback ? <img src={fallback} alt="" /> : null);
 
-  // 横のつながりの線：選んだ語と、同じ分類にいる相手の間だけ（相手が外の分類なら、開いた中に名前で出す）。
-  // 線は直線と直角の曲がりだけ（設計書 3）
+  // 選んだ点につながる点と線
+  const near = new Set<string>();
+  const lit = new Set<string>();
+  if (sel)
+    for (const e of graph.edges)
+      if (e.from === sel || e.to === sel) {
+        lit.add(e.id);
+        near.add(e.from === sel ? e.to : e.from);
+      }
+  const state = (id: string) => (!sel ? undefined : id === sel ? "sel" : near.has(id) ? "near" : "dim");
+
+  const toggle = (g: string) => {
+    setOpen((cur) => {
+      const n = new Set(cur);
+      if (n.has(g)) n.delete(g);
+      else n.add(g);
+      return n;
+    });
+    setSel(null);
+  };
+  // 画面の幅に収める（押す所が 44px を下回らないよう、縮めるのは 0.8 倍まで。それより広いときは横に送る）
+  const box = useRef<HTMLDivElement>(null);
+  const [room, setRoom] = useState(360);
   useLayoutEffect(() => {
     const el = box.current;
-    if (!el || !links) {
-      setLines([]);
-      return;
-    }
-    const draw = () => {
-      const base = el.getBoundingClientRect();
-      const rect = (id: string) => {
-        const t = el.querySelector<HTMLElement>(`[data-tile="${CSS.escape(id)}"]`);
-        if (!t) return null;
-        const r = t.getBoundingClientRect();
-        const g = t.closest("[data-group]")?.getAttribute("data-group") ?? "";
-        return { x: r.left - base.left + r.width / 2, top: r.top - base.top, bottom: r.bottom - base.top, g };
-      };
-      const a = rect(sel!);
-      const out: Line[] = [];
-      let lane = 0;
-      for (const { other, rel } of links.lateral) {
-        if (!inCat.has(other)) continue;
-        const b = rect(other);
-        if (!a || !b) continue;
-        let d: string;
-        if (a.g === b.g && Math.abs(a.top - b.top) < 4) {
-          // 同じまとまりの同じ段：上の縁から上の隙間へ出て、横へ、下りる
-          const y = a.top - 4;
-          d = `M${a.x},${a.top} V${y} H${b.x} V${b.top}`;
-        } else if (a.g === b.g) {
-          // 同じまとまりの別の段：段の間の隙間を通る（開いた中はまとまりの語の下に出るので、段の間には来ない）
-          const [p, q] = a.top < b.top ? [a, b] : [b, a];
-          const y = (p.bottom + q.top) / 2;
-          d = `M${p.x},${p.bottom} V${y} H${q.x} V${q.top}`;
-        } else {
-          // 別のまとまり：左の溝を通る（まとまりの枠・開いた中・ほかの語の上を通らない）。線ごとに少しずらす
-          const gx = 3 + 3 * (lane++ % 3);
-          d = `M${a.x},${a.top} V${a.top - 4} H${gx} V${b.top - 4} H${b.x} V${b.top}`;
-        }
-        out.push({ id: rel.id, d, type: rel.type, mode: rel.mode });
-      }
-      setLines(out);
-    };
-    draw();
-    const ro = new ResizeObserver(draw);
+    if (!el) return;
+    const ro = new ResizeObserver(() => setRoom(el.clientWidth));
     ro.observe(el);
+    setRoom(el.clientWidth);
     return () => ro.disconnect();
-    // 選んだ語と分類が変わったときに引き直す（links は sel から決まる）
-  }, [sel, category, net]);
-
-  const pick = (id: string) => {
-    setSel((cur) => (cur === id ? null : id));
-    setDig([]);
-  };
-  const chip = (id: string, extra?: { note?: string; onClick?: () => void; testid?: string }) => (
-    <button
-      key={id + (extra?.note ?? "")}
-      type="button"
-      className={s.chip}
-      onClick={extra?.onClick ?? (() => (inCat.has(id) ? pick(id) : onConcept(id)))}
-      data-testid={extra?.testid}
-    >
-      {nameOf(net, id)}
-      {extra?.note ? <i>{extra.note}</i> : null}
-    </button>
-  );
-
-  const digAt = dig.length ? dig[dig.length - 1]! : null;
-  const digMats = digAt ? termLinks(net, digAt).materials : [];
-
-  const open = (id: string) => {
-    const l = termLinks(net, id);
-    return (
-      <div className={s.open} data-testid="rm-open">
-        <div className={s.openHead}>
-          <b>{nameOf(net, id)}</b>
-          <button type="button" className={s.page} onClick={() => onConcept(id)} data-testid="rm-page">
-            語のページ
-          </button>
-        </div>
-        {l.parent || l.children.length ? (
-          <div className={s.row} data-testid="rm-kind">
-            <span className={s.label}>種類</span>
-            <div className={s.chips}>
-              {l.parent ? chip(l.parent, { note: "の一種" }) : null}
-              {l.children.map((c) => chip(c, { note: "はこの一種" }))}
-            </div>
-          </div>
-        ) : null}
-        <div className={s.row} data-testid="rm-materials">
-          <span className={s.label}>材料</span>
-          {l.materials.length || l.inherited.length ? (
-            <div className={s.chips}>
-              {l.materials.map((m) =>
-                chip(m, {
-                  onClick: () => setDig([m]),
-                  note: termLinks(net, m).materials.length ? "開く" : undefined,
-                  testid: `rm-mat-${m}`,
-                }),
-              )}
-              {l.inherited.map((m) => chip(m, { note: "親から", onClick: () => setDig([m]) }))}
-            </div>
-          ) : (
-            <span className={s.none}>定義の中に、教材の語の材料はない</span>
-          )}
-        </div>
-        {dig.length ? (
-          <div className={s.dig} data-testid="rm-dig">
-            <div className={s.crumbs}>
-              <button type="button" onClick={() => setDig([])}>
-                {nameOf(net, id)}
-              </button>
-              {dig.map((d, i) => (
-                <span key={d}>
-                  {" › "}
-                  {i === dig.length - 1 ? (
-                    <b>{nameOf(net, d)}</b>
-                  ) : (
-                    <button type="button" onClick={() => setDig(dig.slice(0, i + 1))}>
-                      {nameOf(net, d)}
-                    </button>
-                  )}
-                </span>
-              ))}
-            </div>
-            {digMats.length ? (
-              <div className={s.chips}>
-                {digMats.map((m) =>
-                  chip(m, {
-                    onClick: () => setDig([...dig, m]),
-                    note: termLinks(net, m).materials.length ? "開く" : undefined,
-                  }),
-                )}
-              </div>
-            ) : (
-              <span className={s.none}>{nameOf(net, digAt!)}の材料は、教材の語にはない</span>
-            )}
-            <button type="button" className={s.linkish} onClick={() => onConcept(digAt!)}>
-              {nameOf(net, digAt!)}のページ
-            </button>
-          </div>
-        ) : null}
-        {l.usedBy.length ? (
-          <div className={s.row} data-testid="rm-usedby">
-            <span className={s.label}>これを材料にする語</span>
-            <div className={s.chips}>{l.usedBy.map((u) => chip(u))}</div>
-          </div>
-        ) : null}
-        {l.lateral.length ? (
-          <ul className={s.lateral} data-testid="rm-lateral">
-            {l.lateral.map(({ other, rel }) => (
-              <li key={rel.id}>
-                <button
-                  type="button"
-                  onClick={() => (inCat.has(other) ? pick(other) : onConcept(other))}
-                  data-testid={`rm-rel-${rel.id}`}
-                >
-                  <span className={s.kind} style={{ color: `var(${KIND_VAR[rel.type] ?? "--ink-3"})` }}>
-                    {rel.type}
-                  </span>
-                  <span className={s.relText}>
-                    {(KINDS[rel.type]?.reading ?? "□ → ■")
-                      .replace("□", nameOf(net, rel.from))
-                      .replace("■", nameOf(net, rel.to))}
-                    {rel.axis ? <small>比べる軸：{rel.axis}</small> : null}
-                    {!inCat.has(other) ? <small>ほかの分類の語</small> : null}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    );
-  };
-
-  const tiles = (ids: string[]) => (
-    <ol className={s.tiles}>
-      {ids.map((id) => {
-        const c = net.concepts.get(id)!;
-        const state = sel === id ? "sel" : sel && near.has(id) ? "near" : sel ? "dim" : undefined;
-        return (
-          <li key={id}>
-            <button
-              type="button"
-              className={`${s.tile}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
-              data-tile={id}
-              data-state={state}
-              aria-pressed={sel === id}
-              onClick={() => pick(id)}
-              data-testid={`rm-term-${id}`}
-            >
-              <span className={s.glyph}>{glyph(id)}</span>
-              <span className={s.name}>{c.name}</span>
-            </button>
-          </li>
-        );
-      })}
-    </ol>
-  );
-
-  const groupOfSel = sel ? (map.groups.find((g) => g.terms.includes(sel))?.id ?? "rest") : null;
+  }, []);
+  const pick = (id: string) => setSel((cur) => (cur === id ? null : id));
+  const scale = (l: Laid) => Math.max(0.8, Math.min(1, (room - 8) / l.width));
+  const groupName = (id: string) => net.groups.find((g) => g.id === id)?.name ?? id;
+  // 押した物の行き先が変わるときに、線の経路が古い並べ方のまま残らないよう、並べ終えた図だけを描く
+  const current = laid && graph.nodes.every((n) => laid.boxes.has(n.id)) ? laid : null;
 
   return (
     <section
       className={s.map}
-      ref={box}
       style={{ "--tint": `var(${tint})` } as React.CSSProperties}
       data-testid="relation-map"
       aria-label={`${category}の関係図`}
+      data-ready={current ? "true" : "false"}
     >
-      <svg className={s.lines} aria-hidden="true" data-testid="rm-lines">
-        {lines.map((l) => (
-          <path
-            key={l.id}
-            d={l.d}
-            data-rel={l.id}
-            className={s.line}
-            style={{ stroke: `var(${KIND_VAR[l.type] ?? "--ink-3"})` }}
-            strokeDasharray={
-              l.type === "対比" ? "6 4" : l.mode === "approximation" ? "6 4" : l.mode === "limit" ? "2 4" : undefined
-            }
-          />
-        ))}
-      </svg>
-      {map.shared.length ? (
-        <div className={s.shared} data-testid="rm-shared">
-          <span className={s.label}>ほかの分類から使う語</span>
-          <div className={s.chips}>{map.shared.map((m) => chip(m))}</div>
-        </div>
-      ) : null}
-      {map.groups.map((g) => (
-        <div key={g.id} className={s.group} data-group={g.id} data-testid={`rm-group-${g.id}`}>
-          <div className={s.groupHead}>
-            <h3>{g.name}</h3>
-            {g.summary ? <p>{g.summary}</p> : null}
-          </div>
-          {tiles(g.terms)}
-          {groupOfSel === g.id ? open(sel!) : null}
-          {g.folded.length ? (
-            <div className={s.folded} data-testid={`rm-folded-${g.id}`}>
-              <span className={s.label}>このまとまりの中で使われる語</span>
-              <div className={s.chips}>{g.folded.map((m) => chip(m))}</div>
+      <div className={s.scroll} ref={box} onClick={(e) => e.target === e.currentTarget && setSel(null)}>
+        {current ? (
+          <div
+            className={s.fit}
+            style={{ width: current.width * scale(current), height: current.height * scale(current) }}
+          >
+            <div
+              className={s.canvas}
+              style={{ width: current.width, height: current.height, transform: `scale(${scale(current)})` }}
+              data-testid="rm-canvas"
+            >
+              {/* 開いたまとまりの囲み（いちばん下に敷く） */}
+              {graph.nodes.map((n) => {
+                if (n.kind !== "group" || !n.open) return null;
+                const b = current.boxes.get(n.id)!;
+                return (
+                  <div
+                    key={n.id}
+                    className={s.frame}
+                    style={{ left: b.x, top: b.y, width: b.w, height: b.h }}
+                    data-testid={`rm-group-${n.id}`}
+                    data-node={n.id}
+                    data-open="true"
+                  >
+                    <button
+                      type="button"
+                      className={s.frameHead}
+                      onClick={() => toggle(n.id)}
+                      aria-expanded="true"
+                      data-testid={`rm-toggle-${n.id}`}
+                    >
+                      {groupName(n.id)}
+                      <span aria-hidden="true">−</span>
+                    </button>
+                  </div>
+                );
+              })}
+              <svg
+                className={s.lines}
+                width={current.width}
+                height={current.height}
+                aria-hidden="true"
+                data-testid="rm-lines"
+              >
+                {graph.edges.map((e) => {
+                  const p = current.paths.get(e.id);
+                  if (!p) return null;
+                  return (
+                    <path
+                      key={e.id}
+                      d={p.map((q, i) => `${i ? "L" : "M"}${q.x},${q.y}`).join(" ")}
+                      data-from={e.from}
+                      data-to={e.to}
+                      data-type={e.type}
+                      data-state={!sel ? (e.faint ? "faint" : undefined) : lit.has(e.id) ? "lit" : "dim"}
+                      data-types={e.types.join(" ")}
+                      style={{ stroke: `var(${KIND_VAR[e.type] ?? "--ink-3"})` }}
+                      strokeDasharray={DASH[e.type] ?? (e.mode ? DASH[e.mode] : undefined)}
+                    />
+                  );
+                })}
+              </svg>
+              {graph.nodes.map((n) => {
+                const b = current.boxes.get(n.id)!;
+                if (n.kind === "group" && n.open) return null;
+                const pos = { left: b.x, top: b.y, width: b.w, height: b.h };
+                if (n.kind === "group")
+                  return (
+                    <button
+                      key={n.id}
+                      type="button"
+                      className={s.group}
+                      style={pos}
+                      data-node={n.id}
+                      data-state={state(n.id)}
+                      onClick={() => toggle(n.id)}
+                      aria-expanded="false"
+                      data-testid={`rm-group-${n.id}`}
+                    >
+                      <b>{groupName(n.id)}</b>
+                      <i>
+                        {n.count}語<span aria-hidden="true"> ＋</span>
+                      </i>
+                    </button>
+                  );
+                const t = n.term;
+                return (
+                  <div key={n.id} className={s.cell} style={pos}>
+                    <button
+                      type="button"
+                      className={`${n.kind === "ext" ? s.ext : s.term}${net.concepts.get(t)?.status === "filled" ? "" : ` ${s.skeleton}`}`}
+                      data-node={n.id}
+                      data-state={state(n.id)}
+                      aria-pressed={sel === n.id}
+                      onClick={() => pick(n.id)}
+                      data-testid={`rm-${n.kind}-${t}`}
+                    >
+                      <span className={s.glyph}>{glyph(t)}</span>
+                      <span className={s.name}>{nameOf(net, t)}</span>
+                    </button>
+                    {sel === n.id ? (
+                      <button
+                        type="button"
+                        className={s.go}
+                        onClick={() => onConcept(t)}
+                        aria-label={`${nameOf(net, t)}のページを開く`}
+                        data-testid="rm-page"
+                      >
+                        ›
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
-          ) : null}
-        </div>
-      ))}
-      {map.rest.length ? (
-        <div className={s.group} data-group="rest" data-testid="rm-group-rest">
-          <div className={s.groupHead}>
-            <h3>そのほか</h3>
           </div>
-          {tiles(map.rest)}
-          {groupOfSel === "rest" ? open(sel!) : null}
-        </div>
-      ) : null}
+        ) : null}
+      </div>
+      <div className={s.legend} aria-hidden="true">
+        {(
+          [
+            ["材料", "材料"],
+            ["一般化", "一般化・導出"],
+            ["変換", "変換"],
+            ["対比", "対比"],
+          ] as const
+        ).map(([k, label]) => (
+          <span key={k}>
+            <i style={{ borderColor: `var(${KIND_VAR[k]})`, borderTopStyle: k === "対比" ? "dashed" : "solid" }} />
+            {label}
+          </span>
+        ))}
+      </div>
     </section>
   );
 }

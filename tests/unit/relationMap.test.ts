@@ -13,7 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { merge } from "../../src/data";
-import { categoryMap, termLinks } from "../../src/relationMap";
+import { categoryMap, mapGraph, termLinks } from "../../src/relationMap";
 import { asRelationMap } from "../fixtures/relmap-dist";
 
 const T = (x: string) => `stats2:TERM-${x}`;
@@ -70,5 +70,39 @@ describe("まとまりの関係図", () => {
     expect(l.materials).toEqual([T("prob")]);
     expect(l.inherited).toEqual([T("comb")]); // 確率は自分にもあるので重ねない
     expect(termLinks(n, T("binom")).children).toEqual([T("bernoulli")]);
+  });
+
+  // 確かめる対象：関係図の点と線（mapGraph）。開いているまとまりの組み合わせで、点と線が決まりどおりか。
+  // 想定する故障：閉じたまとまりの中の語へ線を引く（段を飛ばす）・線の端が描かない点を指す・
+  //   同じ2点に線を重ねる・ほかの分類の語を線もないのに置く・学ぶ順（前提）を描く。
+  // 見つけ方：4つのまとまりの開き方 16 通り全部で、線の両端が点にあり、閉じたまとまりの語が点にも線にも出ないこと。
+  //   全部閉じると点はまとまり4つだけ。くり返して数えると待つを開くと、二項分布 — ポアソン分布は1本（変換と対比をまとめる）。
+  // 検出の確かめ（2026-11-06）：閉じたまとまりの語をまとまりの点に置き換えないと、16 通りの確かめで落ちることを見た
+  it("関係図の点と線：どの開き方でも、線の両端は見えている点で、段を飛ばさない", () => {
+    const n = net();
+    const G = (x: string) => `stats2:GRP-dist-${x}`;
+    const all = [G("base"), G("count"), G("wait"), G("cont")];
+    for (let mask = 0; mask < 16; mask++) {
+      const open = new Set(all.filter((_, i) => mask & (1 << i)));
+      const g = mapGraph(n, "確率分布", open);
+      const ids = new Set(g.nodes.map((x) => x.id));
+      for (const e of g.edges) {
+        expect(ids.has(e.from) && ids.has(e.to), `${e.id}（開き方 ${mask}）`).toBe(true);
+        expect(e.types).not.toContain("前提");
+      }
+      for (const x of g.nodes) {
+        if (x.kind === "term") expect(open.has(x.parent!), `${x.id} は閉じたまとまりの語`).toBe(true);
+        if (x.kind === "ext") expect(g.edges.some((e) => e.from === x.id)).toBe(true);
+      }
+      expect(new Set(g.edges.map((e) => e.id)).size).toBe(g.edges.length);
+    }
+    const closed = mapGraph(n, "確率分布", new Set());
+    expect(closed.nodes.map((x) => x.kind)).toEqual(["group", "group", "group", "group"]);
+    const two = mapGraph(n, "確率分布", new Set([G("count"), G("wait")]));
+    const bp = two.edges.filter((e) => [e.from, e.to].sort().join() === [T("binom"), T("poisson")].sort().join());
+    expect(bp).toHaveLength(1);
+    expect(new Set(bp[0]!.types)).toEqual(new Set(["変換", "対比"]));
+    expect(two.edges.find((e) => e.from === "x:" + T("prob"))?.faint).toBe(true); // 基礎の語からの線は初めは薄く
+    expect(two.nodes.find((x) => x.id === "x:" + T("fact"))).toMatchObject({ kind: "ext", parent: G("wait") });
   });
 });
