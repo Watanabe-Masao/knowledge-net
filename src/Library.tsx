@@ -1,6 +1,6 @@
 // 分類のライブラリ（試作）：全体の入口を、iPhone のアプリライブラリに近い形で見せる。
 // 3つの柱（データを記述する → 確率で考える → 推測する）の見出しの下に、分類のタイルを2列で並べる。
-// タイル：大きな枠3つ＝代表の語（説明のある語を先に、つながりの多い順）、4つ目＝「ほか○語」。押すと語は概念のページ、4つ目と名前は分類の地図。
+// タイル：大きな枠3つ＝代表の語（説明のある語を先に、つながりの多い順）、4つ目＝「ほか○語」。押すと語は概念のページ、4つ目は分類のページ（リストビュー。stats2-course #228）。
 // 語の印は教材の公開データ（概念の icon）から読む。印のない語・読めない URL は分類の印。柱は教材の course.pillars（stats2-course #220）。
 import { labCountOf } from "./Shell";
 import { iconUri } from "./icons";
@@ -71,7 +71,7 @@ export default function Library({ net, onConcept, onGroup }: Props) {
                         type="button"
                         className={`${s.cell} ${s.more}`}
                         onClick={() => onGroup(cat)}
-                        aria-label={`${cat}の語をすべて地図で見る`}
+                        aria-label={`${cat}の語をすべて見る`}
                       >
                         {rest > 0 ? (
                           <>
@@ -79,7 +79,7 @@ export default function Library({ net, onConcept, onGroup }: Props) {
                             <span className={s.moreUnit}>ほかの語</span>
                           </>
                         ) : (
-                          <span className={s.moreUnit}>地図で見る</span>
+                          <span className={s.moreUnit}>すべて見る</span>
                         )}
                       </button>
                     </div>

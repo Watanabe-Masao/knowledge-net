@@ -495,3 +495,36 @@ export function iconAllowed(url: string | undefined, roots: string[]): url is st
   if (!url || !/^https:\/\/[^"'()\\\s<>]+\.svg$/.test(url)) return false;
   return roots.some((r) => url.startsWith(r));
 }
+
+/** 分類の中の学ぶ順（stats2-course の issue 228）：前提をさかのぼる関係（relation-types.yaml の trace。trace() と同じ向き：from が先）を守り、
+ *  そのうえで「前に知っておくものの数」（分類の外も含めて、さかのぼってたどれる語の数）が少ない語から並べる。同じなら教材の並び。
+ *  対比など前提でない関係しか持たない語（例：第2種の過誤は第1種の過誤と対比）は、相手より前に来ないよう相手の数＋1として扱う。
+ *  まとまり（M2）と学ぶ順を教材が書くまでのつなぎ。循環があれば、残りを教材の並びで後ろに足す */
+export function learningOrder(net: Network, ids: string[]): string[] {
+  const pos = new Map(ids.map((id, i) => [id, i]));
+  const weight = new Map(ids.map((id) => [id, trace(net, id).order.length]));
+  for (const r of net.relations) {
+    if (KINDS[r.type]?.trace || !pos.has(r.from) || !pos.has(r.to)) continue;
+    // 前提の関係でつながっていない相手どうし：後ろの語（向きの to）を、相手より後ろにする
+    weight.set(r.to, Math.max(weight.get(r.to)!, weight.get(r.from)! + 1));
+  }
+  const next = new Map<string, string[]>(ids.map((id) => [id, []]));
+  const indeg = new Map(ids.map((id) => [id, 0]));
+  for (const r of net.relations) {
+    if (!KINDS[r.type]?.trace || !pos.has(r.from) || !pos.has(r.to) || r.from === r.to) continue;
+    next.get(r.from)!.push(r.to);
+    indeg.set(r.to, indeg.get(r.to)! + 1);
+  }
+  const out: string[] = [];
+  const ready = ids.filter((id) => indeg.get(id) === 0);
+  while (ready.length) {
+    ready.sort((x, y) => weight.get(x)! - weight.get(y)! || pos.get(x)! - pos.get(y)!);
+    const id = ready.shift()!;
+    out.push(id);
+    for (const b of next.get(id)!) {
+      indeg.set(b, indeg.get(b)! - 1);
+      if (indeg.get(b) === 0) ready.push(b);
+    }
+  }
+  return out.length === ids.length ? out : [...out, ...ids.filter((id) => !out.includes(id))];
+}

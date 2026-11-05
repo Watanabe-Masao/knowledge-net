@@ -4,6 +4,7 @@
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
 import Library from "./Library";
+import CategoryList, { LayoutSwitch } from "./CategoryList";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
@@ -26,7 +27,7 @@ import {
 } from "./data";
 import { relationParts } from "./Relation";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
-import { fromUrl, toUrl, type Tab, type View } from "./urlState";
+import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
@@ -44,7 +45,24 @@ function useUrlState() {
   // 実験室の「比べる」の記録カード（?cards=。条件と種だけなので、開けば同じ結果に戻る。stats2-course #122）
   const [cards, setCards] = useState<string | null>(init.cards);
   // 全体図を分類で絞る（?g=分類。#105 の骨格の分類）
-  const [group, setGroup] = useState<string | null>(init.group);
+  const [group, setGroupRaw] = useState<string | null>(init.group);
+  // 分類のページの並べ方（?lv=。正方形・一覧・地図。stats2-course #228）
+  const [layout, setLayoutRaw] = useState<Layout>(init.layout);
+  /** 分類を変える。open＝ライブラリから分類のページを開く（「戻る」でライブラリへ戻れるよう履歴に積む）。
+   *  地図の「分類で絞る」の選び直しは積まない（同じ履歴の中で書き換える） */
+  const setGroup = (g: string | null, open = false) => {
+    if (open) push.current = true;
+    setGroupRaw(g);
+  };
+  const setLayout = (l: Layout) => {
+    push.current = true;
+    setLayoutRaw(l);
+  };
+  /** ライブラリから分類のページを開く（正方形から） */
+  const openGroup = (g: string) => {
+    setLayoutRaw("grid");
+    setGroup(g, true);
+  };
   // タブ（?t=。探索は付けない。実験室を開いているときは実験室）
   const [tab, setTabRaw] = useState<Tab>(init.tab);
   const push = useRef(false);
@@ -72,13 +90,13 @@ function useUrlState() {
     scrollTo(0, 0);
   };
   useEffect(() => {
-    const p = toUrl({ sel, view, cmp, exp, q, cards, group, tab }, new URLSearchParams(location.search));
+    const p = toUrl({ sel, view, cmp, exp, q, cards, group, layout, tab }, new URLSearchParams(location.search));
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url);
     else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, exp, q, cards, group, tab]);
+  }, [sel, view, cmp, exp, q, cards, group, layout, tab]);
   useEffect(() => {
     // 「戻る」：URL から全部の項目を、書き込みと同じ定義で戻す
     const back = () => {
@@ -89,7 +107,8 @@ function useUrlState() {
       setExpRaw(s.exp);
       setQ(s.q);
       setCards(s.cards);
-      setGroup(s.group);
+      setGroupRaw(s.group);
+      setLayoutRaw(s.layout);
       setTabRaw(s.tab);
     };
     addEventListener("popstate", back);
@@ -113,6 +132,9 @@ function useUrlState() {
     setCards,
     group,
     setGroup,
+    layout,
+    setLayout,
+    openGroup,
     tab,
     setTab,
   };
@@ -148,8 +170,26 @@ export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const { sel, setSel, view, setView, cmp, setCmp, exp, setExp, q, cards, setCards, group, setGroup, tab, setTab } =
-    useUrlState();
+  const {
+    sel,
+    setSel,
+    view,
+    setView,
+    cmp,
+    setCmp,
+    exp,
+    setExp,
+    q,
+    cards,
+    setCards,
+    group,
+    setGroup,
+    layout,
+    setLayout,
+    openGroup,
+    tab,
+    setTab,
+  } = useUrlState();
   // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
   const locked = narrow && !!sel && tab === "explore" && !exp;
   useEffect(() => {
@@ -513,15 +553,23 @@ export default function App() {
         </div>
       ) : null}
       {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ（試作）。分類を押すとその分類の地図、語を押すと概念 */}
+      {/* 分類のページ（ライブラリでタイルを押したあと）：並べ方の切り替え。正方形・一覧はリストビュー、地図は島の地図（stats2-course #228） */}
+      {!sel && group && group !== "*" ? (
+        <div className={st.catBar}>
+          <LayoutSwitch value={layout} onChange={setLayout} />
+        </div>
+      ) : null}
       {!sel && !group ? (
         <Library
           net={net}
           onConcept={setSel}
           onGroup={(cat) => {
             setIsleFocus(cat);
-            setGroup(cat);
+            openGroup(cat);
           }}
         />
+      ) : !sel && group && group !== "*" && layout !== "map" ? (
+        <CategoryList net={net} category={group} layout={layout} onConcept={setSel} />
       ) : (
         <>
           <Graph

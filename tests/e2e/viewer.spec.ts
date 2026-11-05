@@ -1133,9 +1133,12 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     );
   expect(new URL(iconUrl).pathname).toMatch(/^\/stats2-labs\/icons\/TERM-[\w-]+\.svg$/);
   await expect.poll(() => iconHits.includes(new URL(iconUrl).pathname)).toBe(true);
-  // タイルの4つ目（ほかの語）を押すと、その分類の語だけの地図
-  await lib.getByRole("button", { name: "確率の語をすべて地図で見る" }).click();
+  // タイルの4つ目（ほかの語）を押すと、その分類のページ（リストビュー）。地図は並べ方の切り替えから（stats2-course #228）
+  await lib.getByRole("button", { name: "確率の語をすべて見る" }).click();
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87/);
+  await expect(page.getByTestId("category-list")).toHaveAttribute("data-layout", "grid");
+  await page.getByTestId("cat-layout-map").click();
+  await expect(page).toHaveURL(/lv=map/);
   const sel = page.getByTestId("group-select");
   await expect(sel).toHaveValue("確率");
   const terms = () =>
@@ -1494,7 +1497,7 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
 test("点を長押しすると、名前・分類・定義1文の札が出る", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布"));
+  await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布")); // 分類のページは地図で（ふだんはリストビュー。stats2-course #228）
   await expect(page.getByText("概念を押すと、定義")).toHaveCount(0);
   await expect
     .poll(() => page.evaluate(() => (window as any).kn?.getElementById("stats2:TERM-binom").length ?? 0))
@@ -1622,7 +1625,7 @@ test("スマホで概念を選んでいる間は、ページが縦に送れず�
 // cmp も同じ1行で戻すので、g で代表して確かめる
 test("戻ると、分類の絞り込みも URL のとおりに戻る", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 800 });
-  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布"));
+  await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布")); // 分類のページは地図で（ふだんはリストビュー。stats2-course #228）
   const sel = page.getByTestId("group-select");
   await expect(sel).toHaveValue("確率分布");
   await expect
