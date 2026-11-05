@@ -56,3 +56,40 @@ test("ライブラリ → 分類のページ：正方形（長押しで説明）
   await expect(page).toHaveURL(/c=stats2%3ATERM-pvalue/);
   await expect(page.getByTestId("detail").getByRole("heading", { name: "p値", exact: true })).toBeVisible();
 });
+
+// 確かめる対象：意味のまとまり（教材の groups・概念の group。型の改訂35。stats2-course #228）で区切って並べること。
+// 想定する故障：まとまりを読まず区切らない・まとまりの順（教材の順）を守らない・まとまりの外の語が消える。
+// 見つけ方：見本の読み込みを page.route で書き換え、確率分布に2つのまとまり（二項分布の側を先に）を足す。
+//   区切りが 教材の順の2つ ＋「そのほか」で、語の数の合計が13であること。
+//   （ほかの分類のまとまりは、中の語がこの分類にないので画面では出ようがない。分類とまとまりの食い違いは教材の build が止める）
+// 検出の確かめ（2026-11-05）：まとまりを読まない・「そのほか」を落とす、の2つの誤りを入れて落ちることを見た
+// 既存との違い：上のテストは区切りのない分類（今の見本）だけを見る
+test("意味のまとまりがあれば、まとまりごとに区切り、まとまりの外は「そのほか」", async ({ page }) => {
+  await page.route("**/sample/stats2.json", async (r) => {
+    const d = await (await r.fetch()).json();
+    d.course.groups = [
+      {
+        id: "stats2:GRP-count",
+        category: "確率分布",
+        name: "くり返して数える",
+        summary: "n 回くり返して、成功の数を数える",
+      },
+      { id: "stats2:GRP-base", category: "確率分布", name: "確率分布のしくみ" },
+    ];
+    const set: Record<string, string> = {
+      "stats2:TERM-bernoulli": "stats2:GRP-count",
+      "stats2:TERM-binom": "stats2:GRP-count",
+      "stats2:TERM-rv": "stats2:GRP-base",
+      "stats2:TERM-dist": "stats2:GRP-base",
+    };
+    for (const c of d.concepts) if (set[c.id]) c.group = set[c.id];
+    await r.fulfill({ json: d });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布"));
+  const list = page.getByTestId("category-list");
+  await expect(list.locator("h3")).toHaveText(["くり返して数える", "確率分布のしくみ", "そのほか"]);
+  await expect(list.getByTestId("cat-section-stats2:GRP-count").locator("[data-testid^=cat-item-]")).toHaveCount(2);
+  await expect(list.getByTestId("cat-section-stats2:GRP-count")).toContainText("n 回くり返して");
+  await expect(list.locator("[data-testid^=cat-item-]")).toHaveCount(13);
+});

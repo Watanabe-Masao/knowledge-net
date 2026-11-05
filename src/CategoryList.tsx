@@ -55,6 +55,15 @@ const HOLD_MS = 450; // 長押しとみなす長さ
 export default function CategoryList({ net, category, layout, onConcept }: Props) {
   const ids = [...net.concepts.values()].filter((c) => c.category === category).map((c) => c.id);
   const order = learningOrder(net, ids).map((id) => net.concepts.get(id)!);
+  // 意味のまとまり（教材の groups。stats2-course #228）：あればまとまりごとに区切る（まとまりの順＝教材の順、中は学ぶ順）。
+  // まとまりに入っていない語は最後に「そのほか」。まとまりのない分類は区切らない
+  const groups = net.groups.filter((g) => g.category === category);
+  const sections: { id: string; name?: string; summary?: string; items: typeof order }[] = groups.length
+    ? [
+        ...groups.map((g) => ({ ...g, items: order.filter((c) => c.group === g.id) })),
+        { id: "rest", name: "そのほか", items: order.filter((c) => !groups.some((g) => g.id === c.group)) },
+      ].filter((x) => x.items.length)
+    : [{ id: "all", items: order }];
   const bands = bandsOf(net);
   const tint = bands.find((b) => b.id === bandOfCat(bands, category))?.tint ?? "--ink-3";
   const mute = getComputedStyle(document.documentElement).getPropertyValue("--ink-3").trim() || "gray";
@@ -104,52 +113,62 @@ export default function CategoryList({ net, category, layout, onConcept }: Props
       data-testid="category-list"
       data-layout={layout}
     >
-      {layout === "grid" ? (
-        <ol className={s.grid} aria-label={`${category}の語（学ぶ順）`}>
-          {order.map((c) => (
-            <li key={c.id} className={s.cellWrap}>
-              <button
-                type="button"
-                className={`${s.cell}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
-                aria-describedby={tip === c.id ? "cat-tip" : undefined}
-                data-testid={`cat-item-${c.id}`}
-                {...hold(c.id)}
-              >
-                <span className={s.glyph}>{glyph(c)}</span>
-                <span className={s.name}>{c.name}</span>
-              </button>
-              {tip === c.id && (c.short ?? c.definition) ? (
-                <div id="cat-tip" role="tooltip" className={s.tip} data-testid="cat-tip">
-                  <b>{c.name}</b>
-                  <span>{c.short ?? c.definition}</span>
-                </div>
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <ol className={s.list} aria-label={`${category}の語（学ぶ順）`}>
-          {order.map((c) => (
-            <li key={c.id}>
-              <button
-                type="button"
-                className={`${s.row}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
-                onClick={() => onConcept(c.id)}
-                data-testid={`cat-item-${c.id}`}
-              >
-                <span className={s.rowGlyph}>{glyph(c)}</span>
-                <span className={s.rowText}>
-                  <b>{c.name}</b>
-                  {(c.short ?? c.definition) ? <small>{c.short ?? c.definition}</small> : null}
-                </span>
-                <span className={s.chev} aria-hidden="true">
-                  ›
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
-      )}
+      {sections.map((sec) => (
+        <div key={sec.id} className={s.section} data-testid={`cat-section-${sec.id}`}>
+          {sec.name ? (
+            <div className={s.secHead}>
+              <h3>{sec.name}</h3>
+              {sec.summary ? <p>{sec.summary}</p> : null}
+            </div>
+          ) : null}
+          {layout === "grid" ? (
+            <ol className={s.grid} aria-label={`${sec.name ?? category}の語（学ぶ順）`}>
+              {sec.items.map((c) => (
+                <li key={c.id} className={s.cellWrap}>
+                  <button
+                    type="button"
+                    className={`${s.cell}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
+                    aria-describedby={tip === c.id ? "cat-tip" : undefined}
+                    data-testid={`cat-item-${c.id}`}
+                    {...hold(c.id)}
+                  >
+                    <span className={s.glyph}>{glyph(c)}</span>
+                    <span className={s.name}>{c.name}</span>
+                  </button>
+                  {tip === c.id && (c.short ?? c.definition) ? (
+                    <div id="cat-tip" role="tooltip" className={s.tip} data-testid="cat-tip">
+                      <b>{c.name}</b>
+                      <span>{c.short ?? c.definition}</span>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <ol className={s.list} aria-label={`${sec.name ?? category}の語（学ぶ順）`}>
+              {sec.items.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    className={`${s.row}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
+                    onClick={() => onConcept(c.id)}
+                    data-testid={`cat-item-${c.id}`}
+                  >
+                    <span className={s.rowGlyph}>{glyph(c)}</span>
+                    <span className={s.rowText}>
+                      <b>{c.name}</b>
+                      {(c.short ?? c.definition) ? <small>{c.short ?? c.definition}</small> : null}
+                    </span>
+                    <span className={s.chev} aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      ))}
     </section>
   );
 }
