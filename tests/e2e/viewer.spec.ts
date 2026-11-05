@@ -809,8 +809,14 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
     /応用/,
   ]);
   await expect(x.getByRole("button", { name: "まず予測を選ぶ" })).toBeDisabled();
-  for (let i = 0; i < 3; i++) await x.getByRole("button", { name: "増やす" }).click();
+  // 予測は表の行を押して選ぶ（UI レビュー「操作と入力」。故障：行を押しても選べない・選んだ行が分からない）。−／＋ は補助
+  const pick = x.getByRole("radiogroup", { name: /いちばん高い所/ });
+  await pick.getByRole("radio", { name: "7 回" }).click();
+  await expect(x.getByTestId("exp-guess-peak")).toHaveText("7 回");
+  await expect(pick.getByRole("radio", { name: "7 回" })).toHaveAttribute("aria-checked", "true");
+  await x.getByRole("button", { name: "増やす" }).click();
   await expect(x.getByTestId("exp-guess-peak")).toHaveText("8 回");
+  await expect(pick.getByRole("radio", { name: "8 回" })).toHaveAttribute("aria-checked", "true");
   await x.getByRole("button", { name: "この予測で実験する" }).click();
   await expect(x.getByRole("radio", { name: /来店客が買う/ })).toHaveCount(0); // 題材の切り替えは置かない（選んでも計算は同じ）
   await x.getByTestId("exp-run-1").click();

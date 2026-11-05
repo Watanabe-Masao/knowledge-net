@@ -65,8 +65,38 @@ export function DistRows({
 }
 
 /** 理論の確率の行 */
-export function TheoryRows({ pmf, inEvent, mark }: { pmf: number[]; inEvent?: (k: number) => boolean; mark?: number }) {
+/** 理論の確率の行。onPick を渡すと行を押して k を選べる（予測を表の行で直接選ぶ。UI レビュー「操作と入力」。stats2-course の issue 224・U6b）。
+ *  選ぶときは radiogroup（行が radio）で、押せる高さを 44px にする */
+export function TheoryRows({
+  pmf,
+  inEvent,
+  mark,
+  onPick,
+  picked,
+  pickLabel = "選ぶ",
+}: {
+  pmf: number[];
+  inEvent?: (k: number) => boolean;
+  mark?: number;
+  onPick?: (k: number) => void;
+  picked?: number | null;
+  pickLabel?: string;
+}) {
   const max = Math.max(1e-12, ...pmf);
+  const cells = (v: number, k: number) => (
+    <>
+      <span>{k} 回</span>
+      <span className={s.bar}>
+        <i style={{ width: `${(v / max) * 100}%` }} />
+      </span>
+      <span>{onPick && picked === k ? "選んだ" : ""}</span>
+      <span>{v > 0 && v < 1e-5 ? "<0.001%" : pctSig(v)}</span>
+    </>
+  );
+  const cls = (k: number) =>
+    [k === mark ? s.mark : inEvent?.(k) ? s.in : "", onPick && picked === k ? s.picked : ""]
+      .filter(Boolean)
+      .join(" ") || undefined;
   return (
     <>
       <div className={s.rowsHead} aria-hidden="true">
@@ -75,23 +105,32 @@ export function TheoryRows({ pmf, inEvent, mark }: { pmf: number[]; inEvent?: (k
         <span />
         <span>確率</span>
       </div>
-      <div className={s.rows} role="list" aria-label="成功の回数ごとの理論の確率" data-testid="q-theory">
-        {pmf.map((v, k) => (
-          <div
-            key={k}
-            role="listitem"
-            className={k === mark ? s.mark : inEvent?.(k) ? s.in : undefined}
-            data-mark={k === mark ? "answer" : undefined}
-          >
-            <span>{k} 回</span>
-            <span className={s.bar}>
-              <i style={{ width: `${(v / max) * 100}%` }} />
-            </span>
-            <span />
-            <span>{v > 0 && v < 1e-5 ? "<0.001%" : pctSig(v)}</span>
-          </div>
-        ))}
-      </div>
+      {onPick ? (
+        <div className={`${s.rows} ${s.pickRows}`} role="radiogroup" aria-label={pickLabel} data-testid="q-theory">
+          {pmf.map((v, k) => (
+            <button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={picked === k}
+              aria-label={`${k} 回`}
+              className={cls(k)}
+              onClick={() => onPick(k)}
+              data-testid={`q-pick-${k}`}
+            >
+              {cells(v, k)}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className={s.rows} role="list" aria-label="成功の回数ごとの理論の確率" data-testid="q-theory">
+          {pmf.map((v, k) => (
+            <div key={k} role="listitem" className={cls(k)} data-mark={k === mark ? "answer" : undefined}>
+              {cells(v, k)}
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }

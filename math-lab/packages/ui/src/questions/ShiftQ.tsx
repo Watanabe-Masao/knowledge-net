@@ -44,11 +44,20 @@ export function ShiftQ(props: QProps) {
   if (stage === 0) {
     body = (
       <>
-        <Card title="いまの山" sub={`n＝${start.n}・p＝${pc(start.p)}`}>
-          <TheoryRows pmf={f0} inEvent={(k) => k === k0} />
-          <p className={qs.muted}>いちばん高いのは {k0} 回（色の行）。</p>
+        <Card
+          title={`p を ${pc(next.p)} にすると、いちばん高い所は？`}
+          sub={`表はいまの山（n＝${start.n}・p＝${pc(start.p)}）`}
+        >
+          <TheoryRows
+            pmf={f0}
+            inEvent={(k) => k === k0}
+            onPick={setGuess}
+            picked={guess}
+            pickLabel={`p を ${pc(next.p)} にしたときの、いちばん高い所`}
+          />
+          <p className={qs.muted}>いちばん高いのは {k0} 回（色の行）。p を変えたあとの頂点を、行を押して選ぶ。</p>
         </Card>
-        <Card title={`p を ${pc(next.p)} にすると、いちばん高い所は？`}>
+        <Card title="選んだ頂点">
           <div className={s.kStep}>
             <button
               type="button"
@@ -70,7 +79,7 @@ export function ShiftQ(props: QProps) {
           </div>
           <p className={qs.muted}>
             {guess === null
-              ? "−／＋ で頂点を選ぶ"
+              ? "上の表の行を押して選ぶ（−／＋ でも動かせる）"
               : ["山は左へ動くと予測", "山は動かないと予測", "山は右へ動くと予測"][dir(guess)]}
           </p>
         </Card>

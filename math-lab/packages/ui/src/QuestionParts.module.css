@@ -62,6 +62,43 @@
   background: var(--ink);
   opacity: 0.7;
 }
+/* 行を押して選ぶとき（予測）：押せる高さ 44px・選んだ行は主の色の枠 */
+.pickRows > button {
+  all: unset;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 46px 8ch;
+  gap: 6px;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 4px;
+  border-radius: var(--r-s);
+  font-size: 12.5px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+}
+.pickRows > button:focus-visible {
+  outline: 2px solid var(--accent);
+}
+.pickRows > button > span:first-child {
+  text-align: right;
+  color: var(--ink-2);
+}
+.pickRows > button > span:nth-child(n + 3) {
+  text-align: right;
+  white-space: nowrap;
+}
+.pickRows > button > span:last-child {
+  color: var(--ink-3);
+}
+.pickRows > button.picked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.pickRows > button.picked > span:nth-child(3) {
+  color: var(--accent);
+  font-weight: 700;
+}
 .in > span:first-child,
 .in > span:nth-child(3) {
   color: var(--data-hi) !important;
