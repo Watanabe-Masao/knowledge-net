@@ -638,9 +638,7 @@
 }
 .expBtns {
   display: inline-flex;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-m);
-  overflow: hidden;
+  gap: 8px;
 }
 .expBtn {
   all: unset;
@@ -654,14 +652,11 @@
   font-weight: 600;
   cursor: pointer;
   background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-m);
   transition:
     transform var(--dur-press) var(--ease),
     background var(--dur) var(--ease);
-}
-.expBtn + .expBtn {
-  border-left: 1px solid var(--line-strong);
-  background: var(--accent);
-  color: var(--accent-ink);
 }
 .expBtn:active {
   transform: scale(var(--press-scale));
@@ -677,11 +672,26 @@
   color: var(--ink-2);
 }
 .expFoot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   font-size: var(--fs-tag);
   color: var(--ink-3);
+}
+.expFoot summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+.expSeed {
+  margin: 0;
+}
+.expAsk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  color: var(--ink-2);
 }
 .clear {
   all: unset;

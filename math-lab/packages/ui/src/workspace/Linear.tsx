@@ -17,7 +17,7 @@ export function Linear({ w }: { w: WsCtx }) {
     <>
       {linear && (
         <fieldset className={s.linear} data-testid="ws-linear">
-          <legend>全部の値を a 倍して b 足す（Y＝aX＋b）</legend>
+          <legend>期待値の性質を試す：全部の値を a 倍して b 足す（Y＝aX＋b）</legend>
           {(
             [
               ["a", a, (v: number) => patch({ a: v }), -3, 3, 0.5, "掛ける定数"],

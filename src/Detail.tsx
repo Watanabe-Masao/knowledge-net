@@ -173,6 +173,7 @@ function groupsOf(net: Network, id: string): Group[] {
       label: relationParts(net, r).text,
     }; // 前提は gist がないので、どこで使うかの説明（description）
     const k = r.type === "変換" ? "change" : r.type === "対比" ? "contrast" : r.to === id ? "before" : "after";
+    if (row.tag === g[k]!.title) row.tag = undefined; // 見出しと同じ札は省く（「対比」の下の全行に「対比」と出さない。UI レビュー「重複と量」）
     g[k]!.rows.push(row);
   }
   for (const d of derivations)

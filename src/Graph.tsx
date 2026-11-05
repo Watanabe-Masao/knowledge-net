@@ -798,13 +798,14 @@ export default function Graph({
     );
     // 全画面は地図を見る所：点を押すと札（名前・分類・定義1文）を出すだけで、選び直さない（選ぶと地図が組み替わって見失う）
     // 島の地図は、名前の字の大きさが倍率で変わるので、名前を除いた面の大きさで収める
-    const bodyView = (eles: cytoscape.NodeCollection) => {
+    const bodyView = (eles: cytoscape.NodeCollection, atLeast = 0) => {
       const bb = eles.boundingBox({ includeLabels: false }),
         pad = padOf(),
         W = c.width(),
         H = c.height();
       const z = Math.max(
         c.minZoom(),
+        atLeast,
         Math.min(c.maxZoom(), (W - 2 * pad) / Math.max(bb.w, 1), (H - 2 * pad - 30) / Math.max(bb.h, 1)),
       );
       return { zoom: z, pan: { x: W / 2 - z * (bb.x1 + bb.w / 2), y: H / 2 + 15 - z * (bb.y1 + bb.h / 2) } };
@@ -818,7 +819,11 @@ export default function Graph({
         t = k === "isle" || k === "band" ? n : n.parent().first();
       if (t.empty()) return; // 帯を押すとその柱の島へ
       const words = t.data("kind") === "isle" ? t.children('[kind != "isleCap"]') : t; // 島は語の並びに寄せる（島の段の中身の分は入れない）
-      c.animate(bodyView(words.nonempty() ? words : t), { duration: reduced() ? 0 : 320, easing: "ease-in-out-cubic" });
+      // 語が読める倍率（ISLE_READ）を下回らない。島が画面より大きいときは、島の真ん中から読める倍率で（端は指で送る）
+      c.animate(bodyView(words.nonempty() ? words : t, ISLE_READ), {
+        duration: reduced() ? 0 : 320,
+        easing: "ease-in-out-cubic",
+      });
     };
     c.on("tap", "node", (e) => {
       if (held) {
