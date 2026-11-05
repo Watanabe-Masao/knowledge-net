@@ -202,7 +202,7 @@
 }
 /* 全体図を分類で絞る（#105）。図の左上、まわり／全体の横 */
 .groupSel {
-  min-height: 36px;
+  min-height: var(--tap); /* select は ::before で広げられないので、箱を 44px に */
   flex: 1 1 140px;
   min-width: 0;
   max-width: 260px;

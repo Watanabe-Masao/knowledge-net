@@ -692,6 +692,15 @@ test("作業台で実験する：100回・1回・条件を変えると記録を�
   await w.getByTestId("ws-chip-k").click();
   await w.getByTestId("ws-slider-k").fill("4");
   await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
+  // 記録の削除は一度たずねる（UI レビュー「操作と入力」。故障：押した瞬間に消える）。「やめる」なら残り、「消す」で消える
+  await w.getByTestId("ws-exp-more").locator("summary").click();
+  await w.getByTestId("ws-clear").click();
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
+  await w.getByRole("button", { name: "やめる" }).click();
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("実験 100 回");
+  await w.getByTestId("ws-clear").click();
+  await w.getByTestId("ws-clear-yes").click();
+  await expect(w.getByTestId("ws-exp-stat")).toContainText("まだ実験していない");
 });
 
 // 式を分解する（#110）：ₙCₖ → n!/(k!(n−k)!) → 階乗を ∏ に。値は変わらず、計算の段も分解した式で進む
@@ -1364,6 +1373,8 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-related-head")).toContainText("関連する問い7 問");
   await expect(lab.getByTestId("lab-open-stats2:binom-C-03")).toHaveCount(0);
   await expect(lab.getByTestId("lab-open-stats2:binom-E-03")).toContainText("主：二項分布と超幾何分布のつながり");
+  // 絞った概念が主の問いは「主：二項分布」を省き、関連だけ（全行に同じ名前を並べない。UI レビュー「重複と量」。故障：全行に「主：二項分布」）
+  await expect(lab.getByTestId("lab-open-stats2:binom-A-01")).not.toContainText("主：");
   await lab.getByTestId("lab-concept-pick").click();
   const sh = page.getByTestId("lab-concept-sheet");
   await expect(sh.getByTestId("lab-c-stats2:TERM-expect")).toContainText("期待値");
@@ -1382,7 +1393,7 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
       .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")!.replace("lab-open-stats2:binom-", ""))),
   ).toEqual(["D-01", "D-03", "F-01"]);
   await expect(lab.getByTestId("lab-open-stats2:binom-D-03")).toContainText(
-    "主：期待値｜関連：分散・確率分布・二項分布",
+    "主：期待値｜関連：分散・確率分布", // 絞った概念（二項分布）は関連からも省く
   );
   await expect(lab.getByTestId("lab-open-stats2:binom-D-01")).not.toContainText("作成中");
   await expect(lab.getByTestId("lab-open-stats2:binom-F-01")).toContainText("作成中");

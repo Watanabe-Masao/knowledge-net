@@ -484,15 +484,20 @@ export function LabPage({
                         ) : null}
                         <ul className={s.qList} data-testid={key === "all" ? `lab-q-${x.id}` : `lab-q-${x.id}-${key}`}>
                           {list.map((it) => {
-                            const roles = (
-                              <small>
-                                主：{it.concept ? nm(it.concept) : "—"}
-                                {(() => {
-                                  const r = (it.related ?? []).filter((id) => net.concepts.has(id));
-                                  return r.length ? `｜関連：${r.map(nm).join("・")}` : "";
-                                })()}
-                              </small>
-                            );
+                            // 絞った概念が主の問いでは「主：…」を省き、関連だけを出す（全行に同じ名前が並ばないように。UI レビュー「重複と量」）
+                            const mainShown = !(picked.length === 1 && it.concept === picked[0]); // 主が関係（両端の一方が絞った概念）なら、関係の名前は残す
+                            const rel = (it.related ?? []).filter((id) => net.concepts.has(id) && !picked.includes(id));
+                            const roles =
+                              mainShown || rel.length ? (
+                                <small>
+                                  {[
+                                    mainShown ? `主：${it.concept ? nm(it.concept) : "—"}` : "",
+                                    rel.length ? `関連：${rel.map(nm).join("・")}` : "",
+                                  ]
+                                    .filter(Boolean)
+                                    .join("｜")}
+                                </small>
+                              ) : null;
                             return (
                               <li key={it.id}>
                                 {it.open ? (
