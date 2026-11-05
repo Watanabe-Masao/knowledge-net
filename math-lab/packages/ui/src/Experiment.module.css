@@ -335,6 +335,7 @@
   box-shadow: inset 0 0 0 1px var(--line);
   animation: none;
 }
+/* 変化を見せる動き：コインが返る（何が出たか） */
 @keyframes pop {
   from {
     opacity: 0;
@@ -856,6 +857,7 @@
   box-shadow: 0 0 0 1.5px var(--accent);
   animation: drawIn var(--dur) var(--ease);
 }
+/* 変化を見せる動き：いま引いた値が記録に加わる */
 @keyframes drawIn {
   from {
     transform: scale(0.6);

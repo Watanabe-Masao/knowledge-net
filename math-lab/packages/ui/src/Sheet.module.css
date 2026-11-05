@@ -73,7 +73,7 @@
   color: var(--ink-2);
   font-size: 17px;
   box-shadow: 0 0 0 1px var(--line);
-  transition: transform var(--dur-spring) var(--ease-bounce);
+  transition: transform var(--dur) var(--ease);
 }
 .close:active {
   transform: scale(var(--press-scale));

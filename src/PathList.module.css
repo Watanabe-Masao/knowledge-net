@@ -79,7 +79,7 @@
   flex: none;
   width: 16px;
   color: var(--ink-3);
-  transition: transform var(--dur-spring) var(--ease-spring);
+  transition: transform var(--dur) var(--ease);
 }
 .chevOn {
   transform: rotate(90deg);
@@ -89,7 +89,7 @@
   display: grid;
   gap: 6px;
   padding: 0 0 12px 42px;
-  animation: panelIn var(--dur-spring) var(--ease-spring);
+  animation: panelIn var(--dur) var(--ease);
 }
 .panel p {
   margin: 0;
