@@ -39,6 +39,7 @@
 | 31 | 2026-11-05 | 型を芯と実験室の拡張に分けた（stats2-course #211）：実験室の定義（experiment・experimentBinom・experimentTable・walkQuiz）を `kn-experiment-v1.json` へ移し、芯の `experiments` はそれを指す。中身は変わらない。`$id` を URL にした（2つのファイルを互いに指すため）。書き出しに任意の `experiment_revision`（使った拡張の改訂） |
 | 32 | 2026-11-05 | 書き出しに任意の `walk_texts`（解き方の公式の文。型は実験室の拡張の `walkTexts`）（stats2-course #211）。任意 |
 | 33 | 2026-11-05 | 書き出しに任意の `apply_texts`（応用の解き方の段の文。型は実験室の拡張の `applyTexts`）（stats2-course #211）。任意 |
+| 34 | 2026-11-05 | 概念に任意の `icon`（語の印の SVG の URL。引用符・括弧・空白を含む URL は型で止める）、教材に任意の `pillars`（柱：id・name・categories。色は画面が順に当てる）（stats2-course #220）。任意 |
 
 ## 実験室の拡張（kn-experiment-v1.json）
 
