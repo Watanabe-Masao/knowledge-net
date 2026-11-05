@@ -805,16 +805,19 @@ export function Seg<T extends string>({
   items,
   value,
   onChange,
+  small,
 }: {
   name: string;
   items: [T, string][];
   value: T;
   onChange: (v: T) => void;
+  /** 小さな札（式の読み方など、面の中のさらに下の段。UI レビュー 11：切り替えの3段を形で分ける） */
+  small?: boolean;
 }) {
   return (
     <div
-      className={s.seg}
-      style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}
+      className={small ? s.segSmall : s.seg}
+      style={small ? undefined : { gridTemplateColumns: `repeat(${items.length}, 1fr)` }}
       role="radiogroup"
       aria-label={name}
     >

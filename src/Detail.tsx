@@ -339,7 +339,7 @@ export default function Detail({
         />
       </header>
       <div className={st.tabs}>
-        <Segmented value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身" items={tabs} />
+        <Segmented variant="tabs" value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身" items={tabs} />
       </div>
     </>
   );

@@ -63,7 +63,7 @@ export function ReadPanel({ w }: { w: WsCtx }) {
   return (
     <div className={s.read} data-testid="ws-read" data-mode={mode}>
       {items.length > 1 && (
-        <Seg name="式の読み方" items={items} value={mode} onChange={(v: ReadAs) => patch({ readAs: v })} />
+        <Seg name="式の読み方" small items={items} value={mode} onChange={(v: ReadAs) => patch({ readAs: v })} />
       )}
       {/* 説明（帯）は 式 → 見方の切り替え の下に置く（渡辺さん 2026-11-04）。計算では部品の札に名前と値が出るので、記号を選んだときだけ出す */}
       {(mode !== "calc" || sel?.sym) && <Strip w={w} />}

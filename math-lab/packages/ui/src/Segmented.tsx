@@ -10,9 +10,11 @@ type Props = {
   onChange: (v: string) => void;
   items: { value: string; label: ReactNode }[];
   label: string;
+  /** 形で階層を分ける（UI レビュー 11）：box＝囲みの切り替え（地図の見方など、いちばん上）・tabs＝下線のタブ（面の中身：概要／式／関係） */
+  variant?: "box" | "tabs";
 };
 
-export function Segmented({ value, onChange, items, label }: Props) {
+export function Segmented({ value, onChange, items, label, variant = "box" }: Props) {
   const root = useRef<HTMLDivElement>(null);
   const [mark, setMark] = useState<CSSProperties>({ opacity: 0 });
   const moved = useRef(false);
@@ -26,12 +28,13 @@ export function Segmented({ value, onChange, items, label }: Props) {
     setMark({
       opacity: 1,
       width: on.offsetWidth,
-      height: on.offsetHeight,
-      transform: `translate(${on.offsetLeft}px, ${on.offsetTop}px)`,
+      height: variant === "tabs" ? 2 : on.offsetHeight, // タブは下の線だけ
+      transform:
+        variant === "tabs" ? `translateX(${on.offsetLeft}px)` : `translate(${on.offsetLeft}px, ${on.offsetTop}px)`,
       transition: moved.current ? undefined : "none",
     });
     moved.current = true;
-  }, [value, items.length]);
+  }, [value, items.length, variant]);
   const choose = (v: string) => {
     haptic();
     onChange(v);
@@ -42,8 +45,9 @@ export function Segmented({ value, onChange, items, label }: Props) {
       type="single"
       value={value}
       onValueChange={choose}
-      className={s.root}
+      className={`${s.root}${variant === "tabs" ? ` ${s.tabs}` : ""}`}
       aria-label={label}
+      data-variant={variant}
     >
       <span className={s.mark} style={mark} aria-hidden="true" data-testid="segmented-mark" />
       {items.map((it) => (

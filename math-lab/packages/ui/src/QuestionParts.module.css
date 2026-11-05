@@ -404,6 +404,39 @@
   color: var(--accent);
 }
 .scale button:focus-visible,
+/* 小さな札：左に寄せた丸い札。見た目は 32px、押せる範囲は ::before で 46px（端の丸めで 44px を割らないよう少し広く） */
+.segSmall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.segSmall button {
+  all: unset;
+  position: relative;
+  z-index: 1; /* 広げた押せる範囲（::before）が、下の説明の欄に覆われないように */
+  box-sizing: border-box;
+  min-height: 32px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  font-size: 12.5px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.segSmall button::before {
+  content: "";
+  position: absolute;
+  inset: -7px -4px;
+}
+.segSmall button[aria-checked="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.segSmall button:focus-visible,
 .seg button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
