@@ -5,6 +5,7 @@
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
 import Library from "./Library";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
+import RelationMap from "./RelationMap";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Detail, { name, sentence } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
@@ -570,6 +571,9 @@ export default function App() {
         />
       ) : !sel && group && group !== "*" && layout !== "map" ? (
         <CategoryList net={net} category={group} layout={layout} onConcept={setSel} />
+      ) : !sel && group && group !== "*" && net.mapReady.has(group) ? (
+        // 関係図に移した分類の地図は、まとまりの関係図（stats2-course #235。移していない分類は今の島の地図）
+        <RelationMap net={net} category={group} onConcept={setSel} />
       ) : (
         <>
           <Graph
