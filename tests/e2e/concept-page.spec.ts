@@ -115,6 +115,45 @@ test("読むときは全画面のページ：下のタブに重なり、次の1�
   await expect(d).toHaveAttribute("data-detent", "full"); // 地図ではなく概念のページへ戻る
   await d.getByTestId("page-cta").click();
   await expect(page.getByTestId("page-lab")).toBeVisible();
+  // 実験室の一覧から、来た概念へ ← で戻れる（下のタブだけにしない。UI レビュー「動線設計」2）
+  await expect(page.getByTestId("tab-back")).toHaveText(/二項分布/);
+  await page.getByTestId("tab-back").click();
+  await expect(page.getByTestId("page-lab")).toHaveCount(0);
+  await expect(d).toBeVisible();
+  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
+  await expect(page).not.toHaveURL(/t=lab/);
+  expect(errs).toEqual([]);
+});
+
+// 確かめる対象：関係のページの次の1手（UI レビュー「動線設計」1。stats2-course #224 U5）。
+// 想定する故障：関係のページが行き止まり（下に次の1手がない）・関係が主の問いでなく別の問いを開く・使わない問い（retired）や作成中を出す・
+//   つながる2つの概念へ移れない。
+// 見つけ方：二項分布と超幾何分布の対比（主の問い E-03「戻さずに抽出するとどうなる？」がある）を開き、題の下の名前の行と下の帯を見て、
+//   帯を押すと E-03 の問い（?q=）が開くか。関係が主の問いのない関係（ポアソン分布への変換）では帯を出さないか。
+// 既存との違い：上のテストは関係のページの ← の戻り先だけを見る
+test("関係のページは、つながる2つの概念を題の下に、関係を確かめる問いを下の帯に出す", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await d.getByTestId("concept-gist").click();
+  await d.getByRole("radio", { name: "関係" }).click();
+  const list = d.getByTestId("edge-list");
+  const rel = page.getByTestId("edge-panel");
+  await list
+    .getByRole("button", { name: /ポアソン分布/ })
+    .first()
+    .click();
+  await expect(rel.getByTestId("edge-ends")).toBeVisible();
+  await expect(rel.getByTestId("edge-next")).toHaveCount(0); // 関係が主・関連の問いがない
+  await rel.getByTestId("edge-back").click();
+  await list.getByRole("button", { name: /と 超幾何分布 を比べる/ }).click();
+  await expect(rel.getByTestId("edge-ends").getByRole("button")).toHaveText(["二項分布", "超幾何分布"]);
+  await expect(rel.getByTestId("edge-next")).toBeVisible();
+  await expect(rel).toContainText("戻さずに抽出するとどうなる？");
+  await rel.getByTestId("edge-next").click();
+  await expect(page).toHaveURL(/q=stats2%3Abinom-E-03/);
+  await expect(page.getByTestId("experiment")).toBeVisible();
   expect(errs).toEqual([]);
 });
 

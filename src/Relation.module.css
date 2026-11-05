@@ -304,6 +304,53 @@
   align-content: start;
   overscroll-behavior: contain;
 }
+/* 関係のページ：題の下のつながる2つの概念・下の次の1手 */
+.ends {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 4px;
+}
+.endsItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.endsArrow {
+  color: var(--ink-3);
+}
+.endsName {
+  all: unset;
+  box-sizing: border-box;
+  min-height: var(--tap);
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  border-radius: var(--r-s);
+}
+.endsName:focus-visible {
+  outline: 2px solid var(--accent);
+}
+.pageBar {
+  flex: none;
+  display: grid;
+  gap: 4px;
+  padding: var(--sp-2) var(--sp-4) calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.pageCta {
+  min-height: 48px;
+  width: 100%;
+}
+.pageNote {
+  margin: 0;
+  text-align: center;
+  font-size: var(--fs-tag);
+}
 .back {
   all: unset;
   box-sizing: border-box;
