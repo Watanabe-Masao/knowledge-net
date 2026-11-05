@@ -27,7 +27,7 @@
   all: unset;
   position: relative;
   box-sizing: border-box;
-  min-height: 40px;
+  min-height: var(--tap);
   display: flex;
   align-items: center;
   justify-content: center;
