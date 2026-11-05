@@ -65,6 +65,8 @@ export type Concept = {
   version: number;
   /** 定義1文と分類（骨格の段から。#105） */ short?: string;
   category?: string;
+  /** 語の印の URL（型の改訂34。stats2-course #220）。読むのは iconAllowed を通ったものだけ */
+  icon?: string;
   /** 型の改訂25（stats2-course #188）：つまり・この概念で考える問い・概要の図（分布の棒をその場で描く設定） */
   gist?: string;
   question?: string;
@@ -155,7 +157,7 @@ export type CourseData = {
   version: 1;
   schema_revision?: number;
   experiment_revision?: number;
-  course: { id: string; title: string; units: Unit[] };
+  course: { id: string; title: string; units: Unit[]; pillars?: { id: string; name: string; categories: string[] }[] };
   concepts: Concept[];
   relations: Relation[];
   derivations: Derivation[];
@@ -201,6 +203,10 @@ export function schemaErrors(data: unknown): string[] {
 
 export type Network = {
   courses: { id: string; title: string }[];
+  /** 柱（分類の大きなまとまり。上から学ぶ順。教材の course.pillars を教材の順につなぐ。stats2-course #220） */
+  pillars: { id: string; name: string; categories: string[] }[];
+  /** 語の印を読んでよい場所（教材の一覧にある公開データのサイトの根。load が入れる） */
+  iconRoots: string[];
   concepts: Map<string, Concept>;
   relations: Relation[];
   derivations: Derivation[];
@@ -220,6 +226,8 @@ export type Network = {
 export function merge(list: { id: string; data: unknown }[]): { net: Network; errors: string[] } {
   const net: Network = {
     courses: [],
+    pillars: [],
+    iconRoots: [],
     concepts: new Map(),
     relations: [],
     derivations: [],
@@ -252,6 +260,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     net.relations.push(...d.relations);
     net.derivations.push(...d.derivations);
     for (const x of d.experiments ?? []) net.experiments.set(x.id, x);
+    for (const p of d.course.pillars ?? []) if (!net.pillars.some((q) => q.id === p.id)) net.pillars.push(p);
     if (d.walk_texts) net.walkTexts.set(d.course.id, d.walk_texts);
     if (d.apply_texts) net.applyTexts.set(d.course.id, d.apply_texts);
   }
@@ -398,6 +407,7 @@ export async function load(src?: string | null): Promise<{ net: Network; errors:
     }),
   );
   const { net, errors } = merge(got.filter((g) => g.data !== null));
+  net.iconRoots = reg.courses.map((c) => siteRoot(c.data, location.href));
   return { net, errors: [...got.flatMap((g) => ("error" in g && g.error ? [g.error] : [])), ...errors] };
 }
 
@@ -463,4 +473,25 @@ export function neighborhood(net: Network, id: string): Map<string, Placed> {
     }
   }
   return pos;
+}
+
+/** 柱と色（画面が順に柱の色を当てる。教材に柱がなければ、全部の分類を1つの柱に）。stats2-course #220 */
+export type Band = { id: string; name: string; tint: string; cats: string[] };
+/** 柱の色（上から順に。tokens の系列の色） */
+export const TINTS = ["--data-1", "--data-2", "--data-3"];
+export function bandsOf(net: Pick<Network, "pillars">): Band[] {
+  const tints = TINTS;
+  if (!net.pillars.length) return [{ id: "all", name: "", tint: tints[0]!, cats: [] }];
+  return net.pillars.map((p, i) => ({ id: p.id, name: p.name, tint: tints[i % tints.length]!, cats: p.categories }));
+}
+/** 分類 → 柱（どの柱にもない分類は最後の柱） */
+export const bandOfCat = (bands: Band[], c: string) =>
+  (bands.find((b) => b.cats.includes(c)) ?? bands[bands.length - 1]!).id;
+
+/** 教材の公開データの URL から、そのサイトの根（…/net/x.json → …/）。語の印はこの下だけを読む */
+export const siteRoot = (dataUrl: string, base: string) => new URL("..", new URL(dataUrl, base)).href;
+/** 語の印の URL を読んでよいか：型で形を絞ったうえで（https の .svg・引用符や括弧なし）、教材の一覧にあるサイトの根の下だけ（stats2-course #220） */
+export function iconAllowed(url: string | undefined, roots: string[]): url is string {
+  if (!url || !/^https:\/\/[^"'()\\\s<>]+\.svg$/.test(url)) return false;
+  return roots.some((r) => url.startsWith(r));
 }

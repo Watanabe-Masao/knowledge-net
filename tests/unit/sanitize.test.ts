@@ -5,7 +5,7 @@
 // 既存との違い：既存のテストは見本のデータだけで、悪いデータを入れていなかった
 import { describe, expect, it } from "vitest";
 import katex from "katex";
-import { allowedSource, schemaErrors } from "../../src/data";
+import { allowedSource, iconAllowed, schemaErrors, siteRoot } from "../../src/data";
 import { readFileSync } from "node:fs";
 import { KATEX_TRUST } from "../../src/RelMap";
 
@@ -69,5 +69,28 @@ describe("語の印の URL は型で安全な形に絞る", () => {
     expect(schemaErrors(d)).toEqual([]);
     d.course.pillars[0].tint = "red";
     expect(schemaErrors(d).length).toBeGreaterThan(0);
+  });
+});
+
+// 確かめる対象：画面が語の印を読むのは、教材の一覧にあるサイトの根の下だけであること（型では場所を絞れない）。
+// 想定する故障：型を通る https の .svg なら、どのサイトの SVG でも mask で読む（教材の外の絵が語の印として出る）・
+//   同じ github.io の別のリポジトリ（同じ origin）を読む・根を前方一致で比べて stats2-labs-evil のような名前を通す。
+// 見つけ方：一覧の教材のデータの URL から根を作り、その下・別のサイト・同じ origin の別のリポジトリ・似た名前を渡す。
+// 既存との違い：上の型のテストは URL の形だけで、どこを指すかは見ていない
+describe("語の印は登録した教材のサイトの下だけを読む", () => {
+  const roots = REG.map((r) => siteRoot(r, BASE));
+  it("根はデータの1つ上（…/stats2-labs/）", () => {
+    expect(roots).toEqual(["https://watanabe-masao.github.io/stats2-labs/"]);
+  });
+  it("根の下の .svg は読み、外・似た名前・形の崩れたものは読まない", () => {
+    expect(iconAllowed("https://watanabe-masao.github.io/stats2-labs/icons/TERM-binom.svg", roots)).toBe(true);
+    for (const bad of [
+      "https://evil.example/stats2-labs/icons/a.svg",
+      "https://watanabe-masao.github.io/other/icons/a.svg",
+      "https://watanabe-masao.github.io/stats2-labs-evil/icons/a.svg",
+      'https://watanabe-masao.github.io/stats2-labs/icons/a.svg")',
+      undefined,
+    ])
+      expect(iconAllowed(bad, roots), String(bad)).toBe(false);
   });
 });
