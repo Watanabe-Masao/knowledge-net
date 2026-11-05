@@ -21,7 +21,7 @@ export function Icon({
   name,
   size = 22,
 }: {
-  name: Tab | "search" | "chevron" | "out" | "full" | "shrink" | "fit";
+  name: Tab | "search" | "chevron" | "out" | "full" | "shrink" | "fit" | "figure" | "play";
   size?: number;
 }) {
   const p = {
@@ -100,6 +100,20 @@ export function Icon({
         <svg {...p}>
           <rect x="4" y="4" width="16" height="16" rx="3" />
           <circle cx="12" cy="12" r="2.5" />
+        </svg>
+      );
+    case "figure": // 図（つながりの図・解説・操作の切り替え。UI レビュー：絵文字をやめ、下のタブと同じ線の印に）
+      return (
+        <svg {...p}>
+          <rect x="3.5" y="5" width="17" height="14" rx="2.5" />
+          <path d="M7 15.5l3.2-3.6 2.6 2.5 2.2-2.2 2.5 3.3" />
+        </svg>
+      );
+    case "play": // 解説（再生）
+      return (
+        <svg {...p}>
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M10.2 8.8l5 3.2-5 3.2z" />
         </svg>
       );
   }

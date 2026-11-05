@@ -477,8 +477,8 @@ export function neighborhood(net: Network, id: string): Map<string, Placed> {
 
 /** 柱と色（画面が順に柱の色を当てる。教材に柱がなければ、全部の分類を1つの柱に）。stats2-course #220 */
 export type Band = { id: string; name: string; tint: string; cats: string[] };
-/** 柱の色（上から順に。tokens の系列の色） */
-export const TINTS = ["--data-1", "--data-2", "--data-3"];
+/** 柱の色（上から順に。tokens の --band-1〜3） */
+export const TINTS = ["--band-1", "--band-2", "--band-3"]; // 柱の色はデータの図の色と分ける（UI レビュー「地図の変更で見直した点」2）
 export function bandsOf(net: Pick<Network, "pillars">): Band[] {
   const tints = TINTS;
   if (!net.pillars.length) return [{ id: "all", name: "", tint: tints[0]!, cats: [] }];

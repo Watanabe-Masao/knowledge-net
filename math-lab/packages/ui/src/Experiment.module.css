@@ -411,9 +411,10 @@
   fill: var(--data-1);
   fill-opacity: 0.6;
 }
+/* 理論の分布だけの棒（概要の図・予測の段）：実験室の棒と同じ濃い青（同じ分布は同じ色。UI レビュー「カラー設定」）。
+   淡い色は理論と実験を並べるときの片方（.bar の実験の棒）に限る */
 .barTheory {
   fill: var(--data-1);
-  fill-opacity: 0.45;
 }
 .barHi {
   fill: var(--data-hi);

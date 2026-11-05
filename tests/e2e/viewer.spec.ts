@@ -395,7 +395,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
     .click();
   const panel = page.getByTestId("edge-panel");
   const sw = panel.getByTestId(/^media-panel-/);
-  await expect(sw.getByRole("radio")).toHaveText(["🖼 図 2", "▶ 解説", "🧪 操作"]);
+  await expect(sw.getByRole("radio")).toHaveText(["図 2", "解説", "操作"]);
   const figs = panel.getByTestId(/^figures-panel-/);
   await expect(figs.locator("img")).toHaveCount(1);
   await expect(figs).toContainText("1／2");
@@ -446,7 +446,7 @@ test("つながりは「💡 つまり」を説明より先に出す（対比・
       return g && d ? d.y - (g.y + g.height) : -1;
     })
     .toBeGreaterThanOrEqual(0);
-  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["▶ 解説", "🧪 操作"]); // 図はその場で描くので、画像の図は出さない
+  await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["解説", "操作"]); // 図はその場で描くので、画像の図は出さない
   await expect(panel.getByTestId("rel-chart")).toBeVisible();
   await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
   await expect(panel.getByText("対比", { exact: false }).first()).toBeVisible(); // 種類は札で出す（括弧を重ねない）
