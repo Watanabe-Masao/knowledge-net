@@ -47,11 +47,6 @@ type Props = {
   onFocus?: (id: string) => void;
   /** 経路（前提をさかのぼる）：点の前に付ける学ぶ順の番号 */
   numbers?: Map<string, number>;
-  /** 分類の地図（#105）：点＝分類（語の数）、線＝分類の間の関係の本数。押すと onSelect に "group:分類" */
-  overview?: {
-    nodes: { id: string; label: string }[];
-    edges: { id: string; source: string; target: string; w: number }[];
-  };
   /** 島の地図（試作）：全部の語を分類ごとの島に入れて並べる。縮めると島の名前とまとめた線だけ */
   isles?: boolean;
   /** 島の地図を、この分類の島に寄せて開く（ライブラリのタイルから。試作） */
@@ -347,7 +342,6 @@ export default function Graph({
   bottomLeft,
   only,
   outer,
-  overview,
   numbers,
   height,
   recenter,
@@ -400,7 +394,7 @@ export default function Graph({
     };
     const labsOf = (cat: string) => labCountOf(net, cat); // 実験室のタブと同じ数え方（使わない問いを除く）
     const isle =
-      isles && !positions && !overview && !numbers
+      isles && !positions && !numbers
         ? islands(elements(net, hidden, keep, numbers).map(withIcon), fs, labsOf, bandsOf(net))
         : null;
     const c = cytoscape({
@@ -411,22 +405,13 @@ export default function Graph({
               e.data.kind === "isle" ? { ...e, data: { ...e.data, isleIcon: iconUri(e.data.cat as string, mute) } } : e,
             )
             .map((e) => (isle.pos.has(e.data.id!) ? { ...e, position: { ...isle.pos.get(e.data.id!)! } } : e))
-        : overview
-          ? [
-              ...overview.nodes.map((n) =>
-                withIcon({ data: { id: `group:${n.id}`, label: n.label, kind: "group", cat: n.id } }),
-              ),
-              ...overview.edges.map((e) => ({
-                data: { id: e.id, source: `group:${e.source}`, target: `group:${e.target}`, type: "group", w: e.w },
-              })),
-            ]
-          : elements(net, hidden, keep, numbers)
-              .map(withIcon)
-              .map((e) =>
-                positions && !e.data.source
-                  ? { ...e, position: { ...(positions.get(e.data.id!) ?? { x: 0, y: 0 }) } }
-                  : e,
-              ),
+        : elements(net, hidden, keep, numbers)
+            .map(withIcon)
+            .map((e) =>
+              positions && !e.data.source
+                ? { ...e, position: { ...(positions.get(e.data.id!) ?? { x: 0, y: 0 }) } }
+                : e,
+            ),
       minZoom: isle ? 0.08 : 0.3,
       maxZoom: around ? 1.2 : 3,
       wheelSensitivity: 0.3, // 周辺図は点が少ないときに大きくなりすぎないように
@@ -528,29 +513,7 @@ export default function Graph({
         { selector: 'edge[mode = "approximation"]', style: { "line-style": "dashed" } },
         { selector: 'edge[mode = "limit"]', style: { "line-style": "dotted" } },
         { selector: ".dim", style: { opacity: 0.18 } },
-        { selector: "node.outer", style: { opacity: 0.5 } },
-        {
-          selector: 'node[kind = "group"]',
-          style: {
-            "font-size": 14,
-            "font-weight": "bold",
-            "text-max-width": "120px",
-            padding: "12px",
-            "border-color": edgeLine,
-            "border-width": 1,
-          },
-        },
-        {
-          selector: 'edge[type = "group"]',
-          style: {
-            width: "mapData(w, 1, 30, 1, 6)",
-            "line-color": mute,
-            "target-arrow-color": mute,
-            opacity: 0.45,
-            "curve-style": "unbundled-bezier",
-            "control-point-distances": 18,
-          },
-        }, // 分類で絞ったとき、分類の外からつながる点
+        { selector: "node.outer", style: { opacity: 0.5 } }, // 分類で絞ったとき、分類の外からつながる点
         { selector: "edge.faint", style: { opacity: 0.3, width: 1.5 } },
         // 分類の島：くぼみの色の面に、上に分類の名前と語の数。名前の大きさは倍率に合わせて画面上でほぼ一定（applyLod）
         {
@@ -669,30 +632,20 @@ export default function Graph({
       layout:
         positions || isle
           ? ({ name: "preset", padding: 20 } as cytoscape.LayoutOptions)
-          : // 分類の地図：3列の格子に、データの並び（教材の分類の順＝学ぶ順）で置く。スマホの幅で字が読める大きさに収まる（#42）
-            overview
-            ? ({
-                name: "preset",
-                padding: 20,
-                positions: (n: cytoscape.NodeSingular) => {
-                  const i = overview.nodes.findIndex((g) => `group:${g.id}` === n.id());
-                  return { x: (i % 3) * 170, y: Math.floor(i / 3) * 120 };
-                },
-              } as cytoscape.LayoutOptions)
-            : // 段に分けて並べる（dagre）。線が別の点の上を通りにくく、矢印の向きが上から下にそろう
-              // 縦長の枠（スマホ）では、段を横に並べる（LR）。横に広がって字が小さくなるのを防ぐ（渡辺さん 2026-10-31：iPhone で見にくい）
-              ({
-                name: "dagre",
-                rankDir:
-                  !numbers &&
-                  (box.current.clientHeight > box.current.clientWidth * 1.1 || (height ?? 0) > box.current.clientWidth)
-                    ? "LR"
-                    : "TB",
-                nodeSep: 16,
-                rankSep: 56,
-                edgeSep: 8,
-                padding: 16,
-              } as cytoscape.LayoutOptions),
+          : // 段に分けて並べる（dagre）。線が別の点の上を通りにくく、矢印の向きが上から下にそろう
+            // 縦長の枠（スマホ）では、段を横に並べる（LR）。横に広がって字が小さくなるのを防ぐ（渡辺さん 2026-10-31：iPhone で見にくい）
+            ({
+              name: "dagre",
+              rankDir:
+                !numbers &&
+                (box.current.clientHeight > box.current.clientWidth * 1.1 || (height ?? 0) > box.current.clientWidth)
+                  ? "LR"
+                  : "TB",
+              nodeSep: 16,
+              rankSep: 56,
+              edgeSep: 8,
+              padding: 16,
+            } as cytoscape.LayoutOptions),
     });
     if (!fill && box.current) {
       // 点の数と並びに合わせて図の高さを決める（余白を残しすぎない）
@@ -720,7 +673,7 @@ export default function Graph({
     let lod = "";
     const applyLod = () => {
       const solo = isle && !c.nodes('[kind = "band"]').length; // 1つの分類の地図：島の段はない（縮めても語を消さない）
-      const l = overview ? "near" : isle && !solo ? (c.zoom() < ISLE_READ ? "far" : lodOf(c.zoom())) : lodOf(c.zoom());
+      const l = isle && !solo ? (c.zoom() < ISLE_READ ? "far" : lodOf(c.zoom())) : lodOf(c.zoom());
       // 島の名前は画面上でおよそ 15px。ただし島の幅と、島の上に空けた高さを超えない（長い名前が隣の島に重ならないように）
       if (isle)
         c.batch(() => {
@@ -874,14 +827,7 @@ export default function Graph({
         applyLod();
       } else c.fit(undefined, padOf());
       const sel = selNow.current ? c.getElementById(selNow.current) : null;
-      if (
-        !positions &&
-        !overview &&
-        !isle &&
-        sel?.nonempty() &&
-        (box.current?.clientWidth ?? 999) < 520 &&
-        c.zoom() < READ_ZOOM
-      ) {
+      if (!positions && !isle && sel?.nonempty() && (box.current?.clientWidth ?? 999) < 520 && c.zoom() < READ_ZOOM) {
         c.zoom(READ_ZOOM);
         c.center(sel);
       }
@@ -911,7 +857,7 @@ export default function Graph({
     };
     // positions の変化は下の effect で動かす（作り直さない）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [net, hidden, fill, around, only, outer, overview, numbers, isles]);
+  }, [net, hidden, fill, around, only, outer, numbers, isles]);
 
   // 高さを後から決めたとき（詳しくの面の高さが分かったとき）：作り直さず枠だけ変えて収め直す
   useEffect(() => {
@@ -996,7 +942,7 @@ export default function Graph({
       if (b && (b.x1 < 0 || b.y1 < 0 || b.x2 > c.width() || b.y2 > c.height()))
         c.animate({ center: { eles: n } }, { duration: reduced() ? 0 : 200 });
     }
-  }, [selected, highlight, fill, edgeSel, positions, only, overview, numbers, net, hidden]); // 図を作り直したとき（見方の切り替え）も選び直す
+  }, [selected, highlight, fill, edgeSel, positions, only, numbers, net, hidden]); // 図を作り直したとき（見方の切り替え）も選び直す
 
   useEffect(() => {
     const c = cy.current;
@@ -1043,19 +989,17 @@ export default function Graph({
       />
       {tip
         ? (() => {
-            const g = tip.id.startsWith("group:") ? tip.id.slice(6) : null,
-              cpt = g ? undefined : net.concepts.get(tip.id);
-            const n = g ? [...net.concepts.values()].filter((x) => x.category === g).length : 0;
-            if (!g && !cpt) return null;
+            const cpt = net.concepts.get(tip.id);
+            if (!cpt) return null;
             const w = box.current?.clientWidth ?? 360;
             return (
               <div
-                className={`${s.tip}${tip.y < 150 ? ` ${s.tipBelow}` : ""}${big && cpt ? ` ${s.tipLive}` : ""}`}
+                className={`${s.tip}${tip.y < 150 ? ` ${s.tipBelow}` : ""}${big ? ` ${s.tipLive}` : ""}`}
                 role="tooltip"
                 data-testid="node-tip"
                 style={{ left: Math.max(8, Math.min(tip.x - 120, w - 248)), top: tip.y < 150 ? tip.y + 40 : tip.y - 8 }}
               >
-                {big && cpt ? (
+                {big ? (
                   // 全画面で押した点：「選ぶ」でその概念をフォーカスで開き、全画面から戻る（渡辺さん 2026-11-01）
                   <button
                     type="button"
@@ -1071,18 +1015,16 @@ export default function Graph({
                     選ぶ
                   </button>
                 ) : null}
-                <b>{g ?? cpt!.name}</b>
+                <b>{cpt.name}</b>
                 <span className={s.tipMeta}>
-                  {g
-                    ? `${n}語`
-                    : [
-                        cpt!.category,
-                        cpt!.status === "skeleton" ? "定義だけ" : cpt!.status === "stub" ? "まだ説明がない" : "",
-                      ]
-                        .filter(Boolean)
-                        .join("・")}
+                  {[
+                    cpt.category,
+                    cpt.status === "skeleton" ? "定義だけ" : cpt.status === "stub" ? "まだ説明がない" : "",
+                  ]
+                    .filter(Boolean)
+                    .join("・")}
                 </span>
-                {cpt && (cpt.short ?? cpt.definition) ? (
+                {(cpt.short ?? cpt.definition) ? (
                   <span className={s.tipText}>{cpt.short ?? cpt.definition}</span>
                 ) : null}
               </div>

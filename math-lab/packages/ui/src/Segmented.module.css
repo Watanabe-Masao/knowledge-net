@@ -52,3 +52,27 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* 下線のタブ（面の中身）：台も白い面もなく、選んだ項目の下に主の色の線（UI レビュー 11：切り替えの3段を形で分ける） */
+.tabs {
+  gap: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.tabs .mark {
+  top: auto;
+  bottom: -1px;
+  border-radius: 1px;
+  background: var(--accent);
+  box-shadow: none;
+}
+.tabs .item {
+  border-radius: 0;
+  color: var(--ink-3);
+}
+.tabs .item[data-state="on"] {
+  color: var(--ink);
+}

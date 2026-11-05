@@ -1204,8 +1204,12 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   await expect(bar.getByRole("link")).toHaveCount(4);
   await expect(bar.getByRole("link", { name: "探索" })).toHaveAttribute("aria-current", "page");
   const crumbs = page.getByTestId("crumbs");
-  await expect(crumbs).toContainText("確率分布");
+  // ライブラリ → 分類 → 語 の3段（UI レビュー 16。故障：入口へ戻る所がない）。ライブラリを押すと入口に戻る
+  await expect(crumbs.getByRole("button")).toHaveText(["ライブラリ", "確率分布"]);
   await expect(crumbs).toContainText("二項分布");
+  await crumbs.getByRole("button", { name: "ライブラリ" }).click();
+  await expect(page.getByTestId("library")).toBeVisible();
+  await expect(page.getByTestId("crumbs")).toHaveCount(0);
   // 学習：単元の一覧（Notion へのリンク）。概念を選んでいないときは全部（選んでいるときの絞り込みは別のテスト）
   await page.goto("./?src=sample/stats2.json");
   await bar.getByRole("link", { name: "学習" }).click();

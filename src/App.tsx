@@ -291,29 +291,6 @@ export default function App() {
       }
     return { only, outer };
   }, [net, eff]);
-  // 分類の地図（#105）：分類ごとの語の数と、分類の間の関係の本数（学ぶ順の向き）。全体図の入口
-  const overview = useMemo(() => {
-    if (!net || eff !== null || groups.length < 2) return undefined;
-    const cat = (id: string) => net.concepts.get(id)?.category;
-    const nodes = groups.map((g) => ({
-      id: g,
-      label: `${g}\n${[...net.concepts.values()].filter((c) => c.category === g).length}語`,
-    }));
-    const w = new Map<string, number>();
-    for (const r of net.relations) {
-      const a = cat(r.from),
-        b = cat(r.to);
-      if (a && b && a !== b) w.set(`${a}>${b}`, (w.get(`${a}>${b}`) ?? 0) + 1);
-    }
-    // 行き来のある2つの分類は、本数の多い向きの1本にまとめる（線が絡まないように）
-    const edges: { id: string; source: string; target: string; w: number }[] = [];
-    for (const [k, n] of w) {
-      const [a, b] = k.split(">") as [string, string],
-        back = w.get(`${b}>${a}`) ?? 0;
-      if (n > back || (n === back && a < b)) edges.push({ id: `ge:${k}`, source: a, target: b, w: n + back });
-    }
-    return { nodes, edges };
-  }, [net, eff, groups]);
   const positions = useMemo(
     () => (net && sel && (view === "around" || EMBED) && net.concepts.has(sel) ? neighborhood(net, sel) : undefined),
     [net, sel, view],
@@ -481,8 +458,20 @@ export default function App() {
           />
         ) : null}
         <Crumbs
-          items={
-            concept
+          items={[
+            // いちばん上はライブラリ（入口）。ライブラリ → 分類 → 語 の3段をパンくずで示す（UI レビュー「地図の変更で見直した点」1）
+            ...(concept || eff
+              ? [
+                  {
+                    label: "ライブラリ",
+                    onClick: () => {
+                      setSel(null);
+                      setGroup(null);
+                    },
+                  },
+                ]
+              : []),
+            ...(concept
               ? [
                   ...(concept.category
                     ? [
@@ -500,8 +489,8 @@ export default function App() {
                 ]
               : eff
                 ? [{ label: eff === "*" ? "全部の語" : eff }]
-                : []
-          }
+                : []),
+          ]}
         />
       </div>
       {errors.map((e) => (
@@ -548,14 +537,13 @@ export default function App() {
               setView("around");
               setSel(id);
             }}
-            onSelect={(id) => (id?.startsWith("group:") ? setGroup(id.slice(6)) : setSel(id))}
+            onSelect={(id) => setSel(id)}
             onEdge={(id) => {
               if (!id.startsWith("ge:")) setEdgeSel(id);
             }}
             edgeSel={edgeSel}
             only={positions ? undefined : path ? path.only : (catOnly ?? grouped.only)}
             outer={positions || path || catOnly ? undefined : grouped.outer}
-            overview={positions || path ? undefined : overview}
             isles={(eff === "*" || !!catOnly) && !positions && !path}
             isleFocus={isleFocus}
             topLeft={
