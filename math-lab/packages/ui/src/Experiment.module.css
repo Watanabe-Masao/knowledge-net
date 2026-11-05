@@ -76,7 +76,7 @@
   font-size: 11px;
   color: var(--ink-3);
   cursor: pointer;
-  min-height: 40px;
+  min-height: var(--tap);
 }
 .stepper button:disabled {
   cursor: default;
@@ -237,7 +237,7 @@
 .peak input {
   grid-column: 1 / -1;
   width: 100%;
-  height: 30px;
+  height: var(--tap);
   margin: 0;
   background: transparent;
   -webkit-appearance: none;
@@ -288,7 +288,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: var(--tap);
   padding: 0 12px;
   border-radius: var(--r-pill);
   font-size: 13px;
@@ -558,7 +558,7 @@
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
-  min-height: 32px;
+  min-height: var(--tap);
 }
 /* 下に止まる押す所 */
 .bar {
@@ -618,7 +618,7 @@
   text-align: center;
   font-size: 13px;
   color: var(--accent);
-  min-height: 32px;
+  min-height: var(--tap);
   cursor: pointer;
   font-weight: 600;
 }
@@ -758,7 +758,7 @@
 .marks button {
   all: unset;
   box-sizing: border-box;
-  min-height: 36px;
+  min-height: var(--tap);
   min-width: 44px;
   padding: 0 10px;
   border-radius: var(--r-pill);
@@ -841,7 +841,7 @@
   display: inline-grid;
   place-items: center;
   min-width: 36px;
-  height: 32px;
+  height: var(--tap);
   padding: 0 8px;
   border-radius: var(--r-s);
   font-size: 13px;
@@ -1067,8 +1067,8 @@
 }
 .wstep button {
   all: unset;
-  width: 36px;
-  height: 36px;
+  width: var(--tap);
+  height: var(--tap);
   display: grid;
   place-items: center;
   border-radius: var(--r-m);
@@ -1214,14 +1214,14 @@
 }
 .kStep {
   display: grid;
-  grid-template-columns: 40px 1fr 40px;
+  grid-template-columns: var(--tap) 1fr var(--tap);
   align-items: center;
   gap: 8px;
 }
 .kStep button {
   all: unset;
-  width: 40px;
-  height: 40px;
+  width: var(--tap);
+  height: var(--tap);
   border-radius: 50%;
   border: 1.5px solid var(--line-strong);
   display: grid;
@@ -1267,7 +1267,7 @@
   max-width: 100%;
   font: inherit;
   font-size: 14px;
-  min-height: 40px;
+  min-height: var(--tap);
   padding: 0 10px;
   border-radius: var(--r-m);
   border: 1.5px solid var(--line-strong);
@@ -1554,7 +1554,7 @@
   margin: 0 -10px -6px 0;
 }
 .wcHead .wClose {
-  height: 36px;
+  height: var(--tap);
   margin: -4px 0;
 }
 .wcHead small {

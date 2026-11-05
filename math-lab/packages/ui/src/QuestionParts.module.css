@@ -2,7 +2,7 @@
 .rowsHead,
 .rows > div {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) 46px 48px;
+  grid-template-columns: 36px minmax(0, 1fr) 46px 8ch; /* 確率の列は「0.0977%」「<0.001%」が収まる幅（UI レビュー 3） */
   gap: 6px;
   align-items: center;
 }
@@ -33,6 +33,7 @@
 }
 .rows > div > span:nth-child(n + 3) {
   text-align: right;
+  white-space: nowrap;
 }
 .rows > div > span:last-child {
   color: var(--ink-3);
@@ -281,7 +282,7 @@
   width: 100%;
   min-width: 0;
   accent-color: var(--accent);
-  min-height: 32px;
+  min-height: var(--tap);
   margin: 0;
 }
 .fieldRow {
@@ -295,8 +296,8 @@
   all: unset;
   position: relative;
   box-sizing: border-box;
-  width: 32px;
-  height: 32px;
+  width: var(--tap);
+  height: var(--tap);
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   display: grid;
@@ -308,11 +309,6 @@
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
-}
-.stepBtn::before {
-  content: "";
-  position: absolute;
-  inset: -6px;
 }
 .stepBtn:disabled {
   opacity: 0.3;
@@ -332,7 +328,7 @@
 .seg button {
   all: unset;
   text-align: center;
-  min-height: 34px;
+  min-height: var(--tap);
   border-radius: 8px;
   font-size: 13.5px;
   cursor: pointer;
@@ -351,7 +347,7 @@
 .scale button {
   all: unset;
   box-sizing: border-box;
-  min-height: 40px;
+  min-height: var(--tap);
   padding: 0 12px;
   border-radius: var(--r-m);
   border: 1.5px solid var(--line-strong);
@@ -380,7 +376,7 @@
   font-size: 12.5px;
   color: var(--accent);
   cursor: pointer;
-  min-height: 32px;
+  min-height: var(--tap);
   justify-self: start;
 }
 .muted {
