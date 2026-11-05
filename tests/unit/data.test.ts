@@ -44,15 +44,15 @@ describe("型（schema/kn-schema-v1.json）", () => {
     normal.counterexample_labs = [{ id: "cont" }];
     expect(schemaErrors(d).length).toBeGreaterThan(0);
   });
-  it("関係の種類は8つで、どれにも読み方とたどるかどうかがある", () => {
-    expect(Object.keys(KINDS)).toHaveLength(8);
+  it("関係の種類は10で、どれにも読み方とたどるかどうかがある", () => {
+    expect(Object.keys(KINDS)).toHaveLength(10);
     expect(KINDS["変換"].trace).toBe(false);
     expect(
       Object.entries(KINDS)
         .filter(([, k]) => k.trace)
         .map(([t]) => t)
         .sort(),
-    ).toEqual(["一般化", "前提", "導出", "特殊化", "統合"].sort());
+    ).toEqual(["一般化", "前提", "導出", "特殊化", "統合", "種類", "材料"].sort());
     for (const k of Object.values(KINDS)) {
       expect(k.reading).toMatch(/□/);
       expect(typeof k.trace).toBe("boolean");
@@ -62,6 +62,40 @@ describe("型（schema/kn-schema-v1.json）", () => {
 
 describe("ネットワーク", () => {
   const { net, errors } = merge([{ id: "stats2", data: sample() }]);
+  // 確かめる対象：型の改訂36（種類・材料・対比の axis。stats2-course #232）を画面が読めること。
+  // 想定する故障：画面の型が新しい種類を知らず、教材のデータが丸ごと読めなくなる（merge が型の不一致で教材を飛ばす）。
+  //   axis が対比以外にも書けてしまう。材料が「前提をさかのぼる」でたどられない。
+  // 見つけ方：見本の前提（確率変数 → 確率分布）を材料に、種類の関係を1本足し、対比に axis を書いて merge する。
+  //   型の誤りが0・関係が全部入る・確率分布のさかのぼりに確率変数が出る。axis を前提に書くと型が止める。
+  // 既存との違い：上のテストは種類の数と読み方だけ。ここは新しい種類のデータを実際に読み込む。
+  // 検出の確かめ（2026-11-06）：型の enum に材料を足さないと、merge が教材を飛ばして落ちることを見た
+  it("改訂36：種類・材料・axis・移した分類のある教材を読み込み、材料もさかのぼる", () => {
+    const d = sample();
+    const rv = d.relations.find((r: { id: string }) => r.id === "stats2:REL-rv-dist");
+    rv.type = "材料";
+    delete rv.premise;
+    d.relations.push({
+      id: "stats2:REL-test-kind",
+      from: "stats2:TERM-bernoulli",
+      to: "stats2:TERM-binom",
+      type: "種類",
+      description: "見本だけの関係",
+      units: [],
+      version: 1,
+    });
+    const con = d.relations.find((r: { type: string }) => r.type === "対比");
+    con.axis = "取り出し方";
+    d.course.relation_map_ready = ["確率分布"];
+    expect(schemaErrors(d)).toEqual([]);
+    const { net, errors } = merge([{ id: "stats2", data: d }]);
+    expect(errors).toEqual([]);
+    expect(net.relations).toHaveLength(d.relations.length);
+    expect(trace(net, "stats2:TERM-dist").order).toContain("stats2:TERM-rv");
+    expect([...net.mapReady]).toEqual(["確率分布"]);
+    const pre = d.relations.find((r: { type: string }) => r.type === "前提");
+    pre.axis = "取り出し方";
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+  });
   it("1つにまとまる", () => {
     expect(errors).toEqual([]);
     expect(net.concepts.size).toBeGreaterThan(0);

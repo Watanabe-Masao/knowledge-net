@@ -30,6 +30,9 @@ const KIND_VAR: Record<string, string> = {
   対比: "--k-con",
   統合: "--k-int",
   応用: "--k-app",
+  // 改訂36（関係図の決まり。stats2-course #232）：種類は構造の線と同じ青、材料は前提と同じ灰。地図の置き換え（#235）までの仮の色
+  種類: "--k-gen",
+  材料: "--k-pre",
 };
 
 const short = (t?: string) => (t ? t.split("（")[0] : "");
@@ -42,8 +45,8 @@ export function nameOf(net: Network, id: string): string {
 export function relationParts(net: Network, r: Relation) {
   const k = KINDS[r.type];
   const text = (k?.reading ?? `□ → ■（${r.type}）`).replace("□", nameOf(net, r.from)).replace("■", nameOf(net, r.to));
-  const tag = r.mode ? short(MODES[r.mode]) : r.premise ? short(PREMISES[r.premise]) : "";
-  const tagTitle = r.mode ? MODES[r.mode] : r.premise ? PREMISES[r.premise] : "";
+  const tag = r.mode ? short(MODES[r.mode]) : r.premise ? short(PREMISES[r.premise]) : r.axis ? r.axis : "";
+  const tagTitle = r.mode ? MODES[r.mode] : r.premise ? PREMISES[r.premise] : r.axis ? `比べる軸：${r.axis}` : "";
   return { text, kind: r.type, tag, tagTitle };
 }
 
@@ -324,7 +327,12 @@ const STAGE_LABEL: Record<string, [string, string][]> = {
     ["result", "行き着く形"],
   ],
 };
-const ALONE_LABEL: Record<string, string> = { 前提: "なぜ前に要るか", 応用: "どう使うか" };
+const ALONE_LABEL: Record<string, string> = {
+  前提: "なぜ前に要るか",
+  応用: "どう使うか",
+  材料: "定義のどこに入るか",
+  種類: "なぜその一種か",
+};
 
 /** 図に出す分布の確率（k＝0 から）。数は engine から */
 export function distPmf(d: ChartDist, kmax: number): number[] {

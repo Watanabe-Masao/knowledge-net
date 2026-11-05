@@ -22,6 +22,9 @@ export const TYPE_COLOR: Record<string, string> = {
   対比: "--k-con",
   統合: "--k-int",
   応用: "--k-app",
+  // 改訂36（関係図の決まり。stats2-course #232）：種類は構造の線と同じ青、材料は前提と同じ灰。地図の置き換え（#235）までの仮の色
+  種類: "--k-gen",
+  材料: "--k-pre",
 };
 
 type Props = {
