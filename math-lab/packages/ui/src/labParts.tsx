@@ -7,7 +7,7 @@ import { haptic, reduced, useTween } from "./motion";
 import { useRunner } from "./runner";
 import s from "./Experiment.module.css";
 
-export const STAGES = ["予測", "実験", "観察", "理由", "応用", "比較"] as const;
+export const STAGES = ["予測", "実験", "観察", "考察", "応用", "比較"] as const;
 /** HTML の特別な文字を文字として出す（KaTeX が描けなかった式を、そのまま HTML として差し込まない。stats2-course issue 206） */
 export const escapeHtml = (t: string) =>
   t.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);

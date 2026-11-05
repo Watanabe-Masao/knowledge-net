@@ -570,6 +570,9 @@ export default function Detail({
                               {r.tag && <span className={st.relTag}>{r.tag}</span>}
                             </span>
                             <span className={st.relGist}>{r.text}</span>
+                            <span className={st.relChev} aria-hidden="true">
+                              ›
+                            </span>
                           </button>
                         </li>
                       ))}
@@ -581,7 +584,7 @@ export default function Detail({
           ) : (
             <Muted>まだ関係がない。</Muted>
           )}
-          <Muted>押すと、下から説明（図・解説・操作）が開く。グラフの線を押すのと同じ。</Muted>
+          <Muted>押すと、関係のページが開く。グラフの線を押すのと同じ。</Muted>
         </div>
       )}
     </>

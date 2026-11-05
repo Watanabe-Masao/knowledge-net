@@ -336,3 +336,9 @@
 .mediaPage {
   z-index: 50;
 }
+
+.tagText {
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+  align-self: center;
+}

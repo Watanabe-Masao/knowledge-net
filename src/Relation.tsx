@@ -51,7 +51,12 @@ export function Badges({ net, r }: { net: Network; r: Relation }) {
   return (
     <BadgeRow>
       <Badge color={KIND_VAR[r.type] ?? "--ink-3"}>{p.kind}</Badge>
-      {p.tag && <Badge title={p.tagTitle}>{p.tag}</Badge>}
+      {/* 近似・前提の種類は札でなく文で（押せる札と形を分ける。UI レビュー「用語・文章」） */}
+      {p.tag && (
+        <span className={s.tagText} data-testid="rel-subtag">
+          {p.tagTitle}
+        </span>
+      )}
     </BadgeRow>
   );
 }
