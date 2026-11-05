@@ -6,7 +6,7 @@ export type Cond = { n: number; p: number };
 export type Op = "eq" | "ge" | "le";
 export type Ev = { op: Op; k: number };
 export type BinomQuestion = NonNullable<BinomDef["questions"]>[number];
-export const STAGES_Q = ["予測", "実験", "観察", "理由", "応用"] as const;
+export const STAGES_Q = ["予測", "実験", "観察", "考察", "応用"] as const; // 4段目は「考察」（理由を考える段。UI レビュー「用語・文章」）
 export const FORM_NAMES = {
   shift: "位置",
   spread: "広がり",

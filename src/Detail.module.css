@@ -193,7 +193,8 @@
   box-sizing: border-box;
   width: 100%;
   display: grid;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) auto; /* 右に › （押すと関係のページへ移ることを見せる。UI レビュー 4） */
+  gap: 4px 8px;
   padding: 10px 2px;
   cursor: pointer;
   min-height: var(--tap);
@@ -212,6 +213,17 @@
   font-size: var(--fs-head);
   font-weight: 600;
   line-height: 1.45;
+}
+.relText,
+.relGist {
+  grid-column: 1;
+}
+.relChev {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  font-size: var(--fs-head);
+  color: var(--ink-3);
 }
 .relGist {
   font-size: var(--fs-small);
