@@ -18,10 +18,14 @@ test("概要は 問い → つまり → 図 → 定義 の順で、原理・条
   await page.goto(URL);
   const d = page.getByTestId("detail");
   await expect(d.getByTestId("concept-question")).toBeVisible();
-  const ys = [];
-  for (const id of ["concept-question", "concept-gist", "concept-chart", "concept-def-tex"])
-    ys.push((await d.getByTestId(id).boundingBox())!.y);
-  expect(ys, "問い → つまり → 図 → 定義 の順でない").toEqual([...ys].sort((a, b) => a - b));
+  // 開いた直後は面が動いていて位置が入れ替わって見えることがある（CI で一度落ちた）。並びが落ち着くまで待ち、ずっと崩れていれば落とす
+  const order = async () => {
+    const ys = [];
+    for (const id of ["concept-question", "concept-gist", "concept-chart", "concept-def-tex"])
+      ys.push((await d.getByTestId(id).boundingBox())!.y);
+    return ys.every((y, i) => i === 0 || ys[i - 1]! < y);
+  };
+  await expect.poll(order, { message: "問い → つまり → 図 → 定義 の順でない" }).toBe(true);
   for (const t of ["なぜその形か", "成り立つ条件", "例と反例"])
     await expect(d.locator("details", { hasText: t }), `${t} が最初から開いている`).not.toHaveAttribute("open", "");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
