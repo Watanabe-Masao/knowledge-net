@@ -1,28 +1,90 @@
-/* まとまりの関係図（stats2-course #235）。点と線だけ。色は意味のある所だけ：選んだ点は主の色、線は関係の種類の色、語の印は柱の色（--tint） */
+/* まとまりの関係図（stats2-course issue 235。設計書 3「関係図（M3）」）。
+   色は意味のある所だけ：選んだ語は主の色（--accent）、線と相手の枠は関係の種類の色（--k-*）、語の印は柱の色（--tint） */
 .map {
-  display: grid;
-  gap: var(--sp-2);
-  margin: var(--sp-2) 0 var(--sp-4);
-}
-
-/* キャンバス：前後左右に動かす（広いときは横にも送る。ページ全体は横にはみ出さない） */
-.scroll {
-  overflow: auto;
-  max-width: 100%;
-  -webkit-overflow-scrolling: touch;
-  padding: var(--sp-3) 0;
-}
-.fit {
-  margin: 0 auto;
-}
-.canvas {
   position: relative;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: contain;
+  background: var(--bg);
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.map:active {
+  cursor: grabbing;
+}
+/* 静かな状態：消えた帯の場所も地図に使う */
+.full {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  height: auto !important;
+}
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
   transform-origin: 0 0;
 }
 
+/* まとまりの枠と見出し */
+.frame {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.frame[data-state="mine"] {
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+.head {
+  position: absolute;
+  left: 14px;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  z-index: 3;
+}
+.head b {
+  font-weight: 600;
+}
+.head i {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.common {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 4px;
+  color: var(--ink-3);
+}
+.folded {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: 11px;
+}
+.folded small {
+  margin-right: 4px;
+}
+
+/* 線（カードと見出しの後ろ、枠の前） */
 .lines {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
   overflow: visible;
   pointer-events: none;
   z-index: 1;
@@ -31,175 +93,184 @@
   fill: none;
   stroke-width: 2;
   stroke-linejoin: round;
+}
+.lines path.under {
+  stroke: var(--line);
+  stroke-width: 9;
   stroke-linecap: round;
 }
-.lines path[data-state="faint"] {
-  opacity: 0.35;
+.lines path.under[data-dim] {
+  opacity: 0.4;
+}
+.lines path[data-state="lit"] {
+  stroke-width: 3;
 }
 .lines path[data-state="dim"] {
   opacity: 0.18;
 }
-.lines path[data-state="lit"] {
-  stroke-width: 2.6;
+.glyphText {
+  fill: var(--surface);
+  font-weight: 800;
 }
 
-/* 開いたまとまりの囲み */
-.frame {
-  position: absolute;
-  z-index: 0;
-  border-radius: 16px;
-  border: 1.5px dashed var(--line-strong);
-  background: color-mix(in srgb, var(--tint) 4%, transparent);
-}
-.frameHead {
+/* 語のカード。押す範囲（button）は動かさず、見た目（.card）だけを大きく・小さくする（押せる範囲を削らない） */
+.term {
   all: unset;
-  box-sizing: border-box;
   position: absolute;
-  top: 0;
-  left: 8px;
-  /* キャンバスは 0.8 倍まで縮めるので、押す所は 56px（縮めても 44px 以上） */
-  min-height: 56px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-2);
-  cursor: pointer;
-}
-.frameHead span {
-  color: var(--ink-3);
-  font-weight: 400;
-}
-
-/* 閉じたまとまり */
-.group {
-  all: unset;
   box-sizing: border-box;
-  position: absolute;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 14px;
-  border-radius: 16px;
-  background: var(--surface);
-  box-shadow: 0 0 0 1px var(--line-strong);
   cursor: pointer;
+  touch-action: none;
 }
-.group b {
-  font-size: 13px;
-  line-height: 1.25;
+.term:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 10px;
 }
-.group i {
-  margin-left: auto;
-  font-style: normal;
-  font-size: 11px;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-
-/* 語の点：印と名前だけ */
-.cell {
+.card {
   position: absolute;
-  z-index: 2;
-}
-.term,
-.ext {
-  all: unset;
+  inset: 0;
   box-sizing: border-box;
-  width: 100%;
-  height: 100%;
+  padding: 8px 4px 6px;
+  border-radius: 10px;
   display: grid;
-  align-content: center;
   justify-items: center;
-  gap: 3px;
-  padding: 4px 2px;
-  border-radius: 16px;
-  background: var(--surface);
-  box-shadow: 0 0 0 1px var(--line-strong);
+  align-content: start;
+  gap: 4px;
   text-align: center;
-  cursor: pointer;
+  color: var(--tint);
+  background: color-mix(in srgb, var(--tint) 6%, var(--surface));
+  transition:
+    transform var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    opacity var(--dur) var(--ease),
+    filter var(--dur) var(--ease);
 }
-.ext {
-  border-radius: 14px;
-  background: var(--bg);
-  box-shadow: none;
+.card b {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.term[data-skeleton] .card {
+  background: transparent;
   border: 1.5px dashed var(--line-strong);
-}
-.skeleton {
-  box-shadow: 0 0 0 1px var(--line);
+  color: var(--ink-3);
 }
 .glyph {
   width: 28px;
   height: 28px;
   display: grid;
   place-items: center;
-  color: var(--tint);
-}
-.ext .glyph {
-  width: 20px;
-  height: 20px;
-  color: var(--ink-3);
 }
 .glyph > * {
-  max-width: 100%;
-  max-height: 100%;
+  width: 28px;
+  height: 28px;
 }
-.name {
-  font-size: 10.5px;
-  font-weight: 600;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
+.mats {
+  display: flex;
+  gap: 2px;
+  color: var(--ink-3);
 }
-.ext .name {
-  font-size: 9.5px;
-  font-weight: 500;
-  color: var(--ink-2);
+.mat {
+  width: 12px;
+  height: 12px;
+  display: inline-grid;
+  place-items: center;
+}
+.mat > * {
+  width: 12px;
+  height: 12px;
+}
+.head .mat,
+.folded .mat {
+  width: 16px;
+  height: 16px;
+}
+.head .mat > *,
+.folded .mat > * {
+  width: 16px;
+  height: 16px;
+}
+/* 成り立つ条件に名前の出る語：点線の輪 */
+.cond {
+  border: 1px dashed currentColor;
+  border-radius: 50%;
+}
+.cond > * {
+  transform: scale(0.75);
+}
+/* 選んだ語は少し大きく、相手は種類の色の枠、関係のない語は灰色で少し小さく（並びは動かさない） */
+.term[data-state="sel"] {
+  z-index: 3;
+}
+.term[data-state="sel"] .card {
+  transform: scale(1.08);
+  box-shadow:
+    inset 0 0 0 2px var(--accent),
+    0 6px 18px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+.term[data-state="near"] .card {
+  box-shadow: inset 0 0 0 2px var(--rc);
+}
+.term[data-skeleton][data-state="near"] .card {
+  border-color: var(--rc);
+  box-shadow: none;
+}
+.term[data-state="dim"] .card {
+  transform: scale(0.93);
+  filter: grayscale(1);
+  opacity: 0.42;
+}
+/* 押した質感：少し沈む */
+.term[data-press] .card {
+  transform: scale(0.94);
+  transition-duration: var(--dur-press);
 }
 
-.term[data-state="sel"],
-.ext[data-state="sel"] {
-  box-shadow: 0 0 0 2.5px var(--accent);
-}
-[data-state="dim"] {
-  opacity: 0.32;
-}
-.term:focus-visible,
-.ext:focus-visible,
-.group:focus-visible,
-.frameHead:focus-visible,
-.go:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* 語のページへ（選んだ点の右上） */
-.go {
-  all: unset;
-  box-sizing: border-box;
+/* 地図の操作（右上）と凡例（下） */
+.ctl {
   position: absolute;
-  top: -24px;
-  right: -24px;
-  width: 56px;
-  height: 56px;
+  right: 12px;
+  top: 12px;
+  z-index: 5;
+}
+.ctl button {
+  all: unset;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--surface);
-  font-size: 20px;
-  z-index: 3;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 0 1px var(--line-strong);
   cursor: pointer;
+  font-size: 18px;
+  color: var(--ink-2);
 }
-
 .legend {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 11px;
-  color: var(--ink-3);
+  gap: 6px 14px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  pointer-events: none;
 }
 .legend span {
   display: inline-flex;
@@ -207,7 +278,187 @@
   gap: 4px;
 }
 .legend i {
-  display: inline-block;
+  width: 16px;
+  height: 2.5px;
+  border-radius: 2px;
+}
+.badge {
+  display: inline-grid;
+  place-items: center;
   width: 18px;
-  border-top: 2px solid;
+  height: 18px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--surface);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* 下の面 */
+.sheet {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  border-radius: 28px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 0 0 1px var(--line-strong),
+    0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
+  cursor: auto;
+}
+.sheet[data-high] {
+  max-height: 50%;
+}
+.grab {
+  all: unset;
+  align-self: center;
+  width: 64px;
+  height: 44px;
+  margin-bottom: -14px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.grab i {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+.sheetHead {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  padding: 0 16px 14px;
+  align-items: center;
+}
+.sheetHead > b {
+  font-size: 18px;
+}
+.counts {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.count {
+  all: unset;
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 10px;
+  border-radius: 22px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.count[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.none {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.page {
+  all: unset;
+  grid-column: 2;
+  grid-row: 1 / 3;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: var(--surface);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+.sheetBody {
+  overflow-y: auto;
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--line);
+}
+.row {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child {
+  border-bottom: none;
+}
+.rowKind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  min-height: 44px;
+}
+.rowItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+}
+.rowItems button {
+  all: unset;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.rowItems em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+.rowItems small {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.nm span {
+  display: inline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+  .term[data-press] .card {
+    transform: none;
+  }
+}
+
+/* 静かな状態：下の面・地図の操作・凡例もフェードで消す（触ると戻る） */
+.sheet,
+.ctl,
+.legend {
+  transition: opacity var(--dur-sheet) var(--ease);
+}
+.full .sheet,
+.full .ctl,
+.full .legend {
+  opacity: 0;
+  pointer-events: none;
 }

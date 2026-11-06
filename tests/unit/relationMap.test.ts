@@ -13,7 +13,16 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { merge } from "../../src/data";
-import { categoryMap, mapGraph, termLinks } from "../../src/relationMap";
+import {
+  CV,
+  KMIN,
+  type LineBadge,
+  categoryMap,
+  fitPick,
+  layoutCategory,
+  lineBadges,
+  termLinks,
+} from "../../src/relationMap";
 import { asRelationMap } from "../fixtures/relmap-dist";
 
 const T = (x: string) => `stats2:TERM-${x}`;
@@ -72,37 +81,114 @@ describe("まとまりの関係図", () => {
     expect(termLinks(n, T("binom")).children).toEqual([T("bernoulli")]);
   });
 
-  // 確かめる対象：関係図の点と線（mapGraph）。開いているまとまりの組み合わせで、点と線が決まりどおりか。
-  // 想定する故障：閉じたまとまりの中の語へ線を引く（段を飛ばす）・線の端が描かない点を指す・
-  //   同じ2点に線を重ねる・ほかの分類の語を線もないのに置く・学ぶ順（前提）を描く。
-  // 見つけ方：4つのまとまりの開き方 16 通り全部で、線の両端が点にあり、閉じたまとまりの語が点にも線にも出ないこと。
-  //   全部閉じると点はまとまり4つだけ。くり返して数えると待つを開くと、二項分布 — ポアソン分布は1本（変換と対比をまとめる）。
-  // 検出の確かめ（2026-11-06）：閉じたまとまりの語をまとまりの点に置き換えないと、16 通りの確かめで落ちることを見た
-  it("関係図の点と線：どの開き方でも、線の両端は見えている点で、段を飛ばさない", () => {
-    const n = net();
-    const G = (x: string) => `stats2:GRP-dist-${x}`;
-    const all = [G("base"), G("count"), G("wait"), G("cont")];
-    for (let mask = 0; mask < 16; mask++) {
-      const open = new Set(all.filter((_, i) => mask & (1 << i)));
-      const g = mapGraph(n, "確率分布", open);
-      const ids = new Set(g.nodes.map((x) => x.id));
-      for (const e of g.edges) {
-        expect(ids.has(e.from) && ids.has(e.to), `${e.id}（開き方 ${mask}）`).toBe(true);
-        expect(e.types).not.toContain("前提");
-      }
-      for (const x of g.nodes) {
-        if (x.kind === "term") expect(open.has(x.parent!), `${x.id} は閉じたまとまりの語`).toBe(true);
-        if (x.kind === "ext") expect(g.edges.some((e) => e.from === x.id)).toBe(true);
-      }
-      expect(new Set(g.edges.map((e) => e.id)).size).toBe(g.edges.length);
+  // 確かめる対象：分類のキャンバスの並びと線（layoutCategory）。線が語の縁から縁へ、直線と直角だけで引かれること。
+  // 想定する故障：線の端が語の縁から外れる（語の中・何もない所で止まる）・斜めの線・同じ2語に線を重ねる・
+  //   学ぶ順（前提）や材料を線にする・語のカードどうしが重なる。
+  // 見つけ方：見本の確率分布で、全部の線の両端がその語の外枠の上にあり、どの区間も縦か横で、組が重複しないこと。
+  //   二項分布 — ポアソン分布は1本（変換と対比をまとめ、主は変換）。カードの外枠どうしが重ならないこと。
+  // 既存との違い：上の2つは関係図のデータ（たたむ・受け継ぎ）。ここは描く形。画面のテストは描いたあとの見え方
+  // 検出の確かめ（2026-11-06）：となりの語を結ぶ線の終わりを 6px 右へずらすと、縁の確かめで落ちることを見た
+  it("キャンバス：線は語の縁から縁へ、縦と横だけ。同じ2語は1本、前提・材料は線にしない", () => {
+    const L = layoutCategory(net(), "確率分布");
+    expect(L.groups.map((g) => g.terms.length)).toEqual([4, 3, 3, 3]);
+    const box = new Map(L.terms.map((t) => [t.id, t]));
+    const onBorder = (p: { x: number; y: number }, id: string) => {
+      const b = box.get(id)!;
+      const inX = p.x >= b.x - 0.5 && p.x <= b.x + b.w + 0.5,
+        inY = p.y >= b.y - 0.5 && p.y <= b.y + b.h + 0.5;
+      return inX && inY && [p.x - b.x, b.x + b.w - p.x, p.y - b.y, b.y + b.h - p.y].some((d) => Math.abs(d) < 0.5);
+    };
+    for (const e of L.edges) {
+      expect(
+        e.types.some((k) => k === "前提" || k === "材料"),
+        e.id,
+      ).toBe(false);
+      const a = e.pts[0]!,
+        z = e.pts[e.pts.length - 1]!;
+      expect(
+        (onBorder(a, e.from) && onBorder(z, e.to)) || (onBorder(a, e.to) && onBorder(z, e.from)),
+        `${e.id} の端が語の縁にない`,
+      ).toBe(true);
+      e.pts.slice(1).forEach((p, i) => {
+        const q = e.pts[i]!;
+        expect(Math.abs(p.x - q.x) < 0.01 || Math.abs(p.y - q.y) < 0.01, `${e.id} に斜めの区間`).toBe(true);
+      });
     }
-    const closed = mapGraph(n, "確率分布", new Set());
-    expect(closed.nodes.map((x) => x.kind)).toEqual(["group", "group", "group", "group"]);
-    const two = mapGraph(n, "確率分布", new Set([G("count"), G("wait")]));
-    const bp = two.edges.filter((e) => [e.from, e.to].sort().join() === [T("binom"), T("poisson")].sort().join());
+    expect(new Set(L.edges.map((e) => e.id)).size).toBe(L.edges.length);
+    const bp = L.edges.filter((e) => [e.from, e.to].sort().join() === [T("binom"), T("poisson")].sort().join());
     expect(bp).toHaveLength(1);
-    expect(new Set(bp[0]!.types)).toEqual(new Set(["変換", "対比"]));
-    expect(two.edges.find((e) => e.from === "x:" + T("prob"))?.faint).toBe(true); // 基礎の語からの線は初めは薄く
-    expect(two.nodes.find((x) => x.id === "x:" + T("fact"))).toMatchObject({ kind: "ext", parent: G("wait") });
+    expect(bp[0]).toMatchObject({ type: "変換", types: ["変換", "対比"] });
+    for (const a of L.terms)
+      for (const b of L.terms)
+        if (a !== b)
+          expect(
+            a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y,
+            `${a.id} と ${b.id}`,
+          ).toBe(true);
+  });
+
+  // 確かめる対象：線の上の種類の印（lineBadges）が重ならないこと（設計書 3 のテスト「線の上の印が重なる・語や見出しに乗る」）。
+  // 想定する故障：印どうしが重なって読めない・語のカードやまとまりの見出しの上に乗る（倍率で印の大きさを割るので、引くほど混む）。
+  // 見つけ方：見本の全部の語を選んだ状態と、何も選ばない状態を、読める倍率の下限（0.62）・ふつう（0.8）・寄った（1.1）で、
+  //   印の外枠どうし・印と語のカード・印と見出しの帯が重ならないことを確かめる（間が取れない線には置かない決まりなので、印がない線は許す）。
+  // 既存との違い：画面のテストは寄り方と操作。ここは置き場所の計算だけを全部の組み合わせで速く
+  // 検出の確かめ（2026-11-06）：ok() の印どうしの間の確かめを外すと、何も選ばない状態で落ちることを見た
+  it("線の上の印：どの語を選んでも、印どうし・語・見出しと重ならない", () => {
+    const L = layoutCategory(net(), "確率分布");
+    const rect = (b: LineBadge) => ({ x0: b.x - b.half, x1: b.x + b.half, y0: b.y - b.r, y1: b.y + b.r });
+    const hit = (a: { x0: number; x1: number; y0: number; y1: number }, b: typeof a) =>
+      a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+    const solid = [
+      ...L.terms.map((t) => ({ x0: t.x, x1: t.x + t.w, y0: t.y, y1: t.y + t.h })),
+      ...L.groups.map((g) => ({ x0: g.x, x1: g.x + g.w, y0: g.y, y1: g.y + CV.head })),
+    ];
+    for (const k of [KMIN, 0.8, 1.1])
+      for (const pick of [null, ...L.terms.map((t) => t.id)]) {
+        const bs = lineBadges(L, pick, new Set(), k);
+        bs.forEach((a, i) => {
+          for (const s of solid) expect(hit(rect(a), s), `${pick} k=${k} 印 ${a.key} が語か見出しに乗る`).toBe(false);
+          for (const b of bs.slice(i + 1))
+            expect(hit(rect(a), rect(b)), `${pick} k=${k} 印 ${a.key} と ${b.key}`).toBe(false);
+        });
+      }
+  });
+
+  // 確かめる対象：語を選んだときの寄り方（fitPick。設計書 3「押した語の相手が、読めない倍率でしか収まらない／画面の外に残る」）。
+  // 想定する故障：倍率が読める下限（0.62）を下回る・選んだ語や同じ分類の相手・線が見える所（上の端から下の面の上まで）の外に残る。
+  // 見つけ方：iPhone（390 幅）と埋め込み（360×320 の地図の高さ）を想定した広さで、見本の全部の語について、倍率が 0.62 以上で、
+  //   選んだ語のカードと相手のカード・線の全部の点が見える所に入ること。入らない語は、選んだ語が見える所に残ることだけを確かめ、名前を出す。
+  // 既存との違い：画面のテストは寄る動きのあとの見え方を1語で。ここは全部の語を計算で
+  // 検出の確かめ（2026-11-06）：fitAxis（ずらして収める）を外すと、390 幅で落ちることを見た
+  it("寄り方：全部の語で、倍率は読める下限以上、選んだ語と相手と線が見える所に入る", () => {
+    const L = layoutCategory(net(), "確率分布");
+    const tight: string[] = [];
+    for (const room of [
+      { W: 390, H: 600, bottom: 140, k: 0.9 },
+      { W: 360, H: 320, bottom: 130, k: 0.9 },
+    ])
+      for (const t of L.terms) {
+        const v = fitPick(L, t.id, new Set(), room)!;
+        expect(v.k, `${t.id} の倍率`).toBeGreaterThanOrEqual(KMIN);
+        const inView = (p: { x: number; y: number }) => {
+          const x = p.x * v.k + v.x,
+            y = p.y * v.k + v.y;
+          return x >= -0.5 && x <= room.W + 0.5 && y >= -0.5 && y <= room.H - room.bottom + 0.5;
+        };
+        const me = [
+          { x: t.x, y: t.y },
+          { x: t.x + t.w, y: t.y + t.h },
+        ];
+        expect(me.every(inView), `${t.id}（${room.W}×${room.H}）が見える所にない`).toBe(true);
+        const pts = L.edges
+          .filter((e) => e.from === t.id || e.to === t.id)
+          .flatMap((e) => {
+            const o = L.terms.find((x) => x.id === (e.from === t.id ? e.to : e.from))!;
+            return [...e.pts, { x: o.x, y: o.y }, { x: o.x + o.w, y: o.y + o.h }];
+          });
+        if (!pts.every(inView)) tight.push(`${t.id}@${room.W}x${room.H}`);
+      }
+    // 390 幅の iPhone では全部の語で相手と線が入ること（埋め込みは高さが足りない語があるので、名前を出して見張る）
+    expect(tight.filter((x) => x.endsWith("390x600"))).toEqual([]);
+    expect(tight.length).toBeLessThanOrEqual(L.terms.length);
   });
 });

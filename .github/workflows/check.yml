@@ -16,5 +16,5 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: "22"}
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run check

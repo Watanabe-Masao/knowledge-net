@@ -682,3 +682,12 @@ button.qRow:active {
   grid-template-columns: 1fr 1.4fr;
   gap: 8px;
 }
+
+/* 関係図の静かな状態：下のタブもフェードで消す（App.module.css と同じ） */
+.tabs {
+  transition: opacity var(--dur-sheet) var(--ease);
+}
+:global(body[data-calm]) .tabs {
+  opacity: 0;
+  pointer-events: none;
+}
