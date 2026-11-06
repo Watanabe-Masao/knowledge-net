@@ -308,55 +308,38 @@ test("指：ピンチの後に流れない、地図は指の真下に付く、�
   expect(Math.abs(top1 - top0), "縁を越えて離したあと、縁ぴったりに戻らない").toBeLessThan(2);
 });
 
-// 確かめる対象：線を押すと関係の面、線を長押ししている間は向こうの端を見せる（A：地図を引く／B rmPeek=card：カードを浮かせる。A/B で比べる）。
-// 想定する故障：細い線が押せない・押しても何も起きない。長押しで面が開いてしまう・離しても元に戻らない。
-// 見つけ方：語に隠れていない線の上の1点を押すと、関係の面（edge-panel）が出る。A：同じ所を長押しすると、その線が濃くなり両端の語が見える所に入り、離すと元の倍率に戻る。
-//   B：長押しの間だけ両端のカード（rm-peek）が出て、離すと消える。どちらも長押しのあとに関係の面は出ない。
+// 確かめる対象：線を押すと関係の面、線を長押ししている間は、地図を動かさずに両端と「つまり」のカードを浮かせる（渡辺さん 2026-11-07 の A/B で B）。
+// 想定する故障：細い線が押せない・押しても何も起きない。長押しで面が開いてしまう・離しても消えない。長押しの間に指が少しずれて地図が動く。
+//   幹の中で並んだ線のうち、指から遠い線を選ぶ。
+// 見つけ方：語に隠れていない線の上の1点を押すと、関係の面（edge-panel）が出る。同じ所を長押しすると、カード（rm-peek）が出て、
+//   その線の両端の名前を含み、指を遊びより大きく（14px）ずらしても地図は動かない。離すと消え、関係の面は出ない。
 // 既存との違い：ほかのテストは語と空いた所だけ
-test("線：押すと関係の面、長押しの間は向こうの端（A 地図を引く／B カードを浮かせる）", async ({ page }) => {
+// 検出の確かめ（2026-11-07）：長押しの間は地図を動かさない処理を外すと、「長押しの間に地図が動いた」で落ちることを見た
+test("線：押すと関係の面、長押しの間は両端のカードを浮かせる（地図は動かさない）", async ({ page }) => {
   const m = await open(page);
   let pt = (await linePoint(page))!;
   expect(pt, "押せる線の点がない").not.toBeNull();
   await page.mouse.click(pt.x, pt.y);
   await expect(page.getByTestId("edge-panel")).toBeVisible();
-  await page.keyboard.press("Escape");
   await page.goto(URL + encodeURIComponent("確率分布"));
   await expect(m).toHaveAttribute("data-ready", "true");
   pt = (await linePoint(page))!;
-  const k0 = Number(await m.getByTestId("rm-canvas").getAttribute("data-k"));
-  await page.mouse.move(pt.x, pt.y);
-  await page.mouse.down();
-  await page.waitForTimeout(1200);
-  // A：長押しの間は、その線が濃くなり、両端の語が見える所に入る（入っていなければ地図を引いて入れる）
   const ends = await m.evaluate((el, id) => {
-    const p = el.querySelector<SVGPathElement>(`[data-testid=rm-lines] path[data-state=lit]`);
-    const view = el.getBoundingClientRect();
-    if (!p) return "濃い線がない";
-    const out = [p.dataset.from!, p.dataset.to!].filter((x) => {
-      const r = el.querySelector<HTMLElement>(`[data-node="${CSS.escape(x)}"]`)!.getBoundingClientRect();
-      return !(
-        r.top >= view.top - 1 &&
-        r.bottom <= view.bottom + 1 &&
-        r.left >= view.left - 1 &&
-        r.right <= view.right + 1
-      );
-    });
-    return out.length ? `見えない端 ${out.join("・")}` : `ok ${id}`;
+    const hit = el.querySelector<SVGPathElement>(`[data-testid="rm-line-${CSS.escape(id)}"]`)!;
+    return hit.getAttribute("aria-label") ?? "";
   }, pt.id);
-  expect(ends).toMatch(/^ok/);
-  await page.mouse.up();
-  await page.waitForTimeout(700);
-  expect(Number(await m.getByTestId("rm-canvas").getAttribute("data-k"))).toBeCloseTo(k0, 2);
-  await expect(page.getByTestId("edge-panel")).toHaveCount(0);
-
-  await page.goto(URL + encodeURIComponent("確率分布") + "&rmPeek=card");
-  await expect(m).toHaveAttribute("data-ready", "true");
-  pt = (await linePoint(page))!;
+  const c0 = await canvasAt(page);
   await page.mouse.move(pt.x, pt.y);
   await page.mouse.down();
   await expect(m.getByTestId("rm-peek")).toBeVisible();
+  await page.mouse.move(pt.x + 12, pt.y + 8); // 遊び（8px）を越えてずらす
+  const c1 = await canvasAt(page);
+  expect(Math.abs(c1.x - c0.x) + Math.abs(c1.y - c0.y), "長押しの間に地図が動いた").toBeLessThan(1);
+  const peekText = await m.getByTestId("rm-peek").innerText();
+  for (const name of ends.split(/と|の/).slice(0, 2)) expect(peekText).toContain(name);
   await page.mouse.up();
   await expect(m.getByTestId("rm-peek")).toHaveCount(0);
+  await page.waitForTimeout(400);
   await expect(page.getByTestId("edge-panel")).toHaveCount(0);
 });
 

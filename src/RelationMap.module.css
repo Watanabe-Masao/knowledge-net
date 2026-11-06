@@ -581,7 +581,13 @@
     0 0 0 1px var(--line-strong),
     0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
   pointer-events: none;
-  animation: edge-in-bottom var(--dur) var(--ease);
+  animation: peek-in var(--dur) var(--ease); /* 押さえている指の上に、すっと出る（縁から滑らせない） */
+}
+@keyframes peek-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
 }
 .peekHead {
   display: flex;
@@ -614,7 +620,7 @@
   box-shadow:
     0 0 0 1px var(--line-strong),
     0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
-  animation: edge-in-bottom var(--dur) var(--ease);
+  animation: peek-in var(--dur) var(--ease);
 }
 .foldCard b {
   font-size: 13px;

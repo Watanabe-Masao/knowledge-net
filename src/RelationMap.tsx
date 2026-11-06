@@ -23,18 +23,6 @@ const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation:
 const dblMs = () => tokenMs("--dur", 200);
 /** 長押しとみなす長さ（一覧ののぞき見と同じ） */
 const HOLD_MS = 450;
-/** A/B で比べる形（渡辺さん 2026-11-07。stats2-course の issue 239）：線の長押しの間の見せ方。
- *  ふだん（A）は地図を一時的に引いて線の両端を見せる。rmPeek=card（B）は地図を動かさず、向こうの端のカードを指の近くに浮かせる。
- *  決まったら、勝った形だけを残してこの切り替えを消す */
-export const AB = (() => {
-  try {
-    return {
-      peek: new URLSearchParams(location.search).get("rmPeek") === "card" ? ("card" as const) : ("zoom" as const),
-    };
-  } catch {
-    return { peek: "zoom" as const };
-  }
-})();
 /** 縁を越えたときの重さ（越えた分をこの割合で縮め、引くほどさらに重く） */
 const RUB = 0.55;
 /** 画面の高さがこれより低い（埋め込みなど）ときは、地図をページの中に置かず全画面のページで開く（画面の原則 2） */
@@ -231,6 +219,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     const move = (e: PointerEvent) => {
       if (!pts.current.has(e.pointerId) || !box.current) return;
       pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (held.current || tipHeld.current) return; // 長押しで浮かせている間は、指が少しずれても地図を動かさない
       const a = [...pts.current.values()];
       let P = last.current;
       if (a.length === 1 && !moved.current) {
@@ -437,64 +426,83 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     return net.relations.find((r) => e.rels.includes(r.id) && r.type === k) ?? null;
   };
   const holdT = useRef(0),
-    held = useRef(false),
-    before = useRef<View | null>(null);
+    held = useRef(false);
   const [peek, setPeek] = useState<{ edge: string; x: number; y: number } | null>(null);
   // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。島の地図・一覧の長押しと同じ働き（画面の原則 10）
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   const tipT = useRef(0),
     tipHeld = useRef(false);
-  const lineDown = (edgeId: string) => (e: React.PointerEvent) => {
-    held.current = false;
-    clearTimeout(holdT.current);
-    const x = e.clientX,
-      y = e.clientY;
-    holdT.current = window.setTimeout(() => {
-      if (moved.current) return;
-      held.current = true;
-      try {
-        navigator.vibrate?.(8);
-      } catch {
-        /* 振動できない端末 */
+  // 指の下の線：幹の中では線が 3px おきに並ぶので、押した要素ではなく、指にいちばん近い線を選ぶ（選んでいる語の線を先に）
+  const nearestEdge = (cx: number, cy: number, fallback: string) => {
+    const o = vRef.current;
+    if (!o || !box.current) return fallback;
+    const r = box.current.getBoundingClientRect();
+    const wx = (cx - r.left - o.x) / o.k,
+      wy = (cy - r.top - o.y) / o.k;
+    const seg = (p: { x: number; y: number }, q: { x: number; y: number }) => {
+      const dx = q.x - p.x,
+        dy = q.y - p.y,
+        l2 = dx * dx + dy * dy || 1,
+        t = Math.max(0, Math.min(1, ((wx - p.x) * dx + (wy - p.y) * dy) / l2));
+      return Math.hypot(wx - (p.x + t * dx), wy - (p.y + t * dy));
+    };
+    let best = fallback,
+      bd = Infinity;
+    for (const e of L.edges) {
+      let d = Math.min(...e.pts.slice(1).map((q, i) => seg(e.pts[i]!, q)));
+      if (pick && (e.from === pick || e.to === pick)) d -= 2 / o.k; // 選んでいる語の線を少し優先
+      if (d < bd) {
+        bd = d;
+        best = e.id;
       }
-      setPeek({ edge: edgeId, x, y });
-      if (AB.peek === "zoom") {
-        // 地図を一時的に引いて、線の両端と線の全部を見える所に入れる（字の読める倍率より引いてよい。離すと戻る）
-        const ed = L.edges.find((q) => q.id === edgeId)!;
-        const ends = L.terms.filter((t) => t.id === ed.from || t.id === ed.to);
-        const xs = [...ends.flatMap((t) => [t.x, t.x + t.w]), ...ed.pts.map((p) => p.x)],
-          ys = [...ends.flatMap((t) => [t.y, t.y + t.h]), ...ed.pts.map((p) => p.y)];
-        const x0 = Math.min(...xs) - 16,
-          y0 = Math.min(...ys) - 16;
-        before.current = vRef.current;
-        const room = { ...size(), bottom: bottomOf() };
-        const fb = fitBox(x0, y0, Math.max(...xs) + 16 - x0, Math.max(...ys) + 16 - y0, room, vRef.current?.k ?? 1);
-        go({ ...fb, k: Math.max(ZMIN, fb.k) });
-      }
-    }, HOLD_MS);
-  };
-  const lineUp = () => {
-    clearTimeout(holdT.current);
-    if (!held.current) return;
-    setPeek(null);
-    if (before.current) {
-      go(before.current);
-      before.current = null;
     }
+    return bd <= 26 / o.k ? best : fallback;
+  };
+  const lineDown =
+    (hitId: string, exact = false) =>
+    (e: React.PointerEvent) => {
+      const edgeId = exact ? hitId : nearestEdge(e.clientX, e.clientY, hitId); // 線の上の印はその線のまま
+      held.current = false;
+      clearTimeout(holdT.current);
+      const x = e.clientX,
+        y = e.clientY;
+      holdT.current = window.setTimeout(() => {
+        if (moved.current) return;
+        held.current = true;
+        try {
+          navigator.vibrate?.(8);
+        } catch {
+          /* 振動できない端末 */
+        }
+        // 地図は動かさず、線の両端と「つまり」を指の上に浮かせる（渡辺さん 2026-11-07 の A/B で決めた形）
+        setPeek({ edge: edgeId, x, y });
+      }, HOLD_MS);
+    };
+  // 長押しの終わりは、指を離したとき（pointerup・touchend）。iPhone の Safari は長押しの途中で pointercancel を送ることがあるので、
+  // 浮かせている間の pointercancel では消さない（指を離すまで見せる）
+  const holdEnd = (e: Event) => {
+    clearTimeout(holdT.current);
+    clearTimeout(tipT.current);
+    if (e.type === "pointercancel" && (held.current || tipHeld.current)) return;
+    if (held.current) setPeek(null);
+    if (tipHeld.current) setTip(null);
   };
   useEffect(() => {
-    addEventListener("pointerup", lineUp);
-    addEventListener("pointercancel", lineUp);
+    addEventListener("pointerup", holdEnd);
+    addEventListener("pointercancel", holdEnd);
+    addEventListener("touchend", holdEnd);
     return () => {
-      removeEventListener("pointerup", lineUp);
-      removeEventListener("pointercancel", lineUp);
+      removeEventListener("pointerup", holdEnd);
+      removeEventListener("pointercancel", holdEnd);
+      removeEventListener("touchend", holdEnd);
     };
   });
   // 線の1回のタップも、ダブルタップを待ってから面を開く（線の上でのダブルタップは、まとまりの外と同じく分類全体へ。画面の原則 10）
   const lineT = useRef(0);
-  const lineClick = (edgeId: string, kind?: string) => (e: React.MouseEvent) => {
+  const lineClick = (hitId: string, kind?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
     if (moved.current || held.current) return; // 長押しのあとの「押した」は数えない
+    const edgeId = kind ? hitId : nearestEdge(e.clientX, e.clientY, hitId); // 線の上の印はその線のまま
     clearTimeout(lineT.current);
     lineT.current = window.setTimeout(() => {
       const r = relOf(edgeId, kind);
@@ -535,6 +543,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
       data-page={page ? "true" : undefined}
       aria-label={`${category}の関係図`}
       onPointerDown={down}
+      onContextMenu={(e) => e.preventDefault()} // iPhone の長押しのメニューを出さない（線・語の長押しと取り合う）
       onClickCapture={(e) => {
         if (dbl(e)) return;
         // 帯が引っ込んでいるとき：語のカードは1回で選び、帯も戻す（中身は同じ所）
@@ -682,7 +691,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
                 data-edge={b.key}
                 data-line={b.key}
                 className={s.lineBadge}
-                onPointerDown={lineDown(b.key)}
+                onPointerDown={lineDown(b.key, true)}
                 onClick={lineClick(b.key, b.types[0])}
               >
                 <rect
@@ -802,8 +811,8 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
           })}
         </div>
       ) : null}
-      {peek && peekEdge && AB.peek === "card" ? (
-        // B：地図は動かさず、線の両端と「つまり」を指の近くに浮かせる（指で隠れないよう、指の上に出す）
+      {peek && peekEdge ? (
+        // 線の長押しの間：地図は動かさず、線の両端と「つまり」を指の近くに浮かせる（指で隠れないよう、指の上に出す）
         <div
           className={s.peekCard}
           data-ui
