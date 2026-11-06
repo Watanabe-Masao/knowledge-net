@@ -147,7 +147,7 @@ export function linksOf(net: Network, id: string): Link[] {
 }
 
 /** 大きさ（キャンバスの単位。倍率 1 で画面の px）。間は線の上の印が入る広さ（列の間 28・まとまりの間 64） */
-export const CV = { tw: 72, th: 92, gx: 28, gy: 12, head: 40, pad: 22, G: 64, cols: 3, foot: 34, M: 16 } as const;
+export const CV = { tw: 84, th: 96, gx: 24, gy: 12, head: 40, pad: 22, G: 64, cols: 3, foot: 34, M: 16 } as const;
 
 export type TermBox = {
   id: string;
@@ -400,8 +400,8 @@ export function lineBadges(L: CanvasLayout, pick: string | null, types: Set<stri
 }
 
 export type View = { k: number; x: number; y: number };
-/** 字が読める倍率（これより引かない）と、寄るときの上限 */
-export const KMIN = 0.62;
+/** 字が読める倍率（これより引かない。カードの名前 15px が、関係のない語の 0.93 倍を掛けても画面の上で 11px 以上）と、寄るときの上限 */
+export const KMIN = 0.8;
 export const KMAX = 1.1;
 
 /** 語を選んだときの寄り方：選んだ語を見える所（上の端から下の面の上まで）の真ん中に置き、相手と線が全部入る倍率に寄せる。
