@@ -24,7 +24,18 @@ async function open(page: Page, w = 390, h = 844) {
 async function still(page: Page) {
   const canvas = page.getByTestId("rm-canvas");
   await page.waitForTimeout(400); // 選んでから寄り始めるまで（ダブルタップを待つ 300ms）を越える
-  await expect(canvas).not.toHaveAttribute("data-moving", "1", { timeout: 3000 });
+  // 寄る動きが終わるのを待つ。終わらないときは、動きが何回起きたか（data-goes）と倍率を出す
+  await expect
+    .poll(
+      async () =>
+        (await canvas.getAttribute("data-moving"))
+          ? `動いている goes=${await canvas.getAttribute("data-goes")} k=${await canvas.getAttribute("data-k")}`
+          : "止まった",
+      {
+        timeout: 6000,
+      },
+    )
+    .toBe("止まった");
   let prev = "";
   for (let i = 0; i < 30; i++) {
     const cur = await canvas.evaluate((el) => {

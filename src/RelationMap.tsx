@@ -122,7 +122,10 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     return { W: r.width, H: r.height };
   };
   const bottomOf = () => (sheet.current?.offsetHeight ?? 0) + (sheet.current ? 16 : 0);
+  /** 寄る動きの数（画面のテストが、動きが重なっていないかを見る） */
+  const goes = useRef(0);
   const go = (nv: View, slow = false) => {
+    goes.current += 1;
     setAnim(
       reduce
         ? false
@@ -464,6 +467,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           data-testid="rm-canvas"
           data-k={v.k.toFixed(3)}
           data-moving={anim ? "1" : undefined}
+          data-goes={goes.current}
         >
           {L.groups.map((g) => (
             <div
