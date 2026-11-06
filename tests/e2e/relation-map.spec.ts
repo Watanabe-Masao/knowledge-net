@@ -107,6 +107,11 @@ test("語を押すと、その線を濃く・相手を種類の色に・ほか�
     return out;
   });
   expect(bad, "線の端が語の縁にない").toEqual([]);
+  // 測っている間に静かな状態（選んで数秒）に入っていたら、何もない所を1回押して下の面を戻す（WebKit は測るのが遅い）
+  if (await m.getAttribute("data-calm")) {
+    await page.mouse.click(view!.x + 6, view!.y + 6);
+    await expect(m).not.toHaveAttribute("data-calm", "true");
+  }
   await m.getByTestId("rm-page").click();
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
 });
