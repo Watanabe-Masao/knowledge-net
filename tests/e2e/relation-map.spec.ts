@@ -9,13 +9,13 @@ const T = (x: string) => `stats2:TERM-${x}`;
 const G = (x: string) => `stats2:GRP-dist-${x}`;
 const URL = "./?src=sample/stats2.json&lv=map&g=";
 
-async function open(page: Page, w = 390, h = 844) {
+async function open(page: Page, w = 390, h = 844, extra = "") {
   await page.route("**/sample/stats2.json", async (r) => {
     const d = await (await r.fetch()).json();
     await r.fulfill({ json: asRelationMap(d) });
   });
   await page.setViewportSize({ width: w, height: h });
-  await page.goto(URL + encodeURIComponent("確率分布"));
+  await page.goto(URL + encodeURIComponent("確率分布") + extra);
   await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
   return page.getByTestId("relation-map");
 }
@@ -313,4 +313,20 @@ test("380px と埋め込み（360×320）でページが横にはみ出さず、
     );
     expect(small, `${w}px で 44px 未満の押す所`).toEqual([]);
   }
+});
+
+// 確かめる対象：A/B で比べる B の形（rmEdge=1・rmTap=deselect・rmWait=0。渡辺さんが iPhone で比べる。stats2-course #239）が、ちゃんと B として動くこと。
+// 想定する故障：URL の切り替えが効かず、A と B が同じに見える（比べても意味がない）。
+// 見つけ方：B の URL で、二項分布を押すとすぐ（150ms 以内）下の面が出て、見える所の外の正規分布の札が出る。空いた所を押すと選んだ語が外れる。
+//   A（何も付けない）はほかのテストが確かめている
+// 既存との違い：ほかのテストは A だけ
+test("A/B：B の形（外の相手の札・空いた所で外す・待たない）が URL で選べる", async ({ page }) => {
+  const m = await open(page, 390, 844, "&rmEdge=1&rmTap=deselect&rmWait=0");
+  await m.getByTestId(`rm-term-${T("binom")}`).click();
+  await expect(m.getByTestId("rm-sheet")).toBeVisible({ timeout: 150 });
+  await still(page);
+  await expect(m.getByTestId(`rm-out-${T("normal")}`)).toBeVisible();
+  const view = (await m.boundingBox())!;
+  await page.mouse.click(view.x + view.width - 8, view.y + 70);
+  await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("aria-pressed", "false");
 });

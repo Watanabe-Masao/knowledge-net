@@ -39,6 +39,24 @@ const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation:
 
 /** ダブルタップを待つ間（1回目のタップの動きは、これが過ぎてから始める。画面の原則 10：1つの操作に動きは1つ） */
 const DBL_MS = 300;
+
+/** A/B で比べる形（渡辺さん 2026-11-07。stats2-course #239）。URL で選び、ふだん（何も付けない）は A：
+ *  rmEdge=1（B）：見える所の外の相手を、下の面の上の段に札で出す／A：出さない
+ *  rmTap=deselect（B）：空いた所の1回のタップで、選んだ語を外す（地図アプリの流儀）／A：帯と面を出し入れする（写真アプリの流儀）
+ *  rmWait=0（B）：1回目のタップですぐ面と寄る動きを出す／A：ダブルタップを待つ 300ms のあとに出す
+ *  決まったら、勝った形だけを残してこの切り替えを消す */
+export const AB = (() => {
+  try {
+    const q = new URLSearchParams(location.search);
+    return {
+      edge: q.get("rmEdge") === "1",
+      tap: q.get("rmTap") === "deselect" ? ("deselect" as const) : ("bars" as const),
+      wait: q.get("rmWait") === "0" ? 0 : DBL_MS,
+    };
+  } catch {
+    return { edge: false, tap: "bars" as const, wait: DBL_MS };
+  }
+})();
 /** 縁を越えたときの重さ（越えた分をこの割合で縮め、引くほどさらに重く） */
 const RUB = 0.55;
 /** 画面の高さがこれより低い（埋め込みなど）ときは、地図をページの中に置かず全画面のページで開く（画面の原則 2） */
@@ -355,7 +373,11 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
   useEffect(() => {
     setShown(null);
     if (!pick) return;
-    const id = setTimeout(() => setShown(pick), DBL_MS);
+    if (!AB.wait) {
+      setShown(pick);
+      return;
+    }
+    const id = setTimeout(() => setShown(pick), AB.wait);
     return () => clearTimeout(id);
   }, [pick]);
   const fitKey = shown ? `${shown}|${[...types].sort().join()}|${high}` : "";
@@ -436,7 +458,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
   // 半分も入らない相手を、下の面の上の段に「↓ 名前」の札で出す。押すと、選んだままその相手が見える所へ寄る。
   // 札は地図の上に重ねない（重ねると、半分見えている相手のカードを札が隠す）
   const outside: { id: string; dir: string; type: string }[] = [];
-  if (pick && shown === pick && v && box.current && !anim) {
+  if (AB.edge && pick && shown === pick && v && box.current && !anim) {
     const { W, H } = size();
     const top = page ? 52 : 0,
       bottom = H - bottomOf();
@@ -482,9 +504,11 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
       }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-ui], button") || moved.current) return;
-        // 空いた所の1回のタップ：帯と面を出し入れする（ダブルタップを待ってから）
+        // 空いた所の1回のタップ：帯と面を出し入れする（ダブルタップを待ってから）。B は選んだ語を外す
         clearTimeout(blankT.current);
-        blankT.current = window.setTimeout(() => (calmRef.current ? leave() : enter()), DBL_MS);
+        const act = () => (AB.tap === "deselect" && pick ? setPick(null) : calmRef.current ? leave() : enter());
+        if (AB.wait) blankT.current = window.setTimeout(act, AB.wait);
+        else act();
       }}
     >
       {v ? (
