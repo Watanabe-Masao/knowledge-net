@@ -13,6 +13,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
+  position: relative;
+  z-index: 2; /* 関係図が画面いっぱいになるとき、その上を滑って引っ込む（RelationMap.module.css の .full） */
 }
 .hits {
   list-style: none;
@@ -242,15 +244,6 @@
   display: flex;
   justify-content: flex-end;
   margin-top: var(--sp-2);
-}
-
-/* 関係図の静かな状態（選んで数秒）：上の帯をフェードで消す。地図は画面いっぱいに広がる（RelationMap.module.css の .full） */
-.top,
-.catBar {
-  transition: opacity var(--dur-sheet) var(--ease);
-}
-:global(body[data-calm]) .top,
-:global(body[data-calm]) .catBar {
-  opacity: 0;
-  pointer-events: none;
+  position: relative;
+  z-index: 2;
 }

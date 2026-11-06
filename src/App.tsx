@@ -233,9 +233,12 @@ export default function App() {
     setModalRaw(m);
     if (m) setEdgeRaw(null);
   };
+  // 関係図で語をダブルタップしたときは、その語を選んで詳しくを全部の段で開く（下の effect が「少し」に戻さないよう印を置く）
+  const openFull = useRef(false);
   useEffect(() => {
     setEdgeRaw(null);
-    setDetent("peek");
+    setDetent(openFull.current ? "full" : "peek");
+    openFull.current = false;
   }, [sel]); // 別の概念へ進んだら、線の説明は閉じ、詳しくは「少し」に
   useEffect(() => {
     // 下のタブの高さ（詳しくの面はその上に乗る）
@@ -346,6 +349,9 @@ export default function App() {
       </main>
     );
   const concept = sel ? net.concepts.get(sel) : undefined;
+  // 関係図（stats2-course #235・#239）：移した分類の地図。語を選んでも関係図のまま、下の面に島の地図と同じ詳しく（Detail）を出す
+  const relmap =
+    !!group && group !== "*" && layout === "map" && net.mapReady.has(group) && (!concept || concept.category === group);
 
   if (EMBED) {
     const full = `${location.pathname}?${new URLSearchParams({ ...(sel ? { c: sel } : {}), ...(SRC ? { src: SRC } : {}) }).toString()}`;
@@ -458,7 +464,7 @@ export default function App() {
   const compact = narrow && !!concept;
   return (
     <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
-      <div className={st.top}>
+      <div className={st.top} data-edge="top">
         <Header
           title="知識ネットワーク"
           sub={
@@ -537,7 +543,7 @@ export default function App() {
       {errors.map((e) => (
         <ErrorText key={e}>{e}</ErrorText>
       ))}
-      {concept ? (
+      {concept && !relmap ? (
         <div className={st.views} ref={aboveMap}>
           <Segmented
             label="見方"
@@ -555,8 +561,8 @@ export default function App() {
       ) : null}
       {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ（試作）。分類を押すとその分類の地図、語を押すと概念 */}
       {/* 分類のページ（ライブラリでタイルを押したあと）：並べ方の切り替え。正方形・一覧はリストビュー、地図は島の地図（stats2-course #228） */}
-      {!sel && group && group !== "*" ? (
-        <div className={st.catBar}>
+      {(!sel || relmap) && group && group !== "*" ? (
+        <div className={st.catBar} data-edge="top">
           <LayoutSwitch value={layout} onChange={setLayout} />
         </div>
       ) : null}
@@ -571,9 +577,21 @@ export default function App() {
         />
       ) : !sel && group && group !== "*" && layout !== "map" ? (
         <CategoryList net={net} category={group} layout={layout} onConcept={setSel} />
-      ) : !sel && group && group !== "*" && net.mapReady.has(group) ? (
+      ) : relmap ? (
         // 関係図に移した分類の地図は、まとまりの関係図（stats2-course #235。移していない分類は今の島の地図）
-        <RelationMap net={net} category={group} onConcept={setSel} onOut={() => setGroup(null)} />
+        <RelationMap
+          net={net}
+          category={group!}
+          selected={sel}
+          onSelect={setSel}
+          onOpen={(id) => {
+            openFull.current = true;
+            if (id === sel) setDetent("full");
+            else setSel(id);
+          }}
+          onRelation={setEdgeSel}
+          onOut={() => setGroup(null)}
+        />
       ) : (
         <>
           <Graph

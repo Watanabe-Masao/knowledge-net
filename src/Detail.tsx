@@ -625,6 +625,7 @@ export default function Detail({
   return (
     <BottomSheet
       label={`${c.name} の詳しく`}
+      data-edge="bottom"
       data-testid="detail"
       detent={sheet.detent}
       onDetent={sheet.onDetent}

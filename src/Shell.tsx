@@ -187,7 +187,7 @@ export function TabBar({
   focusName?: string;
 }) {
   return (
-    <nav className={s.tabs} aria-label="タブ" data-testid="tabbar">
+    <nav className={s.tabs} aria-label="タブ" data-testid="tabbar" data-edge="bottom">
       {TABS.map((t) => (
         <a
           key={t.id}
