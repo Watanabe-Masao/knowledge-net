@@ -512,3 +512,29 @@
   opacity: 0;
   pointer-events: none;
 }
+
+/* 見える所の外の相手（下の面の上の段。地図の上に重ねない。画面の原則 5） */
+.outside {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 12px 6px;
+}
+.outChip {
+  all: unset;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 22px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--rc);
+  cursor: pointer;
+}
+.outChip > span[aria-hidden] {
+  color: var(--rc);
+  font-weight: 800;
+}

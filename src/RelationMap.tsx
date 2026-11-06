@@ -432,6 +432,38 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     } else onConcept(e.id); // ほかの分類の相手は、その語のページへ
   };
 
+  // 見える所の外の相手（画面の原則 5：黙って隠さない。UX レビュー B4）：読める倍率では見える所（上の端から下の面の上まで）に
+  // 半分も入らない相手を、下の面の上の段に「↓ 名前」の札で出す。押すと、選んだままその相手が見える所へ寄る。
+  // 札は地図の上に重ねない（重ねると、半分見えている相手のカードを札が隠す）
+  const outside: { id: string; dir: string; type: string }[] = [];
+  if (pick && shown === pick && v && box.current && !anim) {
+    const { W, H } = size();
+    const top = page ? 52 : 0,
+      bottom = H - bottomOf();
+    for (const t of L.terms) {
+      const k = near.get(t.id);
+      if (!k) continue;
+      const x0 = t.x * v.k + v.x,
+        y0 = t.y * v.k + v.y,
+        w = t.w * v.k,
+        h = t.h * v.k;
+      const vis =
+        Math.max(0, Math.min(x0 + w, W) - Math.max(x0, 0)) * Math.max(0, Math.min(y0 + h, bottom) - Math.max(y0, top));
+      if (vis >= 0.5 * w * h) continue;
+      const dir = y0 + h / 2 > bottom ? "↓" : y0 + h / 2 < top ? "↑" : x0 + w / 2 < 0 ? "←" : "→";
+      outside.push({ id: t.id, dir, type: k });
+    }
+  }
+  const showTerm = (id: string) => {
+    const t = L.terms.find((x) => x.id === id);
+    if (!t || !vRef.current) return;
+    const { W, H } = size();
+    const top = page ? 52 : 0,
+      room = H - bottomOf() - top,
+      k = vRef.current.k;
+    go({ k, x: W / 2 - (t.x + t.w / 2) * k, y: top + room / 2 - (t.y + t.h / 2) * k }, true);
+  };
+
   return (
     <section
       ref={box}
@@ -695,6 +727,8 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           onGo={goPartner}
           onPage={() => onConcept(pick)}
           onClose={() => setPick(null)}
+          outside={outside}
+          onShow={showTerm}
         />
       )}
     </section>
@@ -718,8 +752,13 @@ const Sheet = forwardRef<
     onGo: (e: Link) => void;
     onPage: () => void;
     onClose: () => void;
+    outside: { id: string; dir: string; type: string }[];
+    onShow: (id: string) => void;
   }
->(function Sheet({ net, id, links, types, toggle, high, setHigh, inside, onGo, onPage, onClose }, ref) {
+>(function Sheet(
+  { net, id, links, types, toggle, high, setHigh, inside, onGo, onPage, onClose, outside, onShow },
+  ref,
+) {
   const all = PRI.map((k) => [k, links.filter((e) => e.types.includes(k))] as const).filter(([, v]) => v.length);
   const rows = types.size ? all.filter(([k]) => types.has(k)) : all;
   const y0 = useRef<number | null>(null);
@@ -751,6 +790,24 @@ const Sheet = forwardRef<
       >
         <i />
       </button>
+      {outside.length ? (
+        <div className={s.outside} data-testid="rm-outside" aria-label="見える所の外の相手">
+          {outside.map((x) => (
+            <button
+              key={x.id}
+              type="button"
+              className={s.outChip}
+              style={{ "--rc": `var(${KIND_VAR[x.type] ?? "--ink-3"})` } as React.CSSProperties}
+              data-testid={`rm-out-${x.id}`}
+              aria-label={`${nameOf(net, x.id)}（見える所の外）へ寄る`}
+              onClick={() => onShow(x.id)}
+            >
+              <span aria-hidden="true">{x.dir}</span>
+              <Name text={nameOf(net, x.id)} />
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className={s.sheetHead}>
         <b>
           <Name text={nameOf(net, id)} />
