@@ -9,7 +9,17 @@
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tokenMs } from "@math-lab/ui";
 import { type Network, bandOfCat, bandsOf } from "./data";
-import { type View, fitBox, fitPick, layoutCategory, lineBadges, linksOf, nameOf } from "./relationMap";
+import {
+  type View,
+  crossings,
+  fitBox,
+  fitPick,
+  layoutCategory,
+  lineBadges,
+  linksOf,
+  nameOf,
+  roundedPath,
+} from "./relationMap";
 import { conceptIcon } from "./conceptIcons";
 import { iconUri } from "./icons";
 import { GLYPH_D, KIND_VAR, KindMark, kcol } from "./kinds";
@@ -23,6 +33,16 @@ const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation:
 const dblMs = () => tokenMs("--dur", 200);
 /** 長押しとみなす長さ（一覧ののぞき見と同じ） */
 const HOLD_MS = 450;
+/** A/B で比べる形（渡辺さん 2026-11-07。stats2-course の issue 239）：線の見せ方。
+ *  ふだん（A）は今の形（幹の中の線の間 3px・直角の角・交わる所はそのまま）。rmLine=b（B）は、線の間 6px・角を丸める・
+ *  十字にまたぐ所は後の線の下に切れ目を入れる（つながる分かれ道と見分ける）。決まったら、勝った形だけを残す */
+export const AB = (() => {
+  try {
+    return { line: new URLSearchParams(location.search).get("rmLine") === "b" ? ("b" as const) : ("a" as const) };
+  } catch {
+    return { line: "a" as const };
+  }
+})();
 /** 縁を越えたときの重さ（越えた分をこの割合で縮め、引くほどさらに重く） */
 const RUB = 0.55;
 /** 画面の高さがこれより低い（埋め込みなど）ときは、地図をページの中に置かず全画面のページで開く（画面の原則 2） */
@@ -75,7 +95,9 @@ type Props = {
 };
 
 export default function RelationMap({ net, category, selected, onSelect, onOpen, onRelation, onOut }: Props) {
-  const L = useMemo(() => layoutCategory(net, category), [net, category]);
+  const L = useMemo(() => layoutCategory(net, category, { lane: AB.line === "b" ? 6 : 3 }), [net, category]);
+  const cross = useMemo(() => (AB.line === "b" ? crossings(L) : []), [L]);
+  const pathD = (pts: { x: number; y: number }[]) => roundedPath(pts, AB.line === "b" ? 6 : 0);
   const uid = useId().replace(/:/g, "");
   const box = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<View | null>(null);
@@ -85,7 +107,16 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
   const inMap = (id: string | null) => (id && L.terms.some((t) => t.id === id) ? id : null);
   /** この地図の中の選び（押した瞬間に変わる）。App の選びには、ダブルタップを待ってから渡す */
   const [pick, setPickRaw] = useState<string | null>(() => inMap(selected));
-  const types = useMemo(() => new Set<string>(), []);
+  // 下の札で線の種類を絞る（いくつでも。語を選んでも続く。渡辺さん 2026-11-07）
+  const [types, setTypes] = useState<Set<string>>(() => new Set());
+  const toggleType = (k: string) =>
+    setTypes((cur) => {
+      const n = new Set(cur);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
+  const shows = (ts: string[]) => !types.size || ts.some((k) => types.has(k));
   const [height, setHeight] = useState<number | undefined>(undefined);
   const [page, setPage] = useState(false);
   const pageRef = useRef(false);
@@ -180,7 +211,10 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     const c = (lo: number, hi: number, val: number) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, val)));
     // 帯が引っ込んで地図が広がった分（上・左）は、縁の内側として扱う（広がったとたんに中身を縁へ寄せない）
     const { top, left } = calmRef.current ? calmTop.current : { top: 0, left: 0 };
-    return { ...o, x: c(W - ww, left, o.x), y: c(H - wh, top, o.y) };
+    // 下の札の帯の高さぶん、地図を下まで送れるようにする（札が地図の下の端を隠さない）
+    const legend = box.current.querySelector<HTMLElement>("[data-testid=rm-legend]");
+    const foot = legend && !calmRef.current ? legend.offsetHeight + 8 : 0;
+    return { ...o, x: c(W - ww, left, o.x), y: c(H - wh - foot, top, o.y) };
   };
   const rubber = (o: View): View => {
     const b = bounds(o);
@@ -518,8 +552,10 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     conceptIcon(net.concepts.get(id)?.icon, net.iconRoots) ?? (fallback ? <img src={fallback} alt="" /> : null);
 
   const L0 = pick ? linksOf(net, pick) : [];
-  const near = new Map(L0.map((e) => [e.id, e.type]));
+  const Ls = L0.filter((e) => shows(e.types));
+  const near = new Map(Ls.map((e) => [e.id, types.size ? e.types.find((k) => types.has(k))! : e.type]));
   const onEdge = (from: string, to: string) => !!pick && (from === pick || to === pick);
+  const shown = L.edges.filter((e) => shows(e.types));
   const filled = (id: string) => net.concepts.get(id)?.status === "filled";
   const peekEdge = peek ? L.edges.find((e) => e.id === peek.edge) : undefined;
   // まとまりの「使う語」・見出しの共通の印：印だけでは分かりにくいので、押すと名前の一覧を浮かせて見せる（渡辺さん 2026-11-07）
@@ -648,29 +684,48 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
                 </marker>
               ))}
             </defs>
-            {L.edges.map((e) => (
+            {shown.map((e) => (
               <path key={`u${e.id}`} className={s.under} d={pathD(e.pts)} data-dim={pick ? "1" : undefined} />
             ))}
-            {L.edges.map((e) => {
+            {shown.map((e) => {
               const on = onEdge(e.from, e.to);
               const m = `url(#${uid}-${e.type})`;
+              // B：十字にまたぐ所は、この線の下に切れ目（地の色の上に灰色の帯）を入れて、下の線を切って見せる
+              const gaps = cross.filter((c) => c.edge === e.id);
+              const inFrame = (x: number, y: number) =>
+                L.groups.some((g) => x > g.x && x < g.x + g.w && y > g.y && y < g.y + g.h);
               return (
-                <path
-                  key={e.id}
-                  d={pathD(e.pts)}
-                  style={{ stroke: kcol(e.type) }}
-                  strokeDasharray={DASH[e.type] ?? (e.mode ? DASH[e.mode] : undefined)}
-                  data-from={e.from}
-                  data-to={e.to}
-                  data-type={e.type}
-                  data-state={peek?.edge === e.id ? "lit" : !pick ? undefined : on ? "lit" : "dim"}
-                  markerEnd={e.arrow === "end" ? m : undefined}
-                  markerStart={e.arrow === "start" ? m : undefined}
-                />
+                <g key={e.id}>
+                  {gaps.map((c, i) => {
+                    const d = c.dir === "h" ? `M${c.x - 9},${c.y} H${c.x + 9}` : `M${c.x},${c.y - 9} V${c.y + 9}`;
+                    return (
+                      <g key={i} data-testid="rm-hop">
+                        <path
+                          d={d}
+                          className={s.hopGap}
+                          style={{ stroke: inFrame(c.x, c.y) ? "var(--surface)" : "var(--bg)" }}
+                        />
+                        <path d={d} className={s.under} data-dim={pick ? "1" : undefined} />
+                      </g>
+                    );
+                  })}
+                  <path
+                    key={e.id}
+                    d={pathD(e.pts)}
+                    style={{ stroke: kcol(e.type) }}
+                    strokeDasharray={DASH[e.type] ?? (e.mode ? DASH[e.mode] : undefined)}
+                    data-from={e.from}
+                    data-to={e.to}
+                    data-type={e.type}
+                    data-state={peek?.edge === e.id ? "lit" : !pick ? undefined : on ? "lit" : "dim"}
+                    markerEnd={e.arrow === "end" ? m : undefined}
+                    markerStart={e.arrow === "start" ? m : undefined}
+                  />
+                </g>
               );
             })}
             {/* 線を押す所：見えない太い線（画面の上で 44px。画面の原則 6）。押すと関係の面、長押しの間は向こうの端を見せる */}
-            {L.edges.map((e) => (
+            {shown.map((e) => (
               <path
                 key={`h${e.id}`}
                 d={pathD(e.pts)}
@@ -905,19 +960,61 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
           </svg>
         </button>
       </div>
+      {/* 下の札：凡例を兼ねた絞り込み（押すとその種類の線だけ。いくつでも。もう一度押すと戻る）。1段に収める */}
       {!selected ? (
-        <div className={s.legend} aria-hidden="true" data-ui data-edge="bottom">
-          {["変換", "一般化", "導出", "対比"].map((k) => (
-            <span key={k}>
-              <i style={{ background: kcol(k) }} />
+        <div
+          className={s.legend}
+          data-ui
+          data-edge="bottom"
+          role="group"
+          aria-label="線の種類で絞る（いくつでも）"
+          data-testid="rm-legend"
+        >
+          {LEGEND.map(([k]) => (
+            <button
+              key={k}
+              type="button"
+              className={s.kindChip}
+              aria-pressed={types.has(k)}
+              data-testid={`rm-kind-${k}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleType(k);
+              }}
+            >
               <Badge k={k} size={20} />
               {k}
-            </span>
+            </button>
           ))}
         </div>
+      ) : null}
+      {selected && types.size ? (
+        // 語を選んで札が隠れている間も、絞り込み中だと分かる印（押すと絞り込みを外す）
+        <button
+          type="button"
+          className={s.filterOn}
+          data-ui
+          data-testid="rm-filter-on"
+          aria-label={`${[...types].join("・")}だけを表示中。押すと全部の線に戻す`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setTypes(new Set());
+          }}
+        >
+          {[...types].map((k) => (
+            <Badge key={k} k={k} size={18} />
+          ))}
+          <span aria-hidden="true">✕</span>
+        </button>
       ) : null}
     </section>
   );
 }
 
-const pathD = (p: { x: number; y: number }[]) => p.map((q, i) => `${i ? "L" : "M"}${q.x},${q.y}`).join(" ");
+/** 下の札の種類と線の形の見本（対比は破線） */
+const LEGEND: [string, string | undefined][] = [
+  ["変換", undefined],
+  ["一般化", undefined],
+  ["導出", undefined],
+  ["対比", "4 3"],
+];

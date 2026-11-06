@@ -22,6 +22,8 @@ import {
   layoutCategory,
   lineBadges,
   termLinks,
+  crossings,
+  roundedPath,
 } from "../../src/relationMap";
 import { asRelationMap } from "../fixtures/relmap-dist";
 
@@ -195,5 +197,38 @@ describe("まとまりの関係図", () => {
       T("normal"),
     ]);
     expect(tight.length).toBeLessThanOrEqual(L.terms.length);
+  });
+
+  // 確かめる対象：線の見せ方 B（A/B。rmLine=b）の「またぎ」の点（crossings）と角の丸め（roundedPath）。
+  // 想定する故障：またぎの切れ目を、線のない所や分かれ道（端で接する所）に入れる（つながっている線を切って見せる）。
+  //   角を丸めたときに線の端がずれる（語の縁から外れる）。
+  // 見つけ方：見本で、またぎの点が、縦の区間と横の区間の両方の内側（端でない所）にあること。丸めた道の始まりと終わりが元の端と同じで、
+  //   丸めないとき（r=0）は直線だけの道になること。
+  // 既存との違い：上の「線は語の縁から縁へ」は丸める前の点。ここは B の描き方
+  it("線の見せ方 B：またぎは2本の線の内側の交わりだけ、丸めても端は動かない", () => {
+    const L = layoutCategory(net(), "確率分布", { lane: 6 });
+    const on = (x: number, y: number, pts: { x: number; y: number }[]) =>
+      pts.slice(1).some((q, i) => {
+        const p = pts[i]!;
+        const inX = x > Math.min(p.x, q.x) + 0.4 && x < Math.max(p.x, q.x) - 0.4;
+        const inY = y > Math.min(p.y, q.y) + 0.4 && y < Math.max(p.y, q.y) - 0.4;
+        return (
+          (Math.abs(p.y - q.y) < 0.01 && Math.abs(y - p.y) < 0.01 && inX) ||
+          (Math.abs(p.x - q.x) < 0.01 && Math.abs(x - p.x) < 0.01 && inY)
+        );
+      });
+    for (const c of crossings(L)) {
+      const hits = L.edges.filter((e) => on(c.x, c.y, e.pts));
+      expect(hits.length, `またぎ ${c.x},${c.y} が2本の線の内側にない`).toBeGreaterThanOrEqual(2);
+      expect(hits.map((e) => e.id)).toContain(c.edge);
+    }
+    for (const e of L.edges) {
+      const d = roundedPath(e.pts, 6);
+      const a = e.pts[0]!,
+        z = e.pts[e.pts.length - 1]!;
+      expect(d.startsWith(`M${a.x},${a.y}`)).toBe(true);
+      expect(d.endsWith(`${z.x},${z.y}`)).toBe(true);
+      expect(roundedPath(e.pts, 0)).not.toContain("Q");
+    }
   });
 });

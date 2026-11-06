@@ -343,6 +343,31 @@ test("線：押すと関係の面、長押しの間は両端のカードを浮�
   await expect(page.getByTestId("edge-panel")).toHaveCount(0);
 });
 
+// 確かめる対象：下の札で線の種類を絞る（凡例を兼ねる。渡辺さん 2026-11-07）。
+// 想定する故障：札を押しても線が絞れない・ほかの種類の線が残る。語を選ぶと絞り込みが消える・絞り込み中だと分からない。
+// 見つけ方：「対比」の札を押すと押した状態になり、描かれる線が全部対比を含む線だけになる。二項分布を選ぶと札は隠れるが、
+//   絞り込み中の印（rm-filter-on）が出て、押すと全部の線に戻る。
+// 既存との違い：ほかのテストは全部の線が出ている状態だけ
+test("下の札：押すとその種類の線だけ。語を選んでも続き、印から外せる", async ({ page }) => {
+  const m = await open(page);
+  const all = await m.locator("[data-testid=rm-lines] path[data-type]").count();
+  await m.getByTestId("rm-kind-対比").click();
+  await expect(m.getByTestId("rm-kind-対比")).toHaveAttribute("aria-pressed", "true");
+  const kinds = await m
+    .locator("[data-testid=rm-lines] path[data-type]")
+    .evaluateAll((ps) => ps.map((p) => p.getAttribute("data-type")));
+  expect(kinds.length).toBeGreaterThan(0);
+  expect(kinds.length).toBeLessThan(all);
+  // 線は主の種類で描くので、対比を含む線（主が変換で対比も持つ線を含む）だけが残る。対比でも変換でもない種類は残らない
+  expect(kinds.filter((k) => k !== "対比" && k !== "変換")).toEqual([]);
+  await m.getByTestId(`rm-term-${T("binom")}`).click();
+  await still(page);
+  await expect(m.getByTestId("rm-filter-on")).toBeVisible();
+  await m.getByTestId("rm-filter-on").click();
+  await expect(m.getByTestId("rm-filter-on")).toHaveCount(0);
+  expect(await m.locator("[data-testid=rm-lines] path[data-type]").count()).toBe(all);
+});
+
 // 確かめる対象：印だけの所と語の長押しで、名前・概要が文字で読めること（画面の原則 7。渡辺さん 2026-11-07）。
 // 想定する故障：「このまとまりで使う語」が印だけで何か分からない。語の長押しで選んでしまう・概要が出ない。
 // 見つけ方：まとまりの「使う語」を押すと、名前の一覧（rm-fold）が出る。語を長押しすると、選ばずに概要（rm-tip。定義1文）が出て、離すと消える。

@@ -214,7 +214,9 @@ function condRefs(net: Network, id: string): string[] {
 const common = (lists: string[][]) => (lists.length < 2 ? [] : lists.reduce((a, b) => a.filter((v) => b.includes(v))));
 
 /** 分類のキャンバスの並びと線 */
-export function layoutCategory(net: Network, category: string): CanvasLayout {
+/** 線の見せ方の比べ（A/B。渡辺さん 2026-11-07）：lane は幹の中の線の間（A 3・B 6） */
+export function layoutCategory(net: Network, category: string, opt: { lane?: number } = {}): CanvasLayout {
+  const LG = opt.lane ?? 3;
   const { tw, th, gx, gy, head, pad, G, cols, foot, M } = CV;
   const cm = categoryMap(net, category);
   const decl = cm.groups.map((g) => ({ id: g.id, name: g.name, terms: g.terms, folded: g.folded }));
@@ -300,7 +302,7 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
           { x: B.x, y: yy },
         ];
       } else {
-        const yy = A.y + A.h + 4 + lane(`r${A.g}.${A.r}`) * 3;
+        const yy = A.y + A.h + 4 + lane(`r${A.g}.${A.r}`) * LG;
         pts = [
           { x: ax, y: A.y + A.h },
           { x: ax, y: yy },
@@ -310,7 +312,7 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
       }
     } else {
       const ga = groups[A.g]!;
-      const yA = ga.y + ga.h + 24 + lane(`g${A.g}`) * 3;
+      const yA = ga.y + ga.h + 24 + lane(`g${A.g}`) * LG;
       if (B.g === A.g || B.g === A.g + 1)
         pts = [
           { x: ax, y: A.y + A.h },
@@ -320,8 +322,8 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
         ];
       else {
         const gb = groups[B.g - 1]!;
-        const yB = gb.y + gb.h + 24 + lane(`g${B.g - 1}`) * 3;
-        const xr = right + lane("trunk") * 3;
+        const yB = gb.y + gb.h + 24 + lane(`g${B.g - 1}`) * LG;
+        const xr = right + lane("trunk") * LG;
         pts = [
           { x: ax, y: A.y + A.h },
           { x: ax, y: yA },
@@ -348,7 +350,7 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
     });
   }
   const trunks = lanes.get("trunk") ?? 0;
-  return { category, w: right + trunks * 3 + M, h: bottom + M + 40, groups, terms, edges };
+  return { category, w: right + trunks * LG + M, h: bottom + M + 40, groups, terms, edges };
 }
 
 /** 線の上の種類の印。画面でいつも同じ大きさ（倍率 k で割る）。ほかの印・語・見出しと間をあけられる所だけに置く */
@@ -466,4 +468,55 @@ export function fitBox(
 ): View {
   const k = Math.min(kmax, (room.W - 24) / w, (room.H - 24 - room.bottom) / h);
   return { k, x: (room.W - w * k) / 2 - x * k, y: (room.H - room.bottom - h * k) / 2 - y * k };
+}
+
+/** 線どうしが十字にまたぐ所（縦の区間と横の区間が、どちらの端でもない所で交わる）。後に描く線（edges の後ろの方）を「またぐ側」にする。
+ *  分かれ道（同じ語から出る線が重なる所・端で接する所）は含めない */
+export type Crossing = { edge: string; x: number; y: number; dir: "h" | "v" };
+export function crossings(L: CanvasLayout): Crossing[] {
+  type Seg = { e: number; a: Pt; b: Pt; h: boolean };
+  const segs: Seg[] = [];
+  L.edges.forEach((e, i) =>
+    e.pts.slice(1).forEach((q, j) => {
+      const p = e.pts[j]!;
+      if (Math.abs(p.y - q.y) < 0.01) segs.push({ e: i, a: p, b: q, h: true });
+      else if (Math.abs(p.x - q.x) < 0.01) segs.push({ e: i, a: p, b: q, h: false });
+    }),
+  );
+  const inside = (v: number, a: number, b: number) => v > Math.min(a, b) + 0.5 && v < Math.max(a, b) - 0.5;
+  const out: Crossing[] = [];
+  for (const s1 of segs)
+    for (const s2 of segs) {
+      if (s1.e >= s2.e || s1.h === s2.h) continue;
+      const H = s1.h ? s1 : s2,
+        V = s1.h ? s2 : s1;
+      const x = V.a.x,
+        y = H.a.y;
+      if (!inside(x, H.a.x, H.b.x) || !inside(y, V.a.y, V.b.y)) continue;
+      const later = s2; // 後に描く線がまたぐ
+      out.push({ edge: L.edges[later.e]!.id, x, y, dir: later.h ? "h" : "v" });
+    }
+  return out;
+}
+
+/** 直角の折れ線を、角を半径 r で丸めた SVG の道にする（r が 0 なら角のまま） */
+export function roundedPath(p: Pt[], r: number): string {
+  if (!p.length) return "";
+  let d = `M${p[0]!.x},${p[0]!.y}`;
+  for (let i = 1; i < p.length; i++) {
+    const a = p[i - 1]!,
+      b = p[i]!,
+      c = p[i + 1];
+    if (!c || r <= 0) {
+      d += ` L${b.x},${b.y}`;
+      continue;
+    }
+    const l1 = Math.hypot(b.x - a.x, b.y - a.y),
+      l2 = Math.hypot(c.x - b.x, c.y - b.y),
+      rr = Math.min(r, l1 / 2, l2 / 2);
+    const u = { x: (b.x - a.x) / (l1 || 1), y: (b.y - a.y) / (l1 || 1) },
+      w = { x: (c.x - b.x) / (l2 || 1), y: (c.y - b.y) / (l2 || 1) };
+    d += ` L${b.x - u.x * rr},${b.y - u.y * rr} Q${b.x},${b.y} ${b.x + w.x * rr},${b.y + w.y * rr}`;
+  }
+  return d;
 }
