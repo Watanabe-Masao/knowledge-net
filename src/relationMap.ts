@@ -351,10 +351,10 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
   return { category, w: right + trunks * 3 + M, h: bottom + M + 40, groups, terms, edges };
 }
 
-/** 線の上の種類の印。画面でいつも同じ大きさ（倍率 k で割る）。ほかの印・語・見出しと間をあけられる所だけに置く */
+/** 線の上の種類の印。画面でいつも同じ大きさ（直径 22px。倍率 k で割る）。ほかの印・語・見出しと間をあけられる所だけに置く */
 export type LineBadge = { key: string; x: number; y: number; r: number; half: number; types: string[] };
 export function lineBadges(L: CanvasLayout, pick: string | null, types: Set<string>, k: number): LineBadge[] {
-  const r = 7.5 / k,
+  const r = 11 / k, // 直径 22px（画面の原則 6：印は 20px 以上）
     gap = 12 / k,
     out: LineBadge[] = [];
   const boxes = L.terms

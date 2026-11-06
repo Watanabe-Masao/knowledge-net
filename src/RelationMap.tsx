@@ -10,7 +10,6 @@ import {
   type Link,
   type View,
   DIRECTED,
-  GLYPH,
   PRI,
   fitBox,
   fitPick,
@@ -21,19 +20,9 @@ import {
 } from "./relationMap";
 import { conceptIcon } from "./conceptIcons";
 import { iconUri } from "./icons";
+import { GLYPH_D, KIND_VAR, KindMark, kcol } from "./kinds";
 import s from "./RelationMap.module.css";
 
-/** 関係の種類の色（tokens の --k-*） */
-const KIND_VAR: Record<string, string> = {
-  導出: "--k-der",
-  一般化: "--k-gen",
-  特殊化: "--k-gen",
-  変換: "--k-conv",
-  対比: "--k-con",
-  統合: "--k-int",
-  応用: "--k-app",
-};
-const kcol = (k: string) => `var(${KIND_VAR[k] ?? "--ink-3"})`;
 /** 点線は対比と、近似・極限の変換（「近い」と「等しい」を混ぜない） */
 const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation: "6 4", limit: "2 4" };
 
@@ -50,12 +39,9 @@ const ZMIN = 0.3,
   ZMAX = 2.4,
   ZOUT = 0.45;
 
-export function Badge({ k }: { k: string }) {
-  return (
-    <span className={s.badge} style={{ background: kcol(k) }} role="img" aria-label={k}>
-      {GLYPH[k]}
-    </span>
-  );
+/** 種類の印（kinds.tsx の線の印。どの画面でも同じ） */
+export function Badge({ k, size = 22 }: { k: string; size?: number }) {
+  return <KindMark k={k} size={size} />;
 }
 
 /** 名前は語の途中で切らない：切ってよい所（「分布」などの前・「の」「・」の後）だけに折り返しの候補を置く */
@@ -425,12 +411,30 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
       else n.add(k);
       return n;
     });
-  const goPartner = (e: Link) => {
-    if (L.terms.some((t) => t.id === e.id)) {
-      setPick(e.id);
+  const goPartner = (id: string) => {
+    if (L.terms.some((t) => t.id === id)) {
+      setHigh(false); // 面を低い段に戻してから寄る（寄る先が面に隠れない。UX レビュー B3）
+      setFocus(null);
+      setPick(id);
       setTypes(new Set());
-    } else onConcept(e.id); // ほかの分類の相手は、その語のページへ
+    } else onConcept(id); // ほかの分類の相手は、その語のページへ（入れる順 5 で分類の札にする）
   };
+  // 線の上の印を押す：その線の端の語を選び（選んでいる語の線ならそのまま）、面をその関係の行と「つまり」で開く
+  const [focus, setFocus] = useState<{ kind: string; other: string } | null>(null);
+  const onBadge = (edgeId: string, kind: string) => {
+    const e = L.edges.find((x) => x.id === edgeId);
+    if (!e) return;
+    const me = pick && (e.from === pick || e.to === pick) ? pick : e.from;
+    setPick(me);
+    setFocus({ kind, other: me === e.from ? e.to : e.from });
+    setHigh(true);
+  };
+  useEffect(() => {
+    if (!pick) {
+      setFocus(null);
+      setHigh(false);
+    }
+  }, [pick]);
 
   return (
     <section
@@ -558,7 +562,27 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
                 );
               })}
             {lineBadges(L, pick, types, v.k).map((b) => (
-              <g key={b.key} data-testid="rm-badge" data-edge={b.key}>
+              // 線の上の印は押せる（押すと、下の面がその関係の行と「つまり」を開く）。押す範囲は印より広く 44px（画面の原則 6）
+              <g
+                key={b.key}
+                data-testid="rm-badge"
+                data-edge={b.key}
+                className={s.lineBadge}
+                role="button"
+                aria-label={`${b.types.join("・")}のつながりを見る`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (moved.current) return;
+                  onBadge(b.key, b.types[0]!);
+                }}
+              >
+                <rect
+                  x={b.x - Math.max(b.half, 22 / v.k)}
+                  y={b.y - 22 / v.k}
+                  width={2 * Math.max(b.half, 22 / v.k)}
+                  height={44 / v.k}
+                  className={s.hit}
+                />
                 {b.types.map((k, i) => {
                   const x = b.x + (i - (b.types.length - 1) / 2) * 2 * b.r;
                   return (
@@ -568,17 +592,13 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
                         cy={b.y}
                         r={b.r}
                         style={{ fill: kcol(k), stroke: "var(--surface)" }}
-                        strokeWidth={b.r * 0.22}
+                        strokeWidth={b.r * 0.16}
                       />
-                      <text
-                        x={x}
-                        y={b.y + b.r * 0.38}
-                        textAnchor="middle"
-                        fontSize={b.r * 1.15}
-                        className={s.glyphText}
-                      >
-                        {GLYPH[k]}
-                      </text>
+                      <path
+                        d={GLYPH_D[k] ?? ""}
+                        transform={`translate(${x} ${b.y}) scale(${(b.r / 10) * 0.72}) translate(-10 -10)`}
+                        className={s.glyphPath}
+                      />
                     </g>
                   );
                 })}
@@ -671,7 +691,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           ⤢
         </button>
       </div>
-      {!pick || shown !== pick ? (
+      {!pick ? (
         <div className={s.legend} aria-hidden="true" data-ui>
           {["変換", "一般化", "導出", "対比"].map((k) => (
             <span key={k}>
@@ -688,7 +708,11 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           id={pick}
           links={L0}
           types={types}
-          toggle={toggle}
+          toggle={(k) => {
+            setFocus(null);
+            toggle(k);
+          }}
+          focus={focus}
           high={high}
           setHigh={setHigh}
           inside={new Set(L.terms.map((t) => t.id))}
@@ -704,6 +728,113 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
 const pathD = (p: { x: number; y: number }[]) => p.map((q, i) => `${i ? "L" : "M"}${q.x},${q.y}`).join(" ");
 
 /** 下の面：名前・種類ごとの数（押すとその種類に絞る。いくつでも）・語のページ。上へ引くと相手の一覧 */
+/** 2つの語の間の、その種類の関係（「つまり」の文を出すため） */
+const relBetween = (net: Network, a: string, b: string, kind: string) =>
+  net.relations.find((r) => r.type === kind && ((r.from === a && r.to === b) || (r.from === b && r.to === a)));
+
+/** 線の見方（凡例）。面の中にたたんで残す（選んでも消さない。画面の原則 7） */
+function Legend() {
+  const rows: [string, string, string | undefined][] = [
+    ["変換", "姿を変える（実線は等しい）", undefined],
+    ["変換", "近似・極限で移る", "6 4"],
+    ["一般化", "広げる・特別な場合", undefined],
+    ["導出", "導く", undefined],
+    ["対比", "比べる（向きなし）", "6 4"],
+  ];
+  return (
+    <details className={s.legendIn} data-testid="rm-legend">
+      <summary>線の見方</summary>
+      {rows.map(([k, t, d], i) => (
+        <span key={i}>
+          <svg width="28" height="10" aria-hidden="true">
+            <path d="M2 5H26" style={{ stroke: kcol(k), strokeWidth: 2.5, fill: "none" }} strokeDasharray={d} />
+          </svg>
+          <Badge k={k} size={20} />
+          {t}
+        </span>
+      ))}
+    </details>
+  );
+}
+
+/** 種類ごとの「A → B」の行（面と、入れる順 2 で概念のページの「関係」にも使う同じ部品。画面の原則 4）。
+ *  選んだ語は小さな「この語」、相手はカード。向きのある関係は →、対比は ≠ の印。押すと onGo（地図でその語を選んで寄る） */
+export function FlowRows({
+  net,
+  links,
+  types,
+  inside,
+  onGo,
+  max = 3,
+}: {
+  net: Network;
+  links: Link[];
+  types: Set<string>;
+  inside: Set<string>;
+  onGo: (id: string) => void;
+  max?: number;
+}) {
+  const [more, setMore] = useState(false);
+  const all = PRI.map((k) => [k, links.filter((e) => e.types.includes(k))] as const).filter(([, v]) => v.length);
+  const rows = types.size ? all.filter(([k]) => types.has(k)) : all;
+  const shown = more || types.size ? rows : rows.slice(0, max);
+  const me = <span className={s.me}>この語</span>;
+  return (
+    <div className={s.flows} data-testid="rm-flows">
+      {shown.map(([k, v]) => (
+        <div key={k} className={s.flow} data-kind={k}>
+          <span className={s.flowKind}>
+            <Badge k={k} size={20} />
+            {k}
+          </span>
+          {v.map((e) => {
+            const card = (
+              <button
+                type="button"
+                className={s.partner}
+                style={{ "--rc": kcol(k) } as React.CSSProperties}
+                onClick={() => onGo(e.id)}
+                data-testid={`rm-go-${e.id}`}
+              >
+                <Name text={nameOf(net, e.id)} />
+                {!inside.has(e.id) ? <small>{net.concepts.get(e.id)?.category}</small> : null}
+              </button>
+            );
+            const arrow = DIRECTED.has(k) ? (
+              <i className={s.arrow} aria-hidden="true">
+                →
+              </i>
+            ) : (
+              <i className={s.arrow} aria-hidden="true">
+                ≠
+              </i>
+            );
+            const out = e.out || !DIRECTED.has(k);
+            return (
+              <div
+                key={e.id}
+                className={s.flowItem}
+                aria-label={out ? `この語 ${k} ${nameOf(net, e.id)}` : `${nameOf(net, e.id)} ${k} この語`}
+              >
+                {out ? me : card}
+                {arrow}
+                {out ? card : me}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      {!more && !types.size && rows.length > max ? (
+        <button type="button" className={s.more} onClick={() => setMore(true)} data-testid="rm-more">
+          ほかに {rows.length - max} 種類
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+/** 下の面：題（押すとその語のページ。›）・✕・種類ごとの数の札（名前付き。押すと絞る、いくつでも）。
+ *  上へ引くと、種類ごとの「A → B」の行。線の上の印から開いたときは、その関係の「つまり」を先に出す。凡例は面の中にたたんで残す */
 const Sheet = forwardRef<
   HTMLDivElement,
   {
@@ -712,17 +843,19 @@ const Sheet = forwardRef<
     links: Link[];
     types: Set<string>;
     toggle: (k: string) => void;
+    focus: { kind: string; other: string } | null;
     high: boolean;
     setHigh: (b: boolean) => void;
     inside: Set<string>;
-    onGo: (e: Link) => void;
+    onGo: (id: string) => void;
     onPage: () => void;
     onClose: () => void;
   }
->(function Sheet({ net, id, links, types, toggle, high, setHigh, inside, onGo, onPage, onClose }, ref) {
+>(function Sheet({ net, id, links, types, toggle, focus, high, setHigh, inside, onGo, onPage, onClose }, ref) {
   const all = PRI.map((k) => [k, links.filter((e) => e.types.includes(k))] as const).filter(([, v]) => v.length);
-  const rows = types.size ? all.filter(([k]) => types.has(k)) : all;
   const y0 = useRef<number | null>(null);
+  const fr = focus ? relBetween(net, id, focus.other, focus.kind) : undefined;
+  const name = nameOf(net, id);
   return (
     <div
       ref={ref}
@@ -730,7 +863,7 @@ const Sheet = forwardRef<
       data-ui
       data-high={high ? "1" : undefined}
       role="region"
-      aria-label={`${nameOf(net, id)}のつながり`}
+      aria-label={`${name}のつながり`}
       data-testid="rm-sheet"
       onPointerDown={(e) => {
         y0.current = e.clientY;
@@ -752,9 +885,19 @@ const Sheet = forwardRef<
         <i />
       </button>
       <div className={s.sheetHead}>
-        <b>
-          <Name text={nameOf(net, id)} />
-        </b>
+        <button
+          type="button"
+          className={s.title}
+          onClick={onPage}
+          data-testid="rm-page"
+          aria-label={`${name}のページを開く`}
+        >
+          <Name text={name} />
+          <span aria-hidden="true">›</span>
+        </button>
+        <button type="button" className={s.close} onClick={onClose} aria-label="選ぶのをやめる" data-testid="rm-close">
+          ✕
+        </button>
         <span className={s.counts} role="group" aria-label="関係の種類で絞る（いくつでも）">
           {all.map(([k, v]) => (
             <button
@@ -762,44 +905,35 @@ const Sheet = forwardRef<
               type="button"
               className={s.count}
               aria-pressed={types.has(k)}
-              aria-label={`${k} ${v.length}語`}
+              aria-label={`${k} ${v.length}`}
               data-testid={`rm-type-${k}`}
               onClick={() => toggle(k)}
             >
-              <Badge k={k} />
-              {v.length}
+              <Badge k={k} size={20} />
+              {k}
+              <b>{v.length}</b>
             </button>
           ))}
           {!all.length ? <span className={s.none}>横のつながりはない</span> : null}
         </span>
-        <button type="button" className={s.toPage} onClick={onPage} data-testid="rm-page">
-          語のページ
-        </button>
-        <button type="button" className={s.close} onClick={onClose} aria-label="選ぶのをやめる" data-testid="rm-close">
-          ✕
-        </button>
       </div>
       {high ? (
         <div className={s.sheetBody}>
-          {rows.map(([k, v]) => (
-            <div key={k} className={s.row}>
-              <span className={s.rowKind}>
-                <Badge k={k} />
-                {k}
+          {focus ? (
+            <div className={s.gist} data-testid="rm-gist">
+              <span className={s.flowKind}>
+                <Badge k={focus.kind} size={20} />
+                {focus.kind}：{nameOf(net, fr?.from ?? id)} → {nameOf(net, fr?.to ?? focus.other)}
               </span>
-              <span className={s.rowItems}>
-                {v.map((e) => (
-                  <button key={e.id} type="button" onClick={() => onGo(e)} data-testid={`rm-go-${e.id}`}>
-                    {DIRECTED.has(k) ? (
-                      <em aria-label={e.out ? "この語から" : "この語へ"}>{e.out ? "→" : "←"}</em>
-                    ) : null}
-                    <Name text={nameOf(net, e.id)} />
-                    {!inside.has(e.id) ? <small>{net.concepts.get(e.id)?.category}</small> : null}
-                  </button>
-                ))}
-              </span>
+              <p>
+                {fr?.gist
+                  ? `つまり、${fr.gist}`
+                  : "このつながりの「つまり」はまだ書いていない。語のページで関係を読める。"}
+              </p>
             </div>
-          ))}
+          ) : null}
+          <FlowRows net={net} links={links} types={focus ? new Set([focus.kind]) : types} inside={inside} onGo={onGo} />
+          <Legend />
         </div>
       ) : null}
     </div>

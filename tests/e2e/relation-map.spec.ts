@@ -134,6 +134,33 @@ test("語を押すと、その線を濃く・相手を種類の色に・ほか�
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
 });
 
+// 確かめる対象：どうつながるかを、印と色だけでなく言葉で読めること（画面の原則 7。UX レビュー B8・入れる順 1）。
+// 想定する故障：面の数の札が印と数だけで種類の名前がない・選ぶと凡例が消える・線の上の印を押しても何も起きない・
+//   相手へ移ったときに面が開いたままで寄る先が隠れる（B3）。
+// 見つけ方：二項分布を押すと、面の数の札に種類の名前があり、面の中に線の見方（凡例）がある。線の上の印を押すと、面が開いて
+//   その関係の「つまり」の文が出る。行の相手を押すと、その語が選ばれ、面は低い段に戻る。
+// 既存との違い：ほかのテストは地図の上の見え方と指。ここは下の面で読むこと
+// 検出の確かめ（2026-11-06）：線の上の印の onClick を外すと、「つまり」が出ないで落ちることを見た
+test("面：種類の名前・凡例・線の上の印で「つまり」・相手を押すと面を低くして移る", async ({ page }) => {
+  const m = await open(page);
+  await m.getByTestId(`rm-term-${T("binom")}`).click();
+  await still(page);
+  for (const k of ["変換", "対比", "一般化"]) await expect(m.getByTestId(`rm-type-${k}`)).toContainText(k);
+  await m.getByRole("button", { name: "一覧を広げる" }).click();
+  await expect(m.getByTestId("rm-legend")).toBeVisible();
+  await m.getByTestId("rm-close").click();
+  await still(page);
+  await m.getByTestId("rm-badge").first().click({ force: true });
+  await still(page);
+  await expect(m.getByTestId("rm-gist")).toContainText("つまり");
+  const partner = m.getByTestId("rm-flows").getByRole("button").first();
+  const pid = (await partner.getAttribute("data-testid"))!.replace("rm-go-", "");
+  await partner.click();
+  await still(page);
+  await expect(m.getByTestId(`rm-term-${pid}`)).toHaveAttribute("data-state", "sel");
+  await expect(m.getByTestId("rm-sheet")).not.toHaveAttribute("data-high", "1");
+});
+
 // 確かめる対象：ダブルタップの段（語＝語のページ／まとまりの中の語の外＝そのまとまり／まとまりの外＝分類）。
 // 想定する故障：段を取り違える（語の上で寄るだけ・まとまりの中で分類全体へ戻る）、1回目のタップの選びが邪魔をする。
 // 見つけ方：くり返して数えるの枠の中の何もない所をダブルタップ → その枠が画面に収まり、倍率が初めより上がる。
@@ -311,6 +338,12 @@ test("380px と埋め込み（360×320）でページが横にはみ出さず、
         .filter(({ r }) => r.height < 44 || r.width < 44)
         .map(({ r, id }) => `${id} ${Math.round(r.width)}×${Math.round(r.height)}`),
     );
-    expect(small, `${w}px で 44px 未満の押す所`).toEqual([]);
+    const badges = await m.evaluate((el) =>
+      [...el.querySelectorAll<SVGGElement>("[data-testid=rm-badge]")]
+        .map((g) => g.getBoundingClientRect())
+        .filter((r) => r.width < 43.5 || r.height < 43.5)
+        .map((r) => `${Math.round(r.width)}×${Math.round(r.height)}`),
+    );
+    expect(small.concat(badges.map((b) => `線の上の印 ${b}`)), `${w}px で 44px 未満の押す所`).toEqual([]);
   }
 });
