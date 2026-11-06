@@ -564,6 +564,15 @@
               }
             }
           }
+        },
+        "relation_map_ready": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "関係図の決まり（stats2-course docs/relation-map.md）で書き終えた分類（概念の category）。画面はこの分類だけを、まとまりの関係図で開く。ほかの分類は今の一覧のまま（stats2-course #232・#235）"
         }
       }
     },
@@ -1107,7 +1116,9 @@
               "変換",
               "対比",
               "統合",
-              "応用"
+              "応用",
+              "種類",
+              "材料"
             ]
           },
           "description": {
@@ -1151,6 +1162,12 @@
           "gist": {
             "type": "string",
             "description": "つまり：その関係が言っていることを日常の言葉で1〜2文。説明・図・ラボより先に出す（stats2-course #95）"
+          },
+          "axis": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40,
+            "description": "比べる軸：対比で、何について違うのかを短い名前で（例：取り出し方）。対比だけに書く。関係図の決まりで移した分類では教材の build が必須にする（stats2-course #232・docs/relation-map.md）"
           },
           "stages": {
             "type": "object",
@@ -1501,6 +1518,24 @@
                 ]
               }
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "not": {
+                    "const": "対比"
+                  }
+                }
+              }
+            },
+            "then": {
+              "not": {
+                "required": [
+                  "axis"
+                ]
+              }
+            }
           }
         ]
       }
@@ -1586,5 +1621,5 @@
     }
   },
   "$comment": "改訂 2（2026-10-29）：概念・関係に任意の labs を追加。変更履歴は schema/CHANGELOG.md",
-  "x-revision": 35
+  "x-revision": 36
 }
