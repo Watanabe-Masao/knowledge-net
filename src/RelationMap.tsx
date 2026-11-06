@@ -37,8 +37,12 @@ const kcol = (k: string) => `var(${KIND_VAR[k] ?? "--ink-3"})`;
 /** 点線は対比と、近似・極限の変換（「近い」と「等しい」を混ぜない） */
 const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation: "6 4", limit: "2 4" };
 
-/** 選んでから上の帯と下の面を消すまで */
-const CALM_MS = 2600;
+/** ダブルタップを待つ間（1回目のタップの動きは、これが過ぎてから始める。画面の原則 10：1つの操作に動きは1つ） */
+const DBL_MS = 300;
+/** 縁を越えたときの重さ（越えた分をこの割合で縮め、引くほどさらに重く） */
+const RUB = 0.55;
+/** 画面の高さがこれより低い（埋め込みなど）ときは、地図をページの中に置かず全画面のページで開く（画面の原則 2） */
+const PAGE_MIN = 560;
 /** 指の遊び（これより動くまでは、タップのまま） */
 const SLOP = 8;
 /** 指で拡大・縮小できる範囲。これより引いて離すと、ライブラリ（遠くの見え方）へ戻る */
@@ -96,6 +100,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
   const [types, setTypes] = useState<Set<string>>(() => new Set());
   const [high, setHigh] = useState(false);
   const [height, setHeight] = useState<number | undefined>(undefined);
+  const [page, setPage] = useState(false);
   const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // 画面の残り（上の帯の下から下のタブの上まで）をキャンバスにする
@@ -105,6 +110,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
       if (!el || calmRef.current) return;
       const top = el.getBoundingClientRect().top + scrollY;
       const tab = document.querySelector<HTMLElement>("[data-testid=tabbar]")?.offsetHeight ?? 0;
+      setPage(innerHeight < PAGE_MIN);
       setHeight(Math.max(260, Math.round(innerHeight - top - tab)));
     };
     f();
@@ -131,7 +137,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
   const start = () => {
     const { W } = size();
     const k = Math.min(1.1, (W - 8) / L.w);
-    return { k, x: (W - L.w * k) / 2, y: 8 };
+    return { k, x: (W - L.w * k) / 2, y: page ? 52 : 0 }; // 全画面のページでは上の戻る帯の下から
   };
   useLayoutEffect(() => {
     if (height === undefined) return;
@@ -140,21 +146,31 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [L, height === undefined]);
 
-  // ---- 指の操作：タップの遊び・慣性・ゴムのような縁・2本指の拡大縮小（試作 A v57） ----
+  // ---- 指の操作（画面の原則 2。設計書 3「操作」）----
+  //   遊び（8px）を越えたら、地図は指の真下に付く（越えるまでの分も捨てない）。
+  //   縁を越えると引くほど重く、離すと縁ぴったりへ戻る。2本指で拡大・縮小し、離しても流さない。
+  //   投げの速さは1本指の直近 100ms の動きだけから求める（2本指は2つの指の動きが別々に届き、真ん中が行き来して速さを作ってしまう）
   const pts = useRef(new Map<number, { x: number; y: number }>());
   const last = useRef<{ mx: number; my: number; d: number; n: number } | null>(null);
   const moved = useRef(false);
+  const pinched = useRef(false);
   const startPt = useRef<{ x: number; y: number } | null>(null);
-  const vel = useRef({ x: 0, y: 0, t: 0 });
+  const hist = useRef<{ x: number; y: number; t: number }[]>([]);
+  /** 指が動かしている位置（縁の重さをかける前） */
+  const raw = useRef<View | null>(null);
   const raf = useRef(0);
   const bounds = (o: View): View => {
     if (!box.current) return o;
     const { W, H } = size(),
       ww = L.w * o.k,
-      wh = L.h * o.k,
-      M = 60;
+      wh = L.h * o.k;
     const c = (lo: number, hi: number, val: number) => (lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, val)));
-    return { ...o, x: c(W - ww - M, M, o.x), y: c(H - wh - M, M, o.y) };
+    return { ...o, x: c(W - ww, 0, o.x), y: c(H - wh, 0, o.y) };
+  };
+  const rubber = (o: View): View => {
+    const b = bounds(o);
+    const f = (d: number) => (d * RUB) / (1 + Math.abs(d) / 300);
+    return { ...o, x: b.x + f(o.x - b.x), y: b.y + f(o.y - b.y) };
   };
   const settle = () =>
     setV((o) => {
@@ -173,20 +189,27 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pts.current.size === 1) {
       moved.current = false;
+      pinched.current = false;
       startPt.current = { x: e.clientX, y: e.clientY };
-    } else moved.current = true; // 2本目が触れたら、タップではない
+      raw.current = vRef.current;
+    } else {
+      moved.current = true; // 2本目が触れたら、タップではない
+      pinched.current = true;
+    }
     last.current = null;
-    vel.current = { x: 0, y: 0, t: performance.now() };
+    hist.current = [];
   };
   useEffect(() => {
     const move = (e: PointerEvent) => {
       if (!pts.current.has(e.pointerId) || !box.current) return;
       pts.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
       const a = [...pts.current.values()];
+      let P = last.current;
       if (a.length === 1 && !moved.current) {
         const s0 = startPt.current;
         if (!s0 || Math.hypot(e.clientX - s0.x, e.clientY - s0.y) < SLOP) return;
         moved.current = true;
+        P = { mx: s0.x, my: s0.y, d: 0, n: 1 }; // 遊びの分も動かす（指の真下に付く）
       }
       const cur =
         a.length >= 2
@@ -197,40 +220,52 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
               n: 2,
             }
           : { mx: a[0]!.x, my: a[0]!.y, d: 0, n: 1 };
-      const P = last.current;
       last.current = cur;
-      if (!P || P.n !== cur.n) return;
-      const now = performance.now(),
-        dt = Math.max(1, now - vel.current.t),
-        dx = cur.mx - P.mx,
-        dy = cur.my - P.my;
-      vel.current = { x: 0.6 * (dx / dt) + 0.4 * vel.current.x, y: 0.6 * (dy / dt) + 0.4 * vel.current.y, t: now };
+      if (!P || P.n !== cur.n || !raw.current) return;
+      const now = performance.now();
+      if (cur.n === 1) {
+        hist.current.push({ x: cur.mx, y: cur.my, t: now });
+        while (hist.current.length > 2 && now - hist.current[0]!.t > 100) hist.current.shift();
+      }
       const r = box.current.getBoundingClientRect();
-      setV((o) => {
-        if (!o) return o;
-        const sc = cur.n === 2 && P.d ? cur.d / P.d : 1,
-          k = Math.max(ZMIN, Math.min(ZMAX, o.k * sc)),
-          f = k / o.k,
-          cx = cur.mx - r.left,
-          cy = cur.my - r.top;
-        return { k, x: cx - (cx - o.x) * f + dx, y: cy - (cy - o.y) * f + dy };
-      });
+      const o = raw.current,
+        sc = cur.n === 2 && P.d ? cur.d / P.d : 1,
+        k = Math.max(ZMIN, Math.min(ZMAX, o.k * sc)),
+        f = k / o.k,
+        cx = cur.mx - r.left,
+        cy = cur.my - r.top;
+      raw.current = { k, x: cx - (cx - o.x) * f + (cur.mx - P.mx), y: cy - (cy - o.y) * f + (cur.my - P.my) };
+      setV(rubber(raw.current));
     };
     const up = (e: PointerEvent) => {
       if (!pts.current.has(e.pointerId)) return;
       pts.current.delete(e.pointerId);
       last.current = null;
-      if (pts.current.size) return; // まだ指が残っている（2本→1本）
+      if (pts.current.size) {
+        hist.current = [];
+        return; // まだ指が残っている（2本→1本）
+      }
+      // 速さ：1本指の直近 100ms の初めと終わり（止めてから離したら流さない）
+      const h = hist.current,
+        now = performance.now();
+      hist.current = [];
       if (moved.current && (vRef.current?.k ?? 1) < ZOUT && onOut) return onOut();
-      let { x: vx, y: vy } = vel.current;
-      if (performance.now() - vel.current.t > 100 || !moved.current) vx = vy = 0;
+      if (!moved.current) return; // タップ：見え方は変えない（画面の原則 1）
+      if (pinched.current || reduce || h.length < 2 || now - h[h.length - 1]!.t > 100) return settle();
+      const a0 = h[0]!,
+        a1 = h[h.length - 1]!,
+        dt = Math.max(8, a1.t - a0.t);
+      return fling((a1.x - a0.x) / dt, (a1.y - a0.y) / dt);
+    };
+    // 投げ：離す直前の速さで流し、0.95/コマで弱める。縁を越えた分は半分に（壁でゆっくり止まる）
+    const fling = (vx: number, vy: number) => {
       const sp = Math.hypot(vx, vy),
         cap = 4; // 速すぎる投げは抑える
       if (sp > cap) {
         vx *= cap / sp;
         vy *= cap / sp;
       }
-      if (Math.hypot(vx, vy) < 0.05 || reduce) return settle();
+      if (Math.hypot(vx, vy) < 0.05) return settle();
       let prev = performance.now();
       const step = (now: number) => {
         const dt = Math.min(40, now - prev);
@@ -242,7 +277,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           if (!o) return o;
           const n = { ...o, x: o.x + vx * dt, y: o.y + vy * dt },
             b = bounds(n);
-          return { ...n, x: n.x + (b.x - n.x) * 0.5, y: n.y + (b.y - n.y) * 0.5 }; // 縁を越えた分は半分に（壁でゆっくり止まる）
+          return { ...n, x: n.x + (b.x - n.x) * 0.5, y: n.y + (b.y - n.y) * 0.5 };
         });
         if (Math.hypot(vx, vy) > 0.02) raf.current = requestAnimationFrame(step);
         else settle();
@@ -280,11 +315,12 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     return () => el.removeEventListener("wheel", wheel);
   }, []);
 
-  // ---- 静かな状態：選んで数秒たつと上の帯と下の面を消し、地図を画面いっぱいに（中身は画面の同じ所に残す） ----
+  // ---- 帯を消した状態（画面の原則 1）：時間では消さない。地図の空いた所の1回のタップで、上の帯と下の面を出し入れする
+  //   （写真アプリと同じ）。消すと地図を画面いっぱいにし、中身は画面の同じ所に残す。空いた所の1回目はダブルタップを待ってから
   const [calm, setCalm] = useState(false);
   const calmRef = useRef(false),
     calmTop = useRef({ top: 0, left: 0 }),
-    calmT = useRef(0);
+    blankT = useRef(0);
   const enter = () => {
     if (calmRef.current || !box.current) return;
     const { top, left } = box.current.getBoundingClientRect();
@@ -300,33 +336,33 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     setV((o) => o && { ...o, x: o.x - left, y: o.y - top });
     setCalm(false);
   };
-  const wake = () => {
-    clearTimeout(calmT.current);
-    leave();
-    if (pick) calmT.current = window.setTimeout(enter, CALM_MS);
-  };
-  useEffect(() => {
-    wake();
-    return () => clearTimeout(calmT.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pick, types]);
   useEffect(() => {
     if (calm) document.body.dataset.calm = "1";
     else delete document.body.dataset.calm;
     return () => {
       delete document.body.dataset.calm;
+      clearTimeout(blankT.current);
     };
   }, [calm]);
 
   // ---- 語を選んだら、真ん中に寄せて相手と線を収める ----
-  const fitKey = pick ? `${pick}|${[...types].sort().join()}|${high}` : "";
+  // 1回目のタップは色だけ。下の面と寄る動きは、ダブルタップを待ってから一緒に出す（画面の原則 10。面が先に出ると、
+  // 2回目のタップを面が受けてしまう）
+  const [shown, setShown] = useState<string | null>(null);
   useEffect(() => {
-    if (!pick || !vRef.current) return;
+    setShown(null);
+    if (!pick) return;
+    const id = setTimeout(() => setShown(pick), DBL_MS);
+    return () => clearTimeout(id);
+  }, [pick]);
+  const fitKey = shown ? `${shown}|${[...types].sort().join()}|${high}` : "";
+  useEffect(() => {
+    if (!pick || !shown || !vRef.current) return;
     const id = setTimeout(() => {
       const { W, H } = size();
       const nv = fitPick(L, pick, types, { W, H, bottom: bottomOf(), k: vRef.current!.k });
       if (nv) go(nv, true);
-    }, 30);
+    }, 30); // 面の高さが決まってから
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey]);
@@ -343,6 +379,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     lastTap.current = { t: now, x: e.clientX, y: e.clientY, card };
     if (now - P.t > 320 || !close || moved.current || t.closest("[data-ui]")) return false;
     lastTap.current = { t: 0, x: 0, y: 0 };
+    clearTimeout(blankT.current); // 1回目の空いた所のタップ（帯の出し入れ）は取り消す
     e.stopPropagation();
     e.preventDefault();
     if (P.card) {
@@ -354,8 +391,14 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
     setTypes(new Set());
     const room = { ...size(), bottom: 0 };
     const g = grp && L.groups.find((x) => x.id === grp.dataset.g);
-    if (g) go(fitBox(g.x - 8, g.y - 8, g.w + 16, g.h + 16, room, 1.4), true);
-    else go(start(), true);
+    if (g) {
+      // まとまりへは、少なくとも 1.3 倍は寄る（寄ったと分かるように）
+      const k = Math.min(
+        ZMAX,
+        Math.max(fitBox(g.x - 8, g.y - 8, g.w + 16, g.h + 16, room, 1.4).k, (vRef.current?.k ?? 1) * 1.3),
+      );
+      go({ k, x: room.W / 2 - (g.x + g.w / 2) * k, y: room.H / 2 - (g.y + g.h / 2) * k }, true);
+    } else go(start(), true);
     return true;
   };
 
@@ -389,28 +432,24 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
   return (
     <section
       ref={box}
-      className={`${s.map}${calm ? ` ${s.full}` : ""}`}
+      className={`${s.map}${calm || page ? ` ${s.full}` : ""}${page ? ` ${s.page}` : ""}`}
       style={{ "--tint": `var(${tint})`, height } as React.CSSProperties}
       data-testid="relation-map"
       data-ready={v ? "true" : "false"}
       data-calm={calm ? "true" : undefined}
+      data-page={page ? "true" : undefined}
       aria-label={`${category}の関係図`}
       onPointerDown={down}
-      onPointerMove={() => calm && moved.current && wake()}
       onClickCapture={(e) => {
         if (dbl(e)) return;
-        if (!calm) return;
-        const onCard = (e.target as HTMLElement).closest("[data-cv]");
-        wake();
-        // 帯が消えているとき：語のカードは1回で選ぶ。ほかの所は帯を戻すだけ
-        if (!onCard) {
-          e.stopPropagation();
-          e.preventDefault();
-        }
+        // 帯が消えているとき：語のカードは1回で選び、帯も戻す（中身は同じ所）
+        if (calm && (e.target as HTMLElement).closest("[data-cv]")) leave();
       }}
       onClick={(e) => {
-        if ((e.target as HTMLElement).closest("[data-ui], button")) return;
-        if (!moved.current && pick) setPick(null);
+        if ((e.target as HTMLElement).closest("[data-ui], button") || moved.current) return;
+        // 空いた所の1回のタップ：帯と面を出し入れする（ダブルタップを待ってから）
+        clearTimeout(blankT.current);
+        blankT.current = window.setTimeout(() => (calmRef.current ? leave() : enter()), DBL_MS);
       }}
     >
       {v ? (
@@ -606,6 +645,14 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           })}
         </div>
       ) : null}
+      {page ? (
+        <div className={s.pageBar} data-ui>
+          <button type="button" onClick={() => onOut?.()} aria-label="ライブラリへ戻る" data-testid="rm-back">
+            ‹ ライブラリ
+          </button>
+          <b>{category}</b>
+        </div>
+      ) : null}
       <div className={s.ctl} data-ui>
         <button
           type="button"
@@ -620,7 +667,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           ⤢
         </button>
       </div>
-      {!pick ? (
+      {!pick || shown !== pick ? (
         <div className={s.legend} aria-hidden="true" data-ui>
           {["変換", "一般化", "導出", "対比"].map((k) => (
             <span key={k}>
@@ -643,6 +690,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           inside={new Set(L.terms.map((t) => t.id))}
           onGo={goPartner}
           onPage={() => onConcept(pick)}
+          onClose={() => setPick(null)}
         />
       )}
     </section>
@@ -665,8 +713,9 @@ const Sheet = forwardRef<
     inside: Set<string>;
     onGo: (e: Link) => void;
     onPage: () => void;
+    onClose: () => void;
   }
->(function Sheet({ net, id, links, types, toggle, high, setHigh, inside, onGo, onPage }, ref) {
+>(function Sheet({ net, id, links, types, toggle, high, setHigh, inside, onGo, onPage, onClose }, ref) {
   const all = PRI.map((k) => [k, links.filter((e) => e.types.includes(k))] as const).filter(([, v]) => v.length);
   const rows = types.size ? all.filter(([k]) => types.has(k)) : all;
   const y0 = useRef<number | null>(null);
@@ -719,8 +768,11 @@ const Sheet = forwardRef<
           ))}
           {!all.length ? <span className={s.none}>横のつながりはない</span> : null}
         </span>
-        <button type="button" className={s.page} onClick={onPage} data-testid="rm-page">
+        <button type="button" className={s.toPage} onClick={onPage} data-testid="rm-page">
           語のページ
+        </button>
+        <button type="button" className={s.close} onClick={onClose} aria-label="選ぶのをやめる" data-testid="rm-close">
+          ✕
         </button>
       </div>
       {high ? (
