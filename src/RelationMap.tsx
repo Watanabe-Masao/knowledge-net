@@ -33,14 +33,14 @@ const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation:
 const dblMs = () => tokenMs("--dur", 200);
 /** 長押しとみなす長さ（一覧ののぞき見と同じ） */
 const HOLD_MS = 450;
-/** A/B で比べる形（渡辺さん 2026-11-07。stats2-course の issue 239）：線の見せ方。
- *  ふだん（A）は今の形（幹の中の線の間 3px・直角の角・交わる所はそのまま）。rmLine=b（B）は、線の間 6px・角を丸める・
- *  十字にまたぐ所は後の線の下に切れ目を入れる（つながる分かれ道と見分ける）。決まったら、勝った形だけを残す */
+/** A/B で比べる形（渡辺さん 2026-11-07。stats2-course の issue 239）：語を選んだあとの画面の狭さ。
+ *  rmTop=b：語を選んでいる間は上の帯（見出し・パンくず・見方の切り替え）を引っ込め、地図を上まで広げる。
+ *  空いた所を1回押すと、選びを外し帯も戻す（1段戻す）。決まったら、勝った形だけを残す */
 export const AB = (() => {
   try {
-    return { line: new URLSearchParams(location.search).get("rmLine") === "b" ? ("b" as const) : ("a" as const) };
+    return { top: new URLSearchParams(location.search).get("rmTop") === "b" };
   } catch {
-    return { line: "a" as const };
+    return { top: false };
   }
 })();
 /** 縁を越えたときの重さ（越えた分をこの割合で縮め、引くほどさらに重く） */
@@ -79,6 +79,9 @@ export function Name({ text }: { text: string }) {
   );
 }
 
+/** 帯の引っ込め方（false＝出ている） */
+type Calm = false | "top" | "all";
+
 type Props = {
   net: Network;
   category: string;
@@ -95,9 +98,9 @@ type Props = {
 };
 
 export default function RelationMap({ net, category, selected, onSelect, onOpen, onRelation, onOut }: Props) {
-  const L = useMemo(() => layoutCategory(net, category, { lane: AB.line === "b" ? 6 : 3 }), [net, category]);
-  const cross = useMemo(() => (AB.line === "b" ? crossings(L) : []), [L]);
-  const pathD = (pts: { x: number; y: number }[]) => roundedPath(pts, AB.line === "b" ? 6 : 0);
+  const L = useMemo(() => layoutCategory(net, category, { lane: 6 }), [net, category]);
+  const cross = useMemo(() => crossings(L), [L]);
+  const pathD = (pts: { x: number; y: number }[]) => roundedPath(pts, 6);
   const uid = useId().replace(/:/g, "");
   const box = useRef<HTMLDivElement>(null);
   const [v, setV] = useState<View | null>(null);
@@ -158,7 +161,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
   /** 下の面（詳しく）が地図に重なっている高さ */
   const bottomOf = () => {
     const sh = document.querySelector<HTMLElement>("[data-testid=detail]");
-    if (!sh || !box.current || calmRef.current) return 0;
+    if (!sh || !box.current || calmRef.current === "all") return 0;
     const r = box.current.getBoundingClientRect();
     return Math.max(0, r.bottom - sh.getBoundingClientRect().top) + 8;
   };
@@ -370,31 +373,49 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
   // ---- 帯を引っ込めた状態（画面の原則 1・16）：時間では引っ込めない。地図を指で動かしたときと、何も選んでいないときの空いた所のタップで。
   //   根に data-bars="hidden" を置くと、上の帯・下のタブ・下の面（data-edge）がそれぞれの縁へ同じ動きで引っ込む。
   //   地図は画面いっぱいに広げ、中身は画面の同じ所に残す（広がった分だけ位置をずらす）
-  const [calm, setCalm] = useState(false);
-  const calmRef = useRef(false),
+  //   帯の引っ込め方は2つ：all＝上の帯・下のタブ・下の面のすべて（地図を指で動かしたとき）、top＝上の帯だけ（語を選んでいる間。rmTop=b）
+  const [calm, setCalm] = useState<Calm>(false);
+  const calmRef = useRef<Calm>(false),
     calmTop = useRef({ top: 0, left: 0 }),
     blankT = useRef(0);
   const shift = (dx: number, dy: number) => {
     setV((o) => o && { ...o, x: o.x + dx, y: o.y + dy });
     if (raw.current) raw.current = { ...raw.current, x: raw.current.x + dx, y: raw.current.y + dy };
   };
-  const enter = () => {
-    if (calmRef.current || !box.current || pageRef.current) return;
-    const { top, left } = box.current.getBoundingClientRect();
-    calmTop.current = { top, left };
-    calmRef.current = true;
-    shift(left, top);
-    setCalm(true);
+  const enter = (to: "top" | "all" = "all") => {
+    if (calmRef.current === to || calmRef.current === "all" || !box.current || pageRef.current) return;
+    if (!calmRef.current) {
+      const { top, left } = box.current.getBoundingClientRect();
+      calmTop.current = { top, left };
+      shift(left, top);
+    }
+    calmRef.current = to;
+    setCalm(to);
   };
-  const leave = () => {
+  /** 1段戻す：全部引っ込めていたら、語を選んでいる間の形（rmTop=b なら上の帯だけ引っ込めたまま）へ。そうでなければ帯を全部戻す */
+  const leave = (all = false) => {
     if (!calmRef.current) return;
+    if (!all && calmRef.current === "all" && AB.top && pickRef.current) {
+      calmRef.current = "top";
+      setCalm("top");
+      return;
+    }
     calmRef.current = false;
     const { top, left } = calmTop.current;
     shift(-left, -top);
     setCalm(false);
   };
+  // 語を選んだら上の帯を引っ込め、選びを外したら戻す（rmTop=b。押したときだけ変わる。画面の原則 1）
+  const pickRef = useRef(pick);
+  pickRef.current = pick;
   useEffect(() => {
-    if (calm) document.documentElement.dataset.bars = "hidden";
+    if (!AB.top) return;
+    if (pick && !calmRef.current) enter("top");
+    else if (!pick && calmRef.current === "top") leave(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pick]);
+  useEffect(() => {
+    if (calm) document.documentElement.dataset.bars = calm === "top" ? "top" : "hidden";
     else delete document.documentElement.dataset.bars;
     return () => {
       delete document.documentElement.dataset.bars;
@@ -583,7 +604,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
       onClickCapture={(e) => {
         if (dbl(e)) return;
         // 帯が引っ込んでいるとき：語のカードは1回で選び、帯も戻す（中身は同じ所）
-        if (calm && (e.target as HTMLElement).closest("[data-cv]")) leave();
+        if (calm === "all" && (e.target as HTMLElement).closest("[data-cv]")) leave();
       }}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("[data-ui], button, [data-line]") || moved.current) return;
@@ -591,7 +612,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
         clearTimeout(blankT.current);
         if (fold) return setFold(null); // 浮かせた一覧が出ていれば、まずそれを閉じる（1段戻す）
         blankT.current = window.setTimeout(() => {
-          if (calmRef.current) leave();
+          if (calmRef.current === "all") leave();
           else if (pick) setPick(null, true);
           else enter();
         }, dblMs());

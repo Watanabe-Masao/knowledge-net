@@ -44,6 +44,15 @@ export function sentence(net: Network, r: Relation): string {
   return s + tag;
 }
 
+/** A/B（rmPeek=b）：少しの段を名前と「つまり」だけにする */
+const PEEK_AB = (() => {
+  try {
+    return new URLSearchParams(location.search).get("rmPeek") === "b";
+  } catch {
+    return false;
+  }
+})();
+
 type Props = {
   net: Network;
   concept: Concept;
@@ -229,6 +238,9 @@ export default function Detail({
   useEffect(() => {
     if (sheet) sheet.onPeek?.(peekOut);
   }, [peekOut]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 少しの段を薄くする形（A/B。渡辺さん 2026-11-07「選択を押した後の画面圧迫感」）：rmPeek=b なら、少しの段は名前の1行と
+  // 「つまり」（2行まで）だけ。切り替え（概要・式・関係）と問いは、面を引き上げたときに出す（島の地図でも同じ面なので同じ形）
+  const compact = PEEK_AB && !!sheet && (sheet.detent === "peek" || sheet.detent === "min");
   const groups = groupsOf(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
   // 面の作り（渡辺さん 2026-10-31「スライドで見る部分が狭い」・11-01「下のツールバーに動的に」）：
@@ -338,7 +350,7 @@ export default function Detail({
           ]}
         />
       </header>
-      <div className={st.tabs}>
+      <div className={st.tabs} hidden={compact}>
         <Segmented variant="tabs" value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身" items={tabs} />
       </div>
     </>
@@ -350,7 +362,7 @@ export default function Detail({
           {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
           <div ref={leadRef} className={st.lead}>
             {/* 問いは概念の問いの文だけ。実験室への入口は下の主ボタン1つ（同じ機能を2か所に置かない。渡辺さん 2026-11-04） */}
-            {c.question && (
+            {c.question && !compact && (
               <section className={st.ask} data-testid="concept-question">
                 <span className={st.lab}>問い</span>
                 <p className={st.askText}>{c.question}</p>
@@ -359,11 +371,11 @@ export default function Detail({
             {c.gist && (
               <section className={st.block} data-testid="concept-gist">
                 <span className={st.lab}>つまり</span>
-                <p className={st.gist}>{c.gist}</p>
+                <p className={`${st.gist}${compact ? ` ${st.clamp}` : ""}`}>{c.gist}</p>
               </section>
             )}
             {!c.gist && c.short && c.definition ? (
-              <p className={st.short} data-testid="concept-short">
+              <p className={`${st.short}${compact ? ` ${st.clamp}` : ""}`} data-testid="concept-short">
                 {c.short}
               </p>
             ) : null}

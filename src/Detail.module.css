@@ -790,3 +790,15 @@
   color: var(--ink-2);
   line-height: 1.55;
 }
+
+/* 少しの段では「つまり」を2行までにする（A/B の rmPeek=b） */
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tabs[hidden] {
+  display: none;
+}
