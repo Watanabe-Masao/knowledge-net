@@ -424,6 +424,7 @@ export default function RelationMap({ net, category, onConcept, onOut }: Props) 
           }}
           data-testid="rm-canvas"
           data-k={v.k.toFixed(3)}
+          data-moving={anim ? "1" : undefined}
         >
           {L.groups.map((g) => (
             <div

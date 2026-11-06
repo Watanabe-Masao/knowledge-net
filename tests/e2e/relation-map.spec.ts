@@ -19,14 +19,21 @@ async function open(page: Page, w = 390, h = 844) {
   await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
   return page.getByTestId("relation-map");
 }
-/** 寄る動きが止まるまで待つ（倍率と位置が2回続けて同じ） */
+/** 寄る動きが止まるまで待つ。寄る動き（data-moving）が終わり、キャンバスの画面の上の位置が2回続けて同じ。
+ *  WebKit は動きの途中でも getComputedStyle の transform に終わりの値を返すので、変形の値ではなく画面の上の位置で見る */
 async function still(page: Page) {
+  const canvas = page.getByTestId("rm-canvas");
+  await page.waitForTimeout(80); // 選んでから寄り始めるまで（30ms）を越える
+  await expect(canvas).not.toHaveAttribute("data-moving", "1", { timeout: 3000 });
   let prev = "";
   for (let i = 0; i < 30; i++) {
-    const cur = await page.getByTestId("rm-canvas").evaluate((el) => getComputedStyle(el).transform);
+    const cur = await canvas.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return `${r.x.toFixed(1)},${r.y.toFixed(1)},${r.width.toFixed(1)}`;
+    });
     if (cur === prev) return;
     prev = cur;
-    await page.waitForTimeout(120);
+    await page.waitForTimeout(100);
   }
 }
 const rectOf = (page: Page, id: string) =>
