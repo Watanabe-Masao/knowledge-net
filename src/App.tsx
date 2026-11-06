@@ -573,7 +573,7 @@ export default function App() {
         <CategoryList net={net} category={group} layout={layout} onConcept={setSel} />
       ) : !sel && group && group !== "*" && net.mapReady.has(group) ? (
         // 関係図に移した分類の地図は、まとまりの関係図（stats2-course #235。移していない分類は今の島の地図）
-        <RelationMap net={net} category={group} onConcept={setSel} />
+        <RelationMap net={net} category={group} onConcept={setSel} onOut={() => setGroup(null)} />
       ) : (
         <>
           <Graph

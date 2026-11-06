@@ -243,3 +243,14 @@
   justify-content: flex-end;
   margin-top: var(--sp-2);
 }
+
+/* 関係図の静かな状態（選んで数秒）：上の帯をフェードで消す。地図は画面いっぱいに広がる（RelationMap.module.css の .full） */
+.top,
+.catBar {
+  transition: opacity var(--dur-sheet) var(--ease);
+}
+:global(body[data-calm]) .top,
+:global(body[data-calm]) .catBar {
+  opacity: 0;
+  pointer-events: none;
+}
