@@ -10,7 +10,7 @@ import type { Tab } from "./urlState";
 export type { Tab } from "./urlState";
 export { readTab } from "./urlState";
 export const TABS: { id: Tab; label: string }[] = [
-  { id: "explore", label: "探索" },
+  { id: "explore", label: "さがす" },
   { id: "learn", label: "学習" },
   { id: "lab", label: "実験室" },
   { id: "problems", label: "問題集" },
@@ -353,12 +353,12 @@ export function LabPage({
     return n ? `${n} 問` : "実験室";
   };
   // 地図と同じ分類ごと（データに出てくる順）。名前で探すと、合う概念だけ
-  const cats = [...new Set(concepts.map((id) => net.concepts.get(id)?.category ?? "その他"))]
+  const cats = [...new Set(concepts.map((id) => net.concepts.get(id)?.category ?? "そのほか"))]
     .map((cat): [string, string[]] => [
       cat,
       concepts.filter(
         (id) =>
-          (net.concepts.get(id)?.category ?? "その他") === cat &&
+          (net.concepts.get(id)?.category ?? "そのほか") === cat &&
           (!query ||
             nm(id).includes(query.trim()) ||
             (net.concepts.get(id)?.en ?? "").toLowerCase().includes(query.trim().toLowerCase())),
@@ -418,8 +418,8 @@ export function LabPage({
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="名前で検索"
-                aria-label="概念を名前で検索"
+                placeholder="概念を検索"
+                aria-label="概念を検索"
                 data-testid="lab-concept-search"
               />
               {cats.map(([cat, ids]) => (
@@ -524,7 +524,7 @@ export function LabPage({
                                       {it.title}
                                       {roles}
                                     </span>
-                                    <span className={s.qTag}>作成中</span>
+                                    <span className={s.qTag}>まだ</span>
                                   </div>
                                 )}
                               </li>
@@ -542,7 +542,7 @@ export function LabPage({
                     <b>{lead(x)}</b>
                     <Muted as="span">
                       目的から問いを選ぶ（A〜F の問い {itemsOf(x).filter((it) => it.open).length}／{itemsOf(x).length}
-                      ）・自分で条件を決めて比較
+                      ）・自分で条件を決めて比べる
                     </Muted>
                   </>
                 ) : (

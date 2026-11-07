@@ -59,7 +59,7 @@ export function RelMap({
   );
   const dim = (id: string) => !!sel && sel !== id;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={st.relMap} role="group" aria-label="関係の地図" data-testid="rel-map">
+    <svg viewBox={`0 0 ${W} ${H}`} className={st.relMap} role="group" aria-label="関係図" data-testid="rel-map">
       <defs>
         {sides.map((k) => (
           <marker

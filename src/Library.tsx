@@ -71,12 +71,12 @@ export default function Library({ net, onConcept, onGroup }: Props) {
                         type="button"
                         className={`${s.cell} ${s.more}`}
                         onClick={() => onGroup(cat)}
-                        aria-label={`${cat}の語をすべて見る`}
+                        aria-label={`${cat}の概念をすべて見る`}
                       >
                         {rest > 0 ? (
                           <>
                             <b className={s.moreNum}>{rest}</b>
-                            <span className={s.moreUnit}>ほかの語</span>
+                            <span className={s.moreUnit}>ほかの概念</span>
                           </>
                         ) : (
                           <span className={s.moreUnit}>すべて見る</span>

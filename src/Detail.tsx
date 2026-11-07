@@ -450,14 +450,14 @@ export default function Detail({
                 <>
                   成り立つ条件{" "}
                   <span className={st.n}>
-                    {c.conditions.math.length}
-                    {c.conditions.data?.length ? `＋データ ${c.conditions.data.length}` : ""}
+                    式 {c.conditions.math.length}
+                    {c.conditions.data?.length ? `・データ ${c.conditions.data.length}` : ""}
                   </span>
                 </>
               }
               onOpen={reading}
             >
-              <h4>式が成り立つ条件</h4>
+              <h4>式の条件</h4>
               <ul className={st.conds}>
                 {c.conditions.math.map((x) => (
                   <li key={x}>{x}</li>
@@ -465,7 +465,7 @@ export default function Detail({
               </ul>
               {c.conditions.data?.length ? (
                 <>
-                  <h4>データで確認すること</h4>
+                  <h4>データの条件</h4>
                   <ul>
                     {c.conditions.data.map((x) => (
                       <li key={x}>{x}</li>

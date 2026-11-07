@@ -77,7 +77,7 @@ export default function PathList({ net, target, seq, onOpen, sheet }: Props) {
                     {c.en ? `・${c.en}` : ""}
                   </span>
                 ) : null}
-                {text ? <p>{text}</p> : <p className={st.meta}>説明はまだない。</p>}
+                {text ? <p>{text}</p> : <p className={st.meta}>まだ説明がない。</p>}
                 {c.principle ? <p className={st.sub}>{c.principle}</p> : null}
                 <button type="button" className={st.go} onClick={() => onOpen(id)}>
                   {c.name} を開く<span aria-hidden="true">›</span>

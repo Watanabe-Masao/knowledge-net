@@ -156,7 +156,7 @@ export function islands(
     edges = els.filter((e) => e.data.source);
   const links = edges.map((e) => [e.data.source!, e.data.target!] as [string, string]);
   const catOf = new Map<string, string>();
-  for (const n of nodes) catOf.set(n.data.id!, (n.data.cat as string) || "その他");
+  for (const n of nodes) catOf.set(n.data.id!, (n.data.cat as string) || "そのほか");
   for (const n of nodes)
     if (n.data.kind === "derivation") {
       // 導出の点は、結論の語の島に入れる
@@ -188,7 +188,7 @@ export function islands(
       .map((n) => String(n.data.label));
     const rest = mine.length - top.length,
       labs = labsOf(c);
-    capLines.set(c, [...top, rest > 0 ? `ほか ${rest}語` : "", labs ? `実験の問い ${labs}` : ""].filter(Boolean));
+    capLines.set(c, [...top, rest > 0 ? `ほか ${rest}` : "", labs ? `実験の問い ${labs}` : ""].filter(Boolean));
   }
   for (const cat of cats) {
     const mine = nodes.filter((n) => catOf.get(n.data.id!) === cat);
@@ -310,7 +310,7 @@ export function islands(
         selectable: false,
         data: {
           id: `isle:${c}`,
-          label: `${c}　${count(c)}語`,
+          label: `${c}　${count(c)}`,
           kind: "isle",
           cat: c,
           colW: maxW + ISLE_GAP * 0.8,
@@ -1014,12 +1014,7 @@ export default function Graph({
       aria-modal={big || undefined}
       aria-label={big ? "地図（全画面）" : undefined}
     >
-      <div
-        ref={box}
-        className={`${s.graph}${fill ? ` ${s.fill}` : ""}`}
-        data-testid="graph"
-        aria-label="概念と関係のネットワーク"
-      />
+      <div ref={box} className={`${s.graph}${fill ? ` ${s.fill}` : ""}`} data-testid="graph" aria-label="地図" />
       {tip
         ? (() => {
             const cpt = net.concepts.get(tip.id);
@@ -1088,8 +1083,8 @@ export default function Graph({
           </Button>
           <Button
             icon
-            aria-label="図を枠に収める"
-            title="図を枠に収める"
+            aria-label="全体に戻す"
+            title="全体に戻す"
             onClick={() =>
               isleView.current
                 ? isleView.current()

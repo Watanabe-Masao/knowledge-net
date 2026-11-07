@@ -471,7 +471,7 @@ export default function App() {
             <Button
               variant="quiet"
               icon
-              aria-label="検索"
+              aria-label="概念を検索"
               aria-expanded={searchOpen}
               onClick={() => setSearchOpen(!searchOpen)}
             >
@@ -519,7 +519,7 @@ export default function App() {
                   ...(path ? [{ label: "前提をさかのぼる" }] : []),
                 ]
               : eff
-                ? [{ label: eff === "*" ? "全部の語" : eff }]
+                ? [{ label: eff === "*" ? "全部の概念" : eff }]
                 : []),
           ]}
         />
@@ -536,9 +536,9 @@ export default function App() {
               if (v) setView(v as View);
             }}
             items={[
-              { value: "around", label: "フォーカス" },
-              { value: "path", label: "経路" },
-              { value: "all", label: "俯瞰" },
+              { value: "around", label: "まわり" },
+              { value: "path", label: "たどる" },
+              { value: "all", label: "全体" },
             ]}
           />
         </div>
@@ -617,7 +617,7 @@ export default function App() {
                     data-testid="group-select"
                   >
                     <option value="">分類の一覧に戻る</option>
-                    <option value="*">全部の語（{[...net.concepts.values()].length}）</option>
+                    <option value="*">全部の概念（{[...net.concepts.values()].length}）</option>
                     {groups.map((g) => (
                       <option key={g} value={g}>
                         {g}（{[...net.concepts.values()].filter((c) => c.category === g).length}）
@@ -713,8 +713,8 @@ export default function App() {
       ) : null}
       {full && (
         <FullView
-          label="ラボ"
-          title={full.title ?? "ラボ"}
+          label="実験室"
+          title={full.title ?? "実験室"}
           onClose={() => setFull(null)}
           aside={
             <a href={full.url} target="_blank" rel="noreferrer">
@@ -722,7 +722,7 @@ export default function App() {
             </a>
           }
         >
-          <iframe src={full.url} title={full.title ?? "ラボ"} />
+          <iframe src={full.url} title={full.title ?? "実験室"} />
         </FullView>
       )}
       {edgeSel ? (

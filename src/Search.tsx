@@ -64,7 +64,7 @@ export default function Search({ concepts, onPick }: Props) {
         ref={input}
         type="search"
         className={s.field}
-        placeholder="概念を検索（名前・英語名）"
+        placeholder="概念を検索"
         aria-label="概念を検索"
         value={q}
         role="combobox"
