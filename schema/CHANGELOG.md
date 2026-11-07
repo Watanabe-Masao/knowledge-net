@@ -42,6 +42,7 @@
 | 34 | 2026-11-05 | 概念に任意の `icon`（語の印の SVG の URL。引用符・括弧・空白を含む URL は型で止める）、教材に任意の `pillars`（柱：id・name・categories。色は画面が順に当てる）（stats2-course #220）。任意 |
 | 35 | 2026-11-05 | 教材に任意の `groups`（意味のまとまり：id〔教材名:…〕・category・name・summary。並べた順が学ぶ順）、概念に任意の `group`（まとまりの id）（stats2-course #228）。任意 |
 | 36 | 2026-11-06 | 関係の種類に「種類」（□ は ■ の一種）と「材料」（□ は ■ の材料：定義の構成要素）を足す（relation-types.yaml。trace は true）。関係に任意の `axis`（比べる軸。対比だけ）。教材に任意の `relation_map_ready`（関係図の決まりで書き終えた分類の一覧）。関係図の決まり（stats2-course docs/relation-map.md・#232）。教材は移した分類で、前提（mathematical）を材料か学ぶ順（前提 learning）に分け直す。種類が増えたので、画面を先に公開してから教材が書く。任意 |
+| 37 | 2026-11-07 | 教材に任意の `group_relations`（まとまりの間の関係：from・to〔まとまりの id〕・label〔矢印の言葉〕・relations〔裏付けの関係の id。1本以上〕・任意の note〔開いた直後に最初に出す1文〕）。種類は書かず、指した関係から画面が決める。関係図の全体の見え方の矢印（stats2-course #240）。任意 |
 
 ## 実験室の拡張（kn-experiment-v1.json）
 
