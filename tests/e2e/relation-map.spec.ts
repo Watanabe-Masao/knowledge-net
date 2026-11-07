@@ -563,6 +563,49 @@ test("長押しして離したあとも、地図を指で動かせる", async ({
   expect(await drag(), "語の長押しのあとで地図が動かない").toBeGreaterThan(20);
 });
 
+// 確かめる対象：全体の見え方（設計書 3）。指で引いて名前が読めないほど小さくすると、語を薄くし、まとまりの名前と数を出し、
+//   まとまりの間を組ごとに1本の矢印にする。となりへの矢印は言葉、離れたまとまりへは種類の印だけ（渡辺さん 2026-11-08 の見本で B・b）。
+//   矢印を押すと、組・操作・条件の文（note）が先に出て、メニューから2つの概念のページを開く。まとまりの名前を押すと説明（1文）。
+// 想定する故障：引いても全体の見え方にならない（語が読めない大きさのまま並ぶ）。矢印が教材の「まとまりの間の関係」と数が合わない・
+//   言葉が出ない・離れた矢印に言葉が出て枠からはみ出す。押しても文が出ない・2つの概念のページへ行けない。名前を押しても説明が出ない。
+// 見つけ方：開いた直後は全体の見え方ではない（名前が読める倍率）。まとまりの名前を押すと1文の説明。2本指で引くと data-far になり、
+//   矢印（rm-garrow）が確率分布のまとまりの間の関係の数（3）だけ出る。言葉の矢印は2つ・印だけの矢印は1つ。言葉の矢印を押すと note の文、
+//   メニューの関係を押すと edge-panel。
+// 既存との違い：ほかのテストは名前が読める倍率だけ
+// 検出の確かめ（2026-11-08）：引いたときに全体の見え方へ替える条件（far）を外すと「引いても全体の見え方にならない」で落ちることを見た
+test("全体の見え方：引くとまとまりの名前と1本の矢印。矢印は組・操作・条件の文から開く。名前を押すと説明", async ({
+  page,
+}) => {
+  const m = await open(page);
+  await expect(m, "開いた直後が全体の見え方").not.toHaveAttribute("data-far", "true");
+  await m.getByTestId(`rm-gname-${G("count")}`).click();
+  const info = page.getByTestId("rm-ginfo");
+  await expect(info).toContainText("取り出し・試行をくり返して");
+  await info.getByRole("menuitem", { name: "閉じる" }).click();
+  await expect(info).toHaveCount(0);
+  const view = (await m.boundingBox())!;
+  const cx = view.x + view.width / 2,
+    cy = view.y + 300;
+  // 2本指で引く（指の間を 200 → 150px。倍率は 0.8 → 0.6 ほど。ライブラリへ戻る境目 0.45 より上）
+  const pinch: Record<number, [number, number]>[] = Array.from({ length: 11 }, (_, i) => ({
+    1: [cx - 100 + 2.5 * i, cy] as [number, number],
+    2: [cx + 100 - 2.5 * i, cy] as [number, number],
+  }));
+  await fingers(page, pinch);
+  await expect(m, "引いても全体の見え方にならない").toHaveAttribute("data-far", "true");
+  const arrows = m.getByTestId("rm-garrow");
+  await expect(arrows).toHaveCount(3);
+  const texts = await arrows.allInnerTexts();
+  expect(texts.filter((t) => t.trim().length > 2)).toHaveLength(2); // となりへの矢印は言葉
+  expect(texts.filter((t) => t.trim().length === 0)).toHaveLength(1); // 離れたまとまりへは印だけ
+  await arrows.filter({ hasText: "平均を保って回数を増やす" }).click();
+  const note = page.getByTestId("rm-gnote");
+  await expect(note).toContainText("平均を保って回数を増やす");
+  await expect(note).toContainText("ポアソン分布に近づく");
+  await note.getByTestId("rm-gnote-rel").first().click();
+  await expect(page.getByTestId("edge-panel")).toBeVisible();
+});
+
 // 確かめる対象：下の札で線の種類を絞る（凡例を兼ねる。渡辺さん 2026-11-07）。
 // 想定する故障：札を押しても線が絞れない・ほかの種類の線が残る。語を選ぶと絞り込みが消える・絞り込み中だと分からない。
 // 見つけ方：「対比」の札を押すと押した状態になり、描かれる線が全部対比を含む線だけになる。二項分布を選ぶと札は隠れるが、

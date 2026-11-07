@@ -206,13 +206,10 @@ export default function RelationMap({
     setV(nv);
     animFor(slow ? 640 : 340);
   };
-  // 初め・「全体に戻す」・まとまりの外のダブルタップ：分類の全体を見える所に収める（設計書 3：最初の画面は全体の見え方。
-  // まとまりの名前と1文が、地図の読み方の案内を兼ねる）。上から見せ、下の札の帯の分は空ける
+  // 初め：幅に合わせ、上から見せる（名前が読める倍率。全体の見え方は指で引いたときだけ。渡辺さん 2026-11-08 の見本で B）
   const start = () => {
-    const { W, H } = size();
-    const legend = box.current?.querySelector<HTMLElement>("[data-testid=rm-legend]");
-    const foot = legend && !calmRef.current ? legend.offsetHeight + 8 : 0;
-    const k = Math.min(1.1, (W - 8) / L.w, (H - (page ? 52 : 0) - foot - 8) / L.h);
+    const { W } = size();
+    const k = Math.min(1.1, (W - 8) / L.w);
     // 全画面のページでは上の戻る帯の下から。帯が引っ込んでいるときは、引っ込む前と同じ所（縁の内側の扱いと合わせる）
     const c = calmRef.current ? calmTop.current : { top: 0, left: 0 };
     return { k, x: (W - L.w * k) / 2 + c.left, y: (page ? 52 : 0) + c.top };
@@ -563,7 +560,8 @@ export default function RelationMap({
   const [trace, setTrace] = useState<{ edge: string; n: number } | null>(null);
   // 引き直しの出だしと着いたとき、両端の概念の縁を一度だけ灯す（n で同じ概念をもう一度灯せる）
   const [flash, setFlash] = useState<{ id: string; n: number; color: string } | null>(null);
-  const [gnote, setGnote] = useState<GroupArrow | null>(null); // 全体の見え方で、まとまりの間の矢印を開いたとき
+  const [gnote, setGnote] = useState<GroupArrow | null>(null);
+  const [ginfo, setGinfo] = useState<string | null>(null); // まとまりの名前を押したとき：そのまとまりの1文（説明） // 全体の見え方で、まとまりの間の矢印を開いたとき
   const [pressLine, setPressLine] = useState<string | null>(null); // 押した瞬間に線を太くする（押した手応え）
   const [holdLine, setHoldLine] = useState<string | null>(null); // 押さえている間は、その線が太くなりながら光る（長押しの手触り）
   // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。島の地図・一覧の長押しと同じ働き（画面の原則 10）
@@ -685,6 +683,7 @@ export default function RelationMap({
     setFold(null);
     setTip(null);
     setGnote(null);
+    setGinfo(null);
   }, [category, page]);
   const openFold = (ids: string[], title: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -753,7 +752,19 @@ export default function RelationMap({
               style={{ left: g.x, top: g.y, width: g.w, height: g.h }}
             >
               <div className={s.head} data-testid="rm-head">
-                <b>{g.name}</b>
+                <button
+                  type="button"
+                  className={s.gname}
+                  data-testid={`rm-gname-${g.id}`}
+                  aria-label={`${g.name}の説明`}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    setGinfo(g.id);
+                  }}
+                >
+                  <span className={s.hitbox} data-hitbox aria-hidden="true" />
+                  <b>{g.name}</b>
+                </button>
                 <i aria-label={`${g.terms.length} 個の概念`}>{g.terms.length}</i>
                 {g.common.length || g.commonConds.length ? (
                   <button
@@ -988,11 +999,17 @@ export default function RelationMap({
                     setGnote(a);
                   }}
                 >
-                  {a.label}
+                  {a.anchor === "end" ? (
+                    // 離れたまとまりへの矢印は、種類の印だけ（言葉は押したときに出す。渡辺さん 2026-11-08 の見本で b）
+                    <span aria-label={a.label} style={{ display: "contents" }}>
+                      <Badge k={net.relations.find((r) => r.id === a.relations[0])?.type ?? "変換"} size={22} />
+                    </span>
+                  ) : (
+                    a.label
+                  )}
                 </button>
               ))}
               {L.groups.map((g) => {
-                const meta = net.groups.find((x) => x.id === g.id);
                 return (
                   <div
                     key={`f${g.id}`}
@@ -1002,8 +1019,19 @@ export default function RelationMap({
                       { left: g.x, top: g.y, width: g.w, height: g.h, "--u": `${1 / v.k}px` } as React.CSSProperties
                     }
                   >
-                    <b>{g.name}</b>
-                    {meta?.summary ? <span>{meta.summary}</span> : null}
+                    <button
+                      type="button"
+                      className={s.farName}
+                      data-ui
+                      data-testid={`rm-farname-${g.id}`}
+                      aria-label={`${g.name}の説明`}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        setGinfo(g.id);
+                      }}
+                    >
+                      {g.name}
+                    </button>
                     <i>{g.terms.length} 個の概念</i>
                   </div>
                 );
@@ -1111,6 +1139,41 @@ export default function RelationMap({
           })}
         </div>
       ) : null}
+      {ginfo
+        ? createPortal(
+            // まとまりの名前を押したとき：そのまとまりの1文（説明）と概念の数。いつも出しておくと枠が混むので、押したときだけ
+            <div
+              className={s.peekScrim}
+              data-ui
+              data-testid="rm-ginfo"
+              role="dialog"
+              aria-label="まとまりの説明"
+              onClick={(ev) => {
+                if (ev.target === ev.currentTarget) setGinfo(null);
+              }}
+            >
+              {(() => {
+                const g = net.groups.find((x) => x.id === ginfo);
+                const box0 = L.groups.find((x) => x.id === ginfo);
+                return (
+                  <div className={s.peekCard}>
+                    <span className={s.peekHead}>
+                      <span className={s.peekPair}>{g?.name}</span>
+                    </span>
+                    {g?.summary ? <p>{g.summary}</p> : null}
+                    <p>{box0?.terms.map((t) => nameOf(net, t)).join("・")}</p>
+                  </div>
+                );
+              })()}
+              <div className={s.peekMenu} role="menu">
+                <button type="button" role="menuitem" onClick={() => setGinfo(null)}>
+                  閉じる
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
       {gnote
         ? createPortal(
             // まとまりの間の矢印を開いたとき：まず実際の分布の組・操作・成り立つ条件（note）。まとまり全体が別のまとまりへ変わるようには書かない
