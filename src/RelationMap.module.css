@@ -563,7 +563,7 @@
   }
 }
 
-/* 見える所の外の相手（下の面の上の段。地図の上に重ねない。画面の原則 5） */
+/* 見える所の外の相手（下の面の上の段。地図の上に重ねない。関係図の決定：stats2-course docs/relation-map-design.md 3） */
 .outside {
   display: flex;
   flex-wrap: wrap;
