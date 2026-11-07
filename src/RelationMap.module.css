@@ -625,7 +625,6 @@
   box-shadow:
     0 0 0 1px var(--line-strong),
     0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
-  pointer-events: none;
   animation: peek-in var(--dur) var(--ease); /* 押さえている指の上に、すっと出る（縁から滑らせない） */
 }
 @keyframes peek-in {
@@ -640,6 +639,82 @@
   gap: 6px;
   font-size: 15px;
   font-weight: 700;
+}
+.peekPair {
+  flex: 1;
+  min-width: 0;
+}
+/* 説明の右上：2つの概念のページへ（押す所 44px） */
+.peekOpen {
+  all: unset;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin: -10px -10px -10px 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.peekOpen svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.peekOpen:active {
+  background: var(--line);
+}
+.peekOpen:focus-visible {
+  outline: 2px solid var(--accent);
+}
+/* 線を押したとき：矢印の向きに引き直してから、すっと消える（1つの操作に動きは1つ。画面の原則 10） */
+.trace {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  pointer-events: none;
+  stroke-dasharray: 1 1;
+  animation: trace-draw var(--dur-flash) var(--ease) forwards;
+}
+.trace[data-rev] {
+  animation-name: trace-draw-rev;
+}
+@keyframes trace-draw {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0.9;
+  }
+  70% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes trace-draw-rev {
+  0% {
+    stroke-dashoffset: -1;
+    opacity: 0.9;
+  }
+  70% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trace {
+    animation: none;
+    opacity: 0;
+  }
 }
 .peekCard p {
   margin: 6px 0 0;

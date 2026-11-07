@@ -267,6 +267,8 @@ export default function RelationMap({
     } else {
       moved.current = true; // 2本目が触れたら、タップではない
       pinched.current = true;
+      setPeek(null);
+      setFold(null);
       enter();
     }
     last.current = null;
@@ -284,6 +286,9 @@ export default function RelationMap({
         if (!s0 || Math.hypot(e.clientX - s0.x, e.clientY - s0.y) < SLOP) return;
         moved.current = true;
         P = { mx: s0.x, my: s0.y, d: 0, n: 1 }; // 遊びの分も動かす（指の真下に付く）
+        // 浮かせた説明・一覧は、その場所を指していたもの。地図を動かしたら消す（渡辺さん 2026-11-07「画面移動等で消える」）
+        setPeek(null);
+        setFold(null);
         enter(); // 地図を指で動かすと、帯を引っ込めて地図を広く（Safari でページを送ると帯が引っ込むのと同じ。画面の原則 1・16）
       }
       const cur =
@@ -532,6 +537,9 @@ export default function RelationMap({
   const holdT = useRef(0),
     held = useRef(false);
   const [peek, setPeek] = useState<{ edge: string; x: number; y: number } | null>(null);
+  const heldAt = useRef(0); // 長押しを離した時刻（離したときに来る「押した」を、ほかの所のタップと分ける）
+  // 線を押すと、その線を矢印の向きになぞる（渡辺さん 2026-11-07 の見本で B「線を引き直す」）。n は同じ線をもう一度押したときに描き直す印
+  const [trace, setTrace] = useState<{ edge: string; n: number } | null>(null);
   // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。島の地図・一覧の長押しと同じ働き（画面の原則 10）
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   const tipT = useRef(0),
@@ -584,12 +592,35 @@ export default function RelationMap({
     };
   // 長押しの終わりは、指を離したとき（pointerup・touchend）。iPhone の Safari は長押しの途中で pointercancel を送ることがあるので、
   // 浮かせている間の pointercancel では消さない（指を離すまで見せる）
+  // 線の説明が出ている間：説明の外を押すと閉じる。地図の中なら閉じるだけ（その押した物は動かさない）。地図の外（上の帯・下のタブ）は
+  // 閉じて、押した物もそのまま働く。長押しを離したときの「押した」では閉じない
+  useEffect(() => {
+    if (!peek) return;
+    const close = (e: MouseEvent) => {
+      const t = e.target as Element;
+      if (t.closest?.("[data-testid=rm-peek]")) return;
+      const inMap = !!box.current?.contains(t);
+      if (inMap) e.stopPropagation();
+      if (performance.now() - heldAt.current >= 400) setPeek(null);
+    };
+    addEventListener("click", close, true);
+    return () => removeEventListener("click", close, true);
+  }, [peek]);
   const holdEnd = (e: Event) => {
     clearTimeout(holdT.current);
     clearTimeout(tipT.current);
     if (e.type === "pointercancel" && (held.current || tipHeld.current)) return;
-    if (held.current) setPeek(null);
-    if (tipHeld.current) setTip(null);
+    // 線の説明は離しても残す（ほかの所を押すと閉じる。渡辺さん 2026-11-07）。語の概要は離すと消す
+    if (held.current) {
+      held.current = false;
+      heldAt.current = performance.now();
+    }
+    // 長押しの印は離したら下ろす（残すと、そのあと地図を指で動かせない。渡辺さん 2026-11-07「キャンバスが固定」）
+    if (tipHeld.current) {
+      tipHeld.current = false;
+      heldAt.current = performance.now();
+      setTip(null);
+    }
   };
   useEffect(() => {
     addEventListener("pointerup", holdEnd);
@@ -605,12 +636,12 @@ export default function RelationMap({
   const lineT = useRef(0);
   const lineClick = (hitId: string, kind?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (moved.current || held.current) return; // 長押しのあとの「押した」は数えない
+    if (moved.current || held.current || performance.now() - heldAt.current < 400) return; // 長押しのあとの「押した」は数えない
     const edgeId = kind ? hitId : nearestEdge(e.clientX, e.clientY, hitId); // 線の上の印はその線のまま
     clearTimeout(lineT.current);
     lineT.current = window.setTimeout(() => {
-      const r = relOf(edgeId, kind);
-      if (r) onRelation(r.id);
+      // 押しただけでは別の画面へ移らない。線を矢印の向きになぞって、どちらからどちらへの関係かを見せる（2つの概念のページへは説明の ↗）
+      setTrace((t) => ({ edge: edgeId, n: (t?.n ?? 0) + 1 }));
     }, dblMs());
   };
 
@@ -630,6 +661,12 @@ export default function RelationMap({
   const peekEdge = peek ? L.edges.find((e) => e.id === peek.edge) : undefined;
   // まとまりの「使う語」・見出しの共通の印：印だけでは分かりにくいので、押すと名前の一覧を浮かせて見せる（渡辺さん 2026-11-07）
   const [fold, setFold] = useState<{ ids: string[]; title: string; x: number; y: number } | null>(null);
+  // 分類を替えた・全画面に切り替えたときも、浮かせた物は消す（指していた場所がなくなる）
+  useEffect(() => {
+    setPeek(null);
+    setFold(null);
+    setTip(null);
+  }, [category, page]);
   const openFold = (ids: string[], title: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
     const r = box.current!.getBoundingClientRect(),
@@ -788,13 +825,32 @@ export default function RelationMap({
                     data-from={e.from}
                     data-to={e.to}
                     data-type={e.type}
-                    data-state={peek?.edge === e.id ? "lit" : !pick ? undefined : on ? "lit" : "dim"}
+                    data-state={
+                      peek?.edge === e.id || trace?.edge === e.id ? "lit" : !pick ? undefined : on ? "lit" : "dim"
+                    }
                     markerEnd={e.arrow === "end" ? m : undefined}
                     markerStart={e.arrow === "start" ? m : undefined}
                   />
                 </g>
               );
             })}
+            {(() => {
+              const te = trace && shown.find((e) => e.id === trace.edge);
+              if (!te) return null;
+              // 矢印の向きに引き直す：線の始まり（arrow が start の線は終わり）から、矢印の先へ
+              return (
+                <path
+                  key={`t${trace!.n}`}
+                  d={pathD(te.pts)}
+                  className={s.trace}
+                  pathLength={1}
+                  data-rev={te.arrow === "start" ? "" : undefined}
+                  data-testid="rm-trace"
+                  style={{ stroke: kcol(te.type) }}
+                  onAnimationEnd={() => setTrace(null)}
+                />
+              );
+            })()}
             {/* 線を押す所：見えない太い線（画面の上で 44px。画面の原則 6）。押すと関係の面、長押しの間は向こうの端を見せる */}
             {shown.map((e) => (
               <path
@@ -903,7 +959,7 @@ export default function RelationMap({
                 onContextMenu={(e) => e.preventDefault()}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (moved.current || tipHeld.current) return; // 長押しのあとの「押した」は数えない
+                  if (moved.current || tipHeld.current || performance.now() - heldAt.current < 400) return; // 長押しのあとの「押した」は数えない
                   try {
                     navigator.vibrate?.(8);
                   } catch {
@@ -953,7 +1009,25 @@ export default function RelationMap({
         >
           <span className={s.peekHead}>
             <Badge k={peekEdge.type} size={20} />
-            {nameOf(net, peekRel?.from ?? peekEdge.from)} → {nameOf(net, peekRel?.to ?? peekEdge.to)}
+            <span className={s.peekPair}>
+              {nameOf(net, peekRel?.from ?? peekEdge.from)} → {nameOf(net, peekRel?.to ?? peekEdge.to)}
+            </span>
+            {peekRel ? (
+              <button
+                type="button"
+                className={s.peekOpen}
+                aria-label="2つの概念のページを開く"
+                data-testid="rm-peek-open"
+                onClick={() => {
+                  setPeek(null);
+                  onRelation(peekRel.id);
+                }}
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                  <path d="M9 5h10v10M19 5 6 18" />
+                </svg>
+              </button>
+            ) : null}
           </span>
           {peekRel?.gist ? <p>{peekRel.gist}</p> : null}
         </div>

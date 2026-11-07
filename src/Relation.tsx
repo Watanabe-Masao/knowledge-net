@@ -63,25 +63,10 @@ type MediaKey = "fig" | "tour" | "check";
 const LABEL: Record<MediaKey, string> = { fig: "図", tour: "解説", check: "操作" };
 /** 図・解説・操作の印（下のタブと同じ線の印。絵文字は使わない。UI レビュー「カラー設定」） */
 const MEDIA_ICON: Record<MediaKey, "figure" | "play" | "lab"> = { fig: "figure", tour: "play", check: "lab" };
-const KEY = "kn.media";
-const remembered = (): MediaKey | null => {
-  try {
-    return (localStorage.getItem(KEY) as MediaKey) || null;
-  } catch {
-    return null;
-  }
-};
-const remember = (k: MediaKey) => {
-  try {
-    localStorage.setItem(KEY, k);
-  } catch {
-    /* 保存できない環境では覚えない */
-  }
-};
 
 type MediaProps = { figures?: FigRef[]; labs?: LabRef[]; context: string; open?: boolean };
 
-/** 図／解説／触る の切り替え。open なら最初から開く（覚えている形か、最初にある形）。 */
+/** 図／解説／触る の切り替え。open なら図を最初から開く（解説・触るは押したときだけ）。 */
 export function Media({ figures, labs, context, open = false }: MediaProps) {
   const tours = (labs ?? []).filter((l) => l.kind === "tour");
   const checks = (labs ?? []).filter((l) => l.kind !== "tour");
@@ -90,11 +75,11 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
     ...(tours.length ? ["tour" as const] : []),
     ...(checks.length ? ["check" as const] : []),
   ];
-  // 開いて始めるときは、覚えている形（なければ図）。図がなく何も覚えていなければ閉じたまま（ラボは押すまで読み込まない）
+  // 開いて始めるときは図（なければ閉じたまま。ラボは押すまで読み込まない）
   const first = (): MediaKey | "" => {
     if (!open) return "";
-    const m = remembered();
-    return m && have.includes(m) ? m : have.includes("fig") ? "fig" : "";
+    // 解説・操作は全画面のページで開くので、自動では開かない（押しただけで別の画面へ移らない。渡辺さん 2026-11-07）
+    return have.includes("fig") ? "fig" : "";
   };
   const [value, setValue] = useState<MediaKey | "">(first);
   const [fi, setFi] = useState(0);
@@ -104,7 +89,6 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
   if (!have.length) return null;
   const choose = (v: string) => {
     change(box.current, () => setValue(v as MediaKey | ""));
-    if (v) remember(v as MediaKey);
   };
   const step = (i: number) => change(box.current, () => setFi(i));
   const f = figures?.[Math.min(fi, (figures?.length ?? 1) - 1)];

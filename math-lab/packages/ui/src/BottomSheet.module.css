@@ -17,6 +17,10 @@
   /* 出てくる動きは、縁から出入りする物の動き（base.css の edge-in-bottom）。段に止まる高さの動きだけがばね */
   animation: edge-in-bottom var(--dur-sheet) var(--ease-sheet);
 }
+/* 全画面のページから戻るときは、下から出てこず、その高さから段へ動く */
+.sheet[data-from] {
+  animation: none;
+}
 @media (min-width: 760px) {
   .sheet {
     left: calc(50% - 380px);

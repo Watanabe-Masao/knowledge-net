@@ -190,8 +190,9 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
     .getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ })
     .click();
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
-  // 上で「触る」を選んだので、覚えた形（触る）で開いている
-  await expect(media.getByRole("radio", { name: /操作/ })).toHaveAttribute("aria-checked", "true");
+  // 解説・触るは押したときだけ開く（前に選んだ形を覚えていても自動では開かない。渡辺さん 2026-11-07）
+  await expect(media.getByRole("radio", { name: /操作/ })).toHaveAttribute("aria-checked", "false");
+  await media.getByRole("radio", { name: /操作/ }).click();
   await expect(page.getByTestId("labs-panel-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute(
     "src",
     /poisson\/\?p=rel-approx&embed=1/,
@@ -406,7 +407,7 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
 });
 
 // 図をその場で描かない関係（ポアソン分布 → 指数分布）で、画像の図・解説・触るを切り替える。図をその場で描く関係は relation-open.spec.ts
-test("図／解説／触る は切り替えて1つだけ出す。最初は図、選んだ形を覚える。一覧のカードは閉じておく", async ({
+test("図／解説／触る は切り替えて1つだけ出す。最初は図で、解説・触るは押したときだけ。一覧のカードは閉じておく", async ({
   page,
 }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-poisson`);
@@ -438,7 +439,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await sw.getByRole("radio", { name: /解説/ }).click();
   await page.getByTestId("tour-prev").click(); // 1段目の「やめる」で閉じる
   await expect(page.getByTestId("tour")).toHaveCount(0);
-  // 選んだ形（触る）を覚え、別の線も同じ形で開く
+  // 触るを選んでいても、別の線は図で開く（全画面のページへ勝手に移らない。渡辺さん 2026-11-07）
   await sw.getByRole("radio", { name: /操作/ }).click();
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
@@ -446,6 +447,11 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await page
     .getByTestId("edge-list")
     .getByRole("button", { name: /二項分布 を変換すると 正規分布/ })
+    .click();
+  await expect(page.getByTestId("explore")).toHaveCount(0);
+  await page
+    .getByTestId(/^media-panel-/)
+    .getByRole("radio", { name: /操作/ })
     .click();
   await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pmf");
   await expect(page.getByTestId("explore").getByTestId("exp-curve")).toBeVisible(); // s5-norm は正規分布の曲線を重ねた版
@@ -1509,6 +1515,49 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-poisson");
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
   expect(errs).toEqual([]);
+});
+
+// 確かめる対象：フルのページの上のつまみを下へ引くと、ページが指に付いて下がり、離すと面がその高さから段へ動く（渡辺さん 2026-11-07「ストっと落ちる」）。
+// 想定する故障：引いても動かない（40px で急に段へ切り替わる）。離すと面が下から出直す・段の高さへ一瞬で落ちる。少しだけ引いても戻らない。
+// 見つけ方：つまみを 30px 引いて離すとフルのまま。150px 引く間はページが指の分だけ下がる（transform）。離した直後の面は段2より高く、
+//   そのあと段2の高さまで下がる（高さの動きはばね）。
+// 既存との違い：上のテストはつまみを押す・← だけ（指で引く動きは見ていない）
+// 検出の確かめ（2026-11-07）：面に出だしの高さ（from）を渡す処理を外すと「離した直後の面が段2の高さ」で落ちることを見た
+test("フルのつまみを引くと指に付いて下がり、面はその高さから段へ動く", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
+  const s = page.getByTestId("detail");
+  await expect(s).toHaveAttribute("data-detent", "peek");
+  await s.getByRole("button", { name: "広げる" }).click();
+  await expect(s).toHaveAttribute("data-detent", "half");
+  await s.getByRole("button", { name: "広げる" }).click();
+  await expect(s).toHaveAttribute("data-detent", "full");
+  const g = (await page.getByTestId("page-grab").boundingBox())!;
+  const x = g.x + g.width / 2,
+    y = g.y + g.height / 2;
+  const pull = async (dy: number, up = true) => {
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    for (let i = 1; i <= 6; i++) {
+      await page.mouse.move(x, y + (dy * i) / 6);
+      await page.waitForTimeout(30);
+    }
+    if (up) await page.mouse.up();
+  };
+  await pull(30);
+  await expect(s).toHaveAttribute("data-detent", "full");
+  await expect.poll(() => s.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42)).toBeLessThan(0.5); // 上へ戻る
+  await pull(150, false);
+  const t = await s.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42);
+  expect(Math.abs(t - 150), "ページが指に付いて下がらない").toBeLessThan(4);
+  await page.waitForTimeout(150); // 止めてから離す（投げにしない）
+  await page.mouse.up();
+  await expect(s).toHaveAttribute("data-detent", "half");
+  const h0 = await s.evaluate((el) => el.getBoundingClientRect().height);
+  await page.waitForTimeout(1200); // ばねで止まるまで
+  const hf = await s.evaluate((el) => el.getBoundingClientRect().height);
+  expect(h0, "離した直後の面が段2の高さ（一瞬で落ちた）").toBeGreaterThan(hf + 100);
+  expect(hf).toBeCloseTo(Math.round((844 - (await page.getByTestId("tabbar").boundingBox())!.height) * 0.55), -1);
 });
 
 // 点の札（渡辺さん 2026-10-31：「概念を押すと…」の文の代わりに概念のツールチップ）：長押しで名前・分類・定義1文。動かすと消える

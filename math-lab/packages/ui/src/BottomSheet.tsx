@@ -63,6 +63,8 @@ type Props = {
   bottom?: number;
   /** 止まる段（低い順）。省くと しまう・少し・半分・全部（しまうを置かない面もある） */
   stops?: Detent[];
+  /** 出るときの高さ（px）。全画面のページから戻るとき、その高さから段へすっと動かす（下から出てこない。画面の原則 11） */
+  from?: number;
 } & Omit<HTMLAttributes<HTMLElement>, "title">;
 
 /** つまみを押したときの次の段（止まる段を1つ上へ。全部の次は少し。しまうは押し込んだときだけ） */
@@ -84,6 +86,7 @@ export function BottomSheet({
   min = 64,
   bottom = 0,
   stops = DETENTS,
+  from,
   ...rest
 }: Props) {
   const heights = (): Record<Detent, number> => ({
@@ -94,6 +97,13 @@ export function BottomSheet({
   });
   const [drag, setDrag] = useState<number | null>(null);
   const [, force] = useState(0);
+  const [enter, setEnter] = useState<number | null>(from ?? null);
+  useEffect(() => {
+    if (enter === null) return;
+    // 1枚描いてから段の高さへ（高さの動きはばね）
+    let id = requestAnimationFrame(() => (id = requestAnimationFrame(() => setEnter(null))));
+    return () => cancelAnimationFrame(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const g = useRef<{ y0: number; h0: number; t: number; y: number; v: number; moved: boolean; grab: boolean } | null>(
     null,
   );
@@ -149,7 +159,7 @@ export function BottomSheet({
   };
 
   const hs = heights();
-  const h = drag ?? hs[detent];
+  const h = drag ?? enter ?? hs[detent];
   const dim =
     drag !== null ? Math.max(0, Math.min(1, (drag - hs.half) / (hs.full - hs.half))) : detent === "full" ? 1 : 0;
   return (
@@ -170,7 +180,8 @@ export function BottomSheet({
         role="region"
         aria-label={label}
         data-detent={detent}
-        style={{ height: h, bottom, transition: drag !== null ? "none" : undefined }}
+        data-from={enter !== null || from !== undefined ? "" : undefined}
+        style={{ height: h, bottom, transition: drag !== null || enter !== null ? "none" : undefined }}
         {...rest}
       >
         <div className={s.head} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
