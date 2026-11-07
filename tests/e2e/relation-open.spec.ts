@@ -1,11 +1,12 @@
 // つながりを開いたときの面（stats2-course #188 04）。スマホの幅（390px）で、二項分布のつながりから開く。
 import { test, expect, type Page } from "@playwright/test";
+import { openTab } from "./sheet";
 
 const URL = "./?src=sample/stats2.json&c=stats2%3ATERM-binom";
 async function open(page: Page, name: RegExp) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
-  await page.getByRole("radio", { name: "関係" }).click();
+  await openTab(page, "関係");
   await page.getByTestId("edge-list").getByRole("button", { name }).click();
   const panel = page.getByTestId("edge-panel");
   await expect(panel.locator("article")).toBeVisible();

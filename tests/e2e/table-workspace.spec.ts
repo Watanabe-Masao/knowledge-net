@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { openTab } from "./sheet";
 import { readFileSync } from "node:fs";
 
 // 作業台の型（stats2-course #156）のパターン2（表で決まる分布＝期待値）。教材の build が出力した期待値の概念だけを差し替える
@@ -23,7 +24,7 @@ async function openSheet(page: Page, src: string, id: string) {
   const detail = page.getByTestId("detail");
   for (let i = 0; i < 2 && (await detail.getAttribute("data-detent")) !== "full"; i++)
     await detail.getByRole("button", { name: "広げる" }).click();
-  await detail.getByRole("radio", { name: "式", exact: true }).click();
+  await openTab(detail, "式");
   return page.getByTestId("workspace");
 }
 const open = (page: Page) => openSheet(page, "src=sample/stats2.json", "TERM-expect");

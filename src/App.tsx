@@ -231,8 +231,9 @@ export default function App() {
   useEffect(() => {
     setEdgeRaw(null);
     // 別の概念へ進んだら段2はそのまま（渡辺さん 2026-11-07「2段目を維持」。画面の原則 3）。フルからは段1へ
-    setDetent((d) => (openFull.current ? "full" : sel && d === "half" ? "half" : "peek"));
+    const full = openFull.current; // 更新の関数はあとで呼ばれるので、印は先に読んでおく
     openFull.current = false;
+    setDetent((d) => (full ? "full" : sel && d === "half" ? "half" : "peek"));
   }, [sel]); // 別の概念へ進んだら、線の説明は閉じる
   useEffect(() => {
     // 下のタブの高さ（詳しくの面はその上に乗る）

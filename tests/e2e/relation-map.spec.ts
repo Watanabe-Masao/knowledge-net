@@ -222,19 +222,30 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "full");
 });
 
-// 確かめる対象：空いた所のタップは1段戻す・地図を指で動かすと帯が引っ込む（画面の原則 1・16。渡辺さん 2026-11-07）。
-// 想定する故障：時間で帯が引っ込む。動かしても帯が残る。空いた所のタップが段を飛ばす（選んだまま帯だけ戻らない・いきなり外す）。
-//   帯を出し入れすると地図の中身が動く。引っ込んだ状態の1回目の押しで語を選べない。
-// 見つけ方：二項分布を選んで 3 秒待っても帯は出たまま。地図を 40px 動かすと帯が引っ込む（data-bars=hidden、下のタブが下へずれる）。
-//   空いた所を押す → 帯が戻り、二項分布は選んだまま。もう1回 → 選びが外れ、下の面が消える。もう1回 → 帯が引っ込み、語の画面の位置は同じ。
-//   引っ込んだ状態で幾何分布を1回押す → 選ばれ、帯が戻る。
-// 既存との違い：ほかのテストは帯が出ている状態だけ
-test("空いた所のタップは1段戻す・地図を動かすと帯が引っ込む・時間では変わらない", async ({ page }) => {
+// 確かめる対象：空いた所のタップは1段戻す・語を選ぶと上の帯が引っ込む・地図を指で動かすと帯が全部引っ込む（画面の原則 1・16。渡辺さん 2026-11-07）。
+// 想定する故障：時間で帯が引っ込む。選んでも上の帯が残る。動かしても帯が残る。空いた所のタップが段を飛ばす（面を下げずにいきなり外す・
+//   選んだまま帯だけ戻らない）。帯を出し入れすると地図の中身が動く。引っ込んだ状態の1回目の押しで語を選べない。
+// 見つけ方：3 秒待っても帯は出たまま。二項分布を選ぶと上の帯だけ引っ込む（data-bars=top）。札で面を段2へ上げ、空いた所を押すと段1へ
+//   （選んだまま）。地図を 40px 動かすと全部引っ込む（hidden、下のタブが下へずれる）。空いた所 → 上の帯だけ引っ込んだ形に戻り、選んだまま。
+//   もう1回 → 選びが外れ、下の面が消え、帯が全部戻る。もう1回 → 帯が全部引っ込み、語の画面の位置は同じ。引っ込んだ状態で幾何分布を1回押す
+//   → 選ばれ、上の帯だけ引っ込んだ形。既存との違い：ほかのテストは帯が出ている状態だけ
+// 検出の確かめ（2026-11-07）：空いた所で面を1段下げる処理（onBlank）を外すと、段2から段1へ下がらずに選びが外れて落ちることを見た
+test("空いた所のタップは1段戻す・選ぶと上の帯が引っ込む・地図を動かすと全部引っ込む・時間では変わらない", async ({ page }) => {
   const m = await open(page);
-  await m.getByTestId(`rm-term-${T("binom")}`).click();
-  await still(page);
   await page.waitForTimeout(3000);
   expect(await bars(page)).toBe("shown");
+  await m.getByTestId(`rm-term-${T("binom")}`).click();
+  await still(page);
+  await expect.poll(() => bars(page)).toBe("top");
+  const det = page.getByTestId("detail");
+  await det.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click();
+  await expect(det).toHaveAttribute("data-detent", "half");
+  await page.waitForTimeout(600);
+  const bh = await blank(page);
+  await page.mouse.click(bh.x, Math.min(bh.y, ((await det.boundingBox())!.y as number) - 30));
+  await expect(det).toHaveAttribute("data-detent", "peek");
+  await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("aria-pressed", "true");
+  await page.waitForTimeout(500);
   const b0 = await blank(page);
   await fingers(
     page,
@@ -246,23 +257,42 @@ test("空いた所のタップは1段戻す・地図を動かすと帯が引っ�
   await page.waitForTimeout(500);
   const b = await blank(page);
   await page.mouse.click(b.x, b.y);
-  await expect.poll(() => bars(page)).toBe("shown");
+  await expect.poll(() => bars(page)).toBe("top");
   await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("aria-pressed", "true");
   await page.waitForTimeout(500);
-  const b2 = await blank(page); // 帯が戻ると地図の位置が変わるので、測り直す
+  const b2 = await blank(page);
   await page.mouse.click(b2.x, b2.y);
   await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("aria-pressed", "false");
-  await expect(page.getByTestId("detail")).toHaveCount(0);
-  await page.waitForTimeout(400);
+  await expect(det).toHaveCount(0);
+  await expect.poll(() => bars(page)).toBe("shown");
+  await page.waitForTimeout(500);
+  const b3 = await blank(page); // 帯が戻ると地図の位置が変わるので、測り直す
   const before = await rectOf(page, T("geom"));
-  await page.mouse.click(b2.x, b2.y);
+  await page.mouse.click(b3.x, b3.y);
   await expect.poll(() => bars(page)).toBe("hidden");
   await page.waitForTimeout(500);
   const after = await rectOf(page, T("geom"));
   expect(Math.abs(after.x - before.x) + Math.abs(after.y - before.y), "帯を引っ込めると中身が動く").toBeLessThan(2);
   await m.getByTestId(`rm-term-${T("geom")}`).click();
   await expect(m.getByTestId(`rm-term-${T("geom")}`)).toHaveAttribute("aria-pressed", "true");
-  await expect.poll(() => bars(page)).toBe("shown");
+  await expect.poll(() => bars(page)).toBe("top");
+});
+
+// 確かめる対象：段2で別の語を選んでも段2のまま（渡辺さん 2026-11-07「2段目を維持」。画面の原則 3）。
+// 想定する故障：語を替えるたびに段1へ戻る・中身が前の語のまま。見つけ方：二項分布で札「式」を押して段2、ポアソン分布を押すと段2のままで
+//   名前がポアソン分布。既存との違い：上のテストは段を下げる側だけ
+// 検出の確かめ（2026-11-07）：語が替わったら段1にする前の形に戻すと落ちることを見た
+test("段2で別の語を選んでも段2のまま、中身はその語に替わる", async ({ page }) => {
+  const m = await open(page);
+  await m.getByTestId(`rm-term-${T("binom")}`).click();
+  await still(page);
+  const det = page.getByTestId("detail");
+  await det.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click();
+  await expect(det).toHaveAttribute("data-detent", "half");
+  await still(page);
+  await m.getByTestId(`rm-term-${T("bernoulli")}`).click();
+  await expect(det.getByRole("heading", { level: 2 })).toHaveText("ベルヌーイ分布");
+  await expect(det).toHaveAttribute("data-detent", "half");
 });
 
 // 確かめる対象：指の物理（画面の原則 2。UX レビュー A1・B10・B11）。

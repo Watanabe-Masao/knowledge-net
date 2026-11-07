@@ -1,5 +1,6 @@
 // 概念のページ（stats2-course #188 R1c：概要・つながりを実験室と同じ質に）。スマホの幅（390px）で見る。
 import { test, expect, type Page } from "@playwright/test";
+import { openTab } from "./sheet";
 import { modelPmf } from "../../math-lab/packages/engine/src";
 
 const URL = "./?src=sample/stats2.json&c=stats2%3ATERM-binom";
@@ -17,6 +18,7 @@ test("概要は 問い → つまり → 図 → 定義 の順で、原理・条
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
+  await openTab(page, "概要"); // 問いはフル（ふだんの形）で出す（面の段1・段2には出さない）
   await expect(d.getByTestId("concept-question")).toBeVisible();
   // 開いた直後は面が動いていて位置が入れ替わって見えることがある（CI で一度落ちた）。並びが落ち着くまで待ち、ずっと崩れていれば落とす
   const order = async () => {
@@ -57,7 +59,7 @@ test("実験室への入口は下の主ボタン1つで、この概念に絞っ�
   await page.goto(URL);
   const d = page.getByTestId("detail");
   await expect(d.locator("[data-testid^=concept-q-]"), "概要の中に実験室への2つ目の入口がある").toHaveCount(0);
-  await d.getByTestId("concept-gist").click(); // 少しの段で中身に触れる
+  await openTab(d, "概要"); // 少しの段で中身に触れる
   await expect(d.getByTestId("detail-to-map"), "読んでも全画面にならない").toBeVisible();
   await d.locator("summary", { hasText: "なぜその形か" }).click();
   await expect(d.locator("details", { hasText: "なぜその形か" })).toHaveAttribute("open", "");
@@ -73,7 +75,7 @@ test("実験室への入口は下の主ボタン1つで、この概念に絞っ�
 test("つながりは 前に知っておく・姿を変えると・比べる に分かれ、前提にも理由が出る", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
-  await page.getByTestId("detail").getByRole("radio", { name: "関係" }).click();
+  await openTab(page.getByTestId("detail"), "関係");
   const g = (k: string) => page.getByTestId(`rel-group-${k}`);
   await expect(g("before")).toContainText("組合せ");
   await expect(g("before")).toContainText("同じ確率");
@@ -95,7 +97,7 @@ test("読むときは全画面のページ：下のタブに重なり、次の1�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByTestId("concept-gist").click();
+  await openTab(d, "概要");
   await expect(d).toHaveAttribute("data-detent", "full");
   expect(
     await page.evaluate(() => {
@@ -103,7 +105,7 @@ test("読むときは全画面のページ：下のタブに重なり、次の1�
       return !!document.elementFromPoint(t.x + t.width / 2, t.y + t.height / 2)?.closest("[data-testid=detail]");
     }),
   ).toBe(true);
-  await d.getByRole("radio", { name: "関係" }).click();
+  await openTab(d, "関係");
   await d
     .getByTestId("edge-list")
     .getByRole("button", { name: /と 超幾何分布 を比べる/ })
@@ -136,8 +138,8 @@ test("関係のページは、つながる2つの概念を題の下に、関係�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByTestId("concept-gist").click();
-  await d.getByRole("radio", { name: "関係" }).click();
+  await openTab(d, "概要");
+  await openTab(d, "関係");
   const list = d.getByTestId("edge-list");
   const rel = page.getByTestId("edge-panel");
   await list
@@ -166,7 +168,7 @@ test("式の読み方：意味は記号と今の値、構造は部品と意味�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "式" }).click();
+  await openTab(d, "式");
   const r = d.getByTestId("ws-read");
   await expect(r.getByTestId("ws-read-sym-k")).toContainText("3");
   await expect(r.getByTestId("ws-read-sym-n")).toContainText("10");
@@ -203,7 +205,7 @@ test("並びを作ってみる：札を押すと成功の回数・1通りの確�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "式" }).click();
+  await openTab(d, "式");
   await d.getByTestId("ws-read").getByRole("radio", { name: "構造" }).click();
   await d.getByTestId("ws-seq-more").locator("summary").click(); // 補助なので、初めはたたんである
   const q = d.getByTestId("ws-seq");
@@ -230,7 +232,7 @@ test("構造：なぜこの式で求まるかを段で読み、段ごとに効�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "式" }).click();
+  await openTab(d, "式");
   const r = d.getByTestId("ws-read");
   await r.getByRole("radio", { name: "構造" }).click();
   const w = r.getByTestId("ws-why");
@@ -282,7 +284,7 @@ test("説明は 式 → 見方の切り替え → 説明 の順。段の文の�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "式" }).click();
+  await openTab(d, "式");
   const r = d.getByTestId("ws-read");
   const y = async (l: import("@playwright/test").Locator) => (await l.boundingBox())!.y;
   const ys = [
@@ -314,7 +316,7 @@ test("帯の札は、狭い幅でも記号と値が1行に並ぶ", async ({ page
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "式" }).click();
+  await openTab(d, "式");
   for (const k of ["n", "p", "k"]) {
     const c = d.getByTestId(`ws-chip-${k}`);
     // 記号（斜体・大きめ）と値は字の高さが違うので、上端ではなく中心の高さで比べる（同じ行なら差は数 px）
@@ -336,7 +338,7 @@ test("つながりの地図：置き場所で種類が分かり、点を選ぶ�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "関係" }).click();
+  await openTab(d, "関係");
   const map = d.getByTestId("rel-map");
   const center = async (id: string) => {
     const b = (await map.getByTestId(`rel-node-stats2:${id}`).boundingBox())!;
@@ -363,7 +365,7 @@ test("前提のつながりを選ぶと、二項分布の式のどの部品で�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
-  await d.getByRole("radio", { name: "関係" }).click();
+  await openTab(d, "関係");
   await d.getByTestId("rel-node-stats2:REL-comb-binom").click();
   const f = d.getByTestId("rel-focus");
   await expect(f.locator('[data-on="1"]')).toHaveCount(1);

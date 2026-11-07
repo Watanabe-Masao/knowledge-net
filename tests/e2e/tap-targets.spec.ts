@@ -1,5 +1,6 @@
 // 押せる範囲と表の数（UI レビュー 2026-11 の 1・3。stats2-course #224 U1）。スマホの幅（390px）で実験室を見る。
 import { test, expect, type Locator, type Page } from "@playwright/test";
+import { openTab } from "./sheet";
 
 const SRC = "src=sample/stats2.json";
 
@@ -109,7 +110,7 @@ test("実験室の押せる所は 44×44 あり、理論の確率の表の数は
   const d = page.getByTestId("detail");
   for (let i = 0; i < 2 && (await d.getAttribute("data-detent")) !== "full"; i++)
     await d.getByRole("button", { name: "広げる" }).click();
-  await d.getByRole("radio", { name: /^式$/ }).click();
+  await openTab(d, "式");
   const w = page.getByTestId("workspace");
   await expect(w.getByTestId("ws-calc")).toBeVisible();
   const s = await shortTargets(w);

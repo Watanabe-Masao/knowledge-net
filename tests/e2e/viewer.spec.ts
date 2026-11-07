@@ -1,5 +1,6 @@
 // 画面のテスト（見本のデータ public/sample/stats2.json：教材の公開データの写し。scripts/sync-sample.mjs で版を固定する。stats2-course #209）。スマホ幅・ライト／ダーク・Notion の埋め込み（360×320）。
 import { expect, test, type Page } from "@playwright/test";
+import { openTab } from "./sheet";
 import { WALK_FORMULAS } from "../../math-lab/packages/engine/src";
 
 // 教材の公開サイトの図・ラボは外に取りに行かない（テストの速さと安定のため。中身は教材側のテストで確かめる）
@@ -84,20 +85,31 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
 });
 
-test("比べる：二項分布とポアソン分布", async ({ page }) => {
+// 確かめる対象：2つの概念のページ（関係のページと比較を1つにした。渡辺さん 2026-11-07）。
+// 想定する故障：関係のある組で関係の説明が出ない・並べて見るが最初から開いて関係の説明を押し下げる・関係のない組で空のページになる・
+//   共通の前提が出ない／たどらない関係（変換）で出る。前の比較の URL（?cmp=）が開かない。
+// 見つけ方：前の URL で開き、関係のある組（二項分布・ポアソン分布）は関係のつまりが出て並べて見るは閉じている（開くと定義が並ぶ、共通の前提はない）。
+//   関係のない組（二項分布・標準偏差）は「まだ関係が書かれていない」と、開いた並べて見る（共通の前提に期待値）。既存との違い：関係の中身は relation-open.spec
+test("2つの概念のページ：関係のある組は関係の説明が先で、並べて見るは開いて読む", async ({ page }) => {
   await page.goto(`./?${SRC}&cmp=stats2:TERM-binom,stats2:TERM-poisson`);
-  const cmp = page.getByTestId("compare");
-  await expect(cmp.getByRole("heading", { name: "定義" })).toBeVisible();
-  await expect(cmp.getByRole("heading", { name: "この組の関係" })).toBeVisible();
-  await expect(cmp.getByText(/二項分布 と ポアソン分布 を比べる/)).toBeVisible(); // 対比は読み方の文で出る
-  await expect(cmp.getByRole("heading", { name: "共通の前提" })).toHaveCount(0); // 変換はたどらないので、共通の前提はない
+  const p = page.getByTestId("edge-panel");
+  await expect(p.getByTestId("gist").first()).toBeVisible();
+  const side = p.getByTestId("pair-side");
+  await expect(side).not.toHaveAttribute("open", "");
+  await side.locator("summary").click();
+  await expect(side.getByRole("heading", { name: "定義" })).toBeVisible();
+  await expect(side.getByRole("heading", { name: "共通の前提" })).toHaveCount(0); // 変換はたどらないので、共通の前提はない
+  expect(page.url()).not.toContain("cmp=");
 });
 
-test("比べる：二項分布と標準化の共通の前提", async ({ page }) => {
+test("2つの概念のページ：関係のない組は「まだ関係が書かれていない」と、並べて見る（共通の前提）", async ({ page }) => {
   await page.goto(`./?${SRC}&cmp=stats2:TERM-binom,stats2:TERM-std`);
-  const cmp = page.getByTestId("compare");
-  await expect(cmp.getByRole("heading", { name: "共通の前提" })).toBeVisible();
-  await expect(cmp.getByText(/期待値/).first()).toBeVisible();
+  const p = page.getByTestId("edge-panel");
+  await expect(p.getByTestId("pair-none")).toBeVisible();
+  const side = p.getByTestId("pair-side");
+  await expect(side).toHaveAttribute("open", "");
+  await expect(side.getByRole("heading", { name: "共通の前提" })).toBeVisible();
+  await expect(side.getByText(/期待値/).first()).toBeVisible();
 });
 
 test("線の名前は選んだ概念の線だけに出る", async ({ page }) => {
@@ -197,7 +209,7 @@ async function openQ(x: import("@playwright/test").Locator, key: string) {
   await x.getByTestId(`exp-q-${key}`).click();
 }
 /** 概念の中身の切り替え（概要・式・実験・つながり・教材）を選ぶ */
-const tab = (page: Page, name: RegExp) => page.getByTestId("detail").getByRole("radio", { name }).click();
+const tab = (page: Page, name: RegExp) => openTab(page.getByTestId("detail"), name);
 const settle = (page: Page) =>
   page.waitForFunction(() => {
     const cy = (window as any).kn;
@@ -738,21 +750,17 @@ test("線の見方は下から開く面で、種類を隠せる", async ({ page 
 });
 
 // 比べる（#42）：「ほかの概念と比べる」→ つながりのある概念から相手を選ぶ → そのまま比べる面が開く
-test("ほかの概念と比較：相手を選ぶとすぐ比べられる", async ({ page }) => {
+test("ほかの概念と比べる：探して選ぶと2つの概念のページが開く", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await page.getByRole("button", { name: "ほかの操作" }).click();
-  await page.getByRole("menuitem", { name: "ほかの概念と比較" }).click();
+  await page.getByRole("menuitem", { name: "ほかの概念と比べる" }).click();
   const pick = page.getByTestId("pick");
-  await expect(pick).toContainText("二項分布 を変換すると ポアソン分布"); // どうつながるかの文つき
-  await pick
-    .getByRole("button", { name: /ポアソン分布/ })
-    .first()
-    .click();
-  const cmp = page.getByTestId("compare");
-  await expect(cmp.getByRole("heading", { name: "この組の関係" })).toBeVisible();
-  await cmp.getByRole("button", { name: "比較を終了" }).click();
-  await expect(cmp).toHaveCount(0);
-  expect(page.url()).not.toContain("cmp=");
+  await pick.locator("input").first().fill("ポアソン");
+  await pick.getByText("ポアソン分布").first().click();
+  await expect(pick).toHaveCount(0);
+  const p = page.getByTestId("edge-panel");
+  await expect(p.getByTestId("gist").first()).toBeVisible(); // 関係のある組は、その関係の説明で開く
+  await expect(p.getByTestId("pair-side")).toHaveCount(1);
 });
 
 // 実験室 v0（#102）：予測 → 実験 → 観察 → 理由 → 応用 を1画面ずつ。予想するまで進めない、テーマで言葉が変わる、反例を実験する
@@ -1304,11 +1312,8 @@ test("詳しく：見出しは名前と切り替えだけ、ほかは「…」",
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const det = page.getByTestId("detail");
   await expect(det).toContainText("確率分布・U14 U15 U19");
-  await expect(det.getByRole("radiogroup", { name: "概念の中身" }).getByRole("radio")).toHaveText([
-    "概要",
-    "式",
-    "関係",
-  ]);
+  // 段1は名前の1行の右に札（概要・式・関係）。札を押すと段2、もう一度でフル（ふだんの形の切り替えの帯）
+  await expect(det.getByTestId("detail-chips").getByRole("button")).toHaveText(["概要", "式", "関係"]);
   // 学ぶ行動（実験・問題・単元）は詳しくに置かない（下のタブと同じ機能を2か所に置かない）
   await expect(det.getByRole("button", { name: "実験してみる" })).toHaveCount(0);
   await expect(det.getByRole("link", { name: /問題を解く|単元で読む/ })).toHaveCount(0);
@@ -1333,6 +1338,7 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(bar.getByTestId("badge-learn")).toHaveText("U14");
   await expect(bar.getByTestId("badge-problems")).toHaveText("17");
   await expect(bar.getByTestId("badge-lab")).toHaveText("1");
+  await page.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click(); // 段2でつまりが出る
   await expect(page.getByTestId("concept-gist")).toContainText("成功確率が毎回同じで"); // 概念のページの一言（定義の前。つまり）
   // 問題集：二項分布の問題だけ（17問）。札を押すと全部に戻る
   await bar.getByRole("link", { name: /^問題集/ }).click();
@@ -1436,14 +1442,14 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   // 学習：二項分布の単元だけ
   await bar.getByRole("link", { name: /^学習/ }).click();
   await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(3); // U14・U15・U19
-  // 探索に戻ると詳しくの面。もう一度押すと面をしまい、地図が主に
+  // 探索に戻ると、離れたときの段（段2）の詳しくの面（画面の原則 3）。もう一度押すと段1に下げ、地図が主に（しまう段は置かない）
   await bar.getByRole("link", { name: /^探索/ }).click();
   const det = page.getByTestId("detail");
-  await expect(det).toHaveAttribute("data-detent", "peek");
-  const g0 = (await page.getByTestId("graph").boundingBox())!.height;
+  await expect(det).toHaveAttribute("data-detent", "half");
+  const t0 = (await det.boundingBox())!.y;
   await bar.getByRole("link", { name: /^探索/ }).click();
-  await expect(det).toHaveAttribute("data-detent", "min");
-  await expect.poll(async () => (await page.getByTestId("graph").boundingBox())!.height).toBeGreaterThan(g0 + 50);
+  await expect(det).toHaveAttribute("data-detent", "peek");
+  await expect.poll(async () => (await det.boundingBox())!.y).toBeGreaterThan(t0 + 50); // 面が下がり、地図が広く見える
   expect(errs).toEqual([]);
 });
 
@@ -1453,14 +1459,7 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const s = page.getByTestId("detail");
   await expect(s).toHaveAttribute("data-detent", "peek");
-  await expect(
-    s
-      .getByTestId("concept-question")
-      .or(s.getByTestId("concept-gist"))
-      .or(s.getByTestId("concept-short"))
-      .or(s.getByText(/成功確率 p の独立な試行/))
-      .first(),
-  ).toBeInViewport(); // 少しの段で、名前の1行・切り替え・最初の段（問い。なければつまりか一言、それもなければ定義）が見える（#188 02）
+  await expect(s.getByTestId("detail-chips")).toBeInViewport(); // 段1は名前の1行と、右に札（渡辺さん 2026-11-07）
   const tabs = (await page.getByTestId("tabbar").boundingBox())!;
   await expect
     .poll(async () => {
@@ -1485,8 +1484,15 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
       return !!document.elementFromPoint(t.x + t.width / 2, t.y + t.height / 2)?.closest("[data-testid=detail]");
     }),
   ).toBe(true);
+  // ← は来た段（段2）へ戻る（画面の原則 3）。フルの上のつまみも同じ（渡辺さん 2026-11-07）
   await s.getByTestId("detail-to-map").click();
-  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
+  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "half");
+  await s.getByRole("button", { name: "広げる" }).click();
+  await expect(s).toHaveAttribute("data-detent", "full");
+  await page.getByTestId("page-grab").click();
+  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "half");
+  await page.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click(); // 段2で選んでいる札をもう一度 → フル
+  await expect(s).toHaveAttribute("data-detent", "full");
   // 別の概念を選ぶと少しの段から
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-poisson");
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
