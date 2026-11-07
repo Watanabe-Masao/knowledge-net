@@ -377,10 +377,10 @@ export function pairOpen(net: Network, a: string, b: string): string {
 export function compare(net: Network, ids: string[]) {
   const cs = ids.map((i) => net.concepts.get(i)).filter((c): c is Concept => !!c);
   const rows: { label: string; values: string[] }[] = [
-    { label: "定義", values: cs.map((c) => c.definition ?? "（まだ説明がない）") },
+    { label: "定義", values: cs.map((c) => c.definition ?? "まだ説明がない") },
     { label: "原理", values: cs.map((c) => c.principle ?? "") },
-    { label: "数学的な条件", values: cs.map((c) => (c.conditions?.math ?? []).join("／")) },
-    { label: "データに当てはめるとき", values: cs.map((c) => (c.conditions?.data ?? []).join("／")) },
+    { label: "式の条件", values: cs.map((c) => (c.conditions?.math ?? []).join("／")) },
+    { label: "データの条件", values: cs.map((c) => (c.conditions?.data ?? []).join("／")) },
     { label: "反例", values: cs.map((c) => c.counterexample ?? "") },
   ].filter((r) => r.values.some((v) => v));
   const pre = cs.map((c) => new Set(trace(net, c.id).order));

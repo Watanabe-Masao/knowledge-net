@@ -65,7 +65,7 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await expect(page.getByRole("listbox", { name: "候補" })).toBeVisible();
   await page.getByRole("option", { name: /標準化/ }).click();
   await expect(page.getByRole("listbox", { name: "候補" })).toHaveCount(0);
-  await page.getByRole("radio", { name: "経路" }).click(); // 前提をさかのぼる＝見方の「経路」（学ぶ順の一覧も開く）
+  await page.getByRole("radio", { name: "たどる" }).click(); // 前提をさかのぼる＝見方の「経路」（学ぶ順の一覧も開く）
   const tr = page.getByTestId("trace");
   for (const n of ["期待値", "分散", "確率変数"]) await expect(tr.getByRole("button", { name: n })).toBeVisible();
   // 強調した点の枠が潰れない（線の太さの指定が点に付かない）
@@ -82,7 +82,7 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await expect(tr.getByTestId("path-panel-stats2:TERM-var")).toHaveCount(0);
   await tr.getByRole("button", { name: /期待値 を開く/ }).click();
   await expect(page).toHaveURL(/c=stats2%3ATERM-expect/);
-  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("radio", { name: "まわり" })).toHaveAttribute("aria-checked", "true");
 });
 
 // 確かめる対象：2つの概念のページ（関係のページと比較を1つにした。渡辺さん 2026-11-07）。
@@ -227,7 +227,7 @@ test("🕸 リンク（c 付き）で開くと、その概念の周辺図から�
   const errs = noErrors(page);
   await page.setViewportSize({ width: 380, height: 800 });
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
-  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("radio", { name: "まわり" })).toHaveAttribute("aria-checked", "true");
   await settle(page);
   const r = await page.evaluate(() => {
     const cy = (window as any).kn;
@@ -325,13 +325,13 @@ test("全体に切り替えても選んだ概念を引き継ぎ、「戻る」�
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   const around = await page.evaluate(() => (window as any).kn.nodes().length);
-  await page.getByRole("radio", { name: "俯瞰" }).click();
+  await page.getByRole("radio", { name: "全体" }).click();
   await page.waitForFunction((n) => (window as any).kn.nodes().length > n, around);
   expect(await page.evaluate(() => (window as any).kn.$(":selected").map((n: any) => n.id()))).toEqual([
     "stats2:TERM-binom",
   ]);
   expect(page.url()).toContain("view=all");
-  await page.getByRole("radio", { name: "フォーカス" }).click();
+  await page.getByRole("radio", { name: "まわり" }).click();
   await settle(page);
   // 周りの点（ポアソン分布）を押すと、並べ直さずにその概念が中心へ
   const p = await page.evaluate(() => {
@@ -371,7 +371,7 @@ test("枠の大きさが後から決まっても図が枠に収まり、⤢ で�
       return inside();
     })
     .toBe(false); // panBy の戻り値（cy 全体）は返さない（書き出しに約17秒かかる）
-  await page.getByRole("button", { name: "図を枠に収める" }).click();
+  await page.getByRole("button", { name: "全体に戻す" }).click();
   await expect.poll(inside).toBe(true);
 });
 
@@ -451,7 +451,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図、
   await expect(page.getByTestId("explore").getByTestId("exp-curve")).toBeVisible(); // s5-norm は正規分布の曲線を重ねた版
 });
 
-test("つながりは「💡 つまり」を説明より先に出す（対比・変換）", async ({ page }) => {
+test("つながりは「つまり」を説明より先に出す（対比・変換）", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   await tab(page, /関係/);
@@ -815,7 +815,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
     ["exp-q-A-03", "BUTTON"],
     ["exp-q-A-04", "DIV"],
   ]);
-  await expect(x.getByTestId("exp-q-A-04")).toContainText("作成中");
+  await expect(x.getByTestId("exp-q-A-04")).toContainText("まだ");
   await expect(x.getByTestId("exp-q-A-03")).toContainText("並び");
   await expect(x.getByTestId("exp-q-A-01")).toContainText("位置");
   await expect(x.getByTestId("exp-q-compare")).toHaveCount(0); // 比べるは選択の最後のまとまり。A の下に重ねて出さない（渡辺さん 2026-11-02）
@@ -1154,7 +1154,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   expect(new URL(iconUrl).pathname).toMatch(/^\/stats2-labs\/icons\/TERM-[\w-]+\.svg$/);
   await expect.poll(() => iconHits.includes(new URL(iconUrl).pathname)).toBe(true);
   // タイルの4つ目（ほかの語）を押すと、その分類のページ（リストビュー）。地図は並べ方の切り替えから（stats2-course #228）
-  await lib.getByRole("button", { name: "確率の語をすべて見る" }).click();
+  await lib.getByRole("button", { name: "確率の概念をすべて見る" }).click();
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87/);
   await expect(page.getByTestId("category-list")).toHaveAttribute("data-layout", "grid");
   await page.getByTestId("cat-layout-map").click();
@@ -1172,7 +1172,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   await expect.poll(async () => (await terms()).core).toBe(14); // 確率の分類の14語（標本空間・事象・確率・ベイズの定理・事後確率など）
   expect((await terms()).other).toBe(0); // ほかの分類の点は出さない
   // 390px で：左上の選ぶ欄が「収める」ボタンに重ならず、点が左上の操作の下に隠れない
-  const fitBox = (await page.getByRole("button", { name: "図を枠に収める" }).boundingBox())!;
+  const fitBox = (await page.getByRole("button", { name: "全体に戻す" }).boundingBox())!;
   const selBox = (await sel.boundingBox())!;
   expect(selBox.x + selBox.width).toBeLessThanOrEqual(fitBox.x);
   const hidden = () =>
@@ -1219,13 +1219,13 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
 });
 
 // サイトの骨組み（stats2-course #42・#130）：下のタブ4つ・パンくず・学習／実験室／問題集の一覧。埋め込みにはタブを出さない
-test("下のタブで探索・学習・実験室・問題集を切り替え、パンくずで分類へ戻る", async ({ page }) => {
+test("下のタブでさがす・学習・実験室・問題集を切り替え、パンくずで分類へ戻る", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const bar = page.getByTestId("tabbar");
   await expect(bar.getByRole("link")).toHaveCount(4);
-  await expect(bar.getByRole("link", { name: "探索" })).toHaveAttribute("aria-current", "page");
+  await expect(bar.getByRole("link", { name: "さがす" })).toHaveAttribute("aria-current", "page");
   const crumbs = page.getByTestId("crumbs");
   // ライブラリ → 分類 → 語 の3段（UI レビュー 16。故障：入口へ戻る所がない）。ライブラリを押すと入口に戻る
   await expect(crumbs.getByRole("button")).toHaveText(["ライブラリ", "確率分布"]);
@@ -1262,7 +1262,7 @@ test("下のタブで探索・学習・実験室・問題集を切り替え、�
   await expect(list).toContainText("5初学");
   await expect(list.getByRole("link").first()).toHaveAttribute("href", /notion\.com/);
   // 探索へ戻り、パンくずの分類を押すとその分類の地図
-  await bar.getByRole("link", { name: "探索" }).click();
+  await bar.getByRole("link", { name: "さがす" }).click();
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   await page.getByTestId("crumbs").getByRole("button", { name: "確率分布" }).click();
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
@@ -1283,8 +1283,8 @@ test("見方を切り替える：経路は前提を学ぶ順の番号で並べ�
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
-  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
-  await page.getByRole("radio", { name: "経路" }).click();
+  await expect(page.getByRole("radio", { name: "まわり" })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("radio", { name: "たどる" }).click();
   await expect(page).toHaveURL(/view=path/);
   const info = () =>
     page.evaluate(() => {
@@ -1309,7 +1309,7 @@ test("見方を切り替える：経路は前提を学ぶ順の番号で並べ�
   expect(await lod(0.5)).toBe("mid");
   expect(await lod(0.31)).toBe("far");
   // 俯瞰に切り替えると選んだ概念を引き継ぐ
-  await page.getByRole("radio", { name: "俯瞰" }).click();
+  await page.getByRole("radio", { name: "全体" }).click();
   await expect(page).toHaveURL(/view=all/);
   await expect
     .poll(() => page.evaluate(() => (window as any).kn.$(":selected").map((n: any) => n.id())))
@@ -1426,8 +1426,8 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(lab.getByTestId("lab-open-stats2:binom-D-03")).toContainText(
     "主：期待値｜関連：分散・確率分布", // 絞った概念（二項分布）は関連からも省く
   );
-  await expect(lab.getByTestId("lab-open-stats2:binom-D-01")).not.toContainText("作成中");
-  await expect(lab.getByTestId("lab-open-stats2:binom-F-01")).toContainText("作成中");
+  await expect(lab.getByTestId("lab-open-stats2:binom-D-01")).not.toContainText("まだ");
+  await expect(lab.getByTestId("lab-open-stats2:binom-F-01")).toContainText("まだ");
   await expect(lab.locator("[data-testid^=open-]")).toHaveCount(1); // 期待値の値の表の実験室は二項分布を使わない
   // 実験室のカードの見出しは、問いの1つではなく主な概念の一言（地図・概念のページと同じ文）。故障：問いの文を出す・概念の一言とずれる
   const SHORT = "同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布";
@@ -1455,11 +1455,11 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await bar.getByRole("link", { name: /^学習/ }).click();
   await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(3); // U14・U15・U19
   // 探索に戻ると、離れたときの段（段2）の詳しくの面（画面の原則 3）。もう一度押すと段1に下げ、地図が主に（しまう段は置かない）
-  await bar.getByRole("link", { name: /^探索/ }).click();
+  await bar.getByRole("link", { name: /^さがす/ }).click();
   const det = page.getByTestId("detail");
   await expect(det).toHaveAttribute("data-detent", "half");
   const t0 = (await det.boundingBox())!.y;
-  await bar.getByRole("link", { name: /^探索/ }).click();
+  await bar.getByRole("link", { name: /^さがす/ }).click();
   await expect(det).toHaveAttribute("data-detent", "peek");
   await expect.poll(async () => (await det.boundingBox())!.y).toBeGreaterThan(t0 + 50); // 面が下がり、地図が広く見える
   expect(errs).toEqual([]);
@@ -1605,7 +1605,7 @@ test("地図を全画面で見て、点を押すと札が出て、閉じると�
   await page.getByTestId("tip-pick").click();
   await expect(page.getByRole("dialog", { name: "地図（全画面）" })).toHaveCount(0);
   await expect(page).toHaveURL(/c=stats2%3ATERM-indep/);
-  await expect(page.getByRole("radio", { name: "フォーカス" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("radio", { name: "まわり" })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByTestId("detail").getByRole("heading", { name: "独立", exact: true })).toBeVisible();
   // 閉じるボタンでも元の枠に戻る（高さは選んだ概念の面に合わせて決め直す）
   await page.getByTestId("map-full").click();

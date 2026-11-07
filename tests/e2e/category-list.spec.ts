@@ -11,7 +11,7 @@ import { test, expect } from "@playwright/test";
 test("ライブラリ → 分類のページ：正方形（長押しで説明）・一覧・地図を切り替え、語を押すと概念", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json");
-  await page.getByTestId("lib-検定").getByRole("button", { name: "検定の語をすべて見る" }).click();
+  await page.getByTestId("lib-検定").getByRole("button", { name: "検定の概念をすべて見る" }).click();
   const list = page.getByTestId("category-list");
   await expect(list).toHaveAttribute("data-layout", "grid");
   const items = list.locator("[data-testid^=cat-item-]");

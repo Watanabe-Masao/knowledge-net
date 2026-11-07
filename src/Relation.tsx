@@ -284,7 +284,7 @@ export default function RelationCard({ net, r, onTitle, context, open = false, a
       </div>
       {r.gist && (
         <p className={s.gist} data-testid="gist">
-          <b>💡 つまり</b>
+          <b>つまり</b>
           {r.gist}
         </p>
       )}

@@ -680,13 +680,13 @@ export default function RelationMap({
             >
               <div className={s.head} data-testid="rm-head">
                 <b>{g.name}</b>
-                <i>{g.terms.length}語</i>
+                <i aria-label={`${g.terms.length} 個の概念`}>{g.terms.length}</i>
                 {g.common.length || g.commonConds.length ? (
                   <button
                     type="button"
                     className={s.common}
-                    onClick={openFold([...g.common, ...g.commonConds], `${g.name}の全部の語に共通`)}
-                    aria-label={`全部の語に共通：${[...g.common, ...g.commonConds].map((x) => nameOf(net, x)).join("・")}`}
+                    onClick={openFold([...g.common, ...g.commonConds], `${g.name}の全部の概念に共通`)}
+                    aria-label={`全部の概念に共通：${[...g.common, ...g.commonConds].map((x) => nameOf(net, x)).join("・")}`}
                   >
                     <span className={s.hitbox} data-hitbox aria-hidden="true" />
                     {g.common.map((x) => (
@@ -707,11 +707,11 @@ export default function RelationMap({
                   type="button"
                   className={s.folded}
                   data-testid={`rm-folded-${g.id}`}
-                  onClick={openFold(g.folded, `${g.name}で使う語`)}
-                  aria-label={`このまとまりで使う語：${g.folded.map((x) => nameOf(net, x)).join("・")}`}
+                  onClick={openFold(g.folded, `${g.name}で使う概念`)}
+                  aria-label={`このまとまりで使う概念：${g.folded.map((x) => nameOf(net, x)).join("・")}`}
                 >
                   <span className={s.hitbox} data-hitbox aria-hidden="true" />
-                  <small>このまとまりで使う語</small>
+                  <small>このまとまりで使う概念</small>
                   {g.folded.map((x) => (
                     <span key={x} className={s.mat}>
                       {glyph(x)}

@@ -122,7 +122,7 @@ export default function CategoryList({ net, category, layout, onConcept }: Props
             </div>
           ) : null}
           {layout === "grid" ? (
-            <ol className={s.grid} aria-label={`${sec.name ?? category}の語（学ぶ順）`}>
+            <ol className={s.grid} aria-label={`${sec.name ?? category}の概念（学ぶ順）`}>
               {sec.items.map((c) => (
                 <li key={c.id} className={s.cellWrap}>
                   <button
@@ -145,7 +145,7 @@ export default function CategoryList({ net, category, layout, onConcept }: Props
               ))}
             </ol>
           ) : (
-            <ol className={s.list} aria-label={`${sec.name ?? category}の語（学ぶ順）`}>
+            <ol className={s.list} aria-label={`${sec.name ?? category}の概念（学ぶ順）`}>
               {sec.items.map((c) => (
                 <li key={c.id}>
                   <button
