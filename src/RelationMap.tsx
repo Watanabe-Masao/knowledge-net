@@ -79,6 +79,10 @@ export function Name({ text }: { text: string }) {
 
 /** 分類ごとの最後の見え方（同じ画面の中だけ。開き直したときに戻す） */
 const memo = new Map<string, { net: unknown; page: boolean; v: { k: number; x: number; y: number } }>();
+/** たどった道（分類ごと。選んだ概念を古い順に。最後が今の概念）。戻っても、離れたときのまま（画面の原則 3） */
+const trails = new Map<string, string[]>();
+/** たどった道に残す数（今の概念を入れて。メニューに出すのは前の5つまで。画面の原則 15） */
+const TRAIL_MAX = 6;
 
 /** 帯の引っ込め方（false＝出ている） */
 type Calm = false | "top" | "all";
@@ -147,6 +151,32 @@ export default function RelationMap({
     if (now) onSelect(id);
     else commitT.current = window.setTimeout(() => onSelect(id), dblMs());
   };
+  // ---- たどった道（設計書 3：見てきた道は置かず、← の長押しでたどった道）----
+  const [trail, setTrail] = useState<string[]>(() => trails.get(category) ?? []);
+  useEffect(() => {
+    if (!pick) return;
+    setTrail((t) => {
+      if (t[t.length - 1] === pick) return t; // ← で戻ったときは、backTo が先に道を縮めている
+      const n = [...t.filter((x) => x !== pick), pick].slice(-TRAIL_MAX);
+      trails.set(category, n);
+      return n;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pick]);
+  const backTo = (id: string) => {
+    setTrail((t) => {
+      const i = t.lastIndexOf(id);
+      const n = i < 0 ? t : t.slice(0, i + 1);
+      trails.set(category, n);
+      return n;
+    });
+    setPick(id, true);
+  };
+  const [trailMenu, setTrailMenu] = useState(false);
+  const backHoldT = useRef(0),
+    backHeld = useRef(false);
+  const prevs = trail.length >= 2 && trail[trail.length - 1] === pick ? trail.slice(0, -1).reverse().slice(0, 5) : [];
+
   // ほかの所（下の面の関係・検索など）で選びが変わったら、地図もその語を選ぶ
   useEffect(() => {
     const id = inMap(selected);
@@ -1331,6 +1361,91 @@ export default function RelationMap({
           <b>{category}</b>
         </div>
       ) : null}
+      {prevs.length ? (
+        // 地図の左上の ←：1つ前に選んだ概念へ戻る。長押しで、たどった道のメニュー（押さえている間は沈んで光る。長押しの手触り）
+        <div className={s.backCtl} data-ui>
+          <button
+            type="button"
+            data-testid="rm-trail-back"
+            aria-label={`${nameOf(net, prevs[0]!)}へ戻る。長押しで、たどった道`}
+            onPointerDown={(e) => {
+              backHeld.current = false;
+              const el = e.currentTarget;
+              el.setAttribute("data-hold", "");
+              clearTimeout(backHoldT.current);
+              backHoldT.current = window.setTimeout(() => {
+                el.removeAttribute("data-hold");
+                backHeld.current = true;
+                try {
+                  navigator.vibrate?.(10);
+                } catch {
+                  /* 振動できない端末 */
+                }
+                setTrailMenu(true);
+              }, holdMs());
+            }}
+            onPointerUp={(e) => {
+              e.currentTarget.removeAttribute("data-hold");
+              clearTimeout(backHoldT.current);
+            }}
+            onPointerLeave={(e) => {
+              e.currentTarget.removeAttribute("data-hold");
+              clearTimeout(backHoldT.current);
+            }}
+            onPointerCancel={(e) => {
+              e.currentTarget.removeAttribute("data-hold");
+              clearTimeout(backHoldT.current);
+            }}
+            onContextMenu={(e) => e.preventDefault()}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (backHeld.current) return; // 長押しのあとの「押した」は数えない
+              backTo(prevs[0]!);
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" className={s.ctlIcon}>
+              <path d="M15 5 8 12l7 7" />
+            </svg>
+          </button>
+        </div>
+      ) : null}
+      {trailMenu && prevs.length
+        ? createPortal(
+            <div
+              className={s.peekScrim}
+              data-ui
+              data-testid="rm-trail"
+              role="dialog"
+              aria-label="たどった道"
+              onClick={(ev) => {
+                if (ev.target === ev.currentTarget) setTrailMenu(false);
+              }}
+            >
+              <div className={s.peekMenu} role="menu">
+                <p className={s.menuHead}>たどった道</p>
+                {prevs.map((id, i) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="menuitem"
+                    data-testid="rm-trail-item"
+                    onClick={() => {
+                      setTrailMenu(false);
+                      backTo(id);
+                    }}
+                  >
+                    {nameOf(net, id)}
+                    <small className={s.menuNote}>{i + 1}つ前</small>
+                  </button>
+                ))}
+                <button type="button" role="menuitem" onClick={() => setTrailMenu(false)}>
+                  閉じる
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
       {/* 地図の右上の操作（帯が引っ込んでも残す。渡辺さん 2026-11-07）：選んでいる語があればその語を真ん中へ、なければ全体に戻す */}
       <div className={s.ctl} data-ui data-calm-keep={calm ? "1" : undefined}>
         <button
