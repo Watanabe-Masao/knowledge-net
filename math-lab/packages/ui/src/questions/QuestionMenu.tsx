@@ -46,7 +46,7 @@ export function QuestionMenu({
         aria-disabled="true"
         data-testid={`exp-q-${it.key ?? it.id}`}
       >
-        <span className={s.form}>作成中</span>
+        <span className={s.form}>まだ</span>
         <b>
           {it.key && <span className={s.qid}>{it.key}</span>}
           {it.title}
