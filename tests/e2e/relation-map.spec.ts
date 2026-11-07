@@ -424,39 +424,129 @@ test("指：ピンチの後に流れない、地図は指の真下に付く、�
   expect(Math.abs(top1 - top0), "縁を越えて離したあと、縁ぴったりに戻らない").toBeLessThan(2);
 });
 
-// 確かめる対象：線を押すと関係の面、線を長押ししている間は、地図を動かさずに両端と「つまり」のカードを浮かせる（渡辺さん 2026-11-07 の A/B で B）。
-// 想定する故障：細い線が押せない・押しても何も起きない。長押しで面が開いてしまう・離しても消えない。長押しの間に指が少しずれて地図が動く。
-//   幹の中で並んだ線のうち、指から遠い線を選ぶ。
-// 見つけ方：語に隠れていない線の上の1点を押すと、関係の面（edge-panel）が出る。同じ所を長押しすると、カード（rm-peek）が出て、
-//   その線の両端の名前を含み、指を遊びより大きく（14px）ずらしても地図は動かない。離すと消え、関係の面は出ない。
+// 確かめる対象：線を押すと、別の画面へ移らずに、その線を矢印の向きになぞる（渡辺さん 2026-11-07 の見本で B）。
+//   長押しすると両端と「つまり」の説明が出て、離しても残り、ほかの所を押すと閉じる。説明の右上（↗）で2つの概念のページを開く。
+// 想定する故障：押しただけで2つの概念のページ（や覚えていた解説）へ移る。なぞりが出ない・逆向きに引く。
+//   長押しの説明が離すと消える・離したときの「押した」で閉じる・外を押しても閉じない・外を押したときにその物まで動く（語が選ばれる）。
+//   長押しの間に指が少しずれて地図が動く。↗ で開かない。
+// 見つけ方：語に隠れていない線の上の1点を押すと、なぞりの線（rm-trace）が出て、2つの概念のページ（edge-panel）は出ない。
+//   なぞりは矢印の先の側から引く向き（線の向きの印 data-rev と矢印の付く端が合う）。
+//   長押しで説明（rm-peek）が出て両端の名前を含み、遊びより大きく（14px）ずらしても地図は動かない。離しても残る。
+//   空いた所を押すと閉じ、もう一度長押しして ↗ を押すと edge-panel が出る。
 // 既存との違い：ほかのテストは語と空いた所だけ
-// 検出の確かめ（2026-11-07）：長押しの間は地図を動かさない処理を外すと、「長押しの間に地図が動いた」で落ちることを見た
-test("線：押すと関係の面、長押しの間は両端のカードを浮かせる（地図は動かさない）", async ({ page }) => {
+// 検出の確かめ（2026-11-07）：離したときに説明を消す元の処理に戻すと「離しても残る」で、押すと面を開く元の処理に戻すと
+//   「押しただけで移った」で落ちることを見た
+test("線：押すと矢印の向きになぞる。長押しの説明は残り、外で閉じ、↗ で2つの概念のページ", async ({ page }) => {
   const m = await open(page);
   let pt = (await linePoint(page))!;
   expect(pt, "押せる線の点がない").not.toBeNull();
   await page.mouse.click(pt.x, pt.y);
-  await expect(page.getByTestId("edge-panel")).toBeVisible();
-  await page.goto(URL + encodeURIComponent("確率分布"));
-  await expect(m).toHaveAttribute("data-ready", "true");
+  const tr = m.getByTestId("rm-trace");
+  await expect(tr).toHaveCount(1);
+  const dir = await m.evaluate((el, id) => {
+    const line = el.querySelector<SVGPathElement>(`[data-testid=rm-lines] path[data-type][data-state=lit]`);
+    const t = el.querySelector<SVGPathElement>("[data-testid=rm-trace]")!;
+    return { lit: !!line, arrowStart: !!line?.getAttribute("marker-start"), rev: t.hasAttribute("data-rev"), id };
+  }, pt.id);
+  expect(dir.lit, "押した線が強まらない").toBe(true);
+  expect(dir.rev, "なぞる向きが矢印と合わない").toBe(dir.arrowStart);
+  await page.waitForTimeout(400);
+  await expect(page.getByTestId("edge-panel"), "押しただけで移った").toHaveCount(0);
+  await expect(tr).toHaveCount(0, { timeout: 3000 }); // 引き終えると消える
+
   pt = (await linePoint(page))!;
   const ends = await m.evaluate((el, id) => {
     const hit = el.querySelector<SVGPathElement>(`[data-testid="rm-line-${CSS.escape(id)}"]`)!;
     return hit.getAttribute("aria-label") ?? "";
   }, pt.id);
+  const hold = async () => {
+    await page.mouse.move(pt.x, pt.y);
+    await page.mouse.down();
+    await expect(m.getByTestId("rm-peek")).toBeVisible();
+  };
   const c0 = await canvasAt(page);
-  await page.mouse.move(pt.x, pt.y);
-  await page.mouse.down();
-  await expect(m.getByTestId("rm-peek")).toBeVisible();
+  await hold();
   await page.mouse.move(pt.x + 12, pt.y + 8); // 遊び（8px）を越えてずらす
   const c1 = await canvasAt(page);
   expect(Math.abs(c1.x - c0.x) + Math.abs(c1.y - c0.y), "長押しの間に地図が動いた").toBeLessThan(1);
   const peekText = await m.getByTestId("rm-peek").innerText();
   for (const name of ends.split(/と|の/).slice(0, 2)) expect(peekText).toContain(name);
   await page.mouse.up();
+  await page.waitForTimeout(500);
+  await expect(m.getByTestId("rm-peek"), "離しても残る").toBeVisible();
+  await expect(page.getByTestId("edge-panel")).toHaveCount(0);
+  // 外（語）を押すと閉じるだけ：語は選ばれない
+  const far = await m.evaluate((el) => {
+    const c = el.querySelector("[data-testid=rm-peek]")!.getBoundingClientRect();
+    for (const t of el.querySelectorAll<HTMLElement>("[data-testid^=rm-term-]")) {
+      const r = t.getBoundingClientRect();
+      const x = r.left + r.width / 2,
+        y = r.top + r.height / 2;
+      const inside = x > c.left - 8 && x < c.right + 8 && y > c.top - 8 && y < c.bottom + 8;
+      if (
+        !inside &&
+        y > 0 &&
+        y < innerHeight - 120 &&
+        document.elementFromPoint(x, y)?.closest("[data-testid^=rm-term-]") === t
+      )
+        return { x, y, id: t.dataset.testid! };
+    }
+    return null;
+  });
+  expect(far, "説明に重ならない語がない").not.toBeNull();
+  await page.mouse.click(far!.x, far!.y);
   await expect(m.getByTestId("rm-peek")).toHaveCount(0);
   await page.waitForTimeout(400);
-  await expect(page.getByTestId("edge-panel")).toHaveCount(0);
+  await expect(m.getByTestId(far!.id)).not.toHaveAttribute("data-state", "sel");
+  await hold();
+  await page.mouse.up();
+  await m.getByTestId("rm-peek-open").click();
+  await expect(page.getByTestId("edge-panel")).toBeVisible();
+});
+
+// 確かめる対象：線や語を長押しして離したあとも、地図を指で動かせる（渡辺さん 2026-11-07「キャンバスが固定」）。
+//   浮かせた説明・一覧は、地図を動かすと消える（同日「画面移動等で消える」）。
+// 想定する故障：長押しの印（浮かせている間は地図を動かさない）が離したあとも残り、次に長押しするまで地図が指で動かない。
+//   地図を動かしても、浮かせた物が元の場所を指したまま残る。
+// 見つけ方：線を長押しして離し、空いた所を指で引くと、地図が動き、説明が消える。語でも動く。印だけの所の一覧も引くと消える。
+// 既存との違い：上の線のテストは長押しの間に地図が動かないことだけ（離したあとは見ていない）
+// 検出の確かめ（2026-11-07）：離したときに長押しの印を下ろす処理を外すと落ち、地図を動かしたときに消す処理を外すと
+//   「地図を動かしても説明が残る」で落ちることを見た
+test("長押しして離したあとも、地図を指で動かせる", async ({ page }) => {
+  const m = await open(page);
+  const drag = async () => {
+    const b = (await m.boundingBox())!;
+    const x = b.x + 6,
+      y = b.y + b.height * 0.6;
+    const c0 = await canvasAt(page);
+    await fingers(page, [{ 1: [x, y] }, { 1: [x, y - 20] }, { 1: [x, y - 60] }, { 1: [x, y - 90] }]);
+    const c1 = await canvasAt(page);
+    return Math.abs(c1.y - c0.y);
+  };
+  const pt = (await linePoint(page))!;
+  await page.mouse.move(pt.x, pt.y);
+  await page.mouse.down();
+  await expect(m.getByTestId("rm-peek")).toBeVisible();
+  await page.mouse.up();
+  await page.waitForTimeout(450);
+  expect(await drag(), "線の長押しのあとで地図が動かない").toBeGreaterThan(20);
+  await expect(m.getByTestId("rm-peek"), "地図を動かしても説明が残る").toHaveCount(0);
+  const fold = m.locator("[data-testid^=rm-folded-]").first();
+  if (await fold.count()) {
+    await fold.click();
+    await expect(m.getByTestId("rm-fold")).toBeVisible();
+    await drag();
+    await expect(m.getByTestId("rm-fold"), "地図を動かしても一覧が残る").toHaveCount(0);
+  }
+  await page.goto(URL + encodeURIComponent("確率分布"));
+  await expect(m).toHaveAttribute("data-ready", "true");
+  const t = (await m.locator("[data-testid^=rm-term-]").first().boundingBox())!;
+  await page.mouse.move(t.x + t.width / 2, t.y + t.height / 2);
+  await page.mouse.down();
+  await expect(m.getByTestId("rm-tip")).toBeVisible();
+  await page.mouse.up();
+  await expect(m.getByTestId("rm-tip")).toHaveCount(0);
+  expect(await drag(), "語の長押しのあとで地図が動かない").toBeGreaterThan(20);
 });
 
 // 確かめる対象：下の札で線の種類を絞る（凡例を兼ねる。渡辺さん 2026-11-07）。
