@@ -19,12 +19,17 @@ async function open(page: Page, w = 390, h = 844, extra = "") {
 async function still(page: Page) {
   const canvas = page.getByTestId("rm-canvas");
   await page.waitForTimeout(350); // 選んでから寄り始めるまで（ダブルタップを待つ 0.2 秒と、下の面が出るまで）を越える
+  // 読むたびに、ページの時刻と動き始めた時刻も添える（落ちたとき、動きが本当に止まらないのか、ブラウザが止まって読めなかったのかを分ける。
+  // WebKit で一度、確かめに入る前に 7 秒かかって落ちた。2026-11-07）
   await expect
     .poll(
-      async () =>
-        (await canvas.getAttribute("data-moving"))
-          ? `動いている goes=${await canvas.getAttribute("data-goes")} k=${await canvas.getAttribute("data-k")}`
-          : "止まった",
+      () =>
+        canvas.evaluate((el) => {
+          const since = el.getAttribute("data-moving");
+          return since
+            ? `動いている goes=${el.getAttribute("data-goes")} k=${el.getAttribute("data-k")} 始まり=${since} 今=${Math.round(performance.now())}`
+            : "止まった";
+        }),
       { timeout: 6000 },
     )
     .toBe("止まった");
