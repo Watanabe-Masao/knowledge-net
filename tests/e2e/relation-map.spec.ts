@@ -202,6 +202,7 @@ test("語を押すと、線を濃く・相手を種類の色に・ほかを灰�
 // 見つけ方：くり返して数えるの枠の中の何もない所 → その枠が収まり、倍率が 1.3 倍以上。枠の外 → 初めの倍率。
 //   二項分布をダブルタップ → 詳しくが全部の段（data-detent=full）で開く。
 // 既存との違い：ほかのテストは1回のタップ
+// 検出の確かめ（2026-11-07）：長さの読み方（parseMs）で単位を見ない形に戻すと、2回の間を 120ms 空けたダブルタップで落ちることを見た
 test("ダブルタップ：まとまりの中はそのまとまりへ、外は分類へ、語は詳しくを全部の段で", async ({ page }) => {
   const m = await open(page);
   const k0 = Number(await m.getByTestId("rm-canvas").getAttribute("data-k"));
@@ -218,39 +219,19 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
       }
     throw new Error("まとまりの中に空いた所がない");
   });
-  await page.evaluate(() => {
-    (window as any).__clicks = [];
-    const cv = document.querySelector("[data-testid=rm-canvas]")!;
-    new MutationObserver(() =>
-      (window as any).__clicks.push(
-        `k=${cv.getAttribute("data-k")} goes=${cv.getAttribute("data-goes")}@${Math.round(performance.now())} bars=${document.documentElement.dataset.bars ?? "-"} tap=${(document.querySelector("[data-testid=relation-map]") as HTMLElement).dataset.tap}`,
-      ),
-    ).observe(cv, { attributes: true, attributeFilter: ["data-k", "data-goes"] });
-    for (const t of ["pointerdown", "pointerup", "click", "dblclick"])
-      addEventListener(
-        t,
-        (e: any) =>
-          (window as any).__clicks.push(
-            `${t}@${Math.round(e.timeStamp)} d${e.detail} ${(e.target as HTMLElement).tagName}.${(e.target as HTMLElement).className}`,
-          ),
-        true,
-      );
-  });
-  await page.mouse.dblclick(gp.x, gp.y);
+  // 指のダブルタップは2回の間が 100ms ほど空く（すぐ続けて押す dblclick だけだと、待ちの長さを読み違えても通ってしまった。2026-11-07）
+  await page.mouse.click(gp.x, gp.y);
+  await page.waitForTimeout(120);
+  await page.mouse.click(gp.x, gp.y);
   await still(page);
   const k1 = Number(await m.getByTestId("rm-canvas").getAttribute("data-k"));
-  const dbg = await page.evaluate(() => (window as any).__clicks.join(" | "));
-  expect(k1, `まとまりへは 1.3 倍以上寄る（${JSON.stringify(gp)} ${dbg}）`).toBeGreaterThanOrEqual(k0 * 1.29);
+  expect(k1, "まとまりへは 1.3 倍以上寄る").toBeGreaterThanOrEqual(k0 * 1.29);
   const gb1 = (await g.boundingBox())!;
   const view = (await m.boundingBox())!;
   const gapY = gb1.y + gb1.height + 20 < view.y + view.height - 10 ? gb1.y + gb1.height + 20 : gb1.y - 20;
   await page.mouse.dblclick(view.x + view.width / 2, gapY);
   await still(page);
-  const dbg2 = await page.evaluate(
-    () =>
-      `${(window as any).__clicks.join(" | ")} tap=${(document.querySelector("[data-testid=relation-map]") as HTMLElement).dataset.tap} at=${document.elementFromPoint(0, 0)}`,
-  );
-  expect(Number(await m.getByTestId("rm-canvas").getAttribute("data-k")), `外は分類へ（${dbg2}）`).toBeCloseTo(k0, 2);
+  expect(Number(await m.getByTestId("rm-canvas").getAttribute("data-k"))).toBeCloseTo(k0, 2);
   const p = (await m.getByTestId(`rm-term-${T("binom")}`).boundingBox())!;
   await page.mouse.dblclick(p.x + p.width / 2, p.y + p.height / 2);
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "full");

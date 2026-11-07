@@ -54,10 +54,20 @@ export function haptic(): void {
 // iPhone の Safari は、touchstart を聞いていないと :active（押した返事）を出さない
 if (typeof document !== "undefined") document.addEventListener("touchstart", () => {}, { passive: true });
 
+/** 長さの値（"200ms"・".2s"・"0.32s"）を ms にする。読めなければ fallback。
+ *  build の CSS の縮め方は 200ms を .2s に書き換えるので、単位を見て直す（見ないと 0.2ms になる。ダブルタップの待ちが 0.2ms だった） */
+export function parseMs(v: string, fallback: number): number {
+  const m = /^\s*(-?[\d.]+)\s*(ms|s)?\s*$/.exec(v);
+  if (!m) return fallback;
+  const n = parseFloat(m[1]!);
+  if (!Number.isFinite(n)) return fallback;
+  return m[2] === "s" ? n * 1000 : n;
+}
+
 /** 手触りの値の長さ（ms）を読む（--dur・--dur-sheet など）。読めなければ fallback */
 export function tokenMs(name: string, fallback: number): number {
   if (typeof document === "undefined") return fallback;
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name)) || fallback;
+  return parseMs(getComputedStyle(document.documentElement).getPropertyValue(name), fallback);
 }
 
 /**
