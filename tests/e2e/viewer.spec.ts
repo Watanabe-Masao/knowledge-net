@@ -276,11 +276,23 @@ test("線を押すと下から説明が開き、閉じても選んだ概念は�
     const s = e.renderedSourceEndpoint(),
       g = e.renderedTargetEndpoint();
     const boxes = cy.nodes().map((n: any) => n.renderedBoundingBox());
-    for (const k of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8]) {
+    // ほかの線（の真っすぐな近似）からも離れた所（面の高さで地図の収まり方が変わると、別の線が近くを通ることがある）
+    const others = cy
+      .edges()
+      .filter((x: any) => x.id() !== e.id() && x.visible())
+      .map((x: any) => [x.renderedSourceEndpoint(), x.renderedTargetEndpoint()]);
+    const dist = (x: number, y: number, a: any, b: any) => {
+      const dx = b.x - a.x,
+        dy = b.y - a.y,
+        t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+      return Math.hypot(x - a.x - t * dx, y - a.y - t * dy);
+    };
+    for (const k of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8, 0.25, 0.75, 0.35, 0.65]) {
       const x = s.x + (g.x - s.x) * k,
         y = s.y + (g.y - s.y) * k;
-      if (!boxes.some((b: any) => x >= b.x1 - 4 && x <= b.x2 + 4 && y >= b.y1 - 4 && y <= b.y2 + 4))
-        return { x: r.left + x, y: r.top + y };
+      if (boxes.some((b: any) => x >= b.x1 - 4 && x <= b.x2 + 4 && y >= b.y1 - 4 && y <= b.y2 + 4)) continue;
+      if (others.some(([a, b]: any) => dist(x, y, a, b) < 10)) continue;
+      return { x: r.left + x, y: r.top + y };
     }
     throw new Error("線の上に点のない所がない");
   });
