@@ -406,6 +406,33 @@ export type View = { k: number; x: number; y: number };
 export const KMIN = 0.8;
 export const KMAX = 1.1;
 
+/** 選んだ語と、その相手のカードと線の点（線の種類で絞っていればその種類だけ） */
+function pickPoints(L: CanvasLayout, pick: string, types: Set<string>): Pt[] | null {
+  const me = L.terms.find((t) => t.id === pick);
+  if (!me) return null;
+  const P: Pt[] = [];
+  const add = (t: TermBox) => P.push({ x: t.x, y: t.y }, { x: t.x + t.w, y: t.y + t.h });
+  add(me);
+  for (const e of L.edges)
+    if ((e.from === pick || e.to === pick) && (!types.size || e.types.some((x) => types.has(x)))) {
+      const o = L.terms.find((t) => t.id === (e.from === pick ? e.to : e.from));
+      if (o) add(o);
+      P.push(...e.pts);
+    }
+  return P;
+}
+/** 選んだ語と相手と線を囲む枠（地図の座標）。面の段が替わったとき、見える所に収まっているかを見る */
+export function pickBox(L: CanvasLayout, pick: string, types: Set<string>) {
+  const P = pickPoints(L, pick, types);
+  if (!P) return null;
+  return {
+    x0: Math.min(...P.map((p) => p.x)),
+    x1: Math.max(...P.map((p) => p.x)),
+    y0: Math.min(...P.map((p) => p.y)),
+    y1: Math.max(...P.map((p) => p.y)),
+  };
+}
+
 /** 語を選んだときの寄り方：選んだ語を見える所（上の端から下の面の上まで）の真ん中に置き、相手と線が全部入る倍率に寄せる。
  *  字が読める倍率（KMIN）より引かない。真ん中のままで入らないときは、少しずらして収める */
 export function fitPick(
@@ -418,17 +445,7 @@ export function fitPick(
   if (!me) return null;
   const PAD = 14;
   const { W, H, bottom } = room;
-  const P: Pt[] = [];
-  const add = (t: TermBox) => P.push({ x: t.x, y: t.y }, { x: t.x + t.w, y: t.y + t.h });
-  add(me);
-  const on = (e: CanvasEdge) =>
-    (e.from === pick || e.to === pick) && (!types.size || e.types.some((x) => types.has(x)));
-  for (const e of L.edges)
-    if (on(e)) {
-      const o = L.terms.find((t) => t.id === (e.from === pick ? e.to : e.from));
-      if (o) add(o);
-      P.push(...e.pts);
-    }
+  const P = pickPoints(L, pick, types)!;
   const cx = me.x + me.w / 2,
     cy = me.y + me.h / 2;
   const hx = Math.max(...P.map((p) => Math.abs(p.x - cx))) + PAD,
@@ -450,10 +467,22 @@ export function fitPick(
     }
     return pos;
   };
+  // 縦は、選んだ語と相手と線のまとまりが入るなら、まとまりを見える所の真ん中に（選んだ語を真ん中にすると、相手が片側にあるとき
+  // 反対側が空く。レビュー 2026-11-07）。入らないときは選んだ語を真ん中にして、ずらして収める
+  const vis = H - bottom;
+  // 入らないとき（面を上げて見える所が狭いとき）は、まとまりの上の端を見える所の上の端にそろえ、選んだ語から近い相手を見せる。
+  // それで選んだ語が見える所から出るときだけ、選んだ語を真ん中にする
+  const top = 4 - y0 * k;
+  const y =
+    (y1 - y0) * k <= vis - 8
+      ? (vis - (y1 - y0) * k) / 2 - y0 * k
+      : (me.y + me.h) * k + top <= vis - 4
+        ? top
+        : fitAxis(y0, y1, vis, vis / 2 - cy * k);
   return {
     k,
     x: fitAxis(x0, x1, W, W / 2 - cx * k),
-    y: fitAxis(y0, y1, H - bottom, (H - bottom) / 2 - cy * k),
+    y,
   };
 }
 

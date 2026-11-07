@@ -6,6 +6,7 @@
 //   線を押すとその関係の面（App の Panel）。線を長押ししている間は、向こうの端を見せる（A/B：引いて見せる／カードを浮かせる）。
 //   空いた所の1回のタップは1段戻す（帯が引っ込んでいれば戻す → 選んでいれば外す → 何もなければ帯を引っ込める）。地図を指で動かすと帯が引っ込む。
 // 並びと線の計算は src/relationMap.ts（layoutCategory・lineBadges・fitPick）。ここは見せ方と指の操作だけ
+import { TOP_AB } from "./ab";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tokenMs } from "@math-lab/ui";
 import { type Network, bandOfCat, bandsOf } from "./data";
@@ -14,6 +15,7 @@ import {
   crossings,
   fitBox,
   fitPick,
+  pickBox,
   layoutCategory,
   lineBadges,
   linksOf,
@@ -33,16 +35,7 @@ const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation:
 const dblMs = () => tokenMs("--dur", 200);
 /** 長押しとみなす長さ（一覧ののぞき見と同じ） */
 const HOLD_MS = 450;
-/** A/B で比べる形（渡辺さん 2026-11-07。stats2-course の issue 239）：語を選んだあとの画面の狭さ。
- *  rmTop=b：語を選んでいる間は上の帯（見出し・パンくず・見方の切り替え）を引っ込め、地図を上まで広げる。
- *  空いた所を1回押すと、選びを外し帯も戻す（1段戻す）。決まったら、勝った形だけを残す */
-export const AB = (() => {
-  try {
-    return { top: new URLSearchParams(location.search).get("rmTop") === "b" };
-  } catch {
-    return { top: false };
-  }
-})();
+
 /** 縁を越えたときの重さ（越えた分をこの割合で縮め、引くほどさらに重く） */
 const RUB = 0.55;
 /** 画面の高さがこれより低い（埋め込みなど）ときは、地図をページの中に置かず全画面のページで開く（画面の原則 2） */
@@ -95,9 +88,13 @@ type Props = {
   onRelation: (relId: string) => void;
   /** 引いて離したとき、ライブラリへ戻る（遠くの見え方＝ライブラリ。2つ持たない） */
   onOut?: () => void;
+  /** 空いた所の1回のタップで、まず下の面を1段下げる（下げたら true）。帯を戻すのより後、選びを外すのより先 */
+  onBlank?: () => boolean;
+  /** 下の面の段。段が替わったら、選んだ語の相手が面の下に隠れたときだけ寄り直す */
+  step?: string;
 };
 
-export default function RelationMap({ net, category, selected, onSelect, onOpen, onRelation, onOut }: Props) {
+export default function RelationMap({ net, category, selected, onSelect, onOpen, onRelation, onOut, onBlank, step }: Props) {
   const L = useMemo(() => layoutCategory(net, category, { lane: 6 }), [net, category]);
   const cross = useMemo(() => crossings(L), [L]);
   const pathD = (pts: { x: number; y: number }[]) => roundedPath(pts, 6);
@@ -163,7 +160,11 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     const sh = document.querySelector<HTMLElement>("[data-testid=detail]");
     if (!sh || !box.current || calmRef.current === "all") return 0;
     const r = box.current.getBoundingClientRect();
-    return Math.max(0, r.bottom - sh.getBoundingClientRect().top) + 8;
+    // 面が段へ動いている途中でも、止まる先の高さで測る（面の動きと地図の寄り直しを同じときに。画面の原則 10）
+    const h = parseFloat(sh.style.height),
+      b = parseFloat(sh.style.bottom);
+    const top = Number.isFinite(h) && Number.isFinite(b) ? innerHeight - b - h : sh.getBoundingClientRect().top;
+    return Math.max(0, r.bottom - top) + 8;
   };
   /** 寄る動きの数（画面のテストが、動きが重なっていないかを見る） */
   const goes = useRef(0);
@@ -395,7 +396,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
   /** 1段戻す：全部引っ込めていたら、語を選んでいる間の形（rmTop=b なら上の帯だけ引っ込めたまま）へ。そうでなければ帯を全部戻す */
   const leave = (all = false) => {
     if (!calmRef.current) return;
-    if (!all && calmRef.current === "all" && AB.top && pickRef.current) {
+    if (!all && calmRef.current === "all" && TOP_AB && pickRef.current) {
       calmRef.current = "top";
       setCalm("top");
       return;
@@ -409,7 +410,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
   const pickRef = useRef(pick);
   pickRef.current = pick;
   useEffect(() => {
-    if (!AB.top) return;
+    if (!TOP_AB) return;
     if (pick && !calmRef.current) enter("top");
     else if (!pick && calmRef.current === "top") leave(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -435,6 +436,27 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey]);
+
+  // 面の段が替わったら（段2・段3へ上げた・下げた）、選んだ語と相手が見える所に収まっていなければ寄り直す。
+  // 収まっていれば動かさない（1つの操作に動きは1つ。画面の原則 10）
+  useEffect(() => {
+    if (!step || !pick || selected !== pick || !vRef.current) return;
+    const id = setTimeout(() => {
+      const v0 = vRef.current;
+      if (!v0) return;
+      const { W, H } = size();
+      const b = pickBox(L, pick, types);
+      if (!b) return;
+      const vis = H - bottomOf();
+      const inside =
+        b.x0 * v0.k + v0.x >= 0 && b.x1 * v0.k + v0.x <= W && b.y0 * v0.k + v0.y >= 0 && b.y1 * v0.k + v0.y <= vis;
+      if (inside) return;
+      const nv = fitPick(L, pick, types, { W, H, bottom: bottomOf(), k: v0.k });
+      if (nv) go(nv);
+    }, 30); // 面の止まる先の高さが決まってから（面と同じときに動く）
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // ---- ダブルタップ：語＝その語の詳しくを全部の段で／まとまりの中（語の外）＝そのまとまり／まとまりの外＝分類 ----
   // 1回目で語を選ぶと寄る動きが始まり、2回目の指の下からカードが動くので、語は1回目に押したものを覚えておく
@@ -613,6 +635,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
         if (fold) return setFold(null); // 浮かせた一覧が出ていれば、まずそれを閉じる（1段戻す）
         blankT.current = window.setTimeout(() => {
           if (calmRef.current === "all") leave();
+          else if (pick && onBlank?.()) return;
           else if (pick) setPick(null, true);
           else enter();
         }, dblMs());

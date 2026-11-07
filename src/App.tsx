@@ -3,6 +3,7 @@
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
 // Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
+import { SHEET_STOPS, stepDown } from "./ab";
 import Library from "./Library";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
 import RelationMap from "./RelationMap";
@@ -591,6 +592,12 @@ export default function App() {
           }}
           onRelation={setEdgeSel}
           onOut={() => setGroup(null)}
+          onBlank={() => {
+            const d = narrow ? stepDown(detent) : null;
+            if (d) setDetent(d);
+            return !!d;
+          }}
+          step={detent}
         />
       ) : (
         <>
@@ -843,7 +850,7 @@ export default function App() {
         tab="explore"
         onTab={(t) => {
           if (t === "explore" && sel) {
-            setDetent("min");
+            setDetent(SHEET_STOPS?.[0] ?? "min");
             setRecenter((n) => n + 1);
           } else setTab(t);
         }}

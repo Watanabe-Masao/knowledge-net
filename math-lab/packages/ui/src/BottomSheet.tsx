@@ -9,7 +9,8 @@ import { useEffect, useRef, useState, type HTMLAttributes, type PointerEvent as 
 import { haptic } from "./motion";
 import s from "./BottomSheet.module.css";
 
-export type Detent = "min" | "peek" | "half" | "full";
+export type Detent = "min" | "peek" | "mid" | "half" | "full";
+/** ふだんの段（mid は使う側が stops で選んだときだけ。少しと半分の間の段） */
 export const DETENTS: Detent[] = ["min", "peek", "half", "full"];
 
 /**
@@ -17,12 +18,18 @@ export const DETENTS: Detent[] = ["min", "peek", "half", "full"];
  * h：今の高さ（px）、v：指の速さ（px/ms。上向きが＋）、heights：段ごとの高さ。
  * 速さを 0.18 秒ぶん先へ進めた位置にいちばん近い段。速く払ったときは少なくとも1段は進む。
  */
-export function snapDetent(h: number, v: number, heights: Record<Detent, number>): Detent {
+export function snapDetent(
+  h: number,
+  v: number,
+  heights: Partial<Record<Detent, number>>,
+  stops: Detent[] = DETENTS,
+): Detent {
   const projected = h + v * 180;
-  let best: Detent = "min",
+  const H = (d: Detent) => heights[d] ?? 0;
+  let best: Detent = stops[0]!,
     dist = Infinity;
-  for (const d of DETENTS) {
-    const x = Math.abs(heights[d] - projected);
+  for (const d of stops) {
+    const x = Math.abs(H(d) - projected);
     if (x < dist) {
       dist = x;
       best = d;
@@ -30,10 +37,8 @@ export function snapDetent(h: number, v: number, heights: Record<Detent, number>
   }
   if (Math.abs(v) > 0.5) {
     // 速く払った：今の高さから払った向きに次の段へ（戻りはしない）
-    const order = DETENTS.map((d) => heights[d]);
-    const next =
-      v > 0 ? DETENTS.find((_, i) => order[i]! > h + 1) : [...DETENTS].reverse().find((d) => heights[d] < h - 1);
-    if (next && (v > 0 ? heights[next] > heights[best] : heights[next] < heights[best])) best = next;
+    const next = v > 0 ? stops.find((d) => H(d) > h + 1) : [...stops].reverse().find((d) => H(d) < h - 1);
+    if (next && (v > 0 ? H(next) > H(best) : H(next) < H(best))) best = next;
   }
   return best;
 }
@@ -57,12 +62,17 @@ type Props = {
   min?: number;
   /** 下の余白（下のタブの高さなど。面はその上に乗る） */
   bottom?: number;
-  /** つまみを押したとき、段を替える前に呼ぶ。true を返すと段を替えない（使う側が段の中身を1つ足すときなど） */
-  onGrabTap?: () => boolean;
+  /** 止まる段（低い順）。省くと しまう・少し・半分・全部。mid（少しと半分の間）を入れるときは mid の高さも渡す */
+  stops?: Detent[];
+  mid?: number;
 } & Omit<HTMLAttributes<HTMLElement>, "title">;
 
-/** つまみを押したときの次の段（少し → 半分 → 全部 → 少し。しまうは押し込んだときだけ） */
-const nextDetent = (d: Detent): Detent => (d === "peek" ? "half" : d === "half" ? "full" : "peek");
+/** つまみを押したときの次の段（止まる段を1つ上へ。全部の次は少し。しまうは押し込んだときだけ） */
+const nextDetent = (d: Detent, stops: Detent[]): Detent => {
+  const up: Detent[] = stops.filter((x) => x !== "min");
+  const i = up.indexOf(d);
+  return i < 0 || i === up.length - 1 ? up[0]! : up[i + 1]!;
+};
 
 const vh = () => (typeof window === "undefined" ? 800 : window.innerHeight);
 
@@ -75,12 +85,14 @@ export function BottomSheet({
   peek = 220,
   min = 64,
   bottom = 0,
-  onGrabTap,
+  stops = DETENTS,
+  mid,
   ...rest
 }: Props) {
   const heights = (): Record<Detent, number> => ({
     min,
     peek,
+    mid: mid ?? peek,
     half: Math.round((vh() - bottom) * 0.55),
     full: vh() - bottom - 44,
   });
@@ -117,7 +129,7 @@ export function BottomSheet({
     d.y = e.clientY; // 上向きが＋
     if (Math.abs(e.clientY - d.y0) > 4) d.moved = true;
     const hs = heights();
-    setDrag(rubber(d.h0 - (e.clientY - d.y0), hs.min, hs.full));
+    setDrag(rubber(d.h0 - (e.clientY - d.y0), hs[stops[0]!], hs.full));
   };
   const onUp = (e: RPE) => {
     const d = g.current;
@@ -131,12 +143,11 @@ export function BottomSheet({
         onDetent("peek");
       } else if (d.grab) {
         haptic();
-        if (onGrabTap?.()) return;
-        onDetent(nextDetent(detent));
+        onDetent(nextDetent(detent, stops));
       }
       return;
     }
-    const next = snapDetent(d.h0 - (e.clientY - d.y0), d.v, heights());
+    const next = snapDetent(d.h0 - (e.clientY - d.y0), d.v, heights(), stops);
     if (next !== detent) haptic();
     onDetent(next);
   };
@@ -173,9 +184,7 @@ export function BottomSheet({
             data-grab
             aria-label={detent === "full" ? "少しだけにする" : detent === "min" ? "出す" : "広げる"}
             onClick={(e) => {
-              if (e.detail !== 0) return;
-              if (detent !== "min" && onGrabTap?.()) return;
-              onDetent(detent === "min" ? "peek" : nextDetent(detent));
+              if (e.detail === 0) onDetent(detent === "min" ? "peek" : nextDetent(detent, stops));
             }}
           />
           {header}
