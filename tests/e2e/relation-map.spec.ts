@@ -220,6 +220,12 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
   });
   await page.evaluate(() => {
     (window as any).__clicks = [];
+    const cv = document.querySelector("[data-testid=rm-canvas]")!;
+    new MutationObserver(() =>
+      (window as any).__clicks.push(
+        `k=${cv.getAttribute("data-k")} goes=${cv.getAttribute("data-goes")}@${Math.round(performance.now())} bars=${document.documentElement.dataset.bars ?? "-"}`,
+      ),
+    ).observe(cv, { attributes: true, attributeFilter: ["data-k", "data-goes"] });
     for (const t of ["pointerdown", "pointerup", "click", "dblclick"])
       addEventListener(
         t,
