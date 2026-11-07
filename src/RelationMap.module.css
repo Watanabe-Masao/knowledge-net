@@ -121,6 +121,10 @@
 .lines path[data-state="dim"] {
   opacity: 0.18;
 }
+/* なぞる線の下の元の線：薄くして、上から引き直すのが見えるように */
+.lines path[data-state="ghost"] {
+  opacity: 0.25;
+}
 .glyphText {
   fill: var(--surface);
   font-weight: 800;
@@ -673,23 +677,26 @@
 /* 線を押したとき：矢印の向きに引き直してから、すっと消える（1つの操作に動きは1つ。画面の原則 10） */
 .trace {
   fill: none;
-  stroke-width: 5;
   stroke-linecap: round;
   pointer-events: none;
   stroke-dasharray: 1 1;
-  animation: trace-draw var(--dur-flash) var(--ease) forwards;
+  animation: trace-draw calc(var(--dur-flash) * 1.5) var(--ease) forwards;
 }
 .trace[data-rev] {
   animation-name: trace-draw-rev;
 }
+/* 引き直して（3分の2）、少し止めて、すっと消える（元の線に戻る） */
 @keyframes trace-draw {
   0% {
     stroke-dashoffset: 1;
-    opacity: 0.9;
   }
-  70% {
+  65% {
     stroke-dashoffset: 0;
-    opacity: 0.9;
+    opacity: 1;
+  }
+  85% {
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
   100% {
     stroke-dashoffset: 0;
@@ -699,11 +706,14 @@
 @keyframes trace-draw-rev {
   0% {
     stroke-dashoffset: -1;
-    opacity: 0.9;
   }
-  70% {
+  65% {
     stroke-dashoffset: 0;
-    opacity: 0.9;
+    opacity: 1;
+  }
+  85% {
+    stroke-dashoffset: 0;
+    opacity: 1;
   }
   100% {
     stroke-dashoffset: 0;

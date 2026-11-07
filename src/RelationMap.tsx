@@ -826,7 +826,18 @@ export default function RelationMap({
                     data-to={e.to}
                     data-type={e.type}
                     data-state={
-                      peek?.edge === e.id || trace?.edge === e.id ? "lit" : !pick ? undefined : on ? "lit" : "dim"
+                      // なぞっている間：その線は薄くして上から引き直し、ほかの線は下げる（どの線を引いているかを分かるように）
+                      trace
+                        ? trace.edge === e.id
+                          ? "ghost"
+                          : "dim"
+                        : peek?.edge === e.id
+                          ? "lit"
+                          : !pick
+                            ? undefined
+                            : on
+                              ? "lit"
+                              : "dim"
                     }
                     markerEnd={e.arrow === "end" ? m : undefined}
                     markerStart={e.arrow === "start" ? m : undefined}
@@ -844,6 +855,7 @@ export default function RelationMap({
                   d={pathD(te.pts)}
                   className={s.trace}
                   pathLength={1}
+                  strokeWidth={6 / v.k} /* 画面の上で 6px（ふだんの線の倍） */
                   data-rev={te.arrow === "start" ? "" : undefined}
                   data-testid="rm-trace"
                   style={{ stroke: kcol(te.type) }}
@@ -908,7 +920,10 @@ export default function RelationMap({
           {L.terms.map((t) => {
             const on = pick === t.id,
               k = near.get(t.id),
-              end = peekEdge && (peekEdge.from === t.id || peekEdge.to === t.id);
+              traceEdge = trace ? shown.find((e) => e.id === trace.edge) : undefined,
+              end =
+                (peekEdge && (peekEdge.from === t.id || peekEdge.to === t.id)) ||
+                (traceEdge && (traceEdge.from === t.id || traceEdge.to === t.id));
             return (
               <button
                 key={t.id}
@@ -917,7 +932,7 @@ export default function RelationMap({
                 data-cv={t.id}
                 data-node={t.id}
                 data-testid={`rm-term-${t.id}`}
-                data-state={end ? "near" : !pick ? undefined : on ? "sel" : k ? "near" : "dim"}
+                data-state={end ? "near" : trace ? "dim" : !pick ? undefined : on ? "sel" : k ? "near" : "dim"}
                 data-skeleton={filled(t.id) ? undefined : "1"}
                 aria-pressed={on}
                 aria-label={nameOf(net, t.id)}
@@ -927,7 +942,7 @@ export default function RelationMap({
                     top: t.y,
                     width: t.w,
                     height: t.h,
-                    ...(k || end ? { "--rc": kcol(k ?? peekEdge!.type) } : {}),
+                    ...(k || end ? { "--rc": kcol(k ?? (peekEdge ?? traceEdge)!.type) } : {}),
                   } as React.CSSProperties
                 }
                 onPointerDown={(e) => {
