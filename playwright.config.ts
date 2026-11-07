@@ -9,7 +9,12 @@ export default defineConfig({
   // WebKit（iPhone の Safari と同じ描き方）は関係図だけ。線の位置・変形・position: fixed が Safari で崩れないかを見る（設計書 3）
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
-    { name: "webkit", use: { browserName: "webkit" }, testMatch: /relation-map\.spec\.ts/ },
+    // 落ちたときは trace を残す（CI の WebKit で一度だけ止まる件の原因を見るため。手元に WebKit がない）
+    {
+      name: "webkit",
+      use: { browserName: "webkit", trace: "retain-on-failure" },
+      testMatch: /relation-map\.spec\.ts/,
+    },
   ],
   webServer: { command: "npx vite preview --port 4173 --strictPort", port: 4173, reuseExistingServer: true },
 });

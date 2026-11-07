@@ -628,8 +628,10 @@ test("たどった道：← で1つ前へ、長押しで新しい順のメニュ
   await expect(back).toBeVisible();
   await back.click();
   await expect(page).toHaveURL(/c=stats2%3ATERM-bernoulli/);
+  await still(page); // ← で戻ると寄る動きが始まる。重ねないよう止まってから次へ
   await back.click();
   await expect(page, "戻ったのに道に積み直す").toHaveURL(/c=stats2%3ATERM-binom/);
+  await still(page);
   await expect(back).toHaveCount(0);
   await pickT("bernoulli");
   await pickT("hyper");
