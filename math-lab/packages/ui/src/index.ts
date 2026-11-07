@@ -6,7 +6,7 @@ export { Card, Stack, Row, Split, Muted, Label, ErrorText, Badge, Badges, Disclo
 export { Segmented } from "./Segmented";
 export { Sheet } from "./Sheet";
 export { BottomSheet, snapDetent, rubber, DETENTS, type Detent } from "./BottomSheet";
-export { change, flash, haptic, reduced, tokenMs, useTween } from "./motion";
+export { change, flash, haptic, parseMs, reduced, tokenMs, useTween } from "./motion";
 export { Formula, type FormulaData } from "./Formula";
 export { Workspace, TableWorkspace, type WorkspaceData, type TableWorkspaceData, type ValueTable } from "./Workspace";
 export { Lightbox } from "./Lightbox";

@@ -1,4 +1,5 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
+import { STEPS } from "./steps";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as RPE } from "react";
 import { Media, relationParts } from "./Relation";
 import { RelDig, RelMap } from "./RelMap";
@@ -13,6 +14,7 @@ import {
   Segmented,
   Workspace,
   TableWorkspace,
+  haptic,
   type Detent,
 } from "@math-lab/ui";
 import { modelPmf, modelMoments } from "@math-lab/engine";
@@ -47,7 +49,6 @@ export function sentence(net: Network, r: Relation): string {
 type Props = {
   net: Network;
   concept: Concept;
-  inCompare: boolean;
   onCompare: () => void;
   onSelect: (id: string) => void;
   /** つながりの行を押す（線を押したのと同じ。下からシートが開く） */
@@ -191,7 +192,6 @@ function groupsOf(net: Network, id: string): Group[] {
 export default function Detail({
   net,
   concept: c,
-  inCompare,
   onCompare,
   onSelect,
   onEdge,
@@ -210,22 +210,16 @@ export default function Detail({
     ro.observe(el);
     return () => ro.disconnect();
   }, [sheet !== undefined]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 「少し」の段：見出し（名前の1行と切り替え）＋ 定義が見える高さ
-  const leadRef = useRef<HTMLDivElement>(null);
-  const [leadH, setLeadH] = useState(80);
+  // 面の段（src/steps.ts）：段1＝名前の1行の右に札 → 段2＝つまりと選んだ札の中身 → フル＝ふだんの形。島の地図・一覧でも同じ面なので同じ段
+  const compact = !!sheet && sheet.detent !== "full";
+  const showLead = !compact || sheet?.detent === "half";
+  const peekOut = sheet ? Math.max(64, peekH + 32) : 0; // 段1：つまみ・名前と札の行の下まで
+  // ← は来た段へ戻す（画面の原則 3・11）
+  const lastStep = useRef<Detent>("peek");
+  const grabY = useRef<number | null>(null);
   useEffect(() => {
-    const el = leadRef.current;
-    if (!el || typeof ResizeObserver !== "function") return;
-    const ro = new ResizeObserver(() => setLeadH(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  });
-  const peekOut = sheet
-    ? Math.max(
-        140,
-        Math.min(peekH + leadH + 36, Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.42)),
-      )
-    : 0;
+    if (sheet && sheet.detent !== "full" && sheet.detent !== "min") lastStep.current = sheet.detent;
+  }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (sheet) sheet.onPeek?.(peekOut);
   }, [peekOut]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -253,6 +247,7 @@ export default function Detail({
   // 押す所（問いの札・開く段・ボタン）は、その操作をそのまま通す（全画面のページに切り替えると、押した所が入れ替わって押しても効かなかった。#188 07a）
   const touch = (e: RPE) => {
     if ((e.target as HTMLElement).closest("button, a, summary, input, select")) return;
+    if (compact) return; // 段の形では、押したとき（離したとき）に上げる（段2で中身を指で送れるように）
     if (sheet && (sheet.detent === "peek" || sheet.detent === "min")) reading();
   };
   // この概念を主にする実験室の問い（問いの側で一元管理。#163）
@@ -317,7 +312,7 @@ export default function Detail({
           <button
             type="button"
             className={st.back}
-            onClick={() => sheet.onDetent("peek")}
+            onClick={() => sheet.onDetent(lastStep.current)}
             data-testid="detail-to-map"
             aria-label="地図へ戻る"
           >
@@ -331,43 +326,79 @@ export default function Detail({
             {c.status === "stub" ? "・まだ説明がない" : ""}
           </Muted>
         </div>
+        {compact && (
+          // 段1・段2では、切り替えを名前の右の空いた所に札で1行に並べる（渡辺さん 2026-11-07）。札は段2で見せる中身を選ぶ：
+          // 段1で押すとその中身で段2へ。段2で別の札は中身を替え、選んでいる札をもう一度押すとフルへ
+          <div className={st.chips} role="group" aria-label="概念の中身" data-testid="detail-chips">
+            {tabs.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                className={st.chip}
+                aria-pressed={sheet.detent === "half" && tab === t.value}
+                onClick={() => {
+                  if (sheet.detent === "half" && tab === t.value) return sheet.onDetent("full");
+                  setTabRaw(t.value);
+                  if (sheet.detent !== "half") sheet.onDetent("half");
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
         <MoreMenu
           items={[
-            { label: inCompare ? "比較の面を開く" : "ほかの概念と比較", onClick: onCompare, pressed: inCompare },
+            { label: "ほかの概念と比べる", onClick: onCompare },
             { label: "この概念の URL をコピー", onClick: copyUrl },
           ]}
         />
       </header>
-      <div className={st.tabs}>
+      <div className={st.tabs} hidden={compact}>
         <Segmented variant="tabs" value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身" items={tabs} />
       </div>
     </>
   );
+  // つまり（と問い）。フルでは概要の頭。段2では札に依らず中身の上に出す
+  const leadBlock = (
+    <div className={st.lead}>
+      {/* 問いは概念の問いの文だけ。実験室への入口は下の主ボタン1つ（同じ機能を2か所に置かない。渡辺さん 2026-11-04） */}
+      {c.question && !compact && (
+        <section className={st.ask} data-testid="concept-question">
+          <span className={st.lab}>問い</span>
+          <p className={st.askText}>{c.question}</p>
+        </section>
+      )}
+      {c.gist && (
+        <section className={st.block} data-testid="concept-gist">
+          <span className={st.lab}>つまり</span>
+          <p className={st.gist}>{c.gist}</p>
+        </section>
+      )}
+      {!c.gist && c.short && c.definition ? (
+        <p className={st.short} data-testid="concept-short">
+          {c.short}
+        </p>
+      ) : null}
+    </div>
+  );
   const rest = (
-    <>
+    <div
+      className={st.rest}
+      onClick={
+        compact
+          ? (e) => {
+              // 段の形：中身（つまり・図など）を押すとフルで読む（押す所の操作はそのまま）
+              if (!(e.target as HTMLElement).closest("button, a, summary, input, select")) reading();
+            }
+          : undefined
+      }
+    >
+      {compact && showLead && leadBlock}
       {tab === "about" && (
         <div className={st.pane} data-testid="tab-about" onPointerDown={touch}>
           {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
-          <div ref={leadRef} className={st.lead}>
-            {/* 問いは概念の問いの文だけ。実験室への入口は下の主ボタン1つ（同じ機能を2か所に置かない。渡辺さん 2026-11-04） */}
-            {c.question && (
-              <section className={st.ask} data-testid="concept-question">
-                <span className={st.lab}>問い</span>
-                <p className={st.askText}>{c.question}</p>
-              </section>
-            )}
-            {c.gist && (
-              <section className={st.block} data-testid="concept-gist">
-                <span className={st.lab}>つまり</span>
-                <p className={st.gist}>{c.gist}</p>
-              </section>
-            )}
-            {!c.gist && c.short && c.definition ? (
-              <p className={st.short} data-testid="concept-short">
-                {c.short}
-              </p>
-            ) : null}
-          </div>
+          {!compact && leadBlock}
           {chart && (
             <section className={st.block} data-testid="concept-chart">
               <div className={st.labRow}>
@@ -588,7 +619,7 @@ export default function Detail({
           <Muted>押すと、関係のページが開く。グラフの線を押すのと同じ。</Muted>
         </div>
       )}
-    </>
+    </div>
   );
   if (!sheet)
     return (
@@ -608,6 +639,30 @@ export default function Detail({
         role="region"
         aria-label={`${c.name} のページ`}
       >
+        {/* フルでも上につまみ（渡辺さん 2026-11-07）：押すか下へ引くと、来た段へ戻る（面のつまみと同じ働き。画面の原則 10） */}
+        <button
+          type="button"
+          className={st.pageGrab}
+          aria-label="来た段へ戻す"
+          data-testid="page-grab"
+          onPointerDown={(e) => {
+            grabY.current = e.clientY;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            if (grabY.current !== null && e.clientY - grabY.current > 40) {
+              grabY.current = null;
+              haptic();
+              sheet.onDetent(lastStep.current);
+            }
+          }}
+          onClick={(e) => {
+            if (grabY.current === null && e.detail !== 0) return; // 引いて戻したあとの click は無視（キーボードは通す）
+            grabY.current = null;
+            haptic();
+            sheet.onDetent(lastStep.current);
+          }}
+        />
         <div className={st.pageHead}>{head}</div>
         <div className={st.pageBody}>{rest}</div>
         {lab && (
@@ -625,12 +680,14 @@ export default function Detail({
   return (
     <BottomSheet
       label={`${c.name} の詳しく`}
+      data-edge="bottom"
       data-testid="detail"
       detent={sheet.detent}
       onDetent={sheet.onDetent}
       bottom={sheet.bottom}
       peek={peek}
       min={84}
+      stops={STEPS}
       header={<div ref={headRef}>{head}</div>}
     >
       {rest}

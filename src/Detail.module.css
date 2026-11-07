@@ -12,6 +12,9 @@
 }
 .titles h2 {
   margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis; /* 名前が長いときは「…」で切り、右の札の場所を残す */
   font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -585,7 +588,39 @@
 }
 .pageHead {
   flex: none;
-  padding: var(--sp-3) var(--sp-4) var(--sp-2);
+  padding: 0 var(--sp-4) var(--sp-2);
+}
+/* フルの上のつまみ（面のつまみと同じ見た目。押せる所は 44px） */
+.pageGrab {
+  all: unset;
+  flex: none;
+  position: relative;
+  display: block;
+  align-self: center;
+  width: 88px;
+  height: 20px;
+  cursor: grab;
+  touch-action: none;
+}
+.pageGrab::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+.pageGrab::after {
+  content: "";
+  position: absolute;
+  inset: -12px 0;
+}
+.pageGrab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .pageHead .head {
   display: grid;
@@ -789,4 +824,56 @@
   font-size: var(--fs-small);
   color: var(--ink-2);
   line-height: 1.55;
+}
+
+/* 少しの段（薄い形）の切り替えの札：名前の右に1行で。見た目は 32px、押せる所は 44px */
+.tabs[hidden] {
+  display: none;
+}
+.head:has(.chips) {
+  align-items: center;
+}
+.chips {
+  flex: none;
+  display: flex;
+  gap: 6px;
+}
+.chip {
+  all: unset;
+  position: relative;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-tag);
+  color: var(--ink-2);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+  cursor: pointer;
+  transition: transform var(--dur-press) ease;
+}
+.chip::before {
+  content: "";
+  position: absolute;
+  inset: -6px -3px;
+}
+.chip:active {
+  transform: translateY(1px);
+}
+.chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.chip[aria-pressed="true"] {
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+/* 段2の「つまり」は3行まで（続きはフルで読む） */
+.rest > .lead .gist {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

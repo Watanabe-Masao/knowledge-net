@@ -19,21 +19,8 @@ import {
 import { modelPmf, normalDensity, poissonPmf } from "@math-lab/engine";
 import s from "./Relation.module.css";
 import { Icon } from "./Shell";
+import { KIND_VAR, KindMark } from "./kinds";
 import { KINDS, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
-
-const KIND_VAR: Record<string, string> = {
-  前提: "--k-pre",
-  導出: "--k-der",
-  一般化: "--k-gen",
-  特殊化: "--k-gen",
-  変換: "--k-conv",
-  対比: "--k-con",
-  統合: "--k-int",
-  応用: "--k-app",
-  // 改訂36（関係図の決まり。stats2-course #232）：種類は構造の線と同じ青、材料は前提と同じ灰。地図の置き換え（#235）までの仮の色
-  種類: "--k-gen",
-  材料: "--k-pre",
-};
 
 const short = (t?: string) => (t ? t.split("（")[0] : "");
 
@@ -54,7 +41,10 @@ export function Badges({ net, r }: { net: Network; r: Relation }) {
   const p = relationParts(net, r);
   return (
     <BadgeRow>
-      <Badge color={KIND_VAR[r.type] ?? "--ink-3"}>{p.kind}</Badge>
+      <Badge color={KIND_VAR[r.type] ?? "--ink-3"}>
+        <KindMark k={r.type} size={20} style={{ marginRight: 4 }} />
+        {p.kind}
+      </Badge>
       {/* 近似・前提の種類は札でなく文で（押せる札と形を分ける。UI レビュー「用語・文章」） */}
       {p.tag && (
         <span className={s.tagText} data-testid="rel-subtag">

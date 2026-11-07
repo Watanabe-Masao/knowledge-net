@@ -19,7 +19,7 @@
 .full {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 1; /* 縁の帯（data-edge）が上に重なったまま滑って引っ込めるように、帯より下に置く */
   height: auto !important;
 }
 .world {
@@ -60,21 +60,34 @@
   color: var(--ink-3);
 }
 .common {
+  all: unset;
   display: inline-flex;
+  align-items: center;
   gap: 2px;
   margin-left: 4px;
-  color: var(--ink-3);
+  min-height: 32px;
+  padding: 0 4px;
+  border-radius: 8px;
+  color: var(--ink-2);
+  cursor: pointer;
 }
 .folded {
+  all: unset;
   position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 8px;
+  left: 10px;
+  right: 10px;
+  bottom: 2px;
+  min-height: 32px;
+  padding: 0 6px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 4px;
-  color: var(--ink-3);
-  font-size: 11px;
+  border-radius: 8px;
+  color: var(--ink-2); /* 灰色に沈めず、読める明るさで（押すと名前の一覧） */
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 3;
 }
 .folded small {
   margin-right: 4px;
@@ -210,6 +223,11 @@
 }
 .term[data-state="sel"] .card {
   transform: scale(1.08);
+  background: color-mix(
+    in srgb,
+    var(--accent) 12%,
+    var(--surface)
+  ); /* 選んでいる語は、主の色で微かに塗る（渡辺さん 2026-11-07） */
   box-shadow:
     inset 0 0 0 2px var(--accent),
     0 6px 18px color-mix(in srgb, var(--ink) 14%, transparent);
@@ -256,21 +274,66 @@
 }
 .legend {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
   z-index: 5;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  padding: 8px 12px;
-  border-radius: 16px;
-  font-size: 12px;
-  color: var(--ink-2);
+  justify-content: space-between;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 28px;
   background: color-mix(in srgb, var(--surface) 80%, transparent);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
-  pointer-events: none;
+  box-shadow: 0 0 0 1px var(--line);
+}
+.kindChip {
+  all: unset;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 10px 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 22px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.kindChip[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+}
+.filterOn {
+  all: unset;
+  position: absolute;
+  top: 12px;
+  right: 64px;
+  z-index: 5;
+  min-height: 44px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: inset 0 0 0 2px var(--accent);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.full .filterOn {
+  top: calc(12px + env(safe-area-inset-top, 0px));
+}
+.hopGap {
+  fill: none;
+  stroke-width: 13;
 }
 .legend span {
   display: inline-flex;
@@ -500,15 +563,169 @@
   }
 }
 
-/* 静かな状態：下の面・地図の操作・凡例もフェードで消す（触ると戻る） */
-.sheet,
-.ctl,
-.legend {
-  transition: opacity var(--dur-sheet) var(--ease);
+/* 見える所の外の相手（下の面の上の段。地図の上に重ねない。画面の原則 5） */
+.outside {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 12px 6px;
 }
-.full .sheet,
-.full .ctl,
-.full .legend {
-  opacity: 0;
+.outChip {
+  all: unset;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 22px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 2px var(--rc);
+  cursor: pointer;
+}
+.outChip > span[aria-hidden] {
+  color: var(--rc);
+  font-weight: 800;
+}
+
+/* 線を押す所：見えない太い線（画面の上で 44px） */
+.lineHit {
+  fill: none;
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.lineBadge {
+  pointer-events: auto;
+  cursor: pointer;
+}
+.hit {
+  fill: transparent;
+}
+.glyphPath {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* 線の長押しの間（B）：両端と「つまり」を指の上に浮かせる */
+.peekCard {
+  position: absolute;
+  z-index: 9;
+  width: 300px;
+  max-width: calc(100% - 16px);
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px var(--line-strong),
+    0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
   pointer-events: none;
+  animation: peek-in var(--dur) var(--ease); /* 押さえている指の上に、すっと出る（縁から滑らせない） */
+}
+@keyframes peek-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.peekHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.peekCard p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+/* 印だけの所を押したときの名前の一覧 */
+.foldCard {
+  position: absolute;
+  z-index: 9;
+  width: 260px;
+  max-width: calc(100% - 16px);
+  box-sizing: border-box;
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 0 1px var(--line-strong),
+    0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
+  animation: peek-in var(--dur) var(--ease);
+}
+.foldCard b {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.foldItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.foldItem small {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.foldItem .mat,
+.foldItem .mat > * {
+  width: 18px;
+  height: 18px;
+}
+
+/* 見た目は小さくても、押せる範囲は広げる（読める下限の倍率 0.8 でも画面の上で 44px 以上。画面の原則 6） */
+.common,
+.folded {
+  position: relative;
+}
+.folded {
+  position: absolute;
+}
+.hitbox {
+  position: absolute;
+  inset: -12px -10px;
+  min-width: 56px;
+}
+
+/* 語の長押しの概要（島の地図・一覧の長押しと同じ中身） */
+.tipName {
+  font-size: 17px !important;
+  color: var(--ink) !important;
+}
+.tipMeta {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.tipText {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.ctlIcon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* 帯が引っ込んで画面いっぱいのときも、右上に残す（画面の上の安全な余白の下） */
+.full .ctl {
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(12px + env(safe-area-inset-right, 0px));
 }

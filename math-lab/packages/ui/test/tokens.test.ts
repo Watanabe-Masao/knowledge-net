@@ -71,3 +71,19 @@ describe("ばねの動き", () => {
     }
   });
 });
+
+// 確かめる対象：手触りの長さを CSS から ms で読む（parseMs。ダブルタップの待ち・面の動きの長さに使う）。
+// 想定する故障：build が縮めた CSS（200ms → .2s）を 0.2ms と読む（2026-11-07 に起きた：ダブルタップの待ちが 0.2ms になり、
+//   iPhone で2回目が間に合わなかった）。見つけ方：縮めた形・ふつうの形・読めない値を ms にして照らす。
+// 既存との違い：上のテストは tokens.json の中身。ここは読む側
+// 検出の確かめ（2026-11-07）：単位を見ずに parseFloat だけにすると「.2s → 200」で落ちることを見た
+import { parseMs } from "../src/motion";
+describe("長さの値を ms で読む", () => {
+  it("縮めた CSS の s も、ms も同じ長さ", () => {
+    expect(parseMs(".2s", 0)).toBe(200);
+    expect(parseMs("0.32s", 0)).toBeCloseTo(320);
+    expect(parseMs(" 200ms", 0)).toBe(200);
+    expect(parseMs("", 99)).toBe(99);
+    expect(parseMs("auto", 99)).toBe(99);
+  });
+});

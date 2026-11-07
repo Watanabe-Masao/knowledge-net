@@ -91,6 +91,37 @@ select {
   object-position: top;
   animation-duration: var(--dur);
 }
+/* 縁から出入りする物（上の帯・下のタブ・下の面）の動きは1つ（knowledge-net の画面の原則 16。stats2-course の issue 239）：
+   出る・引っ込むは、その縁の方へ --dur-sheet と --ease-sheet で滑りながら薄く・濃くする。帯を引っ込める合図は根の data-bars="hidden"（全部）・"top"（上の帯だけ。語を選んでいる間）
+   （地図を指で動かしたとき。空いた所の1回のタップで戻す）。出てくるときの動きも同じ曲線（edge-in-*） */
+[data-edge] {
+  transition:
+    transform var(--dur-sheet) var(--ease-sheet),
+    opacity var(--dur-sheet) var(--ease-sheet);
+}
+:root[data-bars="hidden"] [data-edge="top"],
+:root[data-bars="top"] [data-edge="top"] {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+:root[data-bars="hidden"] [data-edge="bottom"] {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes edge-in-bottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+@keyframes edge-in-top {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
 /* 動きを減らす設定（iPhone の「視差効果を減らす」）では全部止める */
 @media (prefers-reduced-motion: reduce) {
   *,

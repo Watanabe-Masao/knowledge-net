@@ -10,18 +10,17 @@
   border-top: 1px solid var(--line);
   border-radius: 14px 14px 0 0;
   box-shadow: var(--shadow-raised);
-  transition: height var(--dur-spring) var(--ease-spring);
-  animation: up var(--dur-spring) var(--ease-spring);
+  transition:
+    height var(--dur-spring) var(--ease-spring),
+    transform var(--dur-sheet) var(--ease-sheet),
+    opacity var(--dur-sheet) var(--ease-sheet);
+  /* 出てくる動きは、縁から出入りする物の動き（base.css の edge-in-bottom）。段に止まる高さの動きだけがばね */
+  animation: edge-in-bottom var(--dur-sheet) var(--ease-sheet);
 }
 @media (min-width: 760px) {
   .sheet {
     left: calc(50% - 380px);
     right: calc(50% - 380px);
-  }
-}
-@keyframes up {
-  from {
-    transform: translateY(100%);
   }
 }
 .head {

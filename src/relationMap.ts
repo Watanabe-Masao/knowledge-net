@@ -214,7 +214,9 @@ function condRefs(net: Network, id: string): string[] {
 const common = (lists: string[][]) => (lists.length < 2 ? [] : lists.reduce((a, b) => a.filter((v) => b.includes(v))));
 
 /** 分類のキャンバスの並びと線 */
-export function layoutCategory(net: Network, category: string): CanvasLayout {
+/** 線の見せ方の比べ（A/B。渡辺さん 2026-11-07）：lane は幹の中の線の間（A 3・B 6） */
+export function layoutCategory(net: Network, category: string, opt: { lane?: number } = {}): CanvasLayout {
+  const LG = opt.lane ?? 3;
   const { tw, th, gx, gy, head, pad, G, cols, foot, M } = CV;
   const cm = categoryMap(net, category);
   const decl = cm.groups.map((g) => ({ id: g.id, name: g.name, terms: g.terms, folded: g.folded }));
@@ -300,7 +302,7 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
           { x: B.x, y: yy },
         ];
       } else {
-        const yy = A.y + A.h + 4 + lane(`r${A.g}.${A.r}`) * 3;
+        const yy = A.y + A.h + 4 + lane(`r${A.g}.${A.r}`) * LG;
         pts = [
           { x: ax, y: A.y + A.h },
           { x: ax, y: yy },
@@ -310,7 +312,7 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
       }
     } else {
       const ga = groups[A.g]!;
-      const yA = ga.y + ga.h + 24 + lane(`g${A.g}`) * 3;
+      const yA = ga.y + ga.h + 24 + lane(`g${A.g}`) * LG;
       if (B.g === A.g || B.g === A.g + 1)
         pts = [
           { x: ax, y: A.y + A.h },
@@ -320,8 +322,8 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
         ];
       else {
         const gb = groups[B.g - 1]!;
-        const yB = gb.y + gb.h + 24 + lane(`g${B.g - 1}`) * 3;
-        const xr = right + lane("trunk") * 3;
+        const yB = gb.y + gb.h + 24 + lane(`g${B.g - 1}`) * LG;
+        const xr = right + lane("trunk") * LG;
         pts = [
           { x: ax, y: A.y + A.h },
           { x: ax, y: yA },
@@ -348,13 +350,13 @@ export function layoutCategory(net: Network, category: string): CanvasLayout {
     });
   }
   const trunks = lanes.get("trunk") ?? 0;
-  return { category, w: right + trunks * 3 + M, h: bottom + M + 40, groups, terms, edges };
+  return { category, w: right + trunks * LG + M, h: bottom + M + 40, groups, terms, edges };
 }
 
 /** 線の上の種類の印。画面でいつも同じ大きさ（倍率 k で割る）。ほかの印・語・見出しと間をあけられる所だけに置く */
 export type LineBadge = { key: string; x: number; y: number; r: number; half: number; types: string[] };
 export function lineBadges(L: CanvasLayout, pick: string | null, types: Set<string>, k: number): LineBadge[] {
-  const r = 7.5 / k,
+  const r = 11 / k, // 直径 22px（画面の原則 6：印は 20px 以上）
     gap = 12 / k,
     out: LineBadge[] = [];
   const boxes = L.terms
@@ -404,6 +406,33 @@ export type View = { k: number; x: number; y: number };
 export const KMIN = 0.8;
 export const KMAX = 1.1;
 
+/** 選んだ語と、その相手のカードと線の点（線の種類で絞っていればその種類だけ） */
+function pickPoints(L: CanvasLayout, pick: string, types: Set<string>): Pt[] | null {
+  const me = L.terms.find((t) => t.id === pick);
+  if (!me) return null;
+  const P: Pt[] = [];
+  const add = (t: TermBox) => P.push({ x: t.x, y: t.y }, { x: t.x + t.w, y: t.y + t.h });
+  add(me);
+  for (const e of L.edges)
+    if ((e.from === pick || e.to === pick) && (!types.size || e.types.some((x) => types.has(x)))) {
+      const o = L.terms.find((t) => t.id === (e.from === pick ? e.to : e.from));
+      if (o) add(o);
+      P.push(...e.pts);
+    }
+  return P;
+}
+/** 選んだ語と相手と線を囲む枠（地図の座標）。面の段が替わったとき、見える所に収まっているかを見る */
+export function pickBox(L: CanvasLayout, pick: string, types: Set<string>) {
+  const P = pickPoints(L, pick, types);
+  if (!P) return null;
+  return {
+    x0: Math.min(...P.map((p) => p.x)),
+    x1: Math.max(...P.map((p) => p.x)),
+    y0: Math.min(...P.map((p) => p.y)),
+    y1: Math.max(...P.map((p) => p.y)),
+  };
+}
+
 /** 語を選んだときの寄り方：選んだ語を見える所（上の端から下の面の上まで）の真ん中に置き、相手と線が全部入る倍率に寄せる。
  *  字が読める倍率（KMIN）より引かない。真ん中のままで入らないときは、少しずらして収める */
 export function fitPick(
@@ -416,17 +445,7 @@ export function fitPick(
   if (!me) return null;
   const PAD = 14;
   const { W, H, bottom } = room;
-  const P: Pt[] = [];
-  const add = (t: TermBox) => P.push({ x: t.x, y: t.y }, { x: t.x + t.w, y: t.y + t.h });
-  add(me);
-  const on = (e: CanvasEdge) =>
-    (e.from === pick || e.to === pick) && (!types.size || e.types.some((x) => types.has(x)));
-  for (const e of L.edges)
-    if (on(e)) {
-      const o = L.terms.find((t) => t.id === (e.from === pick ? e.to : e.from));
-      if (o) add(o);
-      P.push(...e.pts);
-    }
+  const P = pickPoints(L, pick, types)!;
   const cx = me.x + me.w / 2,
     cy = me.y + me.h / 2;
   const hx = Math.max(...P.map((p) => Math.abs(p.x - cx))) + PAD,
@@ -448,10 +467,22 @@ export function fitPick(
     }
     return pos;
   };
+  // 縦は、選んだ語と相手と線のまとまりが入るなら、まとまりを見える所の真ん中に（選んだ語を真ん中にすると、相手が片側にあるとき
+  // 反対側が空く。レビュー 2026-11-07）。入らないときは選んだ語を真ん中にして、ずらして収める
+  const vis = H - bottom;
+  // 入らないとき（面を上げて見える所が狭いとき）は、まとまりの上の端を見える所の上の端にそろえ、選んだ語から近い相手を見せる。
+  // それで選んだ語が見える所から出るときだけ、選んだ語を真ん中にする
+  const top = 4 - y0 * k;
+  const y =
+    (y1 - y0) * k <= vis - 8
+      ? (vis - (y1 - y0) * k) / 2 - y0 * k
+      : (me.y + me.h) * k + top <= vis - 4
+        ? top
+        : fitAxis(y0, y1, vis, vis / 2 - cy * k);
   return {
     k,
     x: fitAxis(x0, x1, W, W / 2 - cx * k),
-    y: fitAxis(y0, y1, H - bottom, (H - bottom) / 2 - cy * k),
+    y,
   };
 }
 
@@ -466,4 +497,55 @@ export function fitBox(
 ): View {
   const k = Math.min(kmax, (room.W - 24) / w, (room.H - 24 - room.bottom) / h);
   return { k, x: (room.W - w * k) / 2 - x * k, y: (room.H - room.bottom - h * k) / 2 - y * k };
+}
+
+/** 線どうしが十字にまたぐ所（縦の区間と横の区間が、どちらの端でもない所で交わる）。後に描く線（edges の後ろの方）を「またぐ側」にする。
+ *  分かれ道（同じ語から出る線が重なる所・端で接する所）は含めない */
+export type Crossing = { edge: string; x: number; y: number; dir: "h" | "v" };
+export function crossings(L: CanvasLayout): Crossing[] {
+  type Seg = { e: number; a: Pt; b: Pt; h: boolean };
+  const segs: Seg[] = [];
+  L.edges.forEach((e, i) =>
+    e.pts.slice(1).forEach((q, j) => {
+      const p = e.pts[j]!;
+      if (Math.abs(p.y - q.y) < 0.01) segs.push({ e: i, a: p, b: q, h: true });
+      else if (Math.abs(p.x - q.x) < 0.01) segs.push({ e: i, a: p, b: q, h: false });
+    }),
+  );
+  const inside = (v: number, a: number, b: number) => v > Math.min(a, b) + 0.5 && v < Math.max(a, b) - 0.5;
+  const out: Crossing[] = [];
+  for (const s1 of segs)
+    for (const s2 of segs) {
+      if (s1.e >= s2.e || s1.h === s2.h) continue;
+      const H = s1.h ? s1 : s2,
+        V = s1.h ? s2 : s1;
+      const x = V.a.x,
+        y = H.a.y;
+      if (!inside(x, H.a.x, H.b.x) || !inside(y, V.a.y, V.b.y)) continue;
+      const later = s2; // 後に描く線がまたぐ
+      out.push({ edge: L.edges[later.e]!.id, x, y, dir: later.h ? "h" : "v" });
+    }
+  return out;
+}
+
+/** 直角の折れ線を、角を半径 r で丸めた SVG の道にする（r が 0 なら角のまま） */
+export function roundedPath(p: Pt[], r: number): string {
+  if (!p.length) return "";
+  let d = `M${p[0]!.x},${p[0]!.y}`;
+  for (let i = 1; i < p.length; i++) {
+    const a = p[i - 1]!,
+      b = p[i]!,
+      c = p[i + 1];
+    if (!c || r <= 0) {
+      d += ` L${b.x},${b.y}`;
+      continue;
+    }
+    const l1 = Math.hypot(b.x - a.x, b.y - a.y),
+      l2 = Math.hypot(c.x - b.x, c.y - b.y),
+      rr = Math.min(r, l1 / 2, l2 / 2);
+    const u = { x: (b.x - a.x) / (l1 || 1), y: (b.y - a.y) / (l1 || 1) },
+      w = { x: (c.x - b.x) / (l2 || 1), y: (c.y - b.y) / (l2 || 1) };
+    d += ` L${b.x - u.x * rr},${b.y - u.y * rr} Q${b.x},${b.y} ${b.x + w.x * rr},${b.y + w.y * rr}`;
+  }
+  return d;
 }
