@@ -476,7 +476,18 @@ export default function RelationMap({
       close = Math.hypot(e.clientX - P.x, e.clientY - P.y) < 24;
     const card = t.closest<HTMLElement>("[data-cv]")?.dataset.cv;
     lastTap.current = { t: now, x: e.clientX, y: e.clientY, card };
-    if (now - P.t > dblMs() + 40 || !close || moved.current || t.closest("[data-ui]")) return false;
+    const why =
+      now - P.t > dblMs() + 40
+        ? `slow:${now - P.t}`
+        : !close
+          ? "far"
+          : moved.current
+            ? "moved"
+            : t.closest("[data-ui]")
+              ? "ui"
+              : "";
+    if (box.current) box.current.dataset.tap = why || "dbl"; // （調べる）WebKit でダブルタップを取りこぼす理由
+    if (why) return false;
     lastTap.current = { t: 0, x: 0, y: 0 };
     clearTimeout(blankT.current); // 1回目の空いた所・線のタップは取り消す
     clearTimeout(lineT.current);

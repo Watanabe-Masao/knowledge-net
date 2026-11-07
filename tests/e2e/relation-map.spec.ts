@@ -223,7 +223,7 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
     const cv = document.querySelector("[data-testid=rm-canvas]")!;
     new MutationObserver(() =>
       (window as any).__clicks.push(
-        `k=${cv.getAttribute("data-k")} goes=${cv.getAttribute("data-goes")}@${Math.round(performance.now())} bars=${document.documentElement.dataset.bars ?? "-"}`,
+        `k=${cv.getAttribute("data-k")} goes=${cv.getAttribute("data-goes")}@${Math.round(performance.now())} bars=${document.documentElement.dataset.bars ?? "-"} tap=${(document.querySelector("[data-testid=relation-map]") as HTMLElement).dataset.tap}`,
       ),
     ).observe(cv, { attributes: true, attributeFilter: ["data-k", "data-goes"] });
     for (const t of ["pointerdown", "pointerup", "click", "dblclick"])
@@ -246,7 +246,11 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
   const gapY = gb1.y + gb1.height + 20 < view.y + view.height - 10 ? gb1.y + gb1.height + 20 : gb1.y - 20;
   await page.mouse.dblclick(view.x + view.width / 2, gapY);
   await still(page);
-  expect(Number(await m.getByTestId("rm-canvas").getAttribute("data-k"))).toBeCloseTo(k0, 2);
+  const dbg2 = await page.evaluate(
+    () =>
+      `${(window as any).__clicks.join(" | ")} tap=${(document.querySelector("[data-testid=relation-map]") as HTMLElement).dataset.tap} at=${document.elementFromPoint(0, 0)}`,
+  );
+  expect(Number(await m.getByTestId("rm-canvas").getAttribute("data-k")), `外は分類へ（${dbg2}）`).toBeCloseTo(k0, 2);
   const p = (await m.getByTestId(`rm-term-${T("binom")}`).boundingBox())!;
   await page.mouse.dblclick(p.x + p.width / 2, p.y + p.height / 2);
   await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "full");
