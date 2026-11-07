@@ -85,7 +85,7 @@ export default function Panel({ net, edgeId, onClose, onSelect, page, onQuestion
   const body = pair ? (
     <>
       {found.rel ? (
-        <RelationOpen net={net} r={found.rel} context={`panel-${found.rel.id}`} titled={!page} />
+        <RelationOpen net={net} r={found.rel} context={`panel-${found.rel.id}`} titled={!page} onTerm={onSelect} />
       ) : (
         <section className={s.block} data-testid="pair-none">
           <span className={s.lab}>関係</span>

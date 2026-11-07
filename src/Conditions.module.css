@@ -1,0 +1,86 @@
+/* 成立条件（stats2-course issue 249）。色はふつうの操作の中立の色だけ（画面の原則 18）。区分は見出しの文字で分ける（印と色だけで意味を伝えない。原則 7） */
+.wrap {
+  display: grid;
+  gap: 14px;
+}
+.kind {
+  display: grid;
+  gap: 6px;
+}
+.head {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: var(--fs-head);
+}
+.lead {
+  font-weight: normal;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.item {
+  padding: 8px 10px;
+  border-radius: var(--r-m);
+  background: var(--surface-2);
+  display: grid;
+  gap: 4px;
+}
+.text {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+}
+.sub {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.subLab {
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--ink-3);
+}
+.src {
+  color: var(--ink-3);
+}
+.termsText {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+}
+.terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* 押せる札：画面の上で 44px 以上（原則 6） */
+.term {
+  all: unset;
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.term:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

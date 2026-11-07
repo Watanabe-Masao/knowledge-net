@@ -85,6 +85,10 @@ export type Concept = {
   };
   /** 型の改訂15：期待値の値の表の作業台 */ table_workspace?: import("@math-lab/ui").TableWorkspaceData;
   conditions?: { math: string[]; data?: string[] };
+  /** 成立条件の区分（型の改訂38。stats2-course #249）：conditions の行ごとに 要件・仮定・目安。kind のない行はデータで確かめる手掛かり */
+  conditions_detail?: ConditionDetail[];
+  /** 基準にする定義の式の id（型の改訂38） */
+  basis_formula?: string;
   example?: string;
   counterexample?: string;
   misconceptions?: { misconception: string; correction: string; labs?: LabRef[] }[];
@@ -94,6 +98,17 @@ export type Concept = {
   labs?: LabRef[];
   counterexample_labs?: LabRef[];
   figures?: FigRef[];
+};
+/** 成立条件の1行（型の改訂38）。要件＝定義を満たさない／仮定＝保証が使えない（偽とは限らない）／目安＝適用を勧められない（精度を別に確かめる） */
+export type ConditionDetail = {
+  text: string;
+  scope?: "math" | "data";
+  kind?: "要件" | "仮定" | "目安";
+  claim?: string;
+  outside?: string;
+  terms?: string[];
+  target?: string;
+  source?: { title: string; locator?: string; url?: string };
 };
 export type Relation = {
   id: string;
@@ -106,6 +121,7 @@ export type Relation = {
   /** 比べる軸：対比で、何について違うのか（型の改訂36） */
   axis?: string;
   conditions?: string[];
+  conditions_detail?: ConditionDetail[];
   mode?: "exact" | "approximation" | "limit";
   premise?: "learning" | "mathematical";
   derivation?: string;

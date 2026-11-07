@@ -20,6 +20,8 @@ import {
 import { modelPmf, modelMoments } from "@math-lab/engine";
 import katex from "katex";
 import st from "./Detail.module.css";
+import { kindName, readingOf } from "./kinds";
+import Conditions, { conditionCount } from "./Conditions";
 import {
   KINDS,
   MODES,
@@ -41,8 +43,8 @@ export function name(net: Network, id: string): string {
 /** 関係を「□は■の前提」のような文にする。 */
 export function sentence(net: Network, r: Relation): string {
   const k = KINDS[r.type];
-  const s = (k?.reading ?? `□ → ■（${r.type}）`).replace("□", name(net, r.from)).replace("■", name(net, r.to));
-  const tag = r.mode ? `（${MODES[r.mode]}）` : r.premise ? `（${PREMISES[r.premise]}）` : "";
+  const s = readingOf(r.type, r.premise, k?.reading).replace("□", name(net, r.from)).replace("■", name(net, r.to));
+  const tag = r.mode ? `（${MODES[r.mode]}）` : r.premise === "mathematical" ? `（${PREMISES[r.premise]}）` : "";
   return s + tag;
 }
 
@@ -150,22 +152,32 @@ const copyUrl = () => {
 };
 
 /** つながりのまとまり（stats2-course #188 04）：前に知っておく → 姿を変えると → 比べる → この先で使う。行の文は gist（つまり）を先に */
-type Group = {
+export type Group = {
   key: string;
+  /** つながりの地図（RelMap）のどの側に置くか。見出しは細かく分け、地図の側は4つのまま（地図の描き直しは issue 249 のあと） */
+  side: "before" | "change" | "contrast" | "after";
   title: string;
   rows: { id: string; other: string; tag?: string; text: string; der?: boolean; label: string }[];
 };
 function groupsOf(net: Network, id: string): Group[] {
   const { relations, derivations } = around(net, id);
+  // 見出しの呼び名と向き（stats2-course issue 249 ④）：A のページは「定義に使う概念」、使われる側の B のページは「これを定義に使う概念」
   const g: Record<string, Group> = {
-    before: { key: "before", title: "前提", rows: [] },
-    change: { key: "change", title: "変換", rows: [] },
-    contrast: { key: "contrast", title: "対比", rows: [] },
-    after: { key: "after", title: "応用", rows: [] },
+    def: { key: "def", side: "before", title: "定義に使う概念", rows: [] },
+    know: { key: "know", side: "before", title: "前提知識", rows: [] },
+    before: { key: "before", side: "before", title: "前提", rows: [] },
+    change: { key: "change", side: "change", title: "変換", rows: [] },
+    contrast: { key: "contrast", side: "contrast", title: "対比", rows: [] },
+    used: { key: "used", side: "after", title: "これを定義に使う概念", rows: [] },
+    after: { key: "after", side: "after", title: "応用", rows: [] },
   };
   for (const r of relations) {
     const other = r.from === id ? r.to : r.from;
-    const tag = r.mode ? MODES[r.mode]!.split("（")[0] : r.type === "前提" ? undefined : r.type; // 札は短く（極限・近似・厳密）
+    const tag = r.mode
+      ? MODES[r.mode]!.split("（")[0]
+      : r.type === "前提" && r.premise !== "learning"
+        ? undefined
+        : kindName(r.type, r.premise); // 札は短く（極限・近似・厳密）
     const row = {
       id: r.id,
       other: name(net, other),
@@ -173,7 +185,22 @@ function groupsOf(net: Network, id: string): Group[] {
       text: r.gist ?? r.description ?? relationParts(net, r).text,
       label: relationParts(net, r).text,
     }; // 前提は gist がないので、どこで使うかの説明（description）
-    const k = r.type === "変換" ? "change" : r.type === "対比" ? "contrast" : r.to === id ? "before" : "after";
+    const into = r.to === id;
+    const k =
+      r.type === "変換"
+        ? "change"
+        : r.type === "対比"
+          ? "contrast"
+          : r.type === "材料"
+            ? into
+              ? "def"
+              : "used"
+            : into && r.type === "前提" && r.premise === "learning"
+              ? "know"
+              : into
+                ? "before"
+                : "after";
+    if (k === "def" || k === "used" || k === "know") row.tag = undefined; // 見出しが種類を言っている
     if (row.tag === g[k]!.title) row.tag = undefined; // 見出しと同じ札は省く（「対比」の下の全行に「対比」と出さない。UI レビュー「重複と量」）
     g[k]!.rows.push(row);
   }
@@ -461,31 +488,22 @@ export default function Detail({
             <More
               title={
                 <>
-                  成り立つ条件{" "}
+                  成立条件{" "}
                   <span className={st.n}>
-                    式 {c.conditions.math.length}
-                    {c.conditions.data?.length ? `・データ ${c.conditions.data.length}` : ""}
+                    {conditionCount(c.conditions_detail, c.conditions.math, c.conditions.data)}
                   </span>
                 </>
               }
               onOpen={reading}
             >
-              <h4>式の条件</h4>
-              <ul className={st.conds}>
-                {c.conditions.math.map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-              {c.conditions.data?.length ? (
-                <>
-                  <h4>データの条件</h4>
-                  <ul>
-                    {c.conditions.data.map((x) => (
-                      <li key={x}>{x}</li>
-                    ))}
-                  </ul>
-                </>
-              ) : null}
+              <Conditions
+                net={net}
+                detail={c.conditions_detail}
+                math={c.conditions.math}
+                data={c.conditions.data ?? []}
+                onTerm={onSelect}
+                plainClass={st.conds}
+              />
             </More>
           )}
           {c.example || c.counterexample || c.misconceptions?.length ? (
