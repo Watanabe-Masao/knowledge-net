@@ -55,7 +55,7 @@ export function toUrl(s: UrlState, base: URLSearchParams): URLSearchParams {
   set("q", s.exp ? s.q : null);
   set("cards", s.exp ? s.cards : null);
   set("g", s.group);
-  set("lv", s.group && !s.sel && s.layout !== "grid" ? s.layout : null);
+  set("lv", s.group && s.layout !== "grid" ? s.layout : null); // 選んでいても残す（戻る・進むで関係図のまま。画面の原則 3）
   set("t", s.tab === "explore" || s.exp ? null : s.tab);
   return p;
 }

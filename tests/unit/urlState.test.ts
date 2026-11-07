@@ -21,7 +21,7 @@ const state: fc.Arbitrary<UrlState> = fc.record({
 const normal = (s: UrlState): UrlState => ({
   ...s,
   view: s.sel ? s.view : "all",
-  layout: s.group && !s.sel ? s.layout : "grid", // 並べ方は分類のページ（分類を選び、概念を選んでいない）のときだけ
+  layout: s.group ? s.layout : "grid", // 並べ方は分類を選んでいるとき（概念を選んでいても残す。戻る・進むで関係図のまま）
   q: s.exp ? s.q : null,
   cards: s.exp ? s.cards : null,
   tab: s.exp ? "lab" : s.tab,
