@@ -829,3 +829,118 @@
   top: calc(12px + env(safe-area-inset-top, 0px));
   right: calc(12px + env(safe-area-inset-right, 0px));
 }
+
+/* ---- 全体の見え方（設計書 3）：名前が読めないほど引いたとき。並びは動かさず、語を薄くし、まとまりの名前・1文・数を大きく出す ----
+   字の大きさは画面の上で同じになるよう、倍率の逆数（--u：画面の上の 1px）を掛ける */
+.map[data-far] .term {
+  opacity: 0.16;
+}
+.map[data-far] .lines,
+.map[data-far] .lineBadge,
+.map[data-far] .head,
+.map[data-far] .folded {
+  opacity: 0;
+  pointer-events: none;
+}
+.map .term,
+.map .lines,
+.map .head,
+.map .folded {
+  transition: opacity var(--dur) var(--ease);
+}
+.farHead {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 4);
+  padding: calc(var(--u) * 12);
+  text-align: center;
+  pointer-events: none;
+  z-index: 4;
+  animation: far-in var(--dur) var(--ease);
+}
+@keyframes far-in {
+  from {
+    opacity: 0;
+  }
+}
+.farHead b {
+  font-size: calc(var(--u) * 16);
+  font-weight: 700;
+  color: var(--ink);
+}
+.farHead span {
+  font-size: calc(var(--u) * 12);
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: calc(var(--u) * 300);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.farHead i {
+  font-style: normal;
+  font-size: calc(var(--u) * 11);
+  color: var(--ink-3);
+}
+.garrows {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 4;
+}
+.garrows path {
+  fill: none;
+  stroke: var(--ink-2);
+}
+.garrowLabel {
+  all: unset;
+  position: absolute;
+  z-index: 5;
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  min-height: calc(var(--u) * 26);
+  padding: calc(var(--u) * 3) calc(var(--u) * 10);
+  border-radius: calc(var(--u) * 13);
+  font-size: calc(var(--u) * 12);
+  line-height: 1.3;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 0 0 calc(var(--u) * 1) var(--line-strong);
+  cursor: pointer;
+}
+/* 押せる範囲は 44px（見た目は枠の間に収まる高さ。画面の原則 6） */
+.garrowLabel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: calc(var(--u) * 44);
+  transform: translateY(-50%);
+}
+/* 離れたまとまりへの矢印（枠の右の外を通る）：言葉は線の右に、2行まで */
+.garrowLabel[data-anchor="end"] {
+  transform: translate(0, -50%);
+  white-space: normal;
+  width: calc(var(--u) * 7.6 * 12);
+  border-radius: calc(var(--u) * 10);
+}
+.garrowLabel:focus-visible {
+  outline: calc(var(--u) * 2) solid var(--accent);
+}
+.gnoteLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink) !important;
+}

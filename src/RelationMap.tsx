@@ -22,6 +22,8 @@ import {
   linksOf,
   nameOf,
   roundedPath,
+  groupArrows,
+  type GroupArrow,
 } from "./relationMap";
 import { conceptIcon } from "./conceptIcons";
 import { iconUri } from "./icons";
@@ -44,6 +46,8 @@ const PAGE_MIN = 560;
 /** 指の遊び（これより動くまでは、タップのまま） */
 const SLOP = 8;
 /** 指で拡大・縮小できる範囲。これより引いて離すと、ライブラリ（遠くの見え方）へ戻る */
+/** 全体の見え方へ替わる倍率：語の名前（15px。関係のない語は 0.93 倍）が画面の上で 11px を割る所（画面の原則 6） */
+const FAR_K = 11 / (15 * 0.93);
 const ZMIN = 0.3,
   ZMAX = 2.4,
   ZOUT = 0.45;
@@ -202,10 +206,13 @@ export default function RelationMap({
     setV(nv);
     animFor(slow ? 640 : 340);
   };
-  // 初め：幅に合わせ、上から見せる
+  // 初め・「全体に戻す」・まとまりの外のダブルタップ：分類の全体を見える所に収める（設計書 3：最初の画面は全体の見え方。
+  // まとまりの名前と1文が、地図の読み方の案内を兼ねる）。上から見せ、下の札の帯の分は空ける
   const start = () => {
-    const { W } = size();
-    const k = Math.min(1.1, (W - 8) / L.w);
+    const { W, H } = size();
+    const legend = box.current?.querySelector<HTMLElement>("[data-testid=rm-legend]");
+    const foot = legend && !calmRef.current ? legend.offsetHeight + 8 : 0;
+    const k = Math.min(1.1, (W - 8) / L.w, (H - (page ? 52 : 0) - foot - 8) / L.h);
     // 全画面のページでは上の戻る帯の下から。帯が引っ込んでいるときは、引っ込む前と同じ所（縁の内側の扱いと合わせる）
     const c = calmRef.current ? calmTop.current : { top: 0, left: 0 };
     return { k, x: (W - L.w * k) / 2 + c.left, y: (page ? 52 : 0) + c.top };
@@ -556,6 +563,7 @@ export default function RelationMap({
   const [trace, setTrace] = useState<{ edge: string; n: number } | null>(null);
   // 引き直しの出だしと着いたとき、両端の概念の縁を一度だけ灯す（n で同じ概念をもう一度灯せる）
   const [flash, setFlash] = useState<{ id: string; n: number; color: string } | null>(null);
+  const [gnote, setGnote] = useState<GroupArrow | null>(null); // 全体の見え方で、まとまりの間の矢印を開いたとき
   const [pressLine, setPressLine] = useState<string | null>(null); // 押した瞬間に線を太くする（押した手応え）
   const [holdLine, setHoldLine] = useState<string | null>(null); // 押さえている間は、その線が太くなりながら光る（長押しの手触り）
   // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。島の地図・一覧の長押しと同じ働き（画面の原則 10）
@@ -664,6 +672,9 @@ export default function RelationMap({
   const near = new Map(Ls.map((e) => [e.id, types.size ? e.types.find((k) => types.has(k))! : e.type]));
   const onEdge = (from: string, to: string) => !!pick && (from === pick || to === pick);
   const shown = L.edges.filter((e) => shows(e.types));
+  // 全体の見え方（設計書 3）：名前が読めないほど引いたら、語を薄くし、まとまりの名前・1文・数を大きく、まとまりの間は動詞付きの1本の矢印
+  const far = !!v && v.k < FAR_K;
+  const garrows = useMemo(() => groupArrows(net, L), [net, L]);
   const filled = (id: string) => net.concepts.get(id)?.status === "filled";
   const peekEdge = peek ? L.edges.find((e) => e.id === peek.edge) : undefined;
   // まとまりの「使う語」・見出しの共通の印：印だけでは分かりにくいので、押すと名前の一覧を浮かせて見せる（渡辺さん 2026-11-07）
@@ -673,6 +684,7 @@ export default function RelationMap({
     setPeek(null);
     setFold(null);
     setTip(null);
+    setGnote(null);
   }, [category, page]);
   const openFold = (ids: string[], title: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -690,6 +702,7 @@ export default function RelationMap({
       data-testid="relation-map"
       data-ready={v ? "true" : "false"}
       data-calm={calm ? "true" : undefined}
+      data-far={far ? "true" : undefined}
       data-page={page ? "true" : undefined}
       aria-label={`${category}の関係図`}
       onPointerDown={down}
@@ -934,6 +947,69 @@ export default function RelationMap({
               </g>
             ))}
           </svg>
+          {far ? (
+            // 全体の見え方：まとまりの間は、組ごとに1本の矢印と動詞（押すと、組・操作・条件の文から開く）
+            <>
+              <svg className={s.garrows} width={L.w} height={L.h} aria-hidden="true" data-testid="rm-garrows">
+                <defs>
+                  <marker
+                    id={`${uid}-ga`}
+                    viewBox="0 0 10 10"
+                    refX="8"
+                    refY="5"
+                    markerWidth="7"
+                    markerHeight="7"
+                    orient="auto"
+                  >
+                    <path d="M0,1 L9,5 L0,9 z" style={{ fill: "var(--ink-2)" }} />
+                  </marker>
+                </defs>
+                {garrows.map((a) => (
+                  <path key={`${a.from}>${a.to}`} d={a.d} strokeWidth={3 / v.k} markerEnd={`url(#${uid}-ga)`} />
+                ))}
+              </svg>
+              {garrows.map((a) => (
+                <button
+                  key={`l${a.from}>${a.to}`}
+                  type="button"
+                  className={s.garrowLabel}
+                  data-ui
+                  data-testid="rm-garrow"
+                  data-anchor={a.anchor}
+                  style={
+                    {
+                      left: a.lx,
+                      top: a.ly,
+                      "--u": `${1 / v.k}px`,
+                    } as React.CSSProperties
+                  }
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    setGnote(a);
+                  }}
+                >
+                  {a.label}
+                </button>
+              ))}
+              {L.groups.map((g) => {
+                const meta = net.groups.find((x) => x.id === g.id);
+                return (
+                  <div
+                    key={`f${g.id}`}
+                    className={s.farHead}
+                    data-testid="rm-farhead"
+                    style={
+                      { left: g.x, top: g.y, width: g.w, height: g.h, "--u": `${1 / v.k}px` } as React.CSSProperties
+                    }
+                  >
+                    <b>{g.name}</b>
+                    {meta?.summary ? <span>{meta.summary}</span> : null}
+                    <i>{g.terms.length} 個の概念</i>
+                  </div>
+                );
+              })}
+            </>
+          ) : null}
           {L.terms.map((t) => {
             const on = pick === t.id,
               k = near.get(t.id),
@@ -1035,6 +1111,59 @@ export default function RelationMap({
           })}
         </div>
       ) : null}
+      {gnote
+        ? createPortal(
+            // まとまりの間の矢印を開いたとき：まず実際の分布の組・操作・成り立つ条件（note）。まとまり全体が別のまとまりへ変わるようには書かない
+            <div
+              className={s.peekScrim}
+              data-ui
+              data-testid="rm-gnote"
+              role="dialog"
+              aria-label="まとまりの間の関係"
+              onClick={(ev) => {
+                if (ev.target === ev.currentTarget) setGnote(null);
+              }}
+            >
+              <div className={s.peekCard}>
+                <span className={s.peekHead}>
+                  <span className={s.peekPair}>
+                    {net.groups.find((x) => x.id === gnote.from)?.name} →{" "}
+                    {net.groups.find((x) => x.id === gnote.to)?.name}
+                  </span>
+                </span>
+                <p className={s.gnoteLabel}>{gnote.label}</p>
+                {gnote.note ? <p>{gnote.note}</p> : null}
+              </div>
+              <div className={s.peekMenu} role="menu">
+                {gnote.relations.map((id) => {
+                  const r = net.relations.find((x) => x.id === id);
+                  if (!r) return null;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="menuitem"
+                      data-testid="rm-gnote-rel"
+                      onClick={() => {
+                        setGnote(null);
+                        onRelation(id);
+                      }}
+                    >
+                      {nameOf(net, r.from)} → {nameOf(net, r.to)}
+                      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="M9 5h10v10M19 5 6 18" />
+                      </svg>
+                    </button>
+                  );
+                })}
+                <button type="button" role="menuitem" onClick={() => setGnote(null)}>
+                  閉じる
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
       {peek && peekEdge
         ? createPortal(
             // 線の長押し：後ろをぼかし、関係の下見と短いメニューを出す（iPhone の長押しの下見と同じ形。渡辺さん 2026-11-07 の見本）。

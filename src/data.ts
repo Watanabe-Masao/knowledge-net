@@ -169,6 +169,8 @@ export type CourseData = {
     groups?: Group[];
     /** 関係図の決まりで書き終えた分類（型の改訂36。stats2-course #232） */
     relation_map_ready?: string[];
+    /** まとまりの間の関係（型の改訂37。stats2-course #240） */
+    group_relations?: GroupRelation[];
   };
   concepts: Concept[];
   relations: Relation[];
@@ -213,12 +215,17 @@ export function schemaErrors(data: unknown): string[] {
   return (validateCourse.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
 }
 
+/** まとまりの間の1本の矢印（全体の見え方。言葉は動詞で、開いた直後に組・操作・条件の文） */
+export type GroupRelation = { from: string; to: string; label: string; relations: string[]; note?: string };
+
 export type Network = {
   courses: { id: string; title: string }[];
   /** 意味のまとまり（分類の中。並べた順が学ぶ順。教材の course.groups を教材の順につなぐ。stats2-course #228） */
   groups: Group[];
   /** 関係図で開く分類（教材の relation_map_ready を合わせたもの。stats2-course #235） */
   mapReady: Set<string>;
+  /** まとまりの間の関係（教材の group_relations をつないだもの。stats2-course #240） */
+  groupRelations: GroupRelation[];
   /** 柱（分類の大きなまとまり。上から学ぶ順。教材の course.pillars を教材の順につなぐ。stats2-course #220） */
   pillars: { id: string; name: string; categories: string[] }[];
   /** 語の印を読んでよい場所（教材の一覧にある公開データのサイトの根。load が入れる） */
@@ -245,6 +252,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     pillars: [],
     groups: [],
     mapReady: new Set(),
+    groupRelations: [],
     iconRoots: [],
     concepts: new Map(),
     relations: [],
@@ -281,6 +289,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     for (const p of d.course.pillars ?? []) if (!net.pillars.some((q) => q.id === p.id)) net.pillars.push(p);
     for (const g of d.course.groups ?? []) if (!net.groups.some((q) => q.id === g.id)) net.groups.push(g);
     for (const c of d.course.relation_map_ready ?? []) net.mapReady.add(c);
+    net.groupRelations.push(...(d.course.group_relations ?? []));
     if (d.walk_texts) net.walkTexts.set(d.course.id, d.walk_texts);
     if (d.apply_texts) net.applyTexts.set(d.course.id, d.apply_texts);
   }

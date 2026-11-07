@@ -549,3 +549,50 @@ export function roundedPath(p: Pt[], r: number): string {
   }
   return d;
 }
+
+// ---- 全体の見え方：まとまりの間の1本の矢印（設計書 3「関係図（M3）」の全体の見え方。stats2-course #240）----
+// 名前が読めないほど引いたとき、まとまりの間の束ねた線の代わりに、組ごとに1本の矢印と動詞を出す。
+// となりのまとまりへは、枠の間をまっすぐ縦に。離れたまとまりへは、枠の右の外を通る（線の重なりを避けて少しずつ外へ）。
+
+export type GroupArrow = {
+  from: string;
+  to: string;
+  label: string;
+  note?: string;
+  relations: string[];
+  /** 線の形（世界の座標） */
+  d: string;
+  /** 言葉を置く所（世界の座標）と、寄せ方（middle：真ん中に置く／end：枠の外の線の右に置く） */
+  lx: number;
+  ly: number;
+  anchor: "middle" | "end";
+};
+
+export function groupArrows(net: Network, L: CanvasLayout): GroupArrow[] {
+  const idx = new Map(L.groups.map((g, i) => [g.id, i]));
+  let lane = 0;
+  const out: GroupArrow[] = [];
+  for (const r of net.groupRelations) {
+    const i = idx.get(r.from),
+      j = idx.get(r.to);
+    if (i === undefined || j === undefined || i === j) continue;
+    const a = L.groups[i]!,
+      b = L.groups[j]!;
+    const base = { from: r.from, to: r.to, label: r.label, note: r.note, relations: r.relations };
+    if (Math.abs(i - j) === 1) {
+      const down = j > i;
+      const x = a.x + a.w / 2,
+        y0 = down ? a.y + a.h : a.y,
+        y1 = down ? b.y : b.y + b.h;
+      out.push({ ...base, d: `M${x},${y0} V${y1}`, lx: x, ly: (y0 + y1) / 2, anchor: "middle" });
+    } else {
+      const x = Math.max(a.x + a.w, b.x + b.w) + 8 + 6 * lane++;
+      const y0 = a.y + a.h / 2,
+        y1 = b.y + b.h / 2;
+      const ax = a.x + a.w,
+        bx = b.x + b.w;
+      out.push({ ...base, d: `M${ax},${y0} H${x} V${y1} H${bx}`, lx: x + 6, ly: (y0 + y1) / 2, anchor: "end" });
+    }
+  }
+  return out;
+}
