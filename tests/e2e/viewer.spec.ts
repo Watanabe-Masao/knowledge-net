@@ -1695,9 +1695,11 @@ test("値の表の実験室：横は値に比例し、▲（期待値）と予�
   const [x0, x100, x1000] = xs as [number, number, number];
   expect((x1000 - x100) / (x100 - x0)).toBeCloseTo(9, 3); // 値の間 100 と 900 の比
   const at = (v: number) => x0 + (v / 100) * (x100 - x0);
-  expect(Number(await x.getByTestId("exp-marker").getAttribute("data-x"))).toBeCloseTo(at(38), 3); // (100×18＋1000×2)÷100＝38
+  // ▲と予測の線は前の位置から滑って動く（--dur-sheet）。止まった位置で見る
+  const xOf = async (id: string) => Number(await x.getByTestId(id).getAttribute("data-x"));
+  await expect.poll(() => xOf("exp-marker")).toBeCloseTo(at(38), 3); // (100×18＋1000×2)÷100＝38
   await x.getByRole("slider", { name: "予測する平均" }).fill("200");
-  expect(Number(await x.getByTestId("exp-mark").getAttribute("data-x"))).toBeCloseTo(at(200), 3);
+  await expect.poll(() => xOf("exp-mark")).toBeCloseTo(at(200), 3);
 });
 
 test("実験室の基本の面は型どおり：式は記号を押せる・本体は開く入口・関連は本体以外", async ({ page }) => {
