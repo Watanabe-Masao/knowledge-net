@@ -312,6 +312,75 @@ test("段2で別の語を選んでも段2のまま、中身はその語に替わ
   await expect(det).toHaveAttribute("data-detent", "half");
 });
 
+// 確かめる対象：戻ると、離れたときのまま（画面の原則 3。#239 の入れる順 2）。
+// 想定する故障：フル（全画面のページ）の間に地図が寄り直し、戻ると選んだ概念の位置が変わる。ライブラリへ出て戻ると、
+//   初めの見え方に戻る（指で動かした所が消える）。概念を選んでいると URL から並べ方（lv=map）が消え、ブラウザで戻る・進むと関係図でなくなる。
+// 見つけ方：ポアソン分布を選んで段2にし、指で少し動かしてから、その画面の上の位置を測る。フルへ行って ← で戻り、同じ位置か。URL に lv=map が残るか。
+//   選びを外して地図を指で動かし、ライブラリへ出てブラウザで戻ると、動かした後の位置か。既存との違い：段のテストは面の高さだけを見る
+// 検出の確かめ（2026-11-07）：フルの前後で寄り直さない処理を外すと1つ目、分類ごとの見え方を覚える処理を外すと2つ目で落ちることを見た
+test("戻ると離れたときのまま：フルから戻っても、ライブラリへ出て戻っても、地図の見え方は同じ", async ({ page }) => {
+  const m = await open(page);
+  const at = async (id: string) => {
+    const r = (await m.getByTestId(`rm-term-${T(id)}`).boundingBox())!;
+    return { x: Math.round(r.x), y: Math.round(r.y) };
+  };
+  await m.getByTestId(`rm-term-${T("poisson")}`).click();
+  await still(page);
+  const det = page.getByTestId("detail");
+  const chip = det.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true });
+  await chip.click();
+  await expect(det).toHaveAttribute("data-detent", "half");
+  await still(page);
+  // 指で少し動かしてから（自分で動かした所を覚えているか）、空いた所の1回で面を戻す
+  const bs = await blank(page);
+  await fingers(
+    page,
+    Array.from({ length: 6 }, (_, i) => ({ 1: [bs.x - 60, Math.min(bs.y, 300) + 8 * i] as [number, number] })),
+    120,
+  );
+  await expect.poll(() => bars(page)).toBe("hidden");
+  await still(page);
+  const bs2 = await blank(page);
+  await page.mouse.click(bs2.x, Math.min(bs2.y, 300));
+  await expect.poll(() => bars(page)).toBe("top");
+  await expect(det).toHaveAttribute("data-detent", "half");
+  await still(page);
+  const p0 = await at("poisson");
+  expect(page.url()).toContain("lv=map");
+  await chip.click();
+  await expect(page.locator('[data-testid=detail][data-detent="full"]')).toHaveCount(1);
+  await page.waitForTimeout(600);
+  await page.getByTestId("detail-to-map").click();
+  await expect(det).toHaveAttribute("data-detent", "half");
+  await still(page);
+  expect(await at("poisson"), "フルから戻ると位置が変わる").toEqual(p0);
+  // 選びを外し、地図を指で動かしてからライブラリへ出て、ブラウザで戻る
+  const b = await blank(page);
+  await page.mouse.click(b.x, Math.min(b.y, (await det.boundingBox())!.y - 30));
+  await expect(det).toHaveAttribute("data-detent", "peek");
+  await page.mouse.click(b.x, Math.min(b.y, (await det.boundingBox())!.y - 30));
+  await expect(det).toHaveCount(0);
+  await expect.poll(() => bars(page)).toBe("shown");
+  await page.waitForTimeout(500);
+  const b2 = await blank(page);
+  await fingers(
+    page,
+    Array.from({ length: 6 }, (_, i) => ({ 1: [b2.x - 60, b2.y - 10 * i] as [number, number] })),
+    120,
+  );
+  await expect.poll(() => bars(page)).toBe("hidden");
+  await page.mouse.click(b2.x, b2.y); // 帯を戻す（ライブラリへのパンくずを押すため）
+  await expect.poll(() => bars(page)).toBe("shown");
+  await still(page);
+  const p1 = await at("poisson");
+  await page.getByTestId("crumbs").getByRole("button", { name: "ライブラリ" }).click();
+  await expect(m).toHaveCount(0);
+  await page.goBack();
+  await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
+  await still(page);
+  expect(await at("poisson"), "ライブラリから戻ると初めの見え方に戻る").toEqual(p1);
+});
+
 // 確かめる対象：指の物理（画面の原則 2。UX レビュー A1・B10・B11）。
 // 想定する故障：①ピンチで指を離すと、2本の指の動きが別々に届いて作った速さで地図が流れる
 //   ②遊び（8px）を越えた分が捨てられ、地図が指より遅れる ③縁を越えても重くならず、離すと空きが残る。

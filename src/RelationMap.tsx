@@ -71,6 +71,9 @@ export function Name({ text }: { text: string }) {
   );
 }
 
+/** 分類ごとの最後の見え方（同じ画面の中だけ。開き直したときに戻す） */
+const memo = new Map<string, { net: unknown; page: boolean; v: { k: number; x: number; y: number } }>();
+
 /** 帯の引っ込め方（false＝出ている） */
 type Calm = false | "top" | "all";
 
@@ -197,11 +200,18 @@ export default function RelationMap({
     const c = calmRef.current ? calmTop.current : { top: 0, left: 0 };
     return { k, x: (W - L.w * k) / 2 + c.left, y: (page ? 52 : 0) + c.top };
   };
+  // 戻ると、離れたときのまま（画面の原則 3）：分類ごとに最後の見え方を覚え、開き直したらそこから（帯を引っ込めた分は除いて覚える）
   useLayoutEffect(() => {
     if (height === undefined) return;
-    setV(start());
+    const m = memo.get(category);
+    setV(m && m.net === net && m.page === page ? m.v : start());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [L, height === undefined]);
+  useEffect(() => {
+    if (!v) return;
+    const c = calmRef.current ? calmTop.current : { top: 0, left: 0 };
+    memo.set(category, { net, page, v: { k: v.k, x: v.x - c.left, y: v.y - c.top } });
+  });
 
   // ---- 指の操作（画面の原則 2。設計書 3「操作」）----
   //   遊び（8px）を越えたら、地図は指の真下に付く（越えるまでの分も捨てない）。
@@ -447,7 +457,12 @@ export default function RelationMap({
 
   // 面の段が替わったら（段2・段3へ上げた・下げた）、選んだ語と相手が見える所に収まっていなければ寄り直す。
   // 収まっていれば動かさない（1つの操作に動きは1つ。画面の原則 10）
+  // フル（全画面のページ）の間は地図が見えないので寄り直さない。フルから戻ったときも、離れたときのまま（画面の原則 3）
+  const prevStep = useRef(step);
   useEffect(() => {
+    const from = prevStep.current;
+    prevStep.current = step;
+    if (step === "full" || from === "full") return;
     if (!step || !pick || selected !== pick || !vRef.current) return;
     const id = setTimeout(() => {
       const v0 = vRef.current;
