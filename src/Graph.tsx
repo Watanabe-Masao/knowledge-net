@@ -5,7 +5,7 @@ import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { useEffect, useRef, useState } from "react";
 import { type Band, type Network, type Placed, TINTS, bandOfCat, bandsOf } from "./data";
-import { Button } from "@math-lab/ui";
+import { Button, tokenMs } from "@math-lab/ui";
 import { iconUri } from "./icons";
 import { loadTermSvgs, termIconUri } from "./termIcons";
 import s from "./Graph.module.css";
@@ -759,8 +759,31 @@ export default function Graph({
     c.on("tapstart", () => {
       held = false;
     });
+    // 押さえている間は、点の縁が主の色で太くなっていく（長押しの手触りを全部の長押しでそろえる。base.css の data-hold と同じ長さ。
+    // Cytoscape の絵なので CSS では塗れず、点の枠の太さと色を動かす。押した返事のあとから始め、離す・動かす・決まると戻す）
+    const holdColor = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "teal";
+    let holding: cytoscape.NodeSingular | null = null;
+    const unhold = () => {
+      if (!holding) return;
+      holding.stop(true).removeStyle("border-width border-color border-opacity");
+      holding = null;
+    };
+    c.on("tapstart", "node", (e) => {
+      unhold();
+      if (e.target.data("kind") === "derivation") return;
+      holding = e.target as cytoscape.NodeSingular;
+      const press = tokenMs("--dur-press", 90);
+      holding
+        .delay(press)
+        .animate(
+          { style: { "border-width": 4, "border-color": holdColor, "border-opacity": 1 } },
+          { duration: Math.max(0, tokenMs("--dur-hold", 450) - press) },
+        );
+    });
+    c.on("tapend tapdrag", unhold);
     c.on("taphold", "node", (e) => {
       held = true;
+      unhold();
       showTip(e);
     });
     c.on("mouseover", "node", (e) => {

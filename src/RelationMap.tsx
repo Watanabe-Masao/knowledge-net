@@ -35,7 +35,7 @@ const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation:
  *  待っている間も、押した瞬間からカードは沈み、選んだ見た目へ移る（遅れて出たように見せない） */
 const dblMs = () => tokenMs("--dur", 200);
 /** 長押しとみなす長さ（一覧ののぞき見と同じ） */
-const HOLD_MS = 450;
+const holdMs = () => tokenMs("--dur-hold", 450);
 
 /** 縁を越えたときの重さ（越えた分をこの割合で縮め、引くほどさらに重く） */
 const RUB = 0.55;
@@ -291,6 +291,8 @@ export default function RelationMap({
         // 浮かせた説明・一覧は、その場所を指していたもの。地図を動かしたら消す（渡辺さん 2026-11-07「画面移動等で消える」）
         setPeek(null);
         setFold(null);
+        setHoldLine(null); // 動かしたら長押しではない（沈んで光るのをやめる）
+        box.current.querySelectorAll("[data-hold]").forEach((x) => x.removeAttribute("data-hold"));
         enter(); // 地図を指で動かすと、帯を引っ込めて地図を広く（Safari でページを送ると帯が引っ込むのと同じ。画面の原則 1・16）
       }
       const cur =
@@ -546,6 +548,7 @@ export default function RelationMap({
   // 引き直しの出だしと着いたとき、両端の概念の縁を一度だけ灯す（n で同じ概念をもう一度灯せる）
   const [flash, setFlash] = useState<{ id: string; n: number; color: string } | null>(null);
   const [pressLine, setPressLine] = useState<string | null>(null); // 押した瞬間に線を太くする（押した手応え）
+  const [holdLine, setHoldLine] = useState<string | null>(null); // 押さえている間は、その線が太くなりながら光る（長押しの手触り）
   // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。島の地図・一覧の長押しと同じ働き（画面の原則 10）
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   const tipT = useRef(0),
@@ -585,6 +588,7 @@ export default function RelationMap({
       const x = e.clientX,
         y = e.clientY;
       holdT.current = window.setTimeout(() => {
+        setHoldLine(null);
         if (moved.current) return;
         held.current = true;
         try {
@@ -594,7 +598,7 @@ export default function RelationMap({
         }
         // 地図は動かさず、線の両端と「つまり」を指の上に浮かせる（渡辺さん 2026-11-07 の A/B で決めた形）
         setPeek({ edge: edgeId, x, y });
-      }, HOLD_MS);
+      }, holdMs());
     };
   // 長押しの終わりは、指を離したとき（pointerup・touchend）。iPhone の Safari は長押しの途中で pointercancel を送ることがあるので、
   // 浮かせている間の pointercancel では消さない（指を離すまで見せる）
@@ -833,6 +837,7 @@ export default function RelationMap({
                               : "dim"
                     }
                     data-press={pressLine === e.id ? "" : undefined}
+                    data-hold={holdLine === e.id ? "" : undefined}
                     markerEnd={e.arrow === "end" && trace?.edge !== e.id ? m : undefined}
                     markerStart={e.arrow === "start" && trace?.edge !== e.id ? m : undefined}
                   />
@@ -868,12 +873,14 @@ export default function RelationMap({
                 role="button"
                 aria-label={`${nameOf(net, e.from)}と${nameOf(net, e.to)}の${e.type}`}
                 onPointerDown={(ev) => {
-                  setPressLine(nearestEdge(ev.clientX, ev.clientY, e.id));
+                  const id = nearestEdge(ev.clientX, ev.clientY, e.id);
+                  setPressLine(id);
+                  setHoldLine(id);
                   lineDown(e.id)(ev);
                 }}
-                onPointerUp={() => setPressLine(null)}
-                onPointerLeave={() => setPressLine(null)}
-                onPointerCancel={() => setPressLine(null)}
+                onPointerUp={() => (setPressLine(null), setHoldLine(null))}
+                onPointerLeave={() => (setPressLine(null), setHoldLine(null))}
+                onPointerCancel={() => (setPressLine(null), setHoldLine(null))}
                 onClick={lineClick(e.id)}
               />
             ))}
@@ -947,11 +954,14 @@ export default function RelationMap({
                 }
                 onPointerDown={(e) => {
                   e.currentTarget.setAttribute("data-press", "1");
+                  e.currentTarget.setAttribute("data-hold", ""); // 押さえている間は沈んで光る（長押しの手触り。base.css）
                   tipHeld.current = false;
                   clearTimeout(tipT.current);
                   const r = box.current!.getBoundingClientRect(),
                     c = e.currentTarget.getBoundingClientRect();
+                  const btn = e.currentTarget;
                   tipT.current = window.setTimeout(() => {
+                    btn.removeAttribute("data-hold");
                     if (moved.current) return;
                     tipHeld.current = true;
                     try {
@@ -960,16 +970,22 @@ export default function RelationMap({
                       /* 振動できない端末 */
                     }
                     setTip({ id: t.id, x: c.left - r.left + c.width / 2, y: c.top - r.top });
-                  }, HOLD_MS);
+                  }, holdMs());
                 }}
                 onPointerUp={(e) => {
                   e.currentTarget.removeAttribute("data-press");
+                  e.currentTarget.removeAttribute("data-hold");
                   clearTimeout(tipT.current);
                   setTip(null);
                 }}
                 onPointerLeave={(e) => {
                   e.currentTarget.removeAttribute("data-press");
+                  e.currentTarget.removeAttribute("data-hold");
                   clearTimeout(tipT.current);
+                }}
+                onPointerCancel={(e) => {
+                  e.currentTarget.removeAttribute("data-press");
+                  e.currentTarget.removeAttribute("data-hold");
                 }}
                 onContextMenu={(e) => e.preventDefault()}
                 onClick={(e) => {
@@ -983,7 +999,7 @@ export default function RelationMap({
                   setPick(on ? null : t.id);
                 }}
               >
-                <span className={s.card}>
+                <span className={s.card} data-hold-part>
                   <span className={s.glyph}>{glyph(t.id)}</span>
                   <b>
                     <Name text={nameOf(net, t.id)} />
