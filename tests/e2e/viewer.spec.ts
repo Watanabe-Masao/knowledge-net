@@ -59,6 +59,15 @@ for (const scheme of ["light", "dark"] as const) {
   });
 }
 
+/** 島の地図（Cytoscape）のテスト用：確率分布は関係図に移したので、読み込みで関係図に移した印（relation_map_ready）を外し、今の島の地図で開く */
+async function islandMap(page: import("@playwright/test").Page) {
+  await page.route("**/sample/stats2.json", async (r) => {
+    const d = await (await r.fetch()).json();
+    delete d.course.relation_map_ready;
+    await r.fulfill({ json: d });
+  });
+}
+
 test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await page.goto(`./?${SRC}`);
   await page.getByLabel("概念を検索").fill("標準"); // 打つたびに候補が絞られる（動的なドロップダウン）
@@ -98,7 +107,9 @@ test("2つの概念のページ：関係のある組は関係の説明が先で�
   await expect(side).not.toHaveAttribute("open", "");
   await side.locator("summary").click();
   await expect(side.getByRole("heading", { name: "定義" })).toBeVisible();
-  await expect(side.getByRole("heading", { name: "共通の前提" })).toHaveCount(0); // 変換はたどらないので、共通の前提はない
+  // 変換はたどらない。共通の前提は、両方の定義に使う概念（確率）から出る（stats2-course #245 で材料を足した）
+  await expect(side.getByRole("heading", { name: "共通の前提" })).toBeVisible();
+  await expect(side).toContainText("確率");
   expect(page.url()).not.toContain("cmp=");
 });
 
@@ -1303,7 +1314,11 @@ test("見方を切り替える：経路は前提を学ぶ順の番号で並べ�
   await expect.poll(async () => (await info()).ids.includes("stats2:TERM-comb")).toBe(true);
   const r = await info();
   expect(r.ids).not.toContain("stats2:TERM-poisson"); // 変換・対比の先はたどらない
-  expect(r.label).toMatch(/^1 /); // いちばん遠い前提が 1
+  // いちばん遠い前提が 1。標本空間にも学ぶ順の番号が付く（材料を足して、標本空間より遠い前提ができた）
+  expect(
+    await page.evaluate(() => (window as any).kn.nodes().some((n: any) => /^1 /.test(n.data("label") ?? ""))),
+  ).toBe(true);
+  expect(r.label).toMatch(/^\d+ /);
   // 点の見せ方：近い＝印＋名前、縮めると名前だけ、さらに縮めると印だけ
   const lod = (z: number) =>
     page.evaluate((z) => {
@@ -1564,6 +1579,7 @@ test("フルのつまみを引くと指に付いて下がり、面はその高�
 test("点を長押しすると、名前・分類・定義1文の札が出る", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
+  await islandMap(page);
   await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布")); // 分類のページは地図で（ふだんはリストビュー。stats2-course #228）
   await expect(page.getByText("概念を押すと、定義")).toHaveCount(0);
   await expect
@@ -1692,6 +1708,7 @@ test("スマホで概念を選んでいる間は、ページが縦に送れず�
 // cmp も同じ1行で戻すので、g で代表して確かめる
 test("戻ると、分類の絞り込みも URL のとおりに戻る", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 800 });
+  await islandMap(page);
   await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布")); // 分類のページは地図で（ふだんはリストビュー。stats2-course #228）
   const sel = page.getByTestId("group-select");
   await expect(sel).toHaveValue("確率分布");

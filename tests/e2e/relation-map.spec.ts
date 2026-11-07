@@ -319,7 +319,7 @@ test("戻ると離れたときのまま：フルから戻っても、ライブ�
     const r = (await m.getByTestId(`rm-term-${T(id)}`).boundingBox())!;
     return { x: Math.round(r.x), y: Math.round(r.y) };
   };
-  await m.getByTestId(`rm-term-${T("poisson")}`).click();
+  await m.getByTestId(`rm-term-${T("binom")}`).click();
   await still(page);
   const det = page.getByTestId("detail");
   const chip = det.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true });
@@ -340,7 +340,7 @@ test("戻ると離れたときのまま：フルから戻っても、ライブ�
   await expect.poll(() => bars(page)).toBe("top");
   await expect(det).toHaveAttribute("data-detent", "half");
   await still(page);
-  const p0 = await at("poisson");
+  const p0 = await at("binom");
   expect(page.url()).toContain("lv=map");
   await chip.click();
   await expect(page.locator('[data-testid=detail][data-detent="full"]')).toHaveCount(1);
@@ -348,7 +348,7 @@ test("戻ると離れたときのまま：フルから戻っても、ライブ�
   await page.getByTestId("detail-to-map").click();
   await expect(det).toHaveAttribute("data-detent", "half");
   await still(page);
-  expect(await at("poisson"), "フルから戻ると位置が変わる").toEqual(p0);
+  expect(await at("binom"), "フルから戻ると位置が変わる").toEqual(p0);
   // 選びを外し、地図を指で動かしてからライブラリへ出て、ブラウザで戻る
   const b = await blank(page);
   await page.mouse.click(b.x, Math.min(b.y, (await det.boundingBox())!.y - 30));
@@ -367,13 +367,13 @@ test("戻ると離れたときのまま：フルから戻っても、ライブ�
   await page.mouse.click(b2.x, b2.y); // 帯を戻す（ライブラリへのパンくずを押すため）
   await expect.poll(() => bars(page)).toBe("shown");
   await still(page);
-  const p1 = await at("poisson");
+  const p1 = await at("binom");
   await page.getByTestId("crumbs").getByRole("button", { name: "ライブラリ" }).click();
   await expect(m).toHaveCount(0);
   await page.goBack();
   await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
   await still(page);
-  expect(await at("poisson"), "ライブラリから戻ると初めの見え方に戻る").toEqual(p1);
+  expect(await at("binom"), "ライブラリから戻ると初めの見え方に戻る").toEqual(p1);
 });
 
 // 確かめる対象：指の物理（画面の原則 2。UX レビュー A1・B10・B11）。
@@ -419,94 +419,91 @@ test("指：ピンチの後に流れない、地図は指の真下に付く、�
   expect(Math.abs(top1 - top0), "縁を越えて離したあと、縁ぴったりに戻らない").toBeLessThan(2);
 });
 
-// 確かめる対象：線を押すと、別の画面へ移らずに、その線を矢印の向きになぞる（渡辺さん 2026-11-07 の見本で B）。
-//   長押しすると両端と「つまり」の説明が出て、離しても残り、ほかの所を押すと閉じる。説明の右上（↗）で2つの概念のページを開く。
-// 想定する故障：押しただけで2つの概念のページ（や覚えていた解説）へ移る。なぞりが出ない・逆向きに引く。
-//   長押しの説明が離すと消える・離したときの「押した」で閉じる・外を押しても閉じない・外を押したときにその物まで動く（語が選ばれる）。
-//   長押しの間に指が少しずれて地図が動く。↗ で開かない。
-// 見つけ方：語に隠れていない線の上の1点を押すと、なぞりの線（rm-trace）が出て、2つの概念のページ（edge-panel）は出ない。
-//   なぞりは矢印の先の側から引く向き（線の向きの印 data-rev と矢印の付く端が合う）。
-//   長押しで説明（rm-peek）が出て両端の名前を含み、遊びより大きく（14px）ずらしても地図は動かない。離しても残る。
-//   空いた所を押すと閉じ、もう一度長押しして ↗ を押すと edge-panel が出る。
+// 確かめる対象：線を押すと、待たずに・別の画面へ移らずに、その線を矢印の向きに引き直す（渡辺さん 2026-11-07 の見本「3+ 引き直す（改）」）。
+//   長押しすると後ろをぼかした下見（両端と「つまり」）とメニューが出て、離しても残り、後ろか「閉じる」で閉じる。メニューから2つの概念のページを開く。
+// 想定する故障：押しただけで2つの概念のページ（や覚えていた解説）へ移る。引き直しが待ってから始まる・出ない・逆向きに引く。
+//   引き直しのあと元の線が薄いまま・矢じりが消えたまま。長押しの下見が離すと消える・離したときの「押した」で閉じる・後ろを押しても閉じない。
+//   長押しの間に指が少しずれて地図が動く。メニューで開かない。
+// 見つけ方：語に隠れていない線の上の1点を押すと、0.1 秒のうちに引き直し（rm-trace）が出て、その線は薄くなる（ghost）。
+//   引く向き（data-rev）は線の矢印の付く端（data-arrow）と合う。両端の概念は枠で囲まれる。引き終えると消え、元の線に矢じりが戻る。2つの概念のページは出ない。
+//   長押しで下見（rm-peek）が出て両端の名前を含み、遊びより大きく（14px）ずらしても地図は動かない。離しても残る。
+//   後ろを押すと閉じ、もう一度長押しして「2つの概念のページを開く」を押すと edge-panel が出る。
 // 既存との違い：ほかのテストは語と空いた所だけ
-// 検出の確かめ（2026-11-07）：離したときに説明を消す元の処理に戻すと「離しても残る」で、押すと面を開く元の処理に戻すと
-//   「押しただけで移った」で落ちることを見た
-test("線：押すと矢印の向きになぞる。長押しの説明は残り、外で閉じ、↗ で2つの概念のページ", async ({ page }) => {
+// 検出の確かめ（2026-11-07）：引き直しを 0.2 秒待たせると「待ってから始まる」で、両端の枠を外すと「両端のカードが枠で囲まれない」で落ちることを見た
+test("線：押すとすぐ矢印の向きに引き直す。長押しの下見は残り、後ろで閉じ、メニューで2つの概念のページ", async ({
+  page,
+}) => {
   const m = await open(page);
   let pt = (await linePoint(page))!;
   expect(pt, "押せる線の点がない").not.toBeNull();
   await page.mouse.click(pt.x, pt.y);
   const tr = m.getByTestId("rm-trace");
-  await expect(tr).toHaveCount(1);
+  await expect(tr, "待ってから始まる").toHaveCount(1, { timeout: 100 });
   const dir = await m.evaluate((el, id) => {
-    const line = el.querySelector<SVGPathElement>(`[data-testid=rm-lines] path[data-type][data-state=lit]`);
-    const t = el.querySelector<SVGPathElement>("[data-testid=rm-trace]")!;
-    return { lit: !!line, arrowStart: !!line?.getAttribute("marker-start"), rev: t.hasAttribute("data-rev"), id };
+    const line = el.querySelector<SVGPathElement>(`[data-testid=rm-lines] path[data-type][data-state=ghost]`);
+    const t = el.querySelector("[data-testid=rm-trace]")!;
+    return {
+      ghost: !!line,
+      marker: !!(line?.getAttribute("marker-end") || line?.getAttribute("marker-start")),
+      arrowStart: line?.getAttribute("data-arrow") === "start",
+      rev: t.hasAttribute("data-rev"),
+      id,
+    };
   }, pt.id);
-  expect(dir.lit, "押した線が強まらない").toBe(true);
-  expect(dir.rev, "なぞる向きが矢印と合わない").toBe(dir.arrowStart);
-  await page.waitForTimeout(400);
-  await expect(page.getByTestId("edge-panel"), "押しただけで移った").toHaveCount(0);
+  expect(dir.ghost, "押した線が薄くならない").toBe(true);
+  expect(dir.marker, "引き直す間も元の矢じりが出ている").toBe(false);
+  expect(dir.rev, "引く向きが矢印と合わない").toBe(dir.arrowStart);
+  // 引き直す間は、両端の概念のカードを線の色の枠で囲む（渡辺さん 2026-11-07）
+  await expect(m.locator("[data-testid^=rm-term-][data-state=near]"), "両端のカードが枠で囲まれない").toHaveCount(2);
   await expect(tr).toHaveCount(0, { timeout: 3000 }); // 引き終えると消える
+  await expect(m.locator("[data-testid=rm-lines] path[data-state=ghost]")).toHaveCount(0);
+  expect(
+    await m
+      .locator("[data-testid=rm-lines] path[data-arrow]")
+      .evaluateAll((ps) => ps.filter((p) => !p.getAttribute("marker-end") && !p.getAttribute("marker-start")).length),
+    "引き直したあと矢じりが戻らない",
+  ).toBe(0);
+  await expect(page.getByTestId("edge-panel"), "押しただけで移った").toHaveCount(0);
 
   pt = (await linePoint(page))!;
   const ends = await m.evaluate((el, id) => {
     const hit = el.querySelector<SVGPathElement>(`[data-testid="rm-line-${CSS.escape(id)}"]`)!;
     return hit.getAttribute("aria-label") ?? "";
   }, pt.id);
+  const peek = page.getByTestId("rm-peek");
   const hold = async () => {
     await page.mouse.move(pt.x, pt.y);
     await page.mouse.down();
-    await expect(m.getByTestId("rm-peek")).toBeVisible();
+    await expect(peek).toBeVisible();
   };
   const c0 = await canvasAt(page);
   await hold();
   await page.mouse.move(pt.x + 12, pt.y + 8); // 遊び（8px）を越えてずらす
   const c1 = await canvasAt(page);
   expect(Math.abs(c1.x - c0.x) + Math.abs(c1.y - c0.y), "長押しの間に地図が動いた").toBeLessThan(1);
-  const peekText = await m.getByTestId("rm-peek").innerText();
+  const peekText = await peek.innerText();
   for (const name of ends.split(/と|の/).slice(0, 2)) expect(peekText).toContain(name);
   await page.mouse.up();
   await page.waitForTimeout(500);
-  await expect(m.getByTestId("rm-peek"), "離しても残る").toBeVisible();
+  await expect(peek, "離しても残る").toBeVisible();
   await expect(page.getByTestId("edge-panel")).toHaveCount(0);
-  // 外（語）を押すと閉じるだけ：語は選ばれない
-  const far = await m.evaluate((el) => {
-    const c = el.querySelector("[data-testid=rm-peek]")!.getBoundingClientRect();
-    for (const t of el.querySelectorAll<HTMLElement>("[data-testid^=rm-term-]")) {
-      const r = t.getBoundingClientRect();
-      const x = r.left + r.width / 2,
-        y = r.top + r.height / 2;
-      const inside = x > c.left - 8 && x < c.right + 8 && y > c.top - 8 && y < c.bottom + 8;
-      if (
-        !inside &&
-        y > 0 &&
-        y < innerHeight - 120 &&
-        document.elementFromPoint(x, y)?.closest("[data-testid^=rm-term-]") === t
-      )
-        return { x, y, id: t.dataset.testid! };
-    }
-    return null;
-  });
-  expect(far, "説明に重ならない語がない").not.toBeNull();
-  await page.mouse.click(far!.x, far!.y);
-  await expect(m.getByTestId("rm-peek")).toHaveCount(0);
-  await page.waitForTimeout(400);
-  await expect(m.getByTestId(far!.id)).not.toHaveAttribute("data-state", "sel");
+  await page.mouse.click(8, 8); // 後ろ（下見とメニューの外）
+  await expect(peek, "後ろを押しても閉じない").toHaveCount(0);
   await hold();
   await page.mouse.up();
-  await m.getByTestId("rm-peek-open").click();
+  await page.waitForTimeout(450);
+  await page.getByTestId("rm-peek-open").click();
   await expect(page.getByTestId("edge-panel")).toBeVisible();
 });
 
 // 確かめる対象：線や語を長押しして離したあとも、地図を指で動かせる（渡辺さん 2026-11-07「キャンバスが固定」）。
-//   浮かせた説明・一覧は、地図を動かすと消える（同日「画面移動等で消える」）。
+//   浮かせた一覧は、地図を動かすと消える（同日「画面移動等で消える」）。線の長押しは画面全体の下見になったので、閉じてから動かす。
 // 想定する故障：長押しの印（浮かせている間は地図を動かさない）が離したあとも残り、次に長押しするまで地図が指で動かない。
 //   地図を動かしても、浮かせた物が元の場所を指したまま残る。
-// 見つけ方：線を長押しして離し、空いた所を指で引くと、地図が動き、説明が消える。語でも動く。印だけの所の一覧も引くと消える。
+// 見つけ方：線を長押しして離し、下見を閉じてから空いた所を指で引くと、地図が動く。語でも動く。印だけの所の一覧は引くと消える。
 // 既存との違い：上の線のテストは長押しの間に地図が動かないことだけ（離したあとは見ていない）
 // 検出の確かめ（2026-11-07）：離したときに長押しの印を下ろす処理を外すと落ち、地図を動かしたときに消す処理を外すと
-//   「地図を動かしても説明が残る」で落ちることを見た
+//   「地図を動かしても一覧が残る」で落ちることを見た
 test("長押しして離したあとも、地図を指で動かせる", async ({ page }) => {
   const m = await open(page);
   const drag = async () => {
@@ -521,11 +518,12 @@ test("長押しして離したあとも、地図を指で動かせる", async ({
   const pt = (await linePoint(page))!;
   await page.mouse.move(pt.x, pt.y);
   await page.mouse.down();
-  await expect(m.getByTestId("rm-peek")).toBeVisible();
+  await expect(page.getByTestId("rm-peek")).toBeVisible();
   await page.mouse.up();
   await page.waitForTimeout(450);
+  await page.getByTestId("rm-peek-close").click();
+  await expect(page.getByTestId("rm-peek")).toHaveCount(0);
   expect(await drag(), "線の長押しのあとで地図が動かない").toBeGreaterThan(20);
-  await expect(m.getByTestId("rm-peek"), "地図を動かしても説明が残る").toHaveCount(0);
   const fold = m.locator("[data-testid^=rm-folded-]").first();
   if (await fold.count()) {
     await fold.click();
@@ -616,6 +614,23 @@ test("380px と埋め込み（360×320）でページが横にはみ出さず、
     [360, 320],
   ] as const) {
     const m = await open(page, w, h);
+    // となり合う概念の間の線（ベルヌーイ分布 → 二項分布 など）も 44px で押せる：同じ行のカードの間が、開いたときの倍率で 44px 以上
+    // （渡辺さん 2026-11-07 の見本で A「間を広げる」。前は 24 で、間の線は 21px しか押せなかった）
+    const gaps = await m.evaluate((el) => {
+      const cards = [...el.querySelectorAll<HTMLElement>("[data-testid^=rm-term-] > span")]
+        .map((c) => c.getBoundingClientRect())
+        .filter((r) => r.width > 20);
+      const out: number[] = [];
+      for (const a of cards)
+        for (const b of cards)
+          if (Math.abs(a.top - b.top) < 2 && b.left > a.right) {
+            const between = cards.some((c) => Math.abs(c.top - a.top) < 2 && c.left >= a.right && c.right <= b.left);
+            if (!between) out.push(Math.round(b.left - a.right));
+          }
+      return out;
+    });
+    expect(gaps.length).toBeGreaterThan(0);
+    expect(Math.min(...gaps), `${w}px でとなり合うカードの間が 44px 未満`).toBeGreaterThanOrEqual(43.5);
     await m.getByTestId(`rm-term-${T("binom")}`).click();
     await still(page);
     const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

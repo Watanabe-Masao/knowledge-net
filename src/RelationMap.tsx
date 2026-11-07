@@ -6,6 +6,8 @@
 //   線を押すとその関係の面（App の Panel）。線を長押ししている間は、向こうの端を見せる（A/B：引いて見せる／カードを浮かせる）。
 //   空いた所の1回のタップは1段戻す（帯が引っ込んでいれば戻す → 選んでいれば外す → 何もなければ帯を引っ込める）。地図を指で動かすと帯が引っ込む。
 // 並びと線の計算は src/relationMap.ts（layoutCategory・lineBadges・fitPick）。ここは見せ方と指の操作だけ
+import Redraw from "./Redraw";
+import { createPortal } from "react-dom";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tokenMs } from "@math-lab/ui";
 import { type Network, bandOfCat, bandsOf } from "./data";
@@ -500,6 +502,7 @@ export default function RelationMap({
     lastTap.current = { t: 0, x: 0, y: 0 };
     clearTimeout(blankT.current); // 1回目の空いた所・線のタップは取り消す
     clearTimeout(lineT.current);
+    setTrace(null); // 1回目の線のタップで始めた引き直しは止める（1つの操作に動きは1つ）
     e.stopPropagation();
     e.preventDefault();
     if (P.card) {
@@ -540,6 +543,9 @@ export default function RelationMap({
   const heldAt = useRef(0); // 長押しを離した時刻（離したときに来る「押した」を、ほかの所のタップと分ける）
   // 線を押すと、その線を矢印の向きになぞる（渡辺さん 2026-11-07 の見本で B「線を引き直す」）。n は同じ線をもう一度押したときに描き直す印
   const [trace, setTrace] = useState<{ edge: string; n: number } | null>(null);
+  // 引き直しの出だしと着いたとき、両端の概念の縁を一度だけ灯す（n で同じ概念をもう一度灯せる）
+  const [flash, setFlash] = useState<{ id: string; n: number; color: string } | null>(null);
+  const [pressLine, setPressLine] = useState<string | null>(null); // 押した瞬間に線を太くする（押した手応え）
   // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。島の地図・一覧の長押しと同じ働き（画面の原則 10）
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   const tipT = useRef(0),
@@ -592,20 +598,6 @@ export default function RelationMap({
     };
   // 長押しの終わりは、指を離したとき（pointerup・touchend）。iPhone の Safari は長押しの途中で pointercancel を送ることがあるので、
   // 浮かせている間の pointercancel では消さない（指を離すまで見せる）
-  // 線の説明が出ている間：説明の外を押すと閉じる。地図の中なら閉じるだけ（その押した物は動かさない）。地図の外（上の帯・下のタブ）は
-  // 閉じて、押した物もそのまま働く。長押しを離したときの「押した」では閉じない
-  useEffect(() => {
-    if (!peek) return;
-    const close = (e: MouseEvent) => {
-      const t = e.target as Element;
-      if (t.closest?.("[data-testid=rm-peek]")) return;
-      const inMap = !!box.current?.contains(t);
-      if (inMap) e.stopPropagation();
-      if (performance.now() - heldAt.current >= 400) setPeek(null);
-    };
-    addEventListener("click", close, true);
-    return () => removeEventListener("click", close, true);
-  }, [peek]);
   const holdEnd = (e: Event) => {
     clearTimeout(holdT.current);
     clearTimeout(tipT.current);
@@ -638,11 +630,13 @@ export default function RelationMap({
     e.stopPropagation();
     if (moved.current || held.current || performance.now() - heldAt.current < 400) return; // 長押しのあとの「押した」は数えない
     const edgeId = kind ? hitId : nearestEdge(e.clientX, e.clientY, hitId); // 線の上の印はその線のまま
-    clearTimeout(lineT.current);
-    lineT.current = window.setTimeout(() => {
-      // 押しただけでは別の画面へ移らない。線を矢印の向きになぞって、どちらからどちらへの関係かを見せる（2つの概念のページへは説明の ↗）
-      setTrace((t) => ({ edge: edgeId, n: (t?.n ?? 0) + 1 }));
-    }, dblMs());
+    // 押しただけでは別の画面へ移らない。すぐに線を矢印の向きに引き直して、どちらからどちらへの関係かを見せる
+    // （待たずに始める。続けてもう一度押したら、ダブルタップとして引き直しを止めて寄る。2つの概念のページへは長押しから）
+    const ed = L.edges.find((x) => x.id === edgeId);
+    if (!ed) return;
+    const from = ed.arrow === "start" ? ed.to : ed.from;
+    setFlash((f) => ({ id: from, n: (f?.n ?? 0) + 1, color: kcol(ed.type) }));
+    setTrace((t) => ({ edge: edgeId, n: (t?.n ?? 0) + 1 }));
   };
 
   const bands = bandsOf(net);
@@ -825,12 +819,11 @@ export default function RelationMap({
                     data-from={e.from}
                     data-to={e.to}
                     data-type={e.type}
+                    data-arrow={e.arrow}
                     data-state={
-                      // なぞっている間：その線は薄くして上から引き直し、ほかの線は下げる（どの線を引いているかを分かるように）
-                      trace
-                        ? trace.edge === e.id
-                          ? "ghost"
-                          : "dim"
+                      // 引き直している間は、その線を薄くして（矢じりも隠して）上から引き直す。ほかの線はそのまま
+                      trace?.edge === e.id
+                        ? "ghost"
                         : peek?.edge === e.id
                           ? "lit"
                           : !pick
@@ -839,8 +832,9 @@ export default function RelationMap({
                               ? "lit"
                               : "dim"
                     }
-                    markerEnd={e.arrow === "end" ? m : undefined}
-                    markerStart={e.arrow === "start" ? m : undefined}
+                    data-press={pressLine === e.id ? "" : undefined}
+                    markerEnd={e.arrow === "end" && trace?.edge !== e.id ? m : undefined}
+                    markerStart={e.arrow === "start" && trace?.edge !== e.id ? m : undefined}
                   />
                 </g>
               );
@@ -848,18 +842,17 @@ export default function RelationMap({
             {(() => {
               const te = trace && shown.find((e) => e.id === trace.edge);
               if (!te) return null;
-              // 矢印の向きに引き直す：線の始まり（arrow が start の線は終わり）から、矢印の先へ
+              const to = te.arrow === "start" ? te.from : te.to;
               return (
-                <path
+                <Redraw
                   key={`t${trace!.n}`}
                   d={pathD(te.pts)}
-                  className={s.trace}
-                  pathLength={1}
-                  strokeWidth={6 / v.k} /* 画面の上で 6px（ふだんの線の倍） */
-                  data-rev={te.arrow === "start" ? "" : undefined}
-                  data-testid="rm-trace"
-                  style={{ stroke: kcol(te.type) }}
-                  onAnimationEnd={() => setTrace(null)}
+                  color={kcol(te.type)}
+                  dash={DASH[te.type] ?? (te.mode ? DASH[te.mode] : undefined)}
+                  rev={te.arrow === "start"}
+                  k={v.k}
+                  onArrive={() => setFlash((f) => ({ id: to, n: (f?.n ?? 0) + 1, color: kcol(te.type) }))}
+                  onDone={() => setTrace(null)}
                 />
               );
             })()}
@@ -874,7 +867,13 @@ export default function RelationMap({
                 data-testid={`rm-line-${e.id}`}
                 role="button"
                 aria-label={`${nameOf(net, e.from)}と${nameOf(net, e.to)}の${e.type}`}
-                onPointerDown={lineDown(e.id)}
+                onPointerDown={(ev) => {
+                  setPressLine(nearestEdge(ev.clientX, ev.clientY, e.id));
+                  lineDown(e.id)(ev);
+                }}
+                onPointerUp={() => setPressLine(null)}
+                onPointerLeave={() => setPressLine(null)}
+                onPointerCancel={() => setPressLine(null)}
                 onClick={lineClick(e.id)}
               />
             ))}
@@ -920,10 +919,9 @@ export default function RelationMap({
           {L.terms.map((t) => {
             const on = pick === t.id,
               k = near.get(t.id),
-              traceEdge = trace ? shown.find((e) => e.id === trace.edge) : undefined,
-              end =
-                (peekEdge && (peekEdge.from === t.id || peekEdge.to === t.id)) ||
-                (traceEdge && (traceEdge.from === t.id || traceEdge.to === t.id));
+              // 線の両端：長押しの下見の間と、引き直しの間は、両端のカードを線の色の枠で囲む（渡辺さん 2026-11-07「概念カードに枠」）
+              endEdge = peekEdge ?? (trace ? shown.find((e) => e.id === trace.edge) : undefined),
+              end = !!endEdge && (endEdge.from === t.id || endEdge.to === t.id);
             return (
               <button
                 key={t.id}
@@ -932,7 +930,8 @@ export default function RelationMap({
                 data-cv={t.id}
                 data-node={t.id}
                 data-testid={`rm-term-${t.id}`}
-                data-state={end ? "near" : trace ? "dim" : !pick ? undefined : on ? "sel" : k ? "near" : "dim"}
+                data-state={end ? "near" : !pick ? undefined : on ? "sel" : k ? "near" : "dim"}
+                data-flash={flash?.id === t.id ? flash.n % 2 : undefined}
                 data-skeleton={filled(t.id) ? undefined : "1"}
                 aria-pressed={on}
                 aria-label={nameOf(net, t.id)}
@@ -942,7 +941,8 @@ export default function RelationMap({
                     top: t.y,
                     width: t.w,
                     height: t.h,
-                    ...(k || end ? { "--rc": kcol(k ?? (peekEdge ?? traceEdge)!.type) } : {}),
+                    ...(k || end ? { "--rc": kcol(k ?? endEdge!.type) } : {}),
+                    ...(flash?.id === t.id ? { "--fc": flash.color } : {}),
                   } as React.CSSProperties
                 }
                 onPointerDown={(e) => {
@@ -1008,45 +1008,63 @@ export default function RelationMap({
           })}
         </div>
       ) : null}
-      {peek && peekEdge ? (
-        // 線の長押しの間：地図は動かさず、線の両端と「つまり」を指の近くに浮かせる（指で隠れないよう、指の上に出す）
-        <div
-          className={s.peekCard}
-          data-ui
-          data-testid="rm-peek"
-          style={{
-            left: Math.max(
-              8,
-              Math.min(peek.x - (box.current?.getBoundingClientRect().left ?? 0) - 150, size().W - 308),
-            ),
-            top: Math.max(8, peek.y - (box.current?.getBoundingClientRect().top ?? 0) - 150),
-          }}
-        >
-          <span className={s.peekHead}>
-            <Badge k={peekEdge.type} size={20} />
-            <span className={s.peekPair}>
-              {nameOf(net, peekRel?.from ?? peekEdge.from)} → {nameOf(net, peekRel?.to ?? peekEdge.to)}
-            </span>
-            {peekRel ? (
-              <button
-                type="button"
-                className={s.peekOpen}
-                aria-label="2つの概念のページを開く"
-                data-testid="rm-peek-open"
-                onClick={() => {
-                  setPeek(null);
-                  onRelation(peekRel.id);
-                }}
-              >
-                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-                  <path d="M9 5h10v10M19 5 6 18" />
-                </svg>
-              </button>
-            ) : null}
-          </span>
-          {peekRel?.gist ? <p>{peekRel.gist}</p> : null}
-        </div>
-      ) : null}
+      {peek && peekEdge
+        ? createPortal(
+            // 線の長押し：後ろをぼかし、関係の下見と短いメニューを出す（iPhone の長押しの下見と同じ形。渡辺さん 2026-11-07 の見本）。
+            // 後ろを押すか「閉じる」で閉じる。長押しを離したときの「押した」では閉じない
+            <div
+              className={s.peekScrim}
+              data-ui
+              data-testid="rm-peek"
+              role="dialog"
+              aria-label="関係の下見"
+              onClick={(ev) => {
+                if (ev.target !== ev.currentTarget || performance.now() - heldAt.current < 400) return;
+                setPeek(null);
+              }}
+            >
+              <div className={s.peekCard}>
+                <span className={s.peekHead}>
+                  <Badge k={peekEdge.type} size={20} />
+                  <span className={s.peekPair}>
+                    {nameOf(net, peekRel?.from ?? peekEdge.from)} → {nameOf(net, peekRel?.to ?? peekEdge.to)}
+                  </span>
+                </span>
+                {peekRel?.gist ? <p>{peekRel.gist}</p> : null}
+              </div>
+              <div className={s.peekMenu} role="menu">
+                {peekRel ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-testid="rm-peek-open"
+                    onClick={() => {
+                      setPeek(null);
+                      onRelation(peekRel.id);
+                    }}
+                  >
+                    2つの概念のページを開く
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                      <path d="M9 5h10v10M19 5 6 18" />
+                    </svg>
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  role="menuitem"
+                  data-testid="rm-peek-close"
+                  onClick={() => {
+                    if (performance.now() - heldAt.current < 400) return;
+                    setPeek(null);
+                  }}
+                >
+                  閉じる
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
       {tip ? (
         <div
           className={s.foldCard}

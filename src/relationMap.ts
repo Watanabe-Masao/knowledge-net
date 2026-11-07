@@ -147,7 +147,7 @@ export function linksOf(net: Network, id: string): Link[] {
 }
 
 /** 大きさ（キャンバスの単位。倍率 1 で画面の px）。間は線の上の印が入る広さ（列の間 28・まとまりの間 64） */
-export const CV = { tw: 84, th: 96, gx: 24, gy: 12, head: 40, pad: 22, G: 64, cols: 3, foot: 34, M: 16 } as const;
+export const CV = { tw: 76, th: 96, gx: 56, gy: 12, head: 40, pad: 18, G: 64, cols: 3, foot: 34, M: 16 } as const;
 
 export type TermBox = {
   id: string;

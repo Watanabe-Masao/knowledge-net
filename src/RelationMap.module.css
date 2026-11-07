@@ -123,7 +123,12 @@
 }
 /* なぞる線の下の元の線：薄くして、上から引き直すのが見えるように */
 .lines path[data-state="ghost"] {
-  opacity: 0.25;
+  opacity: 0.22;
+}
+/* 押した瞬間に線を太くする（押した手応え。押すと沈むのと同じ短さ） */
+.lines path[data-press] {
+  stroke-width: 5;
+  transition: stroke-width var(--dur-press) var(--ease);
 }
 .glyphText {
   fill: var(--surface);
@@ -242,6 +247,24 @@
 .term[data-skeleton][data-state="near"] .card {
   border-color: var(--rc);
   box-shadow: none;
+}
+/* 引き直しの出だし・着いたとき：概念の縁を一度だけ線の色に灯す（カードは動かさない） */
+.term[data-flash="0"] .card,
+.term[data-flash="1"] .card {
+  animation: edge-flash-0 var(--dur-flash) var(--ease);
+}
+.term[data-flash="1"] .card {
+  animation-name: edge-flash-1;
+}
+@keyframes edge-flash-0 {
+  30% {
+    box-shadow: inset 0 0 0 2.5px var(--fc);
+  }
+}
+@keyframes edge-flash-1 {
+  30% {
+    box-shadow: inset 0 0 0 2.5px var(--fc);
+  }
 }
 .term[data-state="dim"] .card {
   transform: scale(0.93);
@@ -615,27 +638,70 @@
   stroke-linejoin: round;
 }
 /* 線の長押しの間（B）：両端と「つまり」を指の上に浮かせる */
+/* 線の長押しの下見：後ろをぼかし、真ん中に関係の札と短いメニュー（地図の上の物ではないので、画面全体に重ねる） */
+.peekScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: var(--sp-4);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  animation: peek-in var(--dur) var(--ease);
+}
 .peekCard {
-  position: absolute;
-  z-index: 9;
-  width: 300px;
-  max-width: calc(100% - 16px);
+  width: min(340px, 100%);
   box-sizing: border-box;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: 16px;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background: var(--surface);
   box-shadow:
     0 0 0 1px var(--line-strong),
-    0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent);
-  animation: peek-in var(--dur) var(--ease); /* 押さえている指の上に、すっと出る（縁から滑らせない） */
+    0 10px 30px color-mix(in srgb, var(--ink) 22%, transparent);
 }
-@keyframes peek-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
+.peekMenu {
+  width: min(260px, 100%);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line-strong),
+    0 10px 30px color-mix(in srgb, var(--ink) 22%, transparent);
+}
+.peekMenu button {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 15px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.peekMenu button + button {
+  border-top: 1px solid var(--line);
+}
+.peekMenu button:active {
+  background: var(--line);
+}
+.peekMenu button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.peekMenu svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .peekHead {
   display: flex;
@@ -648,82 +714,31 @@
   flex: 1;
   min-width: 0;
 }
-/* 説明の右上：2つの概念のページへ（押す所 44px） */
-.peekOpen {
-  all: unset;
-  flex: none;
-  width: 44px;
-  height: 44px;
-  margin: -10px -10px -10px 0;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  color: var(--ink);
-  cursor: pointer;
-}
-.peekOpen svg {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.peekOpen:active {
-  background: var(--line);
-}
-.peekOpen:focus-visible {
-  outline: 2px solid var(--accent);
-}
-/* 線を押したとき：矢印の向きに引き直してから、すっと消える（1つの操作に動きは1つ。画面の原則 10） */
-.trace {
-  fill: none;
-  stroke-linecap: round;
+/* 線を押したとき：矢印の向きに引き直す（src/Redraw.tsx）。ペン先の光る点・引き終わると矢じりが弾む・少し置いて消える */
+.redraw {
   pointer-events: none;
-  stroke-dasharray: 1 1;
-  animation: trace-draw calc(var(--dur-flash) * 1.5) var(--ease) forwards;
+  transition: opacity var(--dur) var(--ease);
 }
-.trace[data-rev] {
-  animation-name: trace-draw-rev;
+.redraw[data-out] {
+  opacity: 0;
 }
-/* 引き直して（3分の2）、少し止めて、すっと消える（元の線に戻る） */
-@keyframes trace-draw {
-  0% {
-    stroke-dashoffset: 1;
-  }
-  65% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  85% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: 0;
-    opacity: 0;
-  }
+.nib {
+  fill: color-mix(in srgb, currentColor 30%, white);
+  filter: drop-shadow(0 0 3px currentColor);
 }
-@keyframes trace-draw-rev {
-  0% {
-    stroke-dashoffset: -1;
-  }
-  65% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  85% {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: 0;
+.redrawHead {
+  /* 矢じりは、引き終わった所から矢の向きへ少し進みながら現れる（拡大・跳ねる動きは使わない。motion-rules） */
+  animation: head-in var(--dur) var(--ease) both;
+}
+@keyframes head-in {
+  from {
+    transform: translateX(-4px);
     opacity: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .trace {
+  .redrawHead {
     animation: none;
-    opacity: 0;
   }
 }
 .peekCard p {
