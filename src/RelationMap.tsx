@@ -182,8 +182,16 @@ export default function RelationMap({
   };
   /** 寄る動きの数（画面のテストが、動きが重なっていないかを見る） */
   const goes = useRef(0);
+  // 動きの終わりのタイマーは1つだけ（前の動きのタイマーが、後から始まった動きを途中で終わらせないように）
+  const animT = useRef(0);
+  const movingSince = useRef(0);
+  const animFor = (ms: number) => {
+    clearTimeout(animT.current);
+    animT.current = window.setTimeout(() => setAnim(false), ms);
+  };
   const go = (nv: View, slow = false) => {
     goes.current += 1;
+    movingSince.current = Math.round(performance.now());
     setAnim(
       reduce
         ? false
@@ -192,7 +200,7 @@ export default function RelationMap({
           : "transform var(--dur-sheet) var(--ease-sheet)",
     );
     setV(nv);
-    setTimeout(() => setAnim(false), slow ? 640 : 340);
+    animFor(slow ? 640 : 340);
   };
   // 初め：幅に合わせ、上から見せる
   const start = () => {
@@ -252,7 +260,8 @@ export default function RelationMap({
       const b = bounds(o);
       if (Math.abs(b.x - o.x) + Math.abs(b.y - o.y) > 1) {
         setAnim(reduce ? false : "transform var(--dur-sheet) var(--ease-sheet)");
-        setTimeout(() => setAnim(false), 340);
+        movingSince.current = Math.round(performance.now());
+        animFor(340);
       }
       return b;
     });
@@ -714,7 +723,9 @@ export default function RelationMap({
           }}
           data-testid="rm-canvas"
           data-k={v.k.toFixed(3)}
-          data-moving={anim ? "1" : undefined}
+          data-moving={
+            anim ? movingSince.current : undefined
+          } /* 動き始めた時刻（画面のテストが、止まらないのか読めなかったのかを分ける） */
           data-goes={goes.current}
         >
           {L.groups.map((g) => (
