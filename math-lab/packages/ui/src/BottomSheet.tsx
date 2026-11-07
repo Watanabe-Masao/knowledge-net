@@ -9,8 +9,7 @@ import { useEffect, useRef, useState, type HTMLAttributes, type PointerEvent as 
 import { haptic } from "./motion";
 import s from "./BottomSheet.module.css";
 
-export type Detent = "min" | "peek" | "mid" | "half" | "full";
-/** ふだんの段（mid は使う側が stops で選んだときだけ。少しと半分の間の段） */
+export type Detent = "min" | "peek" | "half" | "full";
 export const DETENTS: Detent[] = ["min", "peek", "half", "full"];
 
 /**
@@ -62,9 +61,8 @@ type Props = {
   min?: number;
   /** 下の余白（下のタブの高さなど。面はその上に乗る） */
   bottom?: number;
-  /** 止まる段（低い順）。省くと しまう・少し・半分・全部。mid（少しと半分の間）を入れるときは mid の高さも渡す */
+  /** 止まる段（低い順）。省くと しまう・少し・半分・全部（しまうを置かない面もある） */
   stops?: Detent[];
-  mid?: number;
 } & Omit<HTMLAttributes<HTMLElement>, "title">;
 
 /** つまみを押したときの次の段（止まる段を1つ上へ。全部の次は少し。しまうは押し込んだときだけ） */
@@ -86,13 +84,11 @@ export function BottomSheet({
   min = 64,
   bottom = 0,
   stops = DETENTS,
-  mid,
   ...rest
 }: Props) {
   const heights = (): Record<Detent, number> => ({
     min,
     peek,
-    mid: mid ?? peek,
     half: Math.round((vh() - bottom) * 0.55),
     full: vh() - bottom - 44,
   });

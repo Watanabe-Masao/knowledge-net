@@ -6,7 +6,6 @@
 //   線を押すとその関係の面（App の Panel）。線を長押ししている間は、向こうの端を見せる（A/B：引いて見せる／カードを浮かせる）。
 //   空いた所の1回のタップは1段戻す（帯が引っ込んでいれば戻す → 選んでいれば外す → 何もなければ帯を引っ込める）。地図を指で動かすと帯が引っ込む。
 // 並びと線の計算は src/relationMap.ts（layoutCategory・lineBadges・fitPick）。ここは見せ方と指の操作だけ
-import { TOP_AB } from "./ab";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tokenMs } from "@math-lab/ui";
 import { type Network, bandOfCat, bandsOf } from "./data";
@@ -374,7 +373,7 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
   // ---- 帯を引っ込めた状態（画面の原則 1・16）：時間では引っ込めない。地図を指で動かしたときと、何も選んでいないときの空いた所のタップで。
   //   根に data-bars="hidden" を置くと、上の帯・下のタブ・下の面（data-edge）がそれぞれの縁へ同じ動きで引っ込む。
   //   地図は画面いっぱいに広げ、中身は画面の同じ所に残す（広がった分だけ位置をずらす）
-  //   帯の引っ込め方は2つ：all＝上の帯・下のタブ・下の面のすべて（地図を指で動かしたとき）、top＝上の帯だけ（語を選んでいる間。rmTop=b）
+  //   帯の引っ込め方は2つ：all＝上の帯・下のタブ・下の面のすべて（地図を指で動かしたとき）、top＝上の帯だけ（語を選んでいる間）
   const [calm, setCalm] = useState<Calm>(false);
   const calmRef = useRef<Calm>(false),
     calmTop = useRef({ top: 0, left: 0 }),
@@ -393,10 +392,10 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     calmRef.current = to;
     setCalm(to);
   };
-  /** 1段戻す：全部引っ込めていたら、語を選んでいる間の形（rmTop=b なら上の帯だけ引っ込めたまま）へ。そうでなければ帯を全部戻す */
+  /** 1段戻す：全部引っ込めていたら、語を選んでいる間の形（上の帯だけ引っ込めたまま）へ。そうでなければ帯を全部戻す */
   const leave = (all = false) => {
     if (!calmRef.current) return;
-    if (!all && calmRef.current === "all" && TOP_AB && pickRef.current) {
+    if (!all && calmRef.current === "all" && pickRef.current) {
       calmRef.current = "top";
       setCalm("top");
       return;
@@ -406,11 +405,10 @@ export default function RelationMap({ net, category, selected, onSelect, onOpen,
     shift(-left, -top);
     setCalm(false);
   };
-  // 語を選んだら上の帯を引っ込め、選びを外したら戻す（rmTop=b。押したときだけ変わる。画面の原則 1）
+  // 語を選んだら上の帯を引っ込め、選びを外したら戻す（渡辺さん 2026-11-07 に A/B で決めた。押したときだけ変わる。画面の原則 1）
   const pickRef = useRef(pick);
   pickRef.current = pick;
   useEffect(() => {
-    if (!TOP_AB) return;
     if (pick && !calmRef.current) enter("top");
     else if (!pick && calmRef.current === "top") leave(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps

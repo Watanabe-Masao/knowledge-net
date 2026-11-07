@@ -1,5 +1,5 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
-import { SHEET_AB, SHEET_STOPS } from "./ab";
+import { STEPS } from "./steps";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as RPE } from "react";
 import { Media, relationParts } from "./Relation";
 import { RelDig, RelMap } from "./RelMap";
@@ -14,6 +14,7 @@ import {
   Segmented,
   Workspace,
   TableWorkspace,
+  haptic,
   type Detent,
 } from "@math-lab/ui";
 import { modelPmf, modelMoments } from "@math-lab/engine";
@@ -213,31 +214,13 @@ export default function Detail({
     ro.observe(el);
     return () => ro.disconnect();
   }, [sheet !== undefined]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 「少し」の段：見出し（名前の1行と切り替え）＋ 定義が見える高さ
-  const leadRef = useRef<HTMLDivElement>(null);
-  const [leadH, setLeadH] = useState(80);
-  useEffect(() => {
-    const el = leadRef.current;
-    if (!el || typeof ResizeObserver !== "function") return;
-    const ro = new ResizeObserver(() => setLeadH(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  });
-  // 段を分ける形（A/B の rmSheet。渡辺さん 2026-11-07）：段ごとに1つだけ増やす。
-  //   段1＝何か（名前の1行の右に概要・式・関係の札）→ 段2＝一言で（つまり）→ 段3＝確かめる材料（選んだ札の中身）→ フル＝全部（ふだんの形）。
-  //   つまみは1段上げ、地図の空いた所は1段下げる。島の地図・一覧でも同じ面なので同じ段
-  const compact = !!SHEET_AB && !!sheet && sheet.detent !== "full";
-  const stops = SHEET_STOPS;
-  const showLead = !compact || sheet?.detent === "mid" || sheet?.detent === "half";
-  const cap = Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.42);
-  const peekOut = sheet
-    ? compact || SHEET_AB
-      ? Math.max(64, peekH + 32) // 段1：つまみ・名前と札の行の下まで
-      : Math.max(140, Math.min(peekH + leadH + 36, cap))
-    : 0;
-  const midOut = Math.max(peekOut + 40, Math.min(peekH + leadH + 36, cap)); // 段2：＋つまり
+  // 面の段（src/steps.ts）：段1＝名前の1行の右に札 → 段2＝つまりと選んだ札の中身 → フル＝ふだんの形。島の地図・一覧でも同じ面なので同じ段
+  const compact = !!sheet && sheet.detent !== "full";
+  const showLead = !compact || sheet?.detent === "half";
+  const peekOut = sheet ? Math.max(64, peekH + 32) : 0; // 段1：つまみ・名前と札の行の下まで
   // ← は来た段へ戻す（画面の原則 3・11）
   const lastStep = useRef<Detent>("peek");
+  const grabY = useRef<number | null>(null);
   useEffect(() => {
     if (sheet && sheet.detent !== "full" && sheet.detent !== "min") lastStep.current = sheet.detent;
   }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -268,7 +251,7 @@ export default function Detail({
   // 押す所（問いの札・開く段・ボタン）は、その操作をそのまま通す（全画面のページに切り替えると、押した所が入れ替わって押しても効かなかった。#188 07a）
   const touch = (e: RPE) => {
     if ((e.target as HTMLElement).closest("button, a, summary, input, select")) return;
-    if (compact) return; // 段の形では、押したとき（離したとき）に上げる（段3で中身を指で送れるように）
+    if (compact) return; // 段の形では、押したとき（離したとき）に上げる（段2で中身を指で送れるように）
     if (sheet && (sheet.detent === "peek" || sheet.detent === "min")) reading();
   };
   // この概念を主にする実験室の問い（問いの側で一元管理。#163）
@@ -333,7 +316,7 @@ export default function Detail({
           <button
             type="button"
             className={st.back}
-            onClick={() => sheet.onDetent(SHEET_AB ? lastStep.current : "peek")}
+            onClick={() => sheet.onDetent(lastStep.current)}
             data-testid="detail-to-map"
             aria-label="地図へ戻る"
           >
@@ -348,8 +331,8 @@ export default function Detail({
           </Muted>
         </div>
         {compact && (
-          // 段1〜3では、切り替えを名前の右の空いた所に札で1行に並べる（渡辺さん 2026-11-07）。札は段3で見せる中身を選ぶ：
-          // 段1・2で押すとその中身で段3へ。段3で別の札は中身を替え、選んでいる札をもう一度押すとフルへ
+          // 段1・段2では、切り替えを名前の右の空いた所に札で1行に並べる（渡辺さん 2026-11-07）。札は段2で見せる中身を選ぶ：
+          // 段1で押すとその中身で段2へ。段2で別の札は中身を替え、選んでいる札をもう一度押すとフルへ
           <div className={st.chips} role="group" aria-label="概念の中身" data-testid="detail-chips">
             {tabs.map((t) => (
               <button
@@ -380,9 +363,9 @@ export default function Detail({
       </div>
     </>
   );
-  // つまり（と問い）。ふだんは概要の頭。段の形では札に依らず段2から出す（段ごとに1つ増やす）
+  // つまり（と問い）。フルでは概要の頭。段2では札に依らず中身の上に出す
   const leadBlock = (
-    <div ref={leadRef} className={st.lead}>
+    <div className={st.lead}>
       {/* 問いは概念の問いの文だけ。実験室への入口は下の主ボタン1つ（同じ機能を2か所に置かない。渡辺さん 2026-11-04） */}
       {c.question && !compact && (
         <section className={st.ask} data-testid="concept-question">
@@ -415,12 +398,7 @@ export default function Detail({
           : undefined
       }
     >
-      {compact && (
-        // 段1では見せないが、高さ（段2の高さ）を測るために置いておく
-        <div style={showLead ? undefined : { visibility: "hidden" }} aria-hidden={showLead ? undefined : true}>
-          {leadBlock}
-        </div>
-      )}
+      {compact && showLead && leadBlock}
       {tab === "about" && (
         <div className={st.pane} data-testid="tab-about" onPointerDown={touch}>
           {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
@@ -665,6 +643,30 @@ export default function Detail({
         role="region"
         aria-label={`${c.name} のページ`}
       >
+        {/* フルでも上につまみ（渡辺さん 2026-11-07）：押すか下へ引くと、来た段へ戻る（面のつまみと同じ働き。画面の原則 10） */}
+        <button
+          type="button"
+          className={st.pageGrab}
+          aria-label="来た段へ戻す"
+          data-testid="page-grab"
+          onPointerDown={(e) => {
+            grabY.current = e.clientY;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            if (grabY.current !== null && e.clientY - grabY.current > 40) {
+              grabY.current = null;
+              haptic();
+              sheet.onDetent(lastStep.current);
+            }
+          }}
+          onClick={(e) => {
+            if (grabY.current === null && e.detail !== 0) return; // 引いて戻したあとの click は無視（キーボードは通す）
+            grabY.current = null;
+            haptic();
+            sheet.onDetent(lastStep.current);
+          }}
+        />
         <div className={st.pageHead}>{head}</div>
         <div className={st.pageBody}>{rest}</div>
         {lab && (
@@ -689,8 +691,7 @@ export default function Detail({
       bottom={sheet.bottom}
       peek={peek}
       min={84}
-      stops={stops}
-      mid={midOut}
+      stops={STEPS}
       header={<div ref={headRef}>{head}</div>}
     >
       {rest}
