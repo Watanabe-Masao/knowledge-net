@@ -17,6 +17,28 @@ const HEAD: Record<Kind, { title: string; lead: string }> = {
 
 const kindOf = (d: ConditionDetail): Kind => d.kind ?? "手掛かり";
 
+/** 保証すること・外れたとき・目安の対象と出典が同じ行は1つの枠にまとめ、文を並べる（同じ説明を行の数だけ重ねない。
+ *  二項分布の4つの仮定は、どれも「成功回数が B(n, p) に従う」ことを保証する）。手掛かりは行ごとに別の枠。用語は枠の中で重ねない */
+function merge(rows: ConditionDetail[]): { d: ConditionDetail; texts: string[]; terms: string[] }[] {
+  const out: { d: ConditionDetail; texts: string[]; terms: string[] }[] = [];
+  const byKey = new Map<string, (typeof out)[number]>();
+  for (const d of rows) {
+    const key = d.kind
+      ? [d.kind, d.claim, d.outside, d.target, d.source?.title, d.source?.locator].join("\u0000")
+      : `\u0001${d.text}`;
+    const g = byKey.get(key);
+    if (g) {
+      g.texts.push(d.text);
+      for (const t of d.terms ?? []) if (!g.terms.includes(t)) g.terms.push(t);
+    } else {
+      const n = { d, texts: [d.text], terms: [...(d.terms ?? [])] };
+      byKey.set(key, n);
+      out.push(n);
+    }
+  }
+  return out;
+}
+
 /** 見出しの横の数（区分があれば区分ごと、なければ式・データ） */
 export function conditionCount(detail: ConditionDetail[] | undefined, math: string[], data: string[] = []): string {
   if (!detail?.length)
@@ -77,9 +99,17 @@ export default function Conditions({
               {HEAD[k].lead && <span className={s.lead}>{HEAD[k].lead}</span>}
             </h4>
             <ul className={s.list}>
-              {rows.map((d) => (
-                <li key={d.text} className={s.item}>
-                  <p className={s.text}>{d.text}</p>
+              {merge(rows).map(({ d, texts, terms }) => (
+                <li key={texts.join("\n")} className={s.item} data-testid="cond-item">
+                  {texts.length === 1 ? (
+                    <p className={s.text}>{texts[0]}</p>
+                  ) : (
+                    <ul className={s.texts}>
+                      {texts.map((t) => (
+                        <li key={t}>{t}</li>
+                      ))}
+                    </ul>
+                  )}
                   {d.claim && (
                     <p className={s.sub}>
                       <span className={s.subLab}>保証すること</span>
@@ -104,7 +134,7 @@ export default function Conditions({
                       )}
                     </p>
                   )}
-                  <Terms net={net} ids={d.terms} onTerm={onTerm} />
+                  <Terms net={net} ids={terms} onTerm={onTerm} />
                 </li>
               ))}
             </ul>
