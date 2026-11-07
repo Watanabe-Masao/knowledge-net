@@ -19,7 +19,8 @@ import {
 import { modelPmf, normalDensity, poissonPmf } from "@math-lab/engine";
 import s from "./Relation.module.css";
 import { Icon } from "./Shell";
-import { KIND_VAR, KindMark } from "./kinds";
+import { KIND_VAR, KindMark, kindName, readingOf } from "./kinds";
+import Conditions from "./Conditions";
 import { KINDS, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
 const short = (t?: string) => (t ? t.split("（")[0] : "");
@@ -31,10 +32,14 @@ export function nameOf(net: Network, id: string): string {
 /** 関係の文（括弧なし）と札。例：「二項分布 を変換すると ポアソン分布」＋[変換][極限]。 */
 export function relationParts(net: Network, r: Relation) {
   const k = KINDS[r.type];
-  const text = (k?.reading ?? `□ → ■（${r.type}）`).replace("□", nameOf(net, r.from)).replace("■", nameOf(net, r.to));
-  const tag = r.mode ? short(MODES[r.mode]) : r.premise ? short(PREMISES[r.premise]) : r.axis ? r.axis : "";
-  const tagTitle = r.mode ? MODES[r.mode] : r.premise ? PREMISES[r.premise] : r.axis ? `比べる軸：${r.axis}` : "";
-  return { text, kind: r.type, tag, tagTitle };
+  const text = readingOf(r.type, r.premise, k?.reading)
+    .replace("□", nameOf(net, r.from))
+    .replace("■", nameOf(net, r.to));
+  // 前提知識は呼び名に言い分けが入っているので、札の文を重ねない
+  const pm = r.premise === "mathematical" ? r.premise : undefined;
+  const tag = r.mode ? short(MODES[r.mode]) : pm ? short(PREMISES[pm]) : r.axis ? r.axis : "";
+  const tagTitle = r.mode ? MODES[r.mode] : pm ? PREMISES[pm] : r.axis ? `比べる軸：${r.axis}` : "";
+  return { text, kind: kindName(r.type, r.premise), tag, tagTitle };
 }
 
 export function Badges({ net, r }: { net: Network; r: Relation }) {
@@ -286,7 +291,7 @@ export default function RelationCard({ net, r, onTitle, context, open = false, a
 }
 
 // ---- 関係を開いたときの面（stats2-course #188 04）----
-// 並び：つまり → 段（対比は 同じ所・違う所・だから／変換は 元の形・変える操作・行き着く形）→ 図（その場で描く）→ 成り立つ条件 → 解説・触る。
+// 並び：つまり → 段（対比は 同じ所・違う所・だから／変換は 元の形・変える操作・行き着く形）→ 図（その場で描く）→ 成立条件 → 解説・触る。
 // 段と図がない関係（前提・応用など）は、関係の説明を「なぜ前に要るか」などの1段で出す。文・図・条件は教材の関係の1か所から。
 
 const STAGE_LABEL: Record<string, [string, string][]> = {
@@ -402,10 +407,13 @@ export function RelationOpen({
   r,
   context,
   titled = true,
+  onTerm,
 }: {
   net: Network;
   r: Relation;
   context: string;
+  /** 成立条件の用語の札を押したとき（概念を開く）。ない所では札にしない */
+  onTerm?: (id: string) => void;
   /** 見出しにもう関係の文があるとき（全画面のページ）は札だけ */ titled?: boolean;
 }) {
   const p = relationParts(net, r);
@@ -440,12 +448,14 @@ export function RelationOpen({
       {r.chart && <RelChart r={r} />}
       {r.conditions?.length ? (
         <section className={s.block} data-testid="rel-conds">
-          <span className={s.lab}>成り立つ条件{r.mode ? `（${short(MODES[r.mode])}）` : ""}</span>
-          <ul className={s.condList}>
-            {r.conditions.map((c) => (
-              <li key={c}>{c}</li>
-            ))}
-          </ul>
+          <span className={s.lab}>成立条件{r.mode ? `（${short(MODES[r.mode])}）` : ""}</span>
+          <Conditions
+            net={net}
+            detail={r.conditions_detail}
+            math={r.conditions}
+            onTerm={onTerm}
+            plainClass={s.condList}
+          />
         </section>
       ) : null}
       {rows.length ? (

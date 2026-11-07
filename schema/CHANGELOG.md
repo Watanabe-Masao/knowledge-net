@@ -43,6 +43,7 @@
 | 35 | 2026-11-05 | 教材に任意の `groups`（意味のまとまり：id〔教材名:…〕・category・name・summary。並べた順が学ぶ順）、概念に任意の `group`（まとまりの id）（stats2-course #228）。任意 |
 | 36 | 2026-11-06 | 関係の種類に「種類」（□ は ■ の一種）と「材料」（□ は ■ の材料：定義の構成要素）を足す（relation-types.yaml。trace は true）。関係に任意の `axis`（比べる軸。対比だけ）。教材に任意の `relation_map_ready`（関係図の決まりで書き終えた分類の一覧）。関係図の決まり（stats2-course docs/relation-map.md・#232）。教材は移した分類で、前提（mathematical）を材料か学ぶ順（前提 learning）に分け直す。種類が増えたので、画面を先に公開してから教材が書く。任意 |
 | 37 | 2026-11-07 | 教材に任意の `group_relations`（まとまりの間の関係：from・to〔まとまりの id〕・label〔矢印の言葉〕・relations〔裏付けの関係の id。1本以上〕・任意の note〔開いた直後に最初に出す1文〕）。種類は書かず、指した関係から画面が決める。関係図の全体の見え方の矢印（stats2-course #240）。任意 |
+| 38 | 2026-11-08 | 概念と関係に任意の `conditions_detail`（成立条件の区分：行の文・scope〔math／data。概念だけ〕・kind〔要件・仮定・目安〕・claim〔仮定が保証すること〕・outside〔外れたときに言えなくなること〕・terms〔文に出る概念〕・目安の target〔対象の近似〕と source〔出典〕。kind のない行はデータで確かめる手掛かり）。概念に任意の `basis_formula`（基準にする定義の式の id。定義1文は導入で、区分はこの式を基準にする）（stats2-course #249 S5b）。任意 |
 
 ## 実験室の拡張（kn-experiment-v1.json）
 

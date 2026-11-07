@@ -18,6 +18,20 @@ export const KIND_VAR: Record<string, string> = {
 };
 export const kcol = (k: string) => `var(${KIND_VAR[k] ?? "--ink-3"})`;
 
+/** 画面に出す種類の呼び名（stats2-course issue 249 ④）。型の種類の名前（材料・前提）は v2 まで変えず、画面の言葉だけを新しくする。
+ *  材料 → 定義に使う、前提（learning）→ 前提知識。どの画面の札・読み上げ・見出しもここから読む（画面の原則 4） */
+export function kindName(type: string, premise?: string): string {
+  if (type === "材料") return "定義に使う";
+  if (type === "前提" && premise === "learning") return "前提知識";
+  return type;
+}
+
+/** 関係の文の型（□ に from、■ に to）。向きは「使われる概念 → それを使う概念」（issue 249 ④） */
+export function readingOf(type: string, premise: string | undefined, reading: string | undefined): string {
+  if (type === "前提" && premise === "learning") return "□ は ■ の前提知識";
+  return reading ?? `□ → ■（${kindName(type, premise)}）`;
+}
+
 /** 種類の線の印（20×20 の中、線の太さ 2 で描く） */
 export const GLYPH_D: Record<string, string> = {
   変換: "M4 7.5H15M12 4.5l3 3-3 3M16 12.5H5M8 9.5l-3 3 3 3",

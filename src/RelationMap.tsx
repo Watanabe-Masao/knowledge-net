@@ -27,7 +27,7 @@ import {
 } from "./relationMap";
 import { conceptIcon } from "./conceptIcons";
 import { iconUri } from "./icons";
-import { GLYPH_D, KIND_VAR, KindMark, kcol } from "./kinds";
+import { GLYPH_D, KIND_VAR, KindMark, kcol, kindName } from "./kinds";
 import s from "./RelationMap.module.css";
 
 /** 点線は対比と、近似・極限の変換（「近い」と「等しい」を混ぜない） */
@@ -936,7 +936,7 @@ export default function RelationMap({
                 data-line={e.id}
                 data-testid={`rm-line-${e.id}`}
                 role="button"
-                aria-label={`${nameOf(net, e.from)}と${nameOf(net, e.to)}の${e.type}`}
+                aria-label={`${nameOf(net, e.from)}と${nameOf(net, e.to)}の${kindName(e.type)}`}
                 onPointerDown={(ev) => {
                   const id = nearestEdge(ev.clientX, ev.clientY, e.id);
                   setPressLine(id);
@@ -1206,7 +1206,7 @@ export default function RelationMap({
         : null}
       {gnote
         ? createPortal(
-            // まとまりの間の矢印を開いたとき：まず実際の分布の組・操作・成り立つ条件（note）。まとまり全体が別のまとまりへ変わるようには書かない
+            // まとまりの間の矢印を開いたとき：まず実際の分布の組・操作・成立条件（note）。まとまり全体が別のまとまりへ変わるようには書かない
             <div
               className={s.peekScrim}
               data-ui

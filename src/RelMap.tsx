@@ -20,7 +20,6 @@ const COLOR: Record<Side, string> = {
   contrast: "var(--k-con)",
   after: "var(--k-der)",
 };
-const SIDE_LABEL: Record<Side, string> = { before: "前提", change: "変換", contrast: "対比", after: "応用" };
 
 export function RelMap({
   center,
@@ -29,7 +28,7 @@ export function RelMap({
   onSel,
 }: {
   center: string;
-  groups: { key: string; rows: MapRow[] }[];
+  groups: { key: string; side: Side; title: string; rows: MapRow[] }[];
   sel: string | null;
   onSel: (id: string) => void;
 }) {
@@ -37,9 +36,16 @@ export function RelMap({
     H = 290,
     cx = W / 2,
     cy = H / 2;
-  const rowsOf = (k: Side) => groups.find((g) => g.key === k)?.rows ?? [];
+  // 側ごとに、見出し（定義に使う概念・前提知識 など）の行をまとめる。点の読み上げはその行の見出し
+  const rowsOf = (k: Side): (MapRow & { group: string })[] =>
+    groups.filter((g) => g.side === k).flatMap((g) => g.rows.map((r) => ({ ...r, group: g.title })));
+  const sideLabel = (k: Side) =>
+    groups
+      .filter((g) => g.side === k && g.rows.length)
+      .map((g) => g.title)
+      .join("・");
   // 置き場所：上と下は横に並べ、右と左は縦に並べる（多いときは2段）
-  const place = (k: Side, rows: MapRow[]) =>
+  const place = (k: Side, rows: (MapRow & { group: string })[]) =>
     rows.map((r, i) => {
       const n = rows.length;
       if (k === "before" || k === "contrast") {
@@ -89,7 +95,7 @@ export function RelMap({
                   : { x: 4, y: cy - 66, a: "start" };
           return (
             <text key={k} x={p.x} y={p.y} textAnchor={p.a as "middle"} className={st.relMapSide}>
-              {SIDE_LABEL[k]}
+              {sideLabel(k)}
             </text>
           );
         })}
@@ -152,7 +158,7 @@ export function RelMap({
             role="button"
             tabIndex={0}
             aria-pressed={on}
-            aria-label={`${r.other}（${SIDE_LABEL[k]}${r.tag ? `・${r.tag}` : ""}）`}
+            aria-label={`${r.other}（${r.group}${r.tag ? `・${r.tag}` : ""}）`}
             onClick={() => onSel(r.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {

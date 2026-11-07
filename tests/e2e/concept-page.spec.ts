@@ -28,7 +28,7 @@ test("概要は 問い → つまり → 図 → 定義 の順で、原理・条
     return ys.every((y, i) => i === 0 || ys[i - 1]! < y);
   };
   await expect.poll(order, { message: "問い → つまり → 図 → 定義 の順でない" }).toBe(true);
-  for (const t of ["なぜその形か", "成り立つ条件", "例と反例"])
+  for (const t of ["なぜその形か", "成立条件", "例と反例"])
     await expect(d.locator("details", { hasText: t }), `${t} が最初から開いている`).not.toHaveAttribute("open", "");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
@@ -70,20 +70,34 @@ test("実験室への入口は下の主ボタン1つで、この概念に絞っ�
   await expect(page.getByTestId("lab-sel-stats2:TERM-binom"), "一覧がこの概念で絞られていない").toBeVisible();
 });
 
-// 確かめる対象：つながりは種類ごとのまとまり（04）。想定する故障：変換・対比が「前に知っておく」に混ざる・前提の行に理由がない。
-// 見つけ方：二項分布の変換（ポアソン・正規）が「姿を変えると」、対比（幾何）が「比べる」、組合せが「前に知っておく」にあり、組合せの行に説明（description）が出るかを見る
-test("つながりは 前に知っておく・姿を変えると・比べる に分かれ、前提にも理由が出る", async ({ page }) => {
+// 確かめる対象：つながりは種類ごとのまとまり（04）と、新しい呼び名と向き（stats2-course #249 ④）。
+// 想定する故障：変換・対比が前に混ざる・前提の行に理由がない・定義に使う概念と前提知識が「前提」に混ざる・
+// 使われる側のページで見出しが「定義に使う概念」のまま（向きが逆に読める）。
+// 見つけ方：二項分布のページで、組合せが「定義に使う概念」、独立が「前提知識」、変換・対比がそれぞれの見出しにあり、組合せの行に説明が出るかを見る。
+// 組合せのページでは、二項分布が「これを定義に使う概念」の見出しの下にあるかを見る（同じ関係を両端から）。
+// 検出の確かめ（2026-11-08）：groupsOf の材料の振り分けで into の向きを逆にすると、両方のページで落ちることを見た
+test("つながりは 定義に使う概念・前提知識・変換・対比 に分かれ、使われる側は「これを定義に使う概念」", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   await openTab(page.getByTestId("detail"), "関係");
   const g = (k: string) => page.getByTestId(`rel-group-${k}`);
-  await expect(g("before")).toContainText("組合せ");
-  await expect(g("before")).toContainText("同じ確率");
+  await expect(g("def").locator("h3")).toHaveText("定義に使う概念");
+  await expect(g("def")).toContainText("組合せ");
+  await expect(g("def")).toContainText("同じ確率");
+  await expect(g("know").locator("h3")).toHaveText("前提知識");
+  await expect(g("know")).toContainText("独立");
   await expect(g("change")).toContainText("ポアソン分布");
   await expect(g("change")).toContainText("正規分布");
   await expect(g("contrast")).toContainText("幾何分布");
-  await expect(g("before")).not.toContainText("正規分布");
+  await expect(g("def")).not.toContainText("正規分布");
   await expect(page.getByTestId("rel-map")).toBeVisible();
+  await page.goto(URL.replace("TERM-binom", "TERM-comb"));
+  await openTab(page.getByTestId("detail"), "関係");
+  await expect(g("used").locator("h3")).toHaveText("これを定義に使う概念");
+  await expect(g("used")).toContainText("二項分布");
+  await expect(g("def")).toHaveCount(0);
 });
 
 // 確かめる対象：読むときの骨組みを実験室にそろえる（#188 07a・#194）。想定する故障：全画面にしても面が重なったまま（下のタブが押せる・地図が透ける）・
