@@ -218,10 +218,23 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
       }
     throw new Error("まとまりの中に空いた所がない");
   });
+  await page.evaluate(() => {
+    (window as any).__clicks = [];
+    for (const t of ["pointerdown", "pointerup", "click", "dblclick"])
+      addEventListener(
+        t,
+        (e: any) =>
+          (window as any).__clicks.push(
+            `${t}@${Math.round(e.timeStamp)} d${e.detail} ${(e.target as HTMLElement).tagName}.${(e.target as HTMLElement).className}`,
+          ),
+        true,
+      );
+  });
   await page.mouse.dblclick(gp.x, gp.y);
   await still(page);
   const k1 = Number(await m.getByTestId("rm-canvas").getAttribute("data-k"));
-  expect(k1, "まとまりへは 1.3 倍以上寄る").toBeGreaterThanOrEqual(k0 * 1.29);
+  const dbg = await page.evaluate(() => (window as any).__clicks.join(" | "));
+  expect(k1, `まとまりへは 1.3 倍以上寄る（${JSON.stringify(gp)} ${dbg}）`).toBeGreaterThanOrEqual(k0 * 1.29);
   const gb1 = (await g.boundingBox())!;
   const view = (await m.boundingBox())!;
   const gapY = gb1.y + gb1.height + 20 < view.y + view.height - 10 ? gb1.y + gb1.height + 20 : gb1.y - 20;
