@@ -50,6 +50,24 @@ async function blank(page: Page) {
   const m = (await page.getByTestId("relation-map").boundingBox())!;
   return { x: m.x + m.width - 6, y: m.y + 110 }; // 下の面（詳しく）にかからない高さ
 }
+/** まとまりの外の空いた所（まとまりの枠・語・線の当たり・ボタン・札のどれでもなく、ほかのまとまりの枠からも 24px 離れた点）。
+ *  決め打ちの位置だと、倍率や描き方（WebKit は太い線の当たりが先に取る）で線や枠に掛かり、ダブルタップがまとまりへ寄ってしまう */
+async function outside(page: Page) {
+  return page.getByTestId("relation-map").evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const frames = [...el.querySelectorAll("[data-testid^=rm-group-]")].map((g) => g.getBoundingClientRect());
+    const near = (x: number, y: number) =>
+      frames.some((f) => x > f.left - 24 && x < f.right + 24 && y > f.top - 24 && y < f.bottom + 24);
+    for (let y = r.top + 20; y < r.bottom - 120; y += 8)
+      for (let x = r.left + 8; x < r.right - 8; x += 8) {
+        if (near(x, y)) continue;
+        const hit = document.elementFromPoint(x, y);
+        if (!hit || !el.contains(hit) || hit.closest("button, [data-cv], [data-line], [data-ui]")) continue;
+        return { x, y };
+      }
+    throw new Error("まとまりの外に空いた所がない");
+  });
+}
 /** 線の上の、語に隠れていない1点（押す・長押しの確かめに使う） */
 async function linePoint(page: Page) {
   return page.evaluate(() => {
@@ -221,10 +239,8 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
   await still(page);
   const k1 = Number(await m.getByTestId("rm-canvas").getAttribute("data-k"));
   expect(k1, "まとまりへは 1.3 倍以上寄る").toBeGreaterThanOrEqual(k0 * 1.29);
-  const gb1 = (await g.boundingBox())!;
-  const view = (await m.boundingBox())!;
-  const gapY = gb1.y + gb1.height + 20 < view.y + view.height - 10 ? gb1.y + gb1.height + 20 : gb1.y - 20;
-  await page.mouse.dblclick(view.x + view.width / 2, gapY);
+  const op = await outside(page); // まとまりの外（枠・線・語から離れた所）
+  await page.mouse.dblclick(op.x, op.y);
   await still(page);
   expect(Number(await m.getByTestId("rm-canvas").getAttribute("data-k"))).toBeCloseTo(k0, 2);
   const p = (await m.getByTestId(`rm-term-${T("binom")}`).boundingBox())!;
