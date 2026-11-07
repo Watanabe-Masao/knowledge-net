@@ -488,10 +488,14 @@ export default function RelationMap({
       onOpen(P.card);
       return true;
     }
-    const grp = t.closest<HTMLElement>("[data-g]");
     setPick(null, true);
     const room = { ...size(), bottom: 0 };
-    const g = grp && L.groups.find((x) => x.id === grp.dataset.g);
+    // どのまとまりの中かは押した位置で決める（まとまりの中を通る線の当たりの上を押しても、そのまとまりへ。WebKit では太い線の当たりが先に取る）
+    const v0 = vRef.current,
+      r0 = box.current!.getBoundingClientRect();
+    const px = v0 ? (e.clientX - r0.left - v0.x) / v0.k : NaN,
+      py = v0 ? (e.clientY - r0.top - v0.y) / v0.k : NaN;
+    const g = L.groups.find((x) => px >= x.x && px <= x.x + x.w && py >= x.y && py <= x.y + x.h);
     if (g) {
       // まとまりへは、少なくとも 1.3 倍は寄る（寄ったと分かるように）
       const k = Math.min(
