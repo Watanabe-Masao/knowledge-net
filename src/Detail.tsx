@@ -44,7 +44,7 @@ export function sentence(net: Network, r: Relation): string {
   return s + tag;
 }
 
-/** A/B（rmPeek=b）：少しの段を名前と「つまり」だけにする */
+/** A/B（rmPeek=b）：少しの段を名前と切り替え（概要・式・関係）だけにする */
 const PEEK_AB = (() => {
   try {
     return new URLSearchParams(location.search).get("rmPeek") === "b";
@@ -229,18 +229,21 @@ export default function Detail({
     ro.observe(el);
     return () => ro.disconnect();
   });
+  // 少しの段を薄くする形（A/B。渡辺さん 2026-11-07「選択を押した後の画面圧迫感」）：rmPeek=b なら、上まで引き上げるまでは
+  // 名前の1行の右に切り替え（概要・式・関係）の札を1行で並べる。つまみを押すと「つまり」が出る（次に押すと半分へ）。
+  // 上まで引き上げるとふだんの形（切り替えの帯・問い）。札を押すとその中身で上まで上げる。島の地図でも同じ面なので同じ形
+  const compact = PEEK_AB && !!sheet && sheet.detent !== "full";
+  const [leadOpen, setLeadOpen] = useState(false); // つまみで「つまり」を出したか（戻ってもそのまま。画面の原則 3）
+  const showLead = !compact || leadOpen || sheet?.detent === "half";
   const peekOut = sheet
     ? Math.max(
-        140,
-        Math.min(peekH + leadH + 36, Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.42)),
+        compact ? 64 : 140, // 少しの段（薄い形）は、つまみ・名前・切り替えの下の線まで
+        Math.min(compact && !showLead ? peekH + 32 : peekH + leadH + 36, Math.round((typeof innerHeight === "number" ? innerHeight : 800) * 0.42)),
       )
     : 0;
   useEffect(() => {
     if (sheet) sheet.onPeek?.(peekOut);
   }, [peekOut]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 少しの段を薄くする形（A/B。渡辺さん 2026-11-07「選択を押した後の画面圧迫感」）：rmPeek=b なら、少しの段は名前の1行と
-  // 「つまり」（2行まで）だけ。切り替え（概要・式・関係）と問いは、面を引き上げたときに出す（島の地図でも同じ面なので同じ形）
-  const compact = PEEK_AB && !!sheet && (sheet.detent === "peek" || sheet.detent === "min");
   const groups = groupsOf(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
   // 面の作り（渡辺さん 2026-10-31「スライドで見る部分が狭い」・11-01「下のツールバーに動的に」）：
@@ -343,6 +346,22 @@ export default function Detail({
             {c.status === "stub" ? "・まだ説明がない" : ""}
           </Muted>
         </div>
+        {compact && (
+          // 少しの段（薄い形）では、切り替えを名前の右の空いた所に札で1行に並べる（渡辺さん 2026-11-07）。押すとその中身で上まで上げる
+          <div className={st.chips} role="group" aria-label="概念の中身" data-testid="detail-chips">
+            {tabs.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                className={st.chip}
+                aria-pressed={tab === t.value}
+                onClick={() => setTab(t.value)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        )}
         <MoreMenu
           items={[
             { label: inCompare ? "比較の面を開く" : "ほかの概念と比較", onClick: onCompare, pressed: inCompare },
@@ -360,7 +379,7 @@ export default function Detail({
       {tab === "about" && (
         <div className={st.pane} data-testid="tab-about" onPointerDown={touch}>
           {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
-          <div ref={leadRef} className={st.lead}>
+          <div ref={leadRef} className={st.lead} hidden={!showLead}>
             {/* 問いは概念の問いの文だけ。実験室への入口は下の主ボタン1つ（同じ機能を2か所に置かない。渡辺さん 2026-11-04） */}
             {c.question && !compact && (
               <section className={st.ask} data-testid="concept-question">
@@ -371,11 +390,11 @@ export default function Detail({
             {c.gist && (
               <section className={st.block} data-testid="concept-gist">
                 <span className={st.lab}>つまり</span>
-                <p className={`${st.gist}${compact ? ` ${st.clamp}` : ""}`}>{c.gist}</p>
+                <p className={st.gist}>{c.gist}</p>
               </section>
             )}
             {!c.gist && c.short && c.definition ? (
-              <p className={`${st.short}${compact ? ` ${st.clamp}` : ""}`} data-testid="concept-short">
+              <p className={st.short} data-testid="concept-short">
                 {c.short}
               </p>
             ) : null}
@@ -644,6 +663,11 @@ export default function Detail({
       bottom={sheet.bottom}
       peek={peek}
       min={84}
+      onGrabTap={() => {
+        if (!compact || leadOpen || sheet.detent !== "peek") return false;
+        setLeadOpen(true);
+        return true;
+      }}
       header={<div ref={headRef}>{head}</div>}
     >
       {rest}

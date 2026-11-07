@@ -57,6 +57,8 @@ type Props = {
   min?: number;
   /** 下の余白（下のタブの高さなど。面はその上に乗る） */
   bottom?: number;
+  /** つまみを押したとき、段を替える前に呼ぶ。true を返すと段を替えない（使う側が段の中身を1つ足すときなど） */
+  onGrabTap?: () => boolean;
 } & Omit<HTMLAttributes<HTMLElement>, "title">;
 
 /** つまみを押したときの次の段（少し → 半分 → 全部 → 少し。しまうは押し込んだときだけ） */
@@ -73,6 +75,7 @@ export function BottomSheet({
   peek = 220,
   min = 64,
   bottom = 0,
+  onGrabTap,
   ...rest
 }: Props) {
   const heights = (): Record<Detent, number> => ({
@@ -128,6 +131,7 @@ export function BottomSheet({
         onDetent("peek");
       } else if (d.grab) {
         haptic();
+        if (onGrabTap?.()) return;
         onDetent(nextDetent(detent));
       }
       return;
@@ -169,7 +173,9 @@ export function BottomSheet({
             data-grab
             aria-label={detent === "full" ? "少しだけにする" : detent === "min" ? "出す" : "広げる"}
             onClick={(e) => {
-              if (e.detail === 0) onDetent(detent === "min" ? "peek" : nextDetent(detent));
+              if (e.detail !== 0) return;
+              if (detent !== "min" && onGrabTap?.()) return;
+              onDetent(detent === "min" ? "peek" : nextDetent(detent));
             }}
           />
           {header}
