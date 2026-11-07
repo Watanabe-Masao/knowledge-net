@@ -361,6 +361,19 @@ export function around(net: Network, id: string) {
 }
 
 /** 2〜3概念を比べる行（項目・各概念の値）。共通の前提も出す。 */
+/** 2つの概念のページ（関係のページと比べるを1つにした。渡辺さん 2026-11-07。stats2-course の issue 239）。
+ *  関係のない組は「A~B」の id で開く（関係のある組は関係の id で開く） */
+export const pairId = (a: string, b: string) => `${a}~${b}`;
+export const parsePair = (id: string): [string, string] | null => {
+  const i = id.indexOf("~");
+  return i > 0 ? [id.slice(0, i), id.slice(i + 1)] : null;
+};
+/** 2つの概念を開くときの id：間に関係があればその関係、なければ組 */
+export function pairOpen(net: Network, a: string, b: string): string {
+  const r = net.relations.find((r) => (r.from === a && r.to === b) || (r.from === b && r.to === a));
+  return r ? r.id : pairId(a, b);
+}
+
 export function compare(net: Network, ids: string[]) {
   const cs = ids.map((i) => net.concepts.get(i)).filter((c): c is Concept => !!c);
   const rows: { label: string; values: string[] }[] = [

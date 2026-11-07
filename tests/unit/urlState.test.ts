@@ -10,7 +10,6 @@ const id = fc.constantFrom("stats2:TERM-binom", "stats2:TERM-poisson", "stats2:T
 const state: fc.Arbitrary<UrlState> = fc.record({
   sel: fc.option(id, { nil: null }),
   view: fc.constantFrom("around", "path", "all"),
-  cmp: fc.uniqueArray(id, { maxLength: 3 }),
   exp: fc.option(id, { nil: null }),
   q: fc.option(fc.constantFrom("stats2:binom-A-01", "stats2:binom-E-03"), { nil: null }),
   cards: fc.option(fc.constantFrom("b10_0.5_100_1", "b10_0.8_100_1~b10_0.5_100_1"), { nil: null }),
@@ -42,7 +41,6 @@ describe("URL の状態：保存と復元は同じ定義で往復する", () => 
       normal({
         sel: null,
         view: "all",
-        cmp: [],
         exp: null,
         q: null,
         cards: null,

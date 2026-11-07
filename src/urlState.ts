@@ -1,6 +1,6 @@
 // URL に持つ状態（stats2-course #142：保存と復元を同じ状態の定義から作る）。
 // 書き込み（toUrl）と、最初の読み込み・ブラウザの「戻る」（fromUrl）は、どちらもこの1つの定義を使う。項目を足すときはここだけを直す。
-// ?c=選んだ概念 &view=around|path|all &cmp=比べる概念 &x=実験室 &q=実験室の問い（テーマ体系の id。概念から問いを直接開く） &cards=記録カード &g=分類 &lv=分類のページの並べ方（list|map。正方形は付けない） &t=タブ（探索は付けない）
+// ?c=選んだ概念 &view=around|path|all &x=実験室 &q=実験室の問い（テーマ体系の id。概念から問いを直接開く） &cards=記録カード &g=分類 &lv=分類のページの並べ方（list|map。正方形は付けない） &t=タブ（探索は付けない）
 export type View = "around" | "path" | "all"; // フォーカス（まわり）・経路（前提をさかのぼる）・俯瞰（全体）
 export type Tab = "explore" | "learn" | "lab" | "problems";
 /** 分類のページの並べ方（stats2-course #228）：正方形（ふだん）・一覧・地図 */
@@ -10,7 +10,6 @@ export const TAB_IDS: Tab[] = ["explore", "learn", "lab", "problems"];
 export type UrlState = {
   sel: string | null;
   view: View;
-  cmp: string[];
   exp: string | null;
   q: string | null;
   cards: string | null;
@@ -35,7 +34,6 @@ export function fromUrl(p: URLSearchParams): UrlState {
   return {
     sel: p.get("c"),
     view: readView(p),
-    cmp: (p.get("cmp") ?? "").split(",").filter(Boolean),
     exp: p.get("x"),
     q: p.get("q"),
     cards: p.get("cards"),
@@ -51,7 +49,7 @@ export function toUrl(s: UrlState, base: URLSearchParams): URLSearchParams {
   const set = (k: string, v: string | null) => (v ? p.set(k, v) : p.delete(k));
   set("c", s.sel);
   set("view", s.sel ? s.view : null);
-  set("cmp", s.cmp.join(",") || null);
+  set("cmp", null); // 比較は2つの概念のページに入った（前の URL の cmp は消す）
   set("trace", null);
   set("x", s.exp);
   set("q", s.exp ? s.q : null);

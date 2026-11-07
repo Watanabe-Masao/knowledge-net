@@ -51,7 +51,6 @@ export function sentence(net: Network, r: Relation): string {
 type Props = {
   net: Network;
   concept: Concept;
-  inCompare: boolean;
   onCompare: () => void;
   onSelect: (id: string) => void;
   /** つながりの行を押す（線を押したのと同じ。下からシートが開く） */
@@ -195,7 +194,6 @@ function groupsOf(net: Network, id: string): Group[] {
 export default function Detail({
   net,
   concept: c,
-  inCompare,
   onCompare,
   onSelect,
   onEdge,
@@ -353,7 +351,7 @@ export default function Detail({
         )}
         <MoreMenu
           items={[
-            { label: inCompare ? "比較の面を開く" : "ほかの概念と比較", onClick: onCompare, pressed: inCompare },
+            { label: "ほかの概念と比べる", onClick: onCompare },
             { label: "この概念の URL をコピー", onClick: copyUrl },
           ]}
         />

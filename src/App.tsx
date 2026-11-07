@@ -1,4 +1,4 @@
-// 画面全体。状態は URL に持つ（?t=タブ&c=選んだ概念&view=around|all&cmp=比べる概念&trace=1&x=実験室&embed=1&src=データ）。
+// 画面全体。状態は URL に持つ（?t=タブ&c=選んだ概念&view=around|all&trace=1&x=実験室&embed=1&src=データ）。
 // 下のタブは4つ（探索・学習・実験室・問題集。stats2-course #130）。埋め込みではタブとヘッダーを出さない。
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
@@ -8,7 +8,7 @@ import Library from "./Library";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
 import RelationMap from "./RelationMap";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import Detail, { name, sentence } from "./Detail";
+import Detail, { name } from "./Detail";
 import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import PathList from "./PathList";
@@ -18,16 +18,14 @@ import st from "./App.module.css";
 import {
   KINDS,
   MODES,
-  around,
-  compare,
   experimentsFor,
   learnOrder,
   load,
   neighborhood,
+  pairOpen,
   trace,
   type Network,
 } from "./data";
-import { relationParts } from "./Relation";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
@@ -40,7 +38,6 @@ function useUrlState() {
   const init = fromUrl(params);
   const [sel, setSelRaw] = useState<string | null>(init.sel);
   const [view, setView] = useState<View>(init.view);
-  const [cmp, setCmp] = useState<string[]>(init.cmp);
   const [exp, setExpRaw] = useState<string | null>(init.exp);
   // 実験室の問い（?q=テーマ体系の問いの id）：実験室のタブの概念から、問いを直接開く（stats2-course #163）
   const [q, setQ] = useState<string | null>(init.q);
@@ -92,20 +89,19 @@ function useUrlState() {
     scrollTo(0, 0);
   };
   useEffect(() => {
-    const p = toUrl({ sel, view, cmp, exp, q, cards, group, layout, tab }, new URLSearchParams(location.search));
+    const p = toUrl({ sel, view, exp, q, cards, group, layout, tab }, new URLSearchParams(location.search));
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     if (push.current) history.pushState(null, "", url);
     else history.replaceState(null, "", url);
     push.current = false;
-  }, [sel, view, cmp, exp, q, cards, group, layout, tab]);
+  }, [sel, view, exp, q, cards, group, layout, tab]);
   useEffect(() => {
     // 「戻る」：URL から全部の項目を、書き込みと同じ定義で戻す
     const back = () => {
       const s = fromUrl(new URLSearchParams(location.search));
       setSelRaw(s.sel);
       setView(s.view);
-      setCmp(s.cmp);
       setExpRaw(s.exp);
       setQ(s.q);
       setCards(s.cards);
@@ -125,8 +121,6 @@ function useUrlState() {
     setSel,
     view,
     setView: setViewPush,
-    cmp,
-    setCmp,
     exp,
     setExp,
     q,
@@ -177,8 +171,6 @@ export default function App() {
     setSel,
     view,
     setView,
-    cmp,
-    setCmp,
     exp,
     setExp,
     q,
@@ -223,9 +215,9 @@ export default function App() {
     addEventListener("resize", fit);
     return () => removeEventListener("resize", fit);
   }, [narrow, sel, tab, exp, peek, tabH, detent, view, searchOpen]);
-  // 下から開く面は1つだけ：線の説明（edge）か、線の見方（kinds）・前提（trace）・比べる（compare）
+  // 下から開く面は1つだけ：2つの概念のページ（edge。関係と比べる）か、線の見方（kinds）・比べる相手を選ぶ（pick）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
-  const [modal, setModalRaw] = useState<"kinds" | "compare" | "pick" | null>(null);
+  const [modal, setModalRaw] = useState<"kinds" | "pick" | null>(null);
   const setEdgeSel = (id: string | null) => {
     setEdgeRaw(id);
     if (id) setModalRaw(null);
@@ -271,14 +263,14 @@ export default function App() {
       removeEventListener("message", msg);
     };
   }, []);
-  useEffect(() => {
-    if (cmp.length >= 2) setModal("compare");
-  }, [cmp.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     load(SRC).then((r) => {
       setNet(r.net);
       setErrors(r.errors);
+      // 前の「比較」の URL（?cmp=A,B）は、2つの概念のページで開く
+      const old = (params.get("cmp") ?? "").split(",").filter((x) => r.net.concepts.has(x));
+      if (old.length >= 2) setEdgeSel(pairOpen(r.net, old[0]!, old[1]!));
     });
   }, []);
 
@@ -462,7 +454,6 @@ export default function App() {
         <TabBar tab={tab} onTab={setTab} badges={badges} focusName={focus?.name} />
       </main>
     );
-  const cmpData = cmp.length >= 2 ? compare(net, cmp) : null;
   const compact = narrow && !!concept;
   return (
     <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
@@ -650,11 +641,6 @@ export default function App() {
                 <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>
                   線の見方{hidden.size ? `（${hidden.size} 種類を非表示中）` : ""}
                 </button>
-                {cmp.length ? (
-                  <button type="button" className={st.chipBtn} onClick={() => setModal("compare")}>
-                    比較 {cmp.length}
-                  </button>
-                ) : null}
               </>
             }
           />
@@ -675,12 +661,8 @@ export default function App() {
         <Detail
           net={net}
           concept={concept}
-          inCompare={cmp.includes(concept.id)}
           sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined}
-          onCompare={() => {
-            if (!cmp.includes(concept.id)) setCmp([concept.id]);
-            setModal("pick");
-          }}
+          onCompare={() => setModal("pick")}
           onSelect={setSel}
           onEdge={setEdgeSel}
           edgeSel={edgeSel}
@@ -720,102 +702,22 @@ export default function App() {
           </Muted>
         </Sheet>
       )}
-      {modal === "pick" && cmp.length
-        ? (() => {
-            // 比べる相手を選ぶ：つながりのある概念を先に（どうつながるかの文つき）、ほかは探して選ぶ
-            const base = cmp[0]!,
-              a = around(net, base);
-            const near = a.relations
-              .map((r) => ({ id: r.from === base ? r.to : r.from, why: relationParts(net, r).text }))
-              .filter((x) => !cmp.includes(x.id) && net.concepts.has(x.id))
-              .filter((x, i, xs) => xs.findIndex((y) => y.id === x.id) === i);
-            const add = (id: string) => setCmp([...cmp, id].slice(0, 3));
-            return (
-              <Sheet
-                label="比較する概念を選ぶ"
-                title={`${cmp.map((id) => name(net, id)).join("・")} と比較`}
-                onClose={() => {
-                  if (cmp.length >= 2) setModal("compare");
-                  else {
-                    setCmp([]);
-                    setModal(null);
-                  }
-                }}
-                data-testid="pick"
-              >
-                <Muted>定義・条件・期待値と分散などを同じ並びで比べ、2つの関係と共通の前提を出す。</Muted>
-                {near.length ? (
-                  <>
-                    <h4>関係のある概念</h4>
-                    <ul className={st.pick}>
-                      {near.map((x) => (
-                        <li key={x.id}>
-                          <button type="button" className={st.pickItem} onClick={() => add(x.id)}>
-                            <b>{name(net, x.id)}</b>
-                            <span>{x.why}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : null}
-                <h4>ほかの概念から検索</h4>
-                <Search concepts={[...net.concepts.values()].filter((c) => !cmp.includes(c.id))} onPick={add} />
-              </Sheet>
-            );
-          })()
-        : null}
-      {modal === "compare" && cmp.length ? (
+      {modal === "pick" && concept ? (
+        // 比べる相手を選ぶ（2つの概念のページへ）。関係のある相手は関係のタブ・地図の線から開くので、ここは探すだけ
         <Sheet
-          label="比較"
-          title={`比較：${cmp.map((id) => name(net, id)).join(" と ")}`}
+          label="比べる概念を選ぶ"
+          title={`${concept.name} と比べる`}
           onClose={() => setModal(null)}
-          data-testid="compare"
+          data-testid="pick"
         >
-          {cmpData ? (
-            <>
-              {cmpData.rows.map((r) => (
-                <div key={r.label} className={st.compareRow}>
-                  <h4>{r.label}</h4>
-                  {r.values.map((v, i) => (
-                    <p key={i}>
-                      <b>{cmpData.concepts[i].name}</b>：{v || "—"}
-                    </p>
-                  ))}
-                </div>
-              ))}
-              {cmpData.between.length ? (
-                <div className={st.compareRow}>
-                  <h4>この組の関係</h4>
-                  {cmpData.between.map((r) => (
-                    <p key={r.id}>
-                      {sentence(net, r)}：{r.description}
-                    </p>
-                  ))}
-                </div>
-              ) : null}
-              {cmpData.common.length ? (
-                <div className={st.compareRow}>
-                  <h4>共通の前提</h4>
-                  <p>{cmpData.common.map((id) => name(net, id)).join("・")}</p>
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <Muted>比較する概念を選ぶ。</Muted>
-          )}
-          <div className={st.cmpActs}>
-            {cmp.length < 3 && <Button onClick={() => setModal("pick")}>＋ もう1つ追加</Button>}
-            <Button
-              variant="quiet"
-              onClick={() => {
-                setCmp([]);
-                setModal(null);
-              }}
-            >
-              比較を終了
-            </Button>
-          </div>
+          <Muted>選ぶと、2つの概念のページで関係と、定義・条件・反例を並べて見られる。</Muted>
+          <Search
+            concepts={[...net.concepts.values()].filter((c) => c.id !== concept.id)}
+            onPick={(id) => {
+              setModal(null);
+              setEdgeSel(pairOpen(net, concept.id, id));
+            }}
+          />
         </Sheet>
       ) : null}
       {full && (

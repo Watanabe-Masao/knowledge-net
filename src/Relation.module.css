@@ -394,3 +394,18 @@
   align-items: center;
   gap: 4px;
 }
+
+/* 並べて見る（2つの概念のページ）：項目ごとに A と B を1行ずつ */
+.sideRow {
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-1);
+}
+.sideRow h4 {
+  margin: var(--sp-1) 0 2px;
+  font-size: var(--fs-tag);
+  color: var(--ink-2);
+}
+.sideRow p {
+  margin: 0 0 var(--sp-1);
+  line-height: 1.6;
+}
