@@ -77,7 +77,11 @@ export default function Panel({ net, edgeId, onClose, onSelect, page, onQuestion
   if (!found) return null;
   const next = found.rel ? questionsForRelation(net, found.rel.id)[0] : undefined;
   const pair = found.pair;
-  const title = found.rel ? relationParts(net, found.rel).text : pair ? `${name(net, pair[0])} と ${name(net, pair[1])}` : "";
+  const title = found.rel
+    ? relationParts(net, found.rel).text
+    : pair
+      ? `${name(net, pair[0])} と ${name(net, pair[1])}`
+      : "";
   const body = pair ? (
     <>
       {found.rel ? (

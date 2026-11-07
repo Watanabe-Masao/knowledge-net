@@ -93,7 +93,17 @@ type Props = {
   step?: string;
 };
 
-export default function RelationMap({ net, category, selected, onSelect, onOpen, onRelation, onOut, onBlank, step }: Props) {
+export default function RelationMap({
+  net,
+  category,
+  selected,
+  onSelect,
+  onOpen,
+  onRelation,
+  onOut,
+  onBlank,
+  step,
+}: Props) {
   const L = useMemo(() => layoutCategory(net, category, { lane: 6 }), [net, category]);
   const cross = useMemo(() => crossings(L), [L]);
   const pathD = (pts: { x: number; y: number }[]) => roundedPath(pts, 6);

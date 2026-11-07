@@ -826,7 +826,6 @@
   line-height: 1.55;
 }
 
-
 /* 少しの段（薄い形）の切り替えの札：名前の右に1行で。見た目は 32px、押せる所は 44px */
 .tabs[hidden] {
   display: none;

@@ -15,17 +15,7 @@ import PathList from "./PathList";
 import Search from "./Search";
 import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
 import st from "./App.module.css";
-import {
-  KINDS,
-  MODES,
-  experimentsFor,
-  learnOrder,
-  load,
-  neighborhood,
-  pairOpen,
-  trace,
-  type Network,
-} from "./data";
+import { KINDS, MODES, experimentsFor, learnOrder, load, neighborhood, pairOpen, trace, type Network } from "./data";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 

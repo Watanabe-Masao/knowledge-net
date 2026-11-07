@@ -55,9 +55,13 @@ describe("止まる段を選ぶ（stops）", () => {
   });
   it("どの高さ・速さでも stops の中に止まる", () => {
     fc.assert(
-      fc.property(fc.double({ min: 20, max: 820, noNaN: true }), fc.double({ min: -3, max: 3, noNaN: true }), (h, v) => {
-        expect(S).toContain(snapDetent(h, v, H3, [...S]));
-      }),
+      fc.property(
+        fc.double({ min: 20, max: 820, noNaN: true }),
+        fc.double({ min: -3, max: 3, noNaN: true }),
+        (h, v) => {
+          expect(S).toContain(snapDetent(h, v, H3, [...S]));
+        },
+      ),
     );
   });
 });

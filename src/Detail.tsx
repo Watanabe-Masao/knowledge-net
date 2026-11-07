@@ -46,8 +46,6 @@ export function sentence(net: Network, r: Relation): string {
   return s + tag;
 }
 
-
-
 type Props = {
   net: Network;
   concept: Concept;
