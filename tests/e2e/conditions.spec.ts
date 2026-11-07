@@ -16,7 +16,7 @@ async function withDetail(page: Page) {
     const d = await (await r.fetch()).json();
     const b = d.concepts.find((c: { id: string }) => c.id === "stats2:TERM-binom");
     b.conditions = {
-      math: ["n は1以上の整数・0≦p≦1", "各回が独立"],
+      math: ["n は1以上の整数・0≦p≦1", "各回が独立", "各回の成功確率 p が同じ"],
       data: ["客ごとの購入が互いに影響しないかを確かめる"],
     };
     b.conditions_detail = [
@@ -28,6 +28,14 @@ async function withDetail(page: Page) {
         claim: "成功回数が B(n, p) に従う",
         outside: "成功回数に二項分布を使えるとは保証できない",
         terms: ["stats2:TERM-indep", "stats2:TERM-nowhere"],
+      },
+      {
+        text: "各回の成功確率 p が同じ",
+        scope: "math",
+        kind: "仮定",
+        claim: "成功回数が B(n, p) に従う",
+        outside: "成功回数に二項分布を使えるとは保証できない",
+        terms: ["stats2:TERM-indep"],
       },
       { text: "客ごとの購入が互いに影響しないかを確かめる", scope: "data" },
     ];
@@ -52,7 +60,9 @@ async function withDetail(page: Page) {
 // 札が知らない id でも出て、押すと空のページになる。
 // 見つけ方：見出しの文字・各行の文を読み、札の矩形の高さを測り、押したあと見出しの名前が「独立」になるかを見る。
 // 既存との違い：概念のページの既存のテストは、開いて読む段が閉じていることだけを見る（中身は見ない）。
-// 検出の確かめ（2026-11-08）：Conditions の kindOf で kind を見ず全部を手掛かりにすると、「要件」「仮定」の見出しがなく落ちることを見た
+// 保証すること・外れたときが同じ行を1つの枠にまとめること（二項分布の4つの仮定で同じ説明が4回並ばない）。
+// 検出の確かめ（2026-11-08）：Conditions の kindOf で kind を見ず全部を手掛かりにすると、「要件」「仮定」の見出しがなく落ちることを見た。
+// merge の鍵に行の文を足して（まとめないようにして）も落ちることを見た
 test("概念の成立条件は要件・仮定・手掛かりに分かれ、外れたときの説明と押せる用語の札がある", async ({ page }) => {
   const errs = noErrors(page);
   await withDetail(page);
@@ -61,7 +71,7 @@ test("概念の成立条件は要件・仮定・手掛かりに分かれ、外�
   const d = page.getByTestId("detail");
   await openTab(d, "概要");
   const sum = d.locator("summary", { hasText: "成立条件" });
-  await expect(sum).toContainText("要件 1・仮定 1・手掛かり 1");
+  await expect(sum).toContainText("要件 1・仮定 2・手掛かり 1");
   await sum.click();
   const c = d.getByTestId("conditions");
   await expect(c.getByTestId("cond-要件").locator("h4")).toContainText("定義の条件");
@@ -70,6 +80,11 @@ test("概念の成立条件は要件・仮定・手掛かりに分かれ、外�
   await expect(asm.locator("h4")).toContainText("保証の条件");
   await expect(asm).toContainText("成功回数が B(n, p) に従う");
   await expect(asm).toContainText("成功回数に二項分布を使えるとは保証できない");
+  // 保証すること・外れたときが同じ2行は1つの枠に（説明を重ねない）。用語の札も枠の中で1つ
+  await expect(asm.getByTestId("cond-item")).toHaveCount(1);
+  await expect(asm.getByTestId("cond-item").locator("li")).toHaveText(["各回が独立", "各回の成功確率 p が同じ"]);
+  await expect(asm.getByText("保証すること")).toHaveCount(1);
+  await expect(asm.getByTestId("cond-term-stats2:TERM-indep")).toHaveCount(1);
   await expect(c.getByTestId("cond-手掛かり").locator("h4")).toHaveText("データで確かめる手掛かり");
   await expect(c.getByTestId("cond-term-stats2:TERM-nowhere")).toHaveCount(0);
   const chip = c.getByTestId("cond-term-stats2:TERM-indep");

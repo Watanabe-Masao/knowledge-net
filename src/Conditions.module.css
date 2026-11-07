@@ -39,6 +39,14 @@
   font-size: var(--fs-body);
   line-height: 1.55;
 }
+.texts {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 2px;
+  font-size: var(--fs-body);
+  line-height: 1.55;
+}
 .sub {
   margin: 0;
   font-size: var(--fs-small);
