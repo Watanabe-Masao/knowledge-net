@@ -606,6 +606,46 @@ test("全体の見え方：引くとまとまりの名前と1本の矢印。矢�
   await expect(page.getByTestId("edge-panel")).toBeVisible();
 });
 
+// 確かめる対象：たどった道（設計書 3：見てきた道は置かず、← の長押しでたどった道。渡辺さん 2026-11-07）。
+// 想定する故障：← が出ない・1つ前に戻らない・戻ったのに道に積み直して ← が行き来する。長押しでメニューが出ない・新しい順でない・
+//   選んだ所へ戻らない。長押しのあとの「押した」で、さらに1つ戻ってしまう。概念が1つだけのときにも ← が出る。
+// 見つけ方：二項分布だけ選んだときは ← がない。二項分布 → ベルヌーイ分布 → 超幾何分布と選ぶと ← が出て、押すとベルヌーイ分布、もう一度で二項分布
+//   （← が消える）。また3つ選んで ← を長押しすると「たどった道」に新しい順（ベルヌーイ分布・二項分布）。二項分布を選ぶと二項分布へ戻る。
+// 既存との違い：ほかのテストは1つの概念を選ぶだけ
+// 検出の確かめ（2026-11-08）：戻ったときに道を縮める処理（backTo の slice）を外すと「戻ったのに道に積み直す」で落ちることを見た
+test("たどった道：← で1つ前へ、長押しで新しい順のメニューから戻る", async ({ page }) => {
+  const m = await open(page);
+  const pickT = async (id: string) => {
+    await m.getByTestId(`rm-term-${T(id)}`).click({ position: { x: 20, y: 12 } });
+    await expect(page).toHaveURL(new RegExp(`c=stats2%3ATERM-${id}(&|$)`));
+    await still(page);
+  };
+  const back = page.getByTestId("rm-trail-back");
+  await pickT("binom");
+  await expect(back, "概念が1つだけでも ← が出る").toHaveCount(0);
+  await pickT("bernoulli");
+  await pickT("hyper");
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page).toHaveURL(/c=stats2%3ATERM-bernoulli/);
+  await back.click();
+  await expect(page, "戻ったのに道に積み直す").toHaveURL(/c=stats2%3ATERM-binom/);
+  await expect(back).toHaveCount(0);
+  await pickT("bernoulli");
+  await pickT("hyper");
+  const b = (await back.boundingBox())!;
+  await page.mouse.move(b.x + 22, b.y + 22);
+  await page.mouse.down();
+  const menu = page.getByTestId("rm-trail");
+  await expect(menu).toBeVisible();
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  await expect(page, "長押しのあとの押したで戻った").toHaveURL(/c=stats2%3ATERM-hyper/);
+  await expect(menu.getByTestId("rm-trail-item")).toHaveText([/ベルヌーイ分布/, /二項分布/]);
+  await menu.getByTestId("rm-trail-item").filter({ hasText: "二項分布" }).click();
+  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
+});
+
 // 確かめる対象：下の札で線の種類を絞る（凡例を兼ねる。渡辺さん 2026-11-07）。
 // 想定する故障：札を押しても線が絞れない・ほかの種類の線が残る。語を選ぶと絞り込みが消える・絞り込み中だと分からない。
 // 見つけ方：「対比」の札を押すと押した状態になり、描かれる線が全部対比を含む線だけになる。二項分布を選ぶと札は隠れるが、
