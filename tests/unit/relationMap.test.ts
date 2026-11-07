@@ -4,7 +4,7 @@
 //   - ほかのまとまりでも使う語をたたむ（部品のように見せてしまう）。1つのまとまりだけの材料を共通の基礎の語に出す。
 //   - 受け継ぎで、子が自分でも持つ材料を2回出す。
 //   - まとまりの語の数・並びが崩れる。横のつながりに学ぶ順（前提）が混ざる。
-// 見つけ方：見本を関係図の形（確率分布を移した形。tests/fixtures/relmap-dist.ts）にして、手で数えた答えと照らす。
+// 見つけ方：見本（教材が確率分布を関係図に移して公開したデータの写し）で、手で数えた答えと照らす。
 //   たたむ：階乗はポアソン分布（待つ）だけ、期待値は共分散（しくみ）だけ → それぞれのまとまりにたたむ。
 //   確率・組合せは2つ以上のまとまりで使う → 共通の基礎の語。
 //   受け継ぎ：ベルヌーイ分布 → 二項分布 の種類を仮に足すと、親の材料（確率・組合せ）のうち、自分にない組合せだけが出る。
@@ -25,11 +25,10 @@ import {
   crossings,
   roundedPath,
 } from "../../src/relationMap";
-import { asRelationMap } from "../fixtures/relmap-dist";
 
 const T = (x: string) => `stats2:TERM-${x}`;
 const net = (edit?: (d: { relations: unknown[] }) => void) => {
-  const d = asRelationMap(JSON.parse(readFileSync("public/sample/stats2.json", "utf8")));
+  const d = JSON.parse(readFileSync("public/sample/stats2.json", "utf8"));
   edit?.(d);
   const r = merge([{ id: "stats2", data: d }]);
   expect(r.errors).toEqual([]);
@@ -59,9 +58,9 @@ describe("まとまりの関係図", () => {
     expect(new Set(b.materials)).toEqual(new Set([T("comb"), T("prob")]));
     expect(b.lateral.map((x) => x.rel.type)).not.toContain("前提");
     expect(b.lateral.map((x) => x.other)).toEqual(expect.arrayContaining([T("poisson"), T("geom"), T("hyper")]));
-    expect(termLinks(n, T("pdf")).usedBy).toEqual(
-      expect.arrayContaining([T("dist"), T("normal"), T("uniform"), T("expo")]),
-    );
+    // 確率密度関数は確率分布を定義に使う（stats2-course #245 で向きを直した）。連続の分布は確率密度関数を定義に使う
+    expect(termLinks(n, T("pdf")).usedBy).toEqual(expect.arrayContaining([T("normal"), T("uniform"), T("expo")]));
+    expect(termLinks(n, T("pdf")).materials).toContain(T("dist"));
   });
 
   it("受け継ぎ：種類の親の材料は、自分にないものだけを出す", () => {

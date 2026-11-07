@@ -1,19 +1,14 @@
 // まとまりの関係図（stats2-course #235・#239。設計書 3「関係図（M3）」のテスト）。並びと線・印の置き場所・寄り方の計算は単体テスト
 // （tests/unit/relationMap.test.ts）で全部の語を確かめ、ここは描いたあとの見え方と指の操作を確かめる。
-// 見本は、確率分布を関係図に移した形に書き換えて読む（tests/fixtures/relmap-dist.ts。教材が S3 を公開して見本を取り込んだら要らない）。
+// 見本は、教材が確率分布を関係図に移して公開したデータの写し（public/sample/stats2.json）をそのまま読む。
 // iPhone の Safari で崩れないかを見るため、この spec は WebKit でも走らせる（playwright.config.ts の webkit）
 import { test, expect, type Page } from "@playwright/test";
-import { asRelationMap } from "../fixtures/relmap-dist";
 
 const T = (x: string) => `stats2:TERM-${x}`;
 const G = (x: string) => `stats2:GRP-dist-${x}`;
 const URL = "./?src=sample/stats2.json&lv=map&g=";
 
 async function open(page: Page, w = 390, h = 844, extra = "") {
-  await page.route("**/sample/stats2.json", async (r) => {
-    const d = await (await r.fetch()).json();
-    await r.fulfill({ json: asRelationMap(d) });
-  });
   await page.setViewportSize({ width: w, height: h });
   await page.goto(URL + encodeURIComponent("確率分布") + extra);
   await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
