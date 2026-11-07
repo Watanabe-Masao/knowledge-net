@@ -206,8 +206,19 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
   const m = await open(page);
   const k0 = Number(await m.getByTestId("rm-canvas").getAttribute("data-k"));
   const g = m.getByTestId(`rm-group-${G("count")}`);
-  const gb = (await g.boundingBox())!;
-  await page.mouse.dblclick(gb.x + gb.width - 12, gb.y + gb.height - 8);
+  // まとまりの中の、カード・札・ボタンの上ではない所（字の幅は描き方で違うので、決め打ちの位置ではなく画面の上で探す）
+  const gp = await g.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    for (let fy = 0.92; fy > 0.1; fy -= 0.04)
+      for (let fx = 0.96; fx > 0.04; fx -= 0.04) {
+        const x = r.left + r.width * fx,
+          y = r.top + r.height * fy;
+        const hit = document.elementFromPoint(x, y);
+        if (hit && el.contains(hit) && !hit.closest("button, [data-cv], [data-line]")) return { x, y };
+      }
+    throw new Error("まとまりの中に空いた所がない");
+  });
+  await page.mouse.dblclick(gp.x, gp.y);
   await still(page);
   const k1 = Number(await m.getByTestId("rm-canvas").getAttribute("data-k"));
   expect(k1, "まとまりへは 1.3 倍以上寄る").toBeGreaterThanOrEqual(k0 * 1.29);
