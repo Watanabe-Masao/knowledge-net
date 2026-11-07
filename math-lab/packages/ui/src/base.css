@@ -122,6 +122,36 @@ select {
     opacity: 0;
   }
 }
+/* 長押しの手触りは1つ（渡辺さん 2026-11-07「沈んで光る」。knowledge-net の docs/decisions.md）：
+   押さえている間（data-hold）、押した物が --dur-hold でゆっくり沈み、縁の光が強まる。満ちたところで長押しが決まる。
+   ふつうのタップでは見えないよう、押した返事（--dur-press）のあとから始める。見た目の物が子のときは、その子に data-hold-part */
+[data-hold]:not(:has([data-hold-part])),
+[data-hold] [data-hold-part] {
+  transform: scale(0.92) !important;
+  box-shadow:
+    0 0 0 3px var(--accent),
+    0 0 14px color-mix(in srgb, var(--accent) 55%, transparent) !important;
+  transition:
+    transform calc(var(--dur-hold) - var(--dur-press)) linear var(--dur-press),
+    box-shadow calc(var(--dur-hold) - var(--dur-press)) linear var(--dur-press) !important;
+}
+/* 線（SVG の path）は沈まず、太くなりながら光る（filter は none からの移り変わりが効かない所があるので、光は始まりの値を持つ動きで） */
+path[data-hold] {
+  transform: none !important;
+  box-shadow: none !important;
+  stroke-width: 6 !important;
+  transition: stroke-width calc(var(--dur-hold) - var(--dur-press)) linear var(--dur-press) !important;
+  animation: hold-glow var(--dur-hold) linear both;
+}
+@keyframes hold-glow {
+  0%,
+  20% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  100% {
+    filter: drop-shadow(0 0 5px var(--accent));
+  }
+}
 /* 動きを減らす設定（iPhone の「視差効果を減らす」）では全部止める */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -134,5 +164,14 @@ select {
   ::view-transition-old(*),
   ::view-transition-new(*) {
     animation: none !important;
+  }
+  /* 長押しは沈まず、満ちたときに一度だけ縁が灯る（動かさずに「決まった」を伝える） */
+  [data-hold]:not(:has([data-hold-part])),
+  [data-hold] [data-hold-part],
+  path[data-hold] {
+    transform: none !important;
+    transition:
+      box-shadow 0s linear var(--dur-hold),
+      filter 0s linear var(--dur-hold) !important;
   }
 }

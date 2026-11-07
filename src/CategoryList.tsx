@@ -2,6 +2,7 @@
 // ライブラリ（入口・機能別の地図）でタイルを押したあとの画面。分類の語を学ぶ順に並べ、2つの並べ方を切り替える：
 //   正方形（印と名前・横4つ。長押しで定義1文）／一覧（印・名前・定義1文）。地図（島の地図）へも切り替えられる。
 // 語を押すと概念のページ。データは公開データにあるもの（語の印・名前・定義1文・前提の関係）だけで作る
+import { tokenMs } from "@math-lab/ui";
 import { useRef, useState } from "react";
 import { type Network, bandOfCat, bandsOf, learningOrder } from "./data";
 import { conceptIcon } from "./conceptIcons";
@@ -50,7 +51,7 @@ type Props = {
   onConcept: (id: string) => void;
 };
 
-const HOLD_MS = 450; // 長押しとみなす長さ
+const holdMs = () => tokenMs("--dur-hold", 450); // 長押しとみなす長さ（押さえている間は沈んで光る。base.css の data-hold）
 
 export default function CategoryList({ net, category, layout, onConcept }: Props) {
   const ids = [...net.concepts.values()].filter((c) => c.category === category).map((c) => c.id);
@@ -76,23 +77,29 @@ export default function CategoryList({ net, category, layout, onConcept }: Props
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null),
     held = useRef(false);
   const hold = (id: string) => ({
-    onPointerDown: () => {
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
       held.current = false;
+      const el = e.currentTarget;
+      el.setAttribute("data-hold", "");
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => {
+        el.removeAttribute("data-hold");
         held.current = true;
         setTip(id);
-      }, HOLD_MS);
+      }, holdMs());
     },
-    onPointerUp: () => {
+    onPointerUp: (e: React.PointerEvent<HTMLElement>) => {
+      e.currentTarget.removeAttribute("data-hold");
       if (timer.current) clearTimeout(timer.current);
       setTip(null);
     },
-    onPointerLeave: () => {
+    onPointerLeave: (e: React.PointerEvent<HTMLElement>) => {
+      e.currentTarget.removeAttribute("data-hold");
       if (timer.current) clearTimeout(timer.current);
       setTip(null);
     },
-    onPointerCancel: () => {
+    onPointerCancel: (e: React.PointerEvent<HTMLElement>) => {
+      e.currentTarget.removeAttribute("data-hold");
       if (timer.current) clearTimeout(timer.current);
       setTip(null);
     },
