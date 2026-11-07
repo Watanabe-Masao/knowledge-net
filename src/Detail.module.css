@@ -577,6 +577,11 @@
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   animation: pageIn var(--dur) var(--ease);
+  transition: transform var(--dur-spring) var(--ease-spring);
+}
+/* 指で引いている間は指の真下に付く（離すと上へ戻るか、面へ戻る） */
+.page[data-drag] {
+  transition: none;
 }
 @keyframes pageIn {
   from {

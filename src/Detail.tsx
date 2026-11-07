@@ -217,8 +217,21 @@ export default function Detail({
   // ← は来た段へ戻す（画面の原則 3・11）
   const lastStep = useRef<Detent>("peek");
   const grabY = useRef<number | null>(null);
+  const grabT = useRef({ t: 0, y: 0, v: 0 });
+  // フルのページを指で下へ引く量（指に付いて下がる。画面の原則 2）と、面へ戻るときの出だしの高さ（画面の原則 11）
+  const [pageDy, setPageDy] = useState(0);
+  const leaveFrom = useRef<number | undefined>(undefined);
+  const leaveFull = (dy = 0) => {
+    if (!sheet) return;
+    leaveFrom.current = Math.max(0, window.innerHeight - (sheet.bottom ?? 0) - 44 - dy);
+    setPageDy(0);
+    sheet.onDetent(lastStep.current);
+  };
   useEffect(() => {
     if (sheet && sheet.detent !== "full" && sheet.detent !== "min") lastStep.current = sheet.detent;
+  }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (sheet?.detent !== "full") leaveFrom.current = undefined;
   }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (sheet) sheet.onPeek?.(peekOut);
@@ -312,7 +325,7 @@ export default function Detail({
           <button
             type="button"
             className={st.back}
-            onClick={() => sheet.onDetent(lastStep.current)}
+            onClick={() => leaveFull()}
             data-testid="detail-to-map"
             aria-label="地図へ戻る"
           >
@@ -636,6 +649,8 @@ export default function Detail({
         className={st.page}
         data-testid="detail"
         data-detent="full"
+        data-drag={pageDy > 0 ? "" : undefined}
+        style={pageDy > 0 ? { transform: `translateY(${pageDy}px)` } : undefined}
         role="region"
         aria-label={`${c.name} のページ`}
       >
@@ -647,20 +662,36 @@ export default function Detail({
           data-testid="page-grab"
           onPointerDown={(e) => {
             grabY.current = e.clientY;
+            grabT.current = { t: e.timeStamp, y: e.clientY, v: 0 };
             (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
           }}
           onPointerMove={(e) => {
-            if (grabY.current !== null && e.clientY - grabY.current > 40) {
-              grabY.current = null;
+            if (grabY.current === null) return;
+            const g = grabT.current;
+            g.v = (e.clientY - g.y) / Math.max(1, e.timeStamp - g.t); // 下向きが＋（px/ms）
+            g.t = e.timeStamp;
+            g.y = e.clientY;
+            setPageDy(Math.max(0, e.clientY - grabY.current));
+          }}
+          onPointerUp={(e) => {
+            if (grabY.current === null) return;
+            const dy = Math.max(0, e.clientY - grabY.current);
+            if (dy <= 8) return; // 押しただけ：click で戻す
+            grabY.current = null;
+            if (dy > 80 || grabT.current.v > 0.5) {
               haptic();
-              sheet.onDetent(lastStep.current);
-            }
+              leaveFull(dy);
+            } else setPageDy(0); // 少しだけ引いた：上へ戻る
+          }}
+          onPointerCancel={() => {
+            grabY.current = null;
+            setPageDy(0);
           }}
           onClick={(e) => {
             if (grabY.current === null && e.detail !== 0) return; // 引いて戻したあとの click は無視（キーボードは通す）
             grabY.current = null;
             haptic();
-            sheet.onDetent(lastStep.current);
+            leaveFull();
           }}
         />
         <div className={st.pageHead}>{head}</div>
@@ -676,6 +707,7 @@ export default function Detail({
     );
   }
   const peek = peekOut;
+  const from = leaveFrom.current; // 面が出た次の描画で消す（下の effect）
   // スマホ：地図の上に重なる下からの面。見出し・切り替え・定義が「少し」の段で見え、広げると面の残り全部で中身を送る（#42）
   return (
     <BottomSheet
@@ -688,6 +720,7 @@ export default function Detail({
       peek={peek}
       min={84}
       stops={STEPS}
+      from={from}
       header={<div ref={headRef}>{head}</div>}
     >
       {rest}
