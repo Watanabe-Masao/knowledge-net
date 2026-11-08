@@ -8,10 +8,11 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { kindOf, merge } from "../../src/data";
+import { sampleV1 } from "../support/sample";
 
 const j = (p: string) => JSON.parse(readFileSync(p, "utf8"));
 const v2 = () => j("tests/fixtures/v2-sample.json");
-const v1 = () => j("public/sample/stats2.json");
+const v1 = sampleV1; // 見本の版によらず v1 の形で（v1 と v2 を一緒に読む確かめ。#282）
 
 describe("型 v2 の読み込み", () => {
   it("v2 の見本は v2 の型で検査され、外されない", () => {

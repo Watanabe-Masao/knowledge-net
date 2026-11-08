@@ -9,6 +9,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import Ajv2020 from "ajv/dist/2020.js";
+import { sampleV2 } from "../support/sample";
 
 const j = (p: string) => JSON.parse(readFileSync(p, "utf8"));
 const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strict: false });
@@ -25,13 +26,8 @@ describe("型 v2", () => {
     expect(validate(fixture()) ? [] : validate.errors).toEqual([]);
   });
 
-  it("v1 の公開データの見本を、関係を legacy_type に写して version 2 にした形は型に合う（M4 で書き出せる）", () => {
-    const d = j("public/sample/stats2.json");
-    d.version = 2;
-    for (const r of d.relations) {
-      r.legacy_type = r.type;
-      delete r.type;
-    }
+  it("教材の公開データの見本を v2 の形にしたもの（教材が v2 で公開していればそのまま、v1 なら関係を legacy_type に写す）は型に合う", () => {
+    const d = sampleV2();
     expect(validate(d) ? [] : validate.errors?.slice(0, 5)).toEqual([]);
   });
 

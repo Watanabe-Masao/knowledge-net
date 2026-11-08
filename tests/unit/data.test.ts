@@ -1,9 +1,9 @@
 // データの検査とネットワークの計算。間違いを入れたら止まることも確かめる。
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import { KINDS, compare, merge, schemaErrors, trace, around } from "../../src/data";
+import { sampleV1 } from "../support/sample";
 
-const sample = () => JSON.parse(readFileSync("public/sample/stats2.json", "utf8"));
+const sample = sampleV1; // 見本の版によらず v1 の形で（このファイルは v1 の型と v1 の形を見る。#282）
 
 describe("型（schema/kn-schema-v1.json）", () => {
   it("教材の見本は型に合う", () => {
@@ -155,7 +155,7 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(schemaErrors(e).length).toBeGreaterThan(0);
   });
   it("実験室の値の表（改訂10）：見本は合い、値の表の形に二項分布の項目・二項分布に値の表の項目を混ぜると止める", () => {
-    const w0 = () => JSON.parse(readFileSync("public/sample/stats2.json", "utf8"));
+    const w0 = sampleV1;
     const d = w0();
     expect(schemaErrors(d)).toEqual([]);
     const t = d.experiments.find((x: { model: string }) => x.model === "table");
@@ -172,7 +172,7 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(schemaErrors(f).length).toBeGreaterThan(0);
   });
   it("骨格（改訂11）：定義1文と分類があれば合い、どちらかがないと止める", () => {
-    const d = JSON.parse(readFileSync("public/sample/stats2.json", "utf8"));
+    const d = sampleV1();
     const c = d.concepts.find((x: { status: string }) => x.status === "skeleton");
     expect(schemaErrors(d)).toEqual([]);
     delete c.category;
@@ -212,7 +212,7 @@ describe("数理ラボの参照と型の改訂", () => {
 // 見つけ方：見本の全体・概念・式の木に知らない項目を足しても概念の数が変わらず、警告が1つ出る。型の違うデータは今までどおり外れる。
 // 既存との違い：既存の「型」のテストは書き出す側の厳しい型（schemaErrors）だけを見ていた
 describe("型の改訂より新しいデータも、知っている項目だけで読む", () => {
-  const w0 = () => JSON.parse(readFileSync("public/sample/stats2.json", "utf8"));
+  const w0 = sampleV1;
   it("知らない項目があっても教材を外さず、式の木も消さない", () => {
     const base = merge([{ id: "stats2", data: w0() }]);
     expect(base.errors).toEqual([]);

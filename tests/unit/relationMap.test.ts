@@ -11,7 +11,6 @@
 // 既存との違い：data.test.ts は型と読み込み。ここは関係図の計算。
 // 検出の確かめ（2026-11-06）：たたむ条件を「1つ以上のまとまり」にすると、組合せがたたまれて落ちることを見た
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import { merge } from "../../src/data";
 import {
   CV,
@@ -25,10 +24,11 @@ import {
   crossings,
   roundedPath,
 } from "../../src/relationMap";
+import { sampleV1 } from "../support/sample";
 
 const T = (x: string) => `stats2:TERM-${x}`;
 const net = (edit?: (d: { relations: unknown[] }) => void) => {
-  const d = JSON.parse(readFileSync("public/sample/stats2.json", "utf8"));
+  const d = sampleV1(); // 関係を v1 の種類の名前で書き換えるので、見本の版によらず v1 の形で（#282）
   edit?.(d);
   const r = merge([{ id: "stats2", data: d }]);
   expect(r.errors).toEqual([]);
