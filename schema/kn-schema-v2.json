@@ -610,7 +610,7 @@
           ]
         },
         "subject": {
-          "oneOf": [
+          "anyOf": [
             {
               "$ref": "#/$defs/gid"
             },
@@ -1885,7 +1885,7 @@
             "$ref": "#/$defs/text"
           },
           "operation": {
-            "oneOf": [
+            "anyOf": [
               {
                 "$ref": "#/$defs/gid"
               },

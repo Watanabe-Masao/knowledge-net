@@ -60,6 +60,15 @@ describe("型 v2", () => {
     ],
     ["外す理由の文がない", (d) => delete ((d.concepts[1].basis as Row).excludes as Row[])[0].text],
   ];
+  it("移るの通す操作と、条件の行の主語は、概念の id でも文でも書ける（改訂3。oneOf の重なりで id が止まっていた）", () => {
+    const d = fixture();
+    rel(d, "移る").operation = "t:TERM-std";
+    ((rel(d, "移る").conditions as Row[])[0] as Row).subject = "t:TERM-binom";
+    expect(validate(d) ? [] : validate.errors).toEqual([]);
+    rel(d, "移る").operation = "標準化する";
+    expect(ok(d)).toBe(true);
+  });
+
   it.each(breaks)("1つずつ止まる：%s", (_name, mutate) => {
     const d = fixture();
     expect(ok(d)).toBe(true);
