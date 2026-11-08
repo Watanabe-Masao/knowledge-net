@@ -21,7 +21,7 @@ import s from "./Relation.module.css";
 import { Icon } from "./Shell";
 import { KIND_VAR, KindMark, kindName, readingOf } from "./kinds";
 import Conditions from "./Conditions";
-import { KINDS, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
+import { kindOf, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
 const short = (t?: string) => (t ? t.split("（")[0] : "");
 
@@ -31,7 +31,7 @@ export function nameOf(net: Network, id: string): string {
 
 /** 関係の文（括弧なし）と札。例：「二項分布 を変換すると ポアソン分布」＋[変換][極限]。 */
 export function relationParts(net: Network, r: Relation) {
-  const k = KINDS[r.type];
+  const k = kindOf(r.type);
   const text = readingOf(r.type, r.premise, k?.reading)
     .replace("□", nameOf(net, r.from))
     .replace("■", nameOf(net, r.to));

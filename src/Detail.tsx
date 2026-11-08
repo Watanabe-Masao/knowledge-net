@@ -23,7 +23,7 @@ import st from "./Detail.module.css";
 import { kindName, readingOf } from "./kinds";
 import Conditions, { conditionCount } from "./Conditions";
 import {
-  KINDS,
+  kindOf,
   MODES,
   PREMISES,
   around,
@@ -42,7 +42,7 @@ export function name(net: Network, id: string): string {
 
 /** 関係を「□は■の前提」のような文にする。 */
 export function sentence(net: Network, r: Relation): string {
-  const k = KINDS[r.type];
+  const k = kindOf(r.type);
   const s = readingOf(r.type, r.premise, k?.reading).replace("□", name(net, r.from)).replace("■", name(net, r.to));
   const tag = r.mode ? `（${MODES[r.mode]}）` : r.premise === "mathematical" ? `（${PREMISES[r.premise]}）` : "";
   return s + tag;

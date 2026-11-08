@@ -54,3 +54,12 @@
 | 1 | 2026-11-05 | 芯の改訂30までの実験室の定義をそのまま移した（stats2-course #211） |
 | 2 | 2026-11-05 | `$defs.walkTexts`：解き方の公式の文（記号の意味・呼び名・選び肢の形・行の題と文と別の言い方）。engine は文の型の id・穴の値・別の言い方だけを返す（stats2-course #211） |
 | 3 | 2026-11-05 | `$defs.applyTexts`：応用の解き方の段の文（語の名前の穴の言葉・段の題と文と別の言い方）（stats2-course #211） |
+
+## v2（schema/kn-schema-v2.json）
+
+型 v2 は v1 とは別のファイルで、改訂番号は 1 から数える。設計は stats2-course の docs/schema-v2-design.md（#262）。移す順は #259（M3〜M7）。
+
+| 改訂 | 日付 | 変更 |
+| --- | --- | --- |
+| 1 | 2026-11-08 | v2 を作った（stats2-course #263 M3）。`version: 2`。関係の種類を製本 ⑤ の10種類（定める・一種・特別な場合・移る・従う・推定する・導ける・同値・根拠・比べる）にし、種類ごとの必須（特別な場合の fix・移るの mode と極限の claim・従う・導ける・同値・根拠の claim・推定するの properties・比べるの axis・same・differ）を足した。移していない行は `legacy_type`（v1 の種類と v1 の決まり）。主張（`claims`：CLM-番号・種類・本文・前提と結論の主語と述語・条件の行・根拠・逆と反例・確かめの記録）と学ぶ順（`learning`：add・remove と理由）を足した。概念に姿（`forms`）・基準の定義（`basis`）・同一性（aliases・cases・heading_of・alt_definitions）・主張・data_hints、条件の行（`$defs.condition`：区分・掛かる先・主語・範囲・外れたとき・目安の中身と出典）、式に statement_kind・記号の event と omit、教材に `v2_ready` を足した。導出は statement を必須にせず、主張を指せる。v1 の形の概念の条件（math・data）も読める（未移行のあいだ） |
+

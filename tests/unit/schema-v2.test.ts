@@ -1,0 +1,65 @@
+// 型 v2（schema/kn-schema-v2.json。stats2-course #263 M3）の検査。
+// 確かめる対象：製本の決まりのうち、型で機械に止められる部分（設計書 docs/schema-v2-design.md の 1・3.1・4・6）。
+// 想定する故障：v2 の型が、種類ごとの必須（主張・固定の仕方・軸と同じ所・違う所・性質）や、掛かる先ごとの区分、
+//   移していない行（legacy_type）と v2 の種類の取り違えを通してしまう。または v1 の公開データを v2 に写した形を拒む（M4 で読めない）。
+// 見つけ方：手で書いた v2 の見本（tests/fixtures/v2-sample.json）が通ること、1つずつ誤りを入れた写しがそれぞれ止まること、
+//   v1 の公開データの見本を legacy_type で写した形が通ること。
+// 既存との違い：data.test.ts は v1 の型だけを見る。ここは v2 の型だけを見る（画面の読み込みは別のテスト）。
+// 検出の確かめ：下の「1つずつ止まる」の各行は、誤りを入れない写しでは通ることを先に確かめてから、誤りを入れて止まることを見る。
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import Ajv2020 from "ajv/dist/2020.js";
+
+const j = (p: string) => JSON.parse(readFileSync(p, "utf8"));
+const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strict: false });
+ajv.addSchema(j("schema/kn-experiment-v1.json"));
+ajv.addSchema(j("schema/kn-schema-v1.json"));
+const validate = ajv.compile(j("schema/kn-schema-v2.json"));
+const ok = (d: unknown) => validate(d) === true;
+const fixture = () => j("tests/fixtures/v2-sample.json");
+type Row = Record<string, unknown>;
+const rel = (d: { relations: Row[] }, type: string) => d.relations.find((r) => r.type === type)!;
+
+describe("型 v2", () => {
+  it("手で書いた v2 の見本（⑤ の種類・主張・学ぶ順・条件の行）は型に合う", () => {
+    expect(validate(fixture()) ? [] : validate.errors).toEqual([]);
+  });
+
+  it("v1 の公開データの見本を、関係を legacy_type に写して version 2 にした形は型に合う（M4 で書き出せる）", () => {
+    const d = j("public/sample/stats2.json");
+    d.version = 2;
+    for (const r of d.relations) {
+      r.legacy_type = r.type;
+      delete r.type;
+    }
+    expect(validate(d) ? [] : validate.errors?.slice(0, 5)).toEqual([]);
+  });
+
+  const breaks: [string, (d: { relations: Row[]; claims: Row[]; learning: Row[]; concepts: Row[] }) => void][] = [
+    ["導けるに主張がない", (d) => delete rel(d, "導ける").claim],
+    ["従うに主張がない", (d) => delete rel(d, "従う").claim],
+    ["根拠に主張がない", (d) => delete rel(d, "根拠").claim],
+    ["移るの極限に主張がない", (d) => delete rel(d, "移る").claim],
+    ["移るに mode がない", (d) => delete rel(d, "移る").mode],
+    ["特別な場合に固定の仕方がない", (d) => delete rel(d, "特別な場合").fix],
+    ["特別な場合の固定の仕方が3つの外", (d) => (rel(d, "特別な場合").fix = "近づける")],
+    ["推定するに性質の主張がない", (d) => delete rel(d, "推定する").properties],
+    ["比べるに違う所がない", (d) => delete rel(d, "比べる").differ],
+    ["v2 の種類に premise がある", (d) => (rel(d, "導ける").premise = "learning")],
+    ["type と legacy_type の両方がある", (d) => (rel(d, "定める").legacy_type = "材料")],
+    ["type も legacy_type もない", (d) => delete rel(d, "定める").type],
+    ["知らない種類", (d) => (rel(d, "定める").type = "前提")],
+    ["主張の id が CLM-番号でない", (d) => (d.claims[0].id = "t:CLAIM-13")],
+    ["主張の仮定の行に要件", (d) => ((d.claims[0].conditions as Row[])[0].kind = "要件")],
+    ["概念の定義の行に仮定", (d) => (((d.concepts[1].conditions as Row[])[0] as Row).kind = "仮定")],
+    ["変換の行に要件", (d) => (((rel(d, "移る").conditions as Row[])[0] as Row).kind = "要件")],
+    ["学ぶ順に理由がない", (d) => delete d.learning[0].reason],
+    ["知らない姿", (d) => (d.concepts[0].forms = ["箱"])],
+  ];
+  it.each(breaks)("1つずつ止まる：%s", (_name, mutate) => {
+    const d = fixture();
+    expect(ok(d)).toBe(true);
+    mutate(d);
+    expect(ok(d)).toBe(false);
+  });
+});

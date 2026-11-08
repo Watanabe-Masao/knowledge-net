@@ -1,0 +1,471 @@
+{
+  "schema": "kn-schema",
+  "version": 2,
+  "schema_revision": 1,
+  "course": {
+    "id": "t",
+    "title": "v2 の見本",
+    "units": [],
+    "v2_ready": [
+      "確率分布"
+    ]
+  },
+  "concepts": [
+    {
+      "id": "t:TERM-bern",
+      "name": "ベルヌーイ分布",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "ベルヌーイ分布の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "distribution"
+      ]
+    },
+    {
+      "id": "t:TERM-binom",
+      "name": "二項分布",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "二項分布の定義",
+      "principle": "p",
+      "conditions": [
+        {
+          "text": "n は1以上の整数・0≦p≦1",
+          "kind": "要件",
+          "target": "definition",
+          "outside": "この定義の二項分布として扱えない"
+        }
+      ],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "distribution"
+      ],
+      "basis": {
+        "formula": "F-binom-pmf"
+      }
+    },
+    {
+      "id": "t:TERM-snorm",
+      "name": "標準正規分布",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "標準正規分布の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "distribution"
+      ]
+    },
+    {
+      "id": "t:TERM-indep",
+      "name": "独立",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "独立の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "property"
+      ],
+      "basis": {
+        "text": "P(A∩B)＝P(A)P(B)",
+        "terms": [
+          "t:TERM-prob"
+        ]
+      }
+    },
+    {
+      "id": "t:TERM-uncorr",
+      "name": "無相関",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "無相関の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "property"
+      ]
+    },
+    {
+      "id": "t:TERM-prob",
+      "name": "確率",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "確率の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "number"
+      ]
+    },
+    {
+      "id": "t:TERM-xbar",
+      "name": "標本平均",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "標本平均の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "rv"
+      ]
+    },
+    {
+      "id": "t:TERM-mean",
+      "name": "母平均",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "母平均の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "number"
+      ],
+      "heading_of": {
+        "concept": "t:TERM-expect",
+        "object_diff": "母集団について言う",
+        "context_diff": "推測統計で知りたい数"
+      }
+    },
+    {
+      "id": "t:TERM-expect",
+      "name": "期待値",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "期待値の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "operation",
+        "number"
+      ]
+    },
+    {
+      "id": "t:TERM-clt",
+      "name": "中心極限定理",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "中心極限定理の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "proposition"
+      ],
+      "claims": [
+        "t:CLM-6"
+      ]
+    },
+    {
+      "id": "t:TERM-test",
+      "name": "適合度検定",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "適合度検定の定義",
+      "principle": "p",
+      "conditions": [
+        {
+          "text": "期待度数が5以上",
+          "kind": "目安",
+          "target": "procedure",
+          "approx": "カイ二乗分布で近似してよいか",
+          "outside": "この目安では勧められない"
+        }
+      ],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "procedure"
+      ]
+    },
+    {
+      "id": "t:TERM-ttest",
+      "name": "母平均の t 区間",
+      "status": "filled",
+      "units": [],
+      "version": 1,
+      "definition": "母平均の t 区間の定義",
+      "principle": "p",
+      "conditions": [],
+      "example": "e",
+      "counterexample": "c",
+      "forms": [
+        "procedure"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "t:REL-1",
+      "from": "t:TERM-prob",
+      "to": "t:TERM-indep",
+      "type": "定める",
+      "description": "d",
+      "units": [],
+      "version": 1
+    },
+    {
+      "id": "t:REL-2",
+      "from": "t:TERM-bern",
+      "to": "t:TERM-binom",
+      "type": "特別な場合",
+      "description": "d",
+      "units": [],
+      "version": 1,
+      "fix": "count",
+      "fix_text": "n＝1 に固定するとベルヌーイ分布"
+    },
+    {
+      "id": "t:REL-3",
+      "from": "t:TERM-binom",
+      "to": "t:TERM-snorm",
+      "type": "移る",
+      "description": "d",
+      "units": [],
+      "version": 1,
+      "mode": "limit",
+      "claim": "t:CLM-5",
+      "operation": "標準化",
+      "theorem": "t:TERM-clt",
+      "use_form": "F-binom-normal",
+      "conditions": [
+        {
+          "text": "np≧5 かつ n(1−p)≧5",
+          "kind": "目安",
+          "target": "transform",
+          "approx": "二項分布の正規近似"
+        }
+      ]
+    },
+    {
+      "id": "t:REL-4",
+      "from": "t:TERM-xbar",
+      "to": "t:TERM-snorm",
+      "type": "従う",
+      "description": "d",
+      "units": [],
+      "version": 1,
+      "claim": "t:CLM-6",
+      "theorem": "t:TERM-clt",
+      "from_form": "rv"
+    },
+    {
+      "id": "t:REL-5",
+      "from": "t:TERM-xbar",
+      "to": "t:TERM-mean",
+      "type": "推定する",
+      "description": "d",
+      "units": [],
+      "version": 1,
+      "properties": [
+        "t:CLM-20"
+      ]
+    },
+    {
+      "id": "t:REL-6",
+      "from": "t:TERM-indep",
+      "to": "t:TERM-uncorr",
+      "type": "導ける",
+      "description": "d",
+      "units": [],
+      "version": 1,
+      "claim": "t:CLM-13"
+    },
+    {
+      "id": "t:REL-7",
+      "from": "t:TERM-clt",
+      "to": "t:TERM-ttest",
+      "type": "根拠",
+      "description": "d",
+      "units": [],
+      "version": 1,
+      "claim": "t:CLM-19"
+    },
+    {
+      "id": "t:REL-8",
+      "from": "t:TERM-bern",
+      "to": "t:TERM-snorm",
+      "type": "比べる",
+      "description": "d",
+      "units": [],
+      "version": 1,
+      "axis": "とる値",
+      "same": "どちらも分布",
+      "differ": "離散と連続"
+    },
+    {
+      "id": "t:REL-9",
+      "from": "t:TERM-prob",
+      "to": "t:TERM-binom",
+      "legacy_type": "前提",
+      "premise": "learning",
+      "description": "d",
+      "units": [],
+      "version": 1
+    }
+  ],
+  "claims": [
+    {
+      "id": "t:CLM-13",
+      "label": "④-13",
+      "kind": "ならば",
+      "statement": {
+        "text": "X と Y が独立で分散が有限なら Cov(X, Y)＝0"
+      },
+      "premises": {
+        "subjects": [],
+        "predicates": [
+          "t:TERM-indep"
+        ]
+      },
+      "conclusion": {
+        "subjects": [],
+        "predicates": [
+          "t:TERM-uncorr"
+        ]
+      },
+      "conditions": [
+        {
+          "text": "どちらも分散が有限",
+          "kind": "仮定",
+          "target": "claim"
+        }
+      ],
+      "converse": "t:CLM-13-converse",
+      "counterexamples": [
+        "t:CLM-13-counter"
+      ],
+      "verification": {
+        "math": [
+          {
+            "method": "独立な確かめ",
+            "by": "C",
+            "date": "2026-11-08",
+            "version": "dc2b65a"
+          }
+        ],
+        "external": "なし"
+      },
+      "teaching": {
+        "conclusion": true,
+        "proof": "扱う"
+      },
+      "version": 1
+    },
+    {
+      "id": "t:CLM-6",
+      "label": "④-6b",
+      "kind": "極限",
+      "statement": {
+        "text": "√n(X̄−μ)/σ の分布は N(0, 1) に近づく"
+      },
+      "premises": {
+        "subjects": [
+          "t:TERM-xbar"
+        ]
+      },
+      "conclusion": {
+        "subjects": [
+          "t:TERM-xbar"
+        ],
+        "predicates": [
+          "t:TERM-snorm"
+        ]
+      },
+      "grounds": [
+        {
+          "source": {
+            "title": "中心極限定理"
+          },
+          "external": true
+        }
+      ],
+      "verification": {
+        "external": "未照合"
+      },
+      "version": 1
+    },
+    {
+      "id": "t:CLM-5",
+      "kind": "極限",
+      "statement": {
+        "text": "二項分布を標準化すると N(0, 1) に近づく"
+      },
+      "version": 1
+    },
+    {
+      "id": "t:CLM-20",
+      "kind": "推定量の性質",
+      "statement": {
+        "text": "E(X̄)＝μ"
+      },
+      "version": 1
+    },
+    {
+      "id": "t:CLM-19",
+      "kind": "手続きの保証",
+      "statement": {
+        "text": "信頼係数は n→∞ で 1−α に近づく"
+      },
+      "version": 1
+    },
+    {
+      "id": "t:CLM-13-converse",
+      "kind": "ならば",
+      "statement": {
+        "text": "2変量正規なら無相関は独立"
+      },
+      "version": 1
+    },
+    {
+      "id": "t:CLM-13-counter",
+      "kind": "ならば",
+      "statement": {
+        "text": "X が N(0,1)、Y＝X² は無相関だが独立でない"
+      },
+      "version": 1
+    }
+  ],
+  "derivations": [],
+  "learning": [
+    {
+      "id": "t:LRN-1",
+      "op": "add",
+      "from": "t:TERM-indep",
+      "to": "t:TERM-binom",
+      "reason": "並び1つの確率を掛け算で出せる理由",
+      "version": 1
+    }
+  ]
+}
