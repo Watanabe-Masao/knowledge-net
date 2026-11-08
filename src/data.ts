@@ -1,7 +1,9 @@
-// 教材が書き出したデータ（kn-schema v1）を読み、検査して、1つのネットワークにまとめる。
-// 型は schema/kn-schema-v1.json の1か所だけ（Ajv でそのまま検査する）。下の TypeScript の型はそれを写したもの。
+// 教材が書き出したデータ（kn-schema v1・v2）を読み、検査して、1つのネットワークにまとめる。
+// 型は schema/kn-schema-v1.json と schema/kn-schema-v2.json（製本への移行の期間は両方。stats2-course #263）。Ajv でそのまま検査する。下の TypeScript の型はそれを写したもの。
+// v2 のデータは、読んだあとで画面の形（v1 と同じ形の Relation・Concept）に写す（toScreen）。移していない関係は legacy_type を type として読む。
 import Ajv2020 from "ajv/dist/2020";
 import schema from "../schema/kn-schema-v1.json";
+import schemaV2 from "../schema/kn-schema-v2.json";
 import experimentSchema from "../schema/kn-experiment-v1.json";
 import kinds from "./generated/relation-types.json";
 
@@ -116,6 +118,20 @@ export type Relation = {
   from: string;
   to: string;
   type: string;
+  /** v2：移していない行の v1 の種類（画面は type に写して読む） */ legacy_type?: string;
+  /** v2 の種類ごとの項目（stats2-course docs/schema-v2-design.md の 3.1） */
+  fix?: string;
+  fix_text?: string;
+  operation?: string;
+  theorem?: string;
+  reversible?: boolean;
+  use_form?: string;
+  claim?: string;
+  properties?: string[];
+  same?: string;
+  differ?: string;
+  from_form?: string;
+  to_form?: string;
   description: string;
   gist?: string;
   /** 比べる軸：対比で、何について違うのか（型の改訂36） */
@@ -172,9 +188,23 @@ export type Unit = {
 export type ExperimentData = import("@math-lab/ui").ExperimentDef;
 export type WalkTexts = import("@math-lab/ui").WalkTexts;
 export type ApplyTexts = import("@math-lab/ui").ApplyTexts;
+/** v2 の主張（stats2-course #263。画面は今は持つだけで、見せ方は M3 のあと） */
+export type Claim = {
+  id: string;
+  label?: string;
+  kind: string;
+  statement: { text: string; tree?: FormulaNode };
+  premises?: { subjects?: string[]; predicates?: string[] };
+  conclusion?: { subjects?: string[]; predicates?: string[] };
+  version: number;
+};
+/** v2 の学ぶ順の足す・外す */
+export type Learning = { id: string; op: "add" | "remove"; from: string; to: string; reason: string; version: number };
 export type CourseData = {
   schema: "kn-schema";
-  version: 1;
+  version: 1 | 2;
+  claims?: Claim[];
+  learning?: Learning[];
   schema_revision?: number;
   experiment_revision?: number;
   course: {
@@ -197,11 +227,17 @@ export type CourseData = {
 };
 export type Kind = { definition: string; reading: string; trace: boolean; required: string[] };
 export const KINDS = kinds.types as unknown as Record<string, Kind>;
+/** 型 v2 の種類（relation-types.yaml の types_v2。stats2-course #263）。線の見方の一覧は、移行の期間は v1 の種類のまま */
+export const KINDS_V2 = ((kinds as { types_v2?: object }).types_v2 ?? {}) as unknown as Record<string, Kind>;
+/** 種類の定義を v1・v2 のどちらからでも引く */
+export const kindOf = (t: string): Kind | undefined => KINDS[t] ?? KINDS_V2[t];
 export const MODES = kinds.modes as Record<string, string>;
 export const PREMISES = kinds.premises as Record<string, string>;
 
 /** この画面が知っている型の改訂番号（schema/kn-schema-v1.json の x-revision）。 */
 export const REVISION = (schema as { "x-revision"?: number })["x-revision"] ?? 1;
+/** この画面が知っている型 v2 の改訂番号（schema/kn-schema-v2.json の x-revision） */
+export const REVISION_V2 = (schemaV2 as { "x-revision"?: number })["x-revision"] ?? 1;
 /** この画面が知っている実験室の拡張の改訂番号（schema/kn-experiment-v1.json の x-revision。stats2-course issue 211） */
 export const EXPERIMENT_REVISION = (experimentSchema as { "x-revision"?: number })["x-revision"] ?? 1;
 
@@ -209,6 +245,7 @@ export const EXPERIMENT_REVISION = (experimentSchema as { "x-revision"?: number 
 const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false });
 ajv.addSchema(experimentSchema);
 const validateCourse = ajv.compile(schema);
+const validateCourseV2 = ajv.compile(schemaV2);
 /** 読むときの型（stats2-course issue 207）：知らない項目を拒む指定（additionalProperties: false）だけを外した写し。
  *  教材が画面より先に新しい改訂（任意の項目の追加）で公開しても、教材ごと外さずに、知っている項目だけで表示する。
  *  型は1か所のまま（元の型から作る）。Ajv の removeAdditional は、どれか1つに合う形（式の木など）の検査の途中で
@@ -221,14 +258,60 @@ export const relaxSchema = (x: unknown): unknown =>
           Object.entries(x).map(([k, v]) => [k, k === "additionalProperties" && v === false ? true : relaxSchema(v)]),
         )
       : x;
-const validateRead = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false })
-  .addSchema(relaxSchema(experimentSchema) as object)
-  .compile(relaxSchema(schema) as object);
+const readAjv = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false }).addSchema(
+  relaxSchema(experimentSchema) as object,
+);
+const validateRead = readAjv.compile(relaxSchema(schema) as object);
+const validateReadV2 = readAjv.compile(relaxSchema(schemaV2) as object);
 
 /** 型に合わなければ、どこが合わないかの一覧を返す（空なら合っている）。 */
 export function schemaErrors(data: unknown): string[] {
-  if (validateCourse(data)) return [];
-  return (validateCourse.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
+  const v = isV2(data) ? validateCourseV2 : validateCourse;
+  if (v(data)) return [];
+  return (v.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
+}
+const isV2 = (data: unknown) => (data as { version?: number } | null)?.version === 2;
+
+/** v2 の条件の行（object）を、画面の形（文の一覧と区分の写し）に写す */
+type V2Cond = {
+  text: string;
+  kind?: "要件" | "仮定" | "目安";
+  outside?: string;
+  terms?: string[];
+  approx?: string;
+  target?: string;
+};
+const condDetail = (c: V2Cond): ConditionDetail => ({
+  text: c.text,
+  ...(c.kind ? { kind: c.kind } : {}),
+  ...(c.outside ? { outside: c.outside } : {}),
+  ...(c.terms ? { terms: c.terms } : {}),
+  ...(c.approx ? { target: c.approx } : {}),
+});
+/** v2 のデータを、画面が読む形（v1 と同じ形）に写す。移していない関係は legacy_type を type に、条件の行は文と区分に分ける */
+export function toScreen(d: CourseData): CourseData {
+  if (d.version !== 2) return d;
+  const relations = d.relations.map((r) => {
+    const rows = (r.conditions ?? []) as (string | V2Cond)[];
+    const objs = rows.filter((x): x is V2Cond => typeof x === "object");
+    return {
+      ...r,
+      type: r.legacy_type ?? r.type,
+      conditions: rows.map((x) => (typeof x === "string" ? x : x.text)),
+      ...(objs.length ? { conditions_detail: objs.map(condDetail) } : {}),
+    };
+  });
+  const concepts = d.concepts.map((c) => {
+    const cond = c.conditions as unknown;
+    if (!Array.isArray(cond)) return c;
+    const rows = cond as V2Cond[];
+    return {
+      ...c,
+      ...(rows.length ? { conditions: { math: rows.map((x) => x.text) } } : { conditions: undefined }),
+      ...(rows.length ? { conditions_detail: rows.map((x) => ({ ...condDetail(x), scope: "math" as const })) } : {}),
+    } as Concept;
+  });
+  return { ...d, relations, concepts };
 }
 
 /** まとまりの間の1本の矢印（全体の見え方。言葉は動詞で、開いた直後に組・操作・条件の文） */
@@ -249,6 +332,9 @@ export type Network = {
   concepts: Map<string, Concept>;
   relations: Relation[];
   derivations: Derivation[];
+  /** v2 の主張（id → 主張）と学ぶ順の足す・外す（stats2-course #263。見せ方は M3 のあと） */
+  claims: Map<string, Claim>;
+  learning: Learning[];
   /** 実験室（id → 定義）。概念・線から「実験室で試す」で開く */
   experiments: Map<string, ExperimentData>;
   /** 解き方の公式の文（教材 id → walk_texts。実験室は自分の教材の文を使う。stats2-course issue 211） */
@@ -273,6 +359,8 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     concepts: new Map(),
     relations: [],
     derivations: [],
+    claims: new Map(),
+    learning: [],
     experiments: new Map(),
     walkTexts: new Map(),
     applyTexts: new Map(),
@@ -282,25 +370,28 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
   };
   const errors: string[] = [];
   for (const { id, data } of list) {
-    if (!validateRead(data)) {
-      const errs = (validateRead.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
+    const read = isV2(data) ? validateReadV2 : validateRead;
+    if (!read(data)) {
+      const errs = (read.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
       errors.push(`${id}：データの型が合わない（${errs.slice(0, 3).join("／")}${errs.length > 3 ? "…" : ""}）`);
       continue;
     }
-    const d = data as CourseData;
+    const d = toScreen(data as CourseData);
     if (
-      (d.schema_revision ?? 1) > REVISION ||
+      (d.schema_revision ?? 1) > (d.version === 2 ? REVISION_V2 : REVISION) ||
       (d.experiment_revision ?? 1) > EXPERIMENT_REVISION ||
       schemaErrors(data).length
     )
       errors.push(
-        `${id}：データの型の改訂（芯 ${d.schema_revision ?? 1}・実験室 ${d.experiment_revision ?? 1}）がこの画面（芯 ${REVISION}・実験室 ${EXPERIMENT_REVISION}）より新しいか、画面が知らない項目がある。知っている項目だけで表示する（画面の更新を待つ）`,
+        `${id}：データの型の改訂（芯 ${d.schema_revision ?? 1}・実験室 ${d.experiment_revision ?? 1}）がこの画面（芯 ${d.version === 2 ? `v2 の ${REVISION_V2}` : REVISION}・実験室 ${EXPERIMENT_REVISION}）より新しいか、画面が知らない項目がある。知っている項目だけで表示する（画面の更新を待つ）`,
       );
     net.courses.push({ id: d.course.id, title: d.course.title });
     for (const u of d.course.units) net.units.set(u.id, u);
     for (const c of d.concepts) net.concepts.set(c.id, c);
     net.relations.push(...d.relations);
     net.derivations.push(...d.derivations);
+    for (const c of d.claims ?? []) net.claims.set(c.id, c);
+    net.learning.push(...(d.learning ?? []));
     for (const x of d.experiments ?? []) net.experiments.set(x.id, x);
     for (const p of d.course.pillars ?? []) if (!net.pillars.some((q) => q.id === p.id)) net.pillars.push(p);
     for (const g of d.course.groups ?? []) if (!net.groups.some((q) => q.id === g.id)) net.groups.push(g);
@@ -314,7 +405,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     ...net.derivations.flatMap((d) => [...d.premises, d.conclusion]),
   ];
   const relIds = new Set(net.relations.map((r) => r.id));
-  for (const id of ends) if (!net.concepts.has(id) && !relIds.has(id)) net.missing.add(id);
+  for (const id of ends) if (!net.concepts.has(id) && !relIds.has(id) && !net.claims.has(id)) net.missing.add(id);
   return { net, errors };
 }
 
@@ -324,7 +415,7 @@ export type Step = { from: string; to: string; via: string }; // via：関係の
 export function trace(net: Network, id: string): { order: string[]; steps: Step[] } {
   const back = new Map<string, Step[]>();
   const add = (s: Step) => back.set(s.to, [...(back.get(s.to) ?? []), s]);
-  for (const r of net.relations) if (KINDS[r.type]?.trace) add({ from: r.from, to: r.to, via: r.type });
+  for (const r of net.relations) if (kindOf(r.type)?.trace) add({ from: r.from, to: r.to, via: r.type });
   for (const d of net.derivations) for (const p of d.premises) add({ from: p, to: d.conclusion, via: d.id });
   const order: string[] = [];
   const steps: Step[] = [];
@@ -487,7 +578,7 @@ export function neighborhood(net: Network, id: string): Map<string, Placed> {
   for (const r of net.relations) {
     if (r.from !== id && r.to !== id) continue;
     const other = r.from === id ? r.to : r.from;
-    if (KINDS[r.type]?.trace) put(other, r.to === id ? -1 : 1);
+    if (kindOf(r.type)?.trace) put(other, r.to === id ? -1 : 1);
     else put(other, 0);
   }
   for (const d of net.derivations) {
@@ -565,14 +656,14 @@ export function learningOrder(net: Network, ids: string[]): string[] {
   const pos = new Map(ids.map((id, i) => [id, i]));
   const weight = new Map(ids.map((id) => [id, trace(net, id).order.length]));
   for (const r of net.relations) {
-    if (KINDS[r.type]?.trace || !pos.has(r.from) || !pos.has(r.to)) continue;
+    if (kindOf(r.type)?.trace || !pos.has(r.from) || !pos.has(r.to)) continue;
     // 前提の関係でつながっていない相手どうし：後ろの語（向きの to）を、相手より後ろにする
     weight.set(r.to, Math.max(weight.get(r.to)!, weight.get(r.from)! + 1));
   }
   const next = new Map<string, string[]>(ids.map((id) => [id, []]));
   const indeg = new Map(ids.map((id) => [id, 0]));
   for (const r of net.relations) {
-    if (!KINDS[r.type]?.trace || !pos.has(r.from) || !pos.has(r.to) || r.from === r.to) continue;
+    if (!kindOf(r.type)?.trace || !pos.has(r.from) || !pos.has(r.to) || r.from === r.to) continue;
     next.get(r.from)!.push(r.to);
     indeg.set(r.to, indeg.get(r.to)! + 1);
   }
