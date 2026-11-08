@@ -38,6 +38,11 @@ describe("型 v2 の読み込み", () => {
     expect(tr.conditions).toEqual(["np≧5 かつ n(1−p)≧5"]);
     expect(tr.conditions_detail?.[0]).toMatchObject({ kind: "目安", target: "二項分布の正規近似" });
   });
+  it("主張だけを指すまとまりの矢印は、関係を空にして読む（改訂3。stats2-course #289）", () => {
+    const { net, errors } = merge([{ id: "t", data: v2() }]);
+    expect(errors).toEqual([]);
+    expect(net.groupRelations[0]).toMatchObject({ relations: [], claims: ["t:CLM-13"] });
+  });
   it("主張を持ち、主張の id を未接続に数えない", () => {
     const { net } = merge([{ id: "t", data: v2() }]);
     expect(net.claims.get("t:CLM-13")?.label).toBe("④-13");
