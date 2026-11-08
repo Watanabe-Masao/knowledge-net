@@ -48,7 +48,14 @@
         "distribution"
       ],
       "basis": {
-        "formula": "F-binom-pmf"
+        "formula": "F-binom-pmf",
+        "excludes": [
+          {
+            "concept": "t:TERM-prob",
+            "kind": "使われる場",
+            "text": "確率関数の値が確率であることは、分布の定義が使われる場で、直接の構成要素ではない（テストの見本）"
+          }
+        ]
       }
     },
     {

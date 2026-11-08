@@ -51,6 +51,9 @@ describe("型 v2", () => {
     ["変換の行に要件", (d) => (((rel(d, "移る").conditions as Row[])[0] as Row).kind = "要件")],
     ["学ぶ順に理由がない", (d) => delete d.learning[0].reason],
     ["知らない姿", (d) => (d.concepts[0].forms = ["箱"])],
+    // 改訂2（stats2-course #86）：基準の定義から外す理由は ⑤ の「構成要素にしないもの」だけ。一種の親は関係から決まるので書けない
+    ["外す理由が ⑤ の一覧の外", (d) => (((d.concepts[1].basis as Row).excludes as Row[])[0].kind = "一種の親")],
+    ["外す理由の文がない", (d) => delete ((d.concepts[1].basis as Row).excludes as Row[])[0].text],
   ];
   it.each(breaks)("1つずつ止まる：%s", (_name, mutate) => {
     const d = fixture();
