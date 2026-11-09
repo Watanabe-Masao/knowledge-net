@@ -461,7 +461,7 @@ export function RelationOpen({
           <Conditions
             net={net}
             detail={r.conditions_detail}
-            math={r.conditions}
+            math={r.conditions ?? []}
             onTerm={onTerm}
             plainClass={s.condList}
           />
