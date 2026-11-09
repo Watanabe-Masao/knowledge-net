@@ -3088,7 +3088,8 @@
    "検定",
    "要約（代表値・ばらつき）",
    "相関・回帰",
-   "調査・実験"
+   "調査・実験",
+   "データと変数"
   ]
  },
  "concepts": [
@@ -3410,7 +3411,14 @@
    "en": "population",
    "short": "調べたい対象の全体（知りたい性質をもつ人・物のすべて）",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-population.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-population.svg",
+   "basis": {
+    "text": "調べたい性質をもつ対象（人・物・出来事）の全部の要素の集まり（要素の数 N。限りなく多いとみなすこともある）。推測統計で「母集団の分布」と言うときは、値が数の変数について、母集団から1つ無作為に取り出した要素の値（確率変数）の分布を指し、母集団そのものとは別のもの",
+    "terms": []
+   },
+   "forms": [
+    "event"
+   ]
   },
   {
    "id": "stats2:TERM-sample",
@@ -3425,7 +3433,16 @@
    "en": "sample",
    "short": "母集団から、調べるために取り出した一部",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample.svg",
+   "basis": {
+    "text": "母集団について調べるために（実際には抽出枠から）n 回選んだ個体（復元抽出では重なりうる）の、調べる変数の値を並べた組 X₁, …, Xₙ（どの個体が選ばれるかの偶然で値が決まる。選ばれた個体の集まり S は、標本の選ばれ方の結果として文の中で言う。n を標本の大きさと呼び、観測したあとの値 x₁, …, xₙ も同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-population"
+    ]
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-parameter",
@@ -3440,6 +3457,12 @@
    "short": "母集団の性質を表す値（母平均・母分散など）で、ふつうは分からないので標本から推定する",
    "category": "データと変数",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-parameter.svg",
+   "basis": {
+    "text": "母集団の性質を表す数 θ（母平均 μ・母分散 σ² など）。母集団の全部の要素の値から決まり、全数を調べない限り標本からは決まらないので、ふつうは分からない（母集団の分布を分布の族で表すときは、その族を区別する数（二項分布の p など）を同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-population"
+    ]
+   },
    "forms": [
     "number"
    ]
@@ -3458,6 +3481,13 @@
    "short": "標本のデータから計算して求める値（標本平均・標本分散など）",
    "category": "データと変数",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-statistic.svg",
+   "basis": {
+    "text": "標本 X₁, …, Xₙ の値だけで値が数（実数1つ）に決まる関数 T＝t(X₁, …, Xₙ) として作る確率変数（分からない母数を含まないことと、値が数であることは定義の要件。観測したあとの値も同じ名前で呼ぶ。定義ではない補足：標本を取り直すたびに値が変わりうる。分からない母数を推し量る推定や、仮説を確かめる検定に使う）",
+    "terms": [
+     "stats2:TERM-sample",
+     "stats2:TERM-rv"
+    ]
+   },
    "forms": [
     "rv"
    ]
@@ -3524,6 +3554,10 @@
    "short": "標本を選ぶときに使う、母集団の名簿や一覧",
    "category": "データと変数",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-frame.svg",
+   "basis": {
+    "text": "標本を選ぶ元にする、要素を1つずつ並べた一覧（名簿・台帳・地図の区画など）に載っている要素の集まり。母集団の要素の全部を1回ずつ含むとは限らず、漏れ・重複・対象外の要素を含むことがある",
+    "terms": []
+   },
    "forms": [
     "event"
    ]
@@ -3593,8 +3627,14 @@
    "short": "値が分類（性別・血液型など）を表し、そのままでは足したり平均したりできない変数",
    "category": "データと変数",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-qual.svg",
+   "basis": {
+    "text": "個体（調べる対象の1つ1つ）ごとに値を1つ対応させる変数のうち、尺度が名義尺度か順序尺度のもの。値は分類（カテゴリ）を表し、数字で書いても値どうしの足し算・引き算に意味がない",
+    "terms": [
+     "stats2:TERM-scale"
+    ]
+   },
    "forms": [
-    "rv"
+    "function"
    ]
   },
   {
@@ -3609,7 +3649,16 @@
    "en": "quantitative variable",
    "short": "値が数量（長さ・金額など）を表し、足したり平均したりできる変数",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-quant.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-quant.svg",
+   "basis": {
+    "text": "個体（調べる対象の1つ1つ）ごとに値を1つ対応させる変数のうち、尺度が間隔尺度か比例尺度のもの。値は数量を表し、値どうしの差に意味がある（比例尺度なら比にも意味がある）",
+    "terms": [
+     "stats2:TERM-scale"
+    ]
+   },
+   "forms": [
+    "function"
+   ]
   },
   {
    "id": "stats2:TERM-scale",
@@ -3623,7 +3672,14 @@
    "en": "level of measurement",
    "short": "データの値がもつ情報の段階で、名義・順序・間隔・比例の4つがある",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-scale.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-scale.svg",
+   "basis": {
+    "text": "変数の値について、意味をもつ比べ方・計算で分けた4つの段階。名義尺度（同じか違うかだけ）、順序尺度（大小の順まで）、間隔尺度（差まで。0 の位置は決め方による）、比例尺度（比まで。0 が「無い」を表す）。上の段階は、下の段階の比べ方を全部含む",
+    "terms": []
+   },
+   "forms": [
+    "property"
+   ]
   },
   {
    "id": "stats2:TERM-mode",
@@ -3800,7 +3856,14 @@
    "en": "ratio",
    "short": "全体に対する部分の大きさを、全体を1（または100%）として表した値",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ratio.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ratio.svg",
+   "basis": {
+    "text": "もとにする量 B に対する、比べる量 A の比 A/B（B を1とみた A の大きさ。100倍すると百分率（%）。A が B の一部なら 0 以上 1 以下、前年比のように A が B より大きければ 1 を超える）。B＞0 は定義の要件",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-point",
@@ -3815,7 +3878,16 @@
    "en": "percentage point",
    "short": "2つの割合（%）の差を、%どうしの引き算で表した単位",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-point.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-point.svg",
+   "basis": {
+    "text": "2つの割合 p₁・p₂ を百分率で表したときの差 p₂−p₁ を、その数で表したもの（単位はポイント。10% から 12% は 2 ポイント。前の割合を基準にした相対的な変化 (p₂−p₁)/p₁（p₁＞0 のとき。10% から 12% は 20% 増）とは別）",
+    "terms": [
+     "stats2:TERM-ratio"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-dev",
@@ -10316,7 +10388,7 @@
     ]
    },
    "forms": [
-    "rv"
+    "function"
    ]
   },
   {
@@ -10496,7 +10568,7 @@
    "category": "調査・実験",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sampling-error.svg",
    "basis": {
-    "text": "標本 S を選んだあと、S の要素を誤りなく測ったときの推定量の値 θ̂*(S) と、抽出枠の上の母数 θ_F（抽出枠の全部を誤りなく調べたときの値）の差 θ̂*(S)−θ_F（どの標本が選ばれたかで値が決まる）",
+    "text": "選ばれた個体の集まり S が決まったあと、S の要素を誤りなく測ったときの推定量の値 θ̂*(S) と、抽出枠の上の母数 θ_F（抽出枠の全部を誤りなく調べたときの値）の差 θ̂*(S)−θ_F（どの標本が選ばれたかで値が決まる）",
     "terms": [
      "stats2:TERM-estimator",
      "stats2:TERM-frame"
@@ -10520,7 +10592,7 @@
    "category": "調査・実験",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-nonsampling-error.svg",
    "basis": {
-    "text": "実際に得たデータで求めた推定量の値 θ̂ と、母数 θ の差 θ̂−θ から、選んだ標本を誤りなく測ったときのずれを除いた部分 (θ̂−θ̂*(S))＋(θ_F−θ)（θ̂*(S) は標本 S の要素を誤りなく測ったときの推定量の値、θ_F は抽出枠の全部を誤りなく調べたときの値）。前の項は無回答・回答や記入の誤りなど測り方から、後ろの項は抽出枠と母集団のずれ（名簿の漏れなど）から来る。標本誤差 θ̂*(S)−θ_F と足すと θ̂−θ になる",
+    "text": "実際に得たデータで求めた推定量の値 θ̂ と、母数 θ の差 θ̂−θ から、選んだ標本を誤りなく測ったときのずれを除いた部分 (θ̂−θ̂*(S))＋(θ_F−θ)（θ̂*(S) は選ばれた個体の集まり S の要素を誤りなく測ったときの推定量の値、θ_F は抽出枠の全部を誤りなく調べたときの値）。前の項は無回答・回答や記入の誤りなど測り方から、後ろの項は抽出枠と母集団のずれ（名簿の漏れなど）から来る。標本誤差 θ̂*(S)−θ_F と足すと θ̂−θ になる",
     "terms": [
      "stats2:TERM-estimator",
      "stats2:TERM-frame"
@@ -12761,16 +12833,15 @@
   },
   {
    "id": "stats2:REL-population-sample",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-population",
    "to": "stats2:TERM-sample",
-   "legacy_type": "前提",
-   "description": "標本は母集団の一部。何の一部か（母集団）を先に決めないと、標本から何を言うのかが決まらない。",
+   "type": "定める",
+   "description": "標本は、母集団から選んだ個体の値の組。母集団が定義に直接出る。",
    "units": [
     "stats2:U03",
     "stats2:U17"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-sample-random",
@@ -12811,16 +12882,15 @@
   },
   {
    "id": "stats2:REL-sample-statistic",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-sample",
    "to": "stats2:TERM-statistic",
-   "legacy_type": "前提",
-   "description": "統計量は標本のデータから計算する値。",
+   "type": "定める",
+   "description": "統計量は、標本の値だけで決まる関数として作る確率変数。標本が定義に直接出る。",
    "units": [
     "stats2:U03",
     "stats2:U18"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-statistic-sampdist",
@@ -13321,40 +13391,26 @@
   },
   {
    "id": "stats2:REL-ratio-point",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-ratio",
    "to": "stats2:TERM-point",
-   "legacy_type": "前提",
-   "description": "パーセントポイントは、2つの割合（%）の差。割合が分かってから、その差の言い方として学ぶ。",
+   "type": "定める",
+   "description": "パーセントポイントは、% で表した2つの割合の差。割合が定義に直接出る。",
    "units": [
     "stats2:U01",
     "stats2:U05T"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-population-parameter",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-population",
    "to": "stats2:TERM-parameter",
-   "legacy_type": "前提",
-   "description": "母数は母集団の性質を表す値。",
+   "type": "定める",
+   "description": "母数は、母集団の個体の値の全体から決まる数。母集団が定義に直接出る。",
    "units": [
     "stats2:U03"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-parameter-statistic-contrast",
-   "version": 1,
-   "from": "stats2:TERM-parameter",
-   "to": "stats2:TERM-statistic",
-   "legacy_type": "対比",
-   "description": "母数は母集団の値でふつうは分からない。統計量は標本から計算する値で、標本を取り直すたびに変わる。統計量で母数を推定する。",
-   "units": [
-    "stats2:U03"
-   ],
-   "gist": "母数は「本当の値（分からない）」、統計量は「手元のデータから出した値（取り直すと変わる）」。手元の値から本当の値を推し量るのが推定。"
+   ]
   },
   {
    "id": "stats2:REL-parameter-estimator",
@@ -13370,39 +13426,40 @@
   },
   {
    "id": "stats2:REL-scale-qual",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-scale",
    "to": "stats2:TERM-qual",
-   "legacy_type": "前提",
-   "description": "名義尺度・順序尺度のデータが質的変数になる。",
+   "type": "定める",
+   "description": "質的変数は、名義尺度か順序尺度の値をとる変数。尺度が定義に直接出る。",
    "units": [
     "stats2:U04"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-scale-quant",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-scale",
    "to": "stats2:TERM-quant",
-   "legacy_type": "前提",
-   "description": "間隔尺度・比例尺度のデータが量的変数になる。",
+   "type": "定める",
+   "description": "量的変数は、間隔尺度か比例尺度の値をとる変数。尺度が定義に直接出る。",
    "units": [
     "stats2:U04"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-qual-quant-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-qual",
    "to": "stats2:TERM-quant",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "質的変数は分類を、量的変数は数量を表す。量的変数は平均や分散を計算できるが、質的変数は度数や割合で要約する。",
    "units": [
     "stats2:U04"
    ],
-   "gist": "「何の種類か」を表すのが質的、「どれだけか」を表すのが量的。数字で書いてあっても、背番号のように分類なら質的。"
+   "axis": "尺度の段階（値が分類か数量か）と、それで意味をもつ計算・要約",
+   "gist": "「何の種類か」を表すのが質的、「どれだけか」を表すのが量的。数字で書いてあっても、背番号のように分類なら質的。",
+   "same": "どちらも個体の1つ1つに値を1つ対応させる変数で、調べた個体の値を並べるとデータの列になる",
+   "differ": "質的変数は名義尺度か順序尺度で、値は分類を表し、数字で書いても値どうしの足し算・引き算に意味がない。度数・割合で要約し、順序尺度なら大小の順で中央値まで言える。量的変数は間隔尺度か比例尺度で、値は数量を表し、差に意味がある（比例尺度なら比も）ので、平均・分散で要約できる"
   },
   {
    "id": "stats2:REL-freqtable-mode",
@@ -14987,6 +15044,18 @@
    "description": "標本誤差は、誤りなく測った推定量の値と、抽出枠の上の母数 θ_F の差。抽出枠が定義に直接出る。",
    "units": [
     "stats2:U31"
+   ]
+  },
+  {
+   "id": "stats2:REL-statistic-rv",
+   "version": 1,
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-rv",
+   "type": "一種",
+   "description": "統計量は、標本の関数として作る確率変数の1つ（分からない母数を含まないもの）。",
+   "units": [
+    "stats2:U03",
+    "stats2:U18"
    ]
   }
  ],
