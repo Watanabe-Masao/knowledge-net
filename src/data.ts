@@ -294,8 +294,8 @@ const condDetail = (c: V2Cond): ConditionDetail => ({
 });
 /** v2 のデータを、画面が読む形（v1 と同じ形）に写す。移していない関係は legacy_type を type に、条件の行は文と区分に分ける */
 /**
- * ⑤ の種類を、今の画面（地図・関係図・凡例）の v1 の種類で出す読み替え（渡辺さん 2026-11-09。stats2-course #289）。
- * 関係図を ⑤ の種類で描き直すのは M6（#270）。それまでの仮の形で、意味は製本 ⑤ のまま（元の種類は kind_v2 に残す）。
+ * ⑤ の種類を、今の画面（地図・関係図・凡例）の v1 の種類で出す読み替え（渡辺さん 2026-11-09。stats2-course の issue 289）。
+ * 関係図を ⑤ の種類で描き直すのは M6（stats2-course の issue 270）。それまでの仮の形で、意味は製本 ⑤ のまま（元の種類は kind_v2 に残す）。
  * 見直す条件：画面が ⑤ の種類を描けるようになったら外す（docs/decisions.md）。
  */
 export const SCREEN_KIND_OF_V2: Record<string, string> = {
@@ -445,7 +445,7 @@ export type Step = { from: string; to: string; via: string }; // via：関係の
 /** id を理解するのにたどる前提を、近い順に返す（relation-types.yaml の trace が true の関係と、導出の前提）。 */
 /**
  * 前提をさかのぼる向き（先に学ぶ側 → 後の側）。ほとんどの種類は from → to。
- * 種類（⑤ の一種）だけは「from は to の一種」なので、親（to）の定義が子（from）の定義に入る：親が先（stats2-course #289。
+ * 種類（⑤ の一種）だけは「from は to の一種」なので、親（to）の定義が子（from）の定義に入る：親が先（stats2-course の issue 289。
  * 公開データに種類の行が入って初めて分かった。v1 の種類の行はそれまで0だった）
  */
 function prereq(r: { type: string; from: string; to: string }): [string, string] {
