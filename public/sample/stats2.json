@@ -3085,7 +3085,8 @@
    "確率",
    "標本分布・極限",
    "推定",
-   "検定"
+   "検定",
+   "要約（代表値・ばらつき）"
   ]
  },
  "concepts": [
@@ -3609,7 +3610,14 @@
    "en": "mode",
    "short": "データの中でいちばん多く現れる値（度数分布では度数が最大の階級の値）",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mode.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mode.svg",
+   "basis": {
+    "text": "データに現れる値のうち、現れる回数（度数）がいちばん多い値（いちばん多い値が2つ以上あれば、それぞれが最頻値）",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-median",
@@ -3625,7 +3633,14 @@
    "en": "median",
    "short": "データを小さい順に並べたとき、真ん中にくる値",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-median.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-median.svg",
+   "basis": {
+    "text": "値に順序があるデータ x₁, …, xₙ（n≧1。順序があることは定義の要件）を小さい順に並べたとき、真ん中の位置の値（n が奇数なら (n＋1)/2 番目、偶数なら n/2 番目と n/2＋1 番目の2つの値の和の半分。偶数のときは値が量的であることも要件で、順序だけのデータではこの定義では定まらない）",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-freqtable",
@@ -3682,7 +3697,16 @@
    "en": "quartile",
    "short": "データを小さい順に並べて4等分する位置の値（第1・第2・第3四分位数）",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-quartile.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-quartile.svg",
+   "basis": {
+    "text": "データを小さい順に並べ、中央値を第2四分位数 Q₂、中央値より下の半分の中央値を第1四分位数 Q₁、上の半分の中央値を第3四分位数 Q₃ とする（n が奇数のときは、真ん中の値を両方の半分から除く。n≧2 で、値が量的であることは定義の要件）",
+    "terms": [
+     "stats2:TERM-median"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-iqr",
@@ -3697,7 +3721,16 @@
    "en": "interquartile range",
    "short": "第3四分位数から第1四分位数を引いた値で、真ん中の半分のデータの広がり",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-iqr.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-iqr.svg",
+   "basis": {
+    "text": "第3四分位数から第1四分位数を引いた値 Q₃−Q₁（真ん中の半分のデータの広がり）",
+    "terms": [
+     "stats2:TERM-quartile"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-outlier",
@@ -3713,7 +3746,16 @@
    "en": "outlier",
    "short": "ほかのデータから大きく離れた値（箱ひげ図では、箱から四分位範囲の1.5倍より外の値など）",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-outlier.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-outlier.svg",
+   "basis": {
+    "text": "データの値のうち、決めた基準でほかの値から大きく離れているとみなすもの。この教材の基準は箱ひげ図の柵で、Q₁−1.5×(Q₃−Q₁) より小さいか、Q₃＋1.5×(Q₃−Q₁) より大きい値（z の大きさなどほかの判定は、外れ値の候補を見つける別の目安で、この定義の外）",
+    "terms": [
+     "stats2:TERM-iqr"
+    ]
+   },
+   "forms": [
+    "property"
+   ]
   },
   {
    "id": "stats2:TERM-ratio",
@@ -3761,7 +3803,16 @@
    "en": "deviation",
    "short": "1つのデータの値から平均を引いた値（平均からのずれ）",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-dev.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-dev.svg",
+   "basis": {
+    "text": "データ x₁, …, xₙ の各値 xᵢ から平均 x̄ を引いた値 xᵢ−x̄（平均からのずれ）",
+    "terms": [
+     "stats2:TERM-mean"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-var",
@@ -3995,7 +4046,7 @@
    ],
    "conditions": {
     "math": [
-     "期待値と、2乗の期待値が有限"
+     "2乗の期待値 E(X²) が有限（このとき E(X) も有限になり、E((X−μ)²) が有限の値に定まる）"
     ],
     "data": [
      "外れ値が1つあると大きく変わる（2乗で効く）ので、分布の形も一緒に見る"
@@ -4013,6 +4064,19 @@
      "correction": "分散は元の単位の2乗。元の単位で言うなら平方根の標準偏差"
     }
    ],
+   "conditions_detail": [
+    {
+     "text": "2乗の期待値 E(X²) が有限（このとき E(X) も有限になり、E((X−μ)²) が有限の値に定まる）",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "この定義の分散（有限の値）としては扱えない（∞ になるか定まらない）"
+    },
+    {
+     "text": "外れ値が1つあると大きく変わる（2乗で効く）ので、分布の形も一緒に見る",
+     "scope": "data"
+    }
+   ],
+   "basis_formula": "F-var-def",
    "labs": [
     {
      "id": "LAB-expect",
@@ -4042,6 +4106,9 @@
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ],
+   "basis": {
+    "formula": "F-var-def"
+   },
    "forms": [
     "operation",
     "number"
@@ -4062,6 +4129,13 @@
    "short": "偏差の2乗の和を n−1 で割った分散で、その期待値が母分散に一致する",
    "category": "要約（代表値・ばらつき）",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-unbvar.svg",
+   "basis": {
+    "text": "標本 X₁, …, Xₙ（n≧2。n≧2 は定義の要件）から作る統計量 s²＝{(X₁−X̄)²＋…＋(Xₙ−X̄)²}/(n−1)（X̄ は標本平均。観測したあとの値も同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-statistic",
+     "stats2:TERM-sample-mean"
+    ]
+   },
    "forms": [
     "rv"
    ]
@@ -4165,6 +4239,19 @@
      "correction": "ずれの2乗の平均の平方根。ずれの大きさ（絶対値）の平均と同じか、それより大きくなる"
     }
    ],
+   "conditions_detail": [
+    {
+     "text": "分散が有限",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "√V(X) が有限の値に定まらないので、この定義の標準偏差として扱えない"
+    },
+    {
+     "text": "外れ値に強く引っ張られる（2乗が効く）。山が2つあるときや裾が長いときは、分布の形と一緒に見る",
+     "scope": "data"
+    }
+   ],
+   "basis_formula": "F-sd-def",
    "labs": [
     {
      "id": "LAB-z",
@@ -4195,6 +4282,9 @@
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ],
+   "basis": {
+    "formula": "F-sd-def"
+   },
    "forms": [
     "operation",
     "number"
@@ -4212,7 +4302,17 @@
    "en": "coefficient of variation",
    "short": "標準偏差を平均で割った値で、平均の大きさが違うデータどうしのばらつきを比べるのに使う",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-cv.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-cv.svg",
+   "basis": {
+    "text": "平均 x̄ が正の量的なデータ x₁, …, xₙ（n≧2）について、不偏分散の平方根 s＝√{Σ(xᵢ−x̄)²/(n−1)} を平均で割った値 s/x̄（x̄＞0・n≧2 は定義の要件）",
+    "terms": [
+     "stats2:TERM-unbvar",
+     "stats2:TERM-mean"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-unbiased",
@@ -4420,6 +4520,19 @@
      "correction": "位置と広がりをそろえるだけで、形は元のまま"
     }
    ],
+   "conditions_detail": [
+    {
+     "text": "分散が有限で、標準偏差が0でない",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "σ で割れない（σ＝0）か σ が定まらないので、標準化した値が定まらない"
+    },
+    {
+     "text": "平均と標準偏差を、比べたい集団から出しているか（別の集団の値で割らない。偏差値のように基準集団の値を使うと、平均0・標準偏差1 にはならない）",
+     "scope": "data"
+    }
+   ],
+   "basis_formula": "F-std-def",
    "labs": [
     {
      "id": "LAB-z",
@@ -4450,6 +4563,9 @@
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ],
+   "basis": {
+    "formula": "F-std-def"
+   },
    "forms": [
     "operation"
    ]
@@ -4466,7 +4582,16 @@
    "en": "skewness",
    "short": "分布の左右の非対称さを表す値で、右に裾が長いと正になる",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-skew.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-skew.svg",
+   "basis": {
+    "text": "データ x₁, …, xₙ（データの標準偏差 √v＞0 は定義の要件。v はデータの分散）について、(xᵢ−x̄)/√v の3乗の平均 (1/n)Σ{(xᵢ−x̄)/√v}³",
+    "terms": [
+     "stats2:TERM-data-sd"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-kurt",
@@ -4480,7 +4605,16 @@
    "en": "kurtosis",
    "short": "分布の山のとがり具合と、裾の重さを表す値",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-kurt.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-kurt.svg",
+   "basis": {
+    "text": "データ x₁, …, xₙ（データの標準偏差 √v＞0 は定義の要件。v はデータの分散）について、(xᵢ−x̄)/√v の4乗の平均 (1/n)Σ{(xᵢ−x̄)/√v}⁴（3を引かない決め方。母集団が正規分布のとき、その母集団の値が3になる）",
+    "terms": [
+     "stats2:TERM-data-sd"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-normal",
@@ -5101,6 +5235,19 @@
      }
     ]
    },
+   "conditions_detail": [
+    {
+     "text": "値の大きさ×確率の和（連続なら積分）が有限の値になる（絶対収束：足す順序で値が変わらない）",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "期待値が定まらない（足す順序で値が変わるか、∞ になる）ので、この定義の期待値としては扱えない"
+    },
+    {
+     "text": "くり返しの平均として読むには、同じ条件の試行がくり返せること",
+     "scope": "data"
+    }
+   ],
+   "basis_formula": "F-expect-def",
    "labs": [
     {
      "id": "LAB-expect",
@@ -5138,6 +5285,9 @@
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ],
+   "basis": {
+    "formula": "F-expect-def"
+   },
    "forms": [
     "operation",
     "number"
@@ -5154,9 +5304,16 @@
    ],
    "problems": [],
    "en": "geometric mean",
-   "short": "n 個の正の値を掛け合わせて n 乗根をとった値で、伸び率の平均に使う",
+   "short": "n 個の正の値を掛け合わせて n 乗根をとった値で、倍率（1＋伸び率）の平均に使う",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-geomean.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-geomean.svg",
+   "basis": {
+    "text": "n 個の正の値 x₁, …, xₙ（正であることは定義の要件）を掛け合わせた積の n 乗根 (x₁x₂⋯xₙ)^(1/n)（伸び率なら、倍率 1＋伸び率 に当てはめる）",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-ma",
@@ -6135,9 +6292,8 @@
     {
      "text": "X・Y の分散が有限",
      "scope": "math",
-     "kind": "仮定",
-     "claim": "共分散が有限の値に定まる",
-     "outside": "共分散が定まるとは限らない（ずれの積の期待値が存在しないことがある）",
+     "kind": "要件",
+     "outside": "この教材の有限分散を前提とする共分散の定義域として扱えない（一般には共分散が存在する場合もある）",
      "terms": [
       "stats2:TERM-var"
      ]
@@ -10296,7 +10452,14 @@
    "en": "arithmetic mean",
    "short": "データの値をすべて足し、データの個数で割った値",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mean.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mean.svg",
+   "basis": {
+    "text": "足すことに意味のある値（量的変数）のデータ x₁, …, xₙ（n≧1。量的変数であることは定義の要件）の値をすべて足し、個数 n で割った値 x̄＝(x₁＋…＋xₙ)/n",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-prob",
@@ -10674,7 +10837,14 @@
    "en": "quantile",
    "short": "データを小さい順に並べ、決めた割合の位置にくる値（下から10%の位置など）",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-quantile.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-quantile.svg",
+   "basis": {
+    "text": "量的なデータ（n≧1）を小さい順に並べた x₍₁₎≦…≦x₍ₙ₎ と割合 p（0≦p≦1）について、1＋p(n−1) 番目の位置の値（位置が整数でないときは、前後の2つの値を比例で埋める。線形補間の決め方）",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-range",
@@ -10688,7 +10858,14 @@
    "en": "range",
    "short": "データの最大値から最小値を引いた値",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-range.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-range.svg",
+   "basis": {
+    "text": "データの最大値から最小値を引いた値",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-slr",
@@ -10735,32 +10912,63 @@
    "forms": [
     "property"
    ]
+  },
+  {
+   "id": "stats2:TERM-data-var",
+   "name": "データの分散",
+   "status": "skeleton",
+   "version": 1,
+   "units": [],
+   "problems": [],
+   "en": "variance of data",
+   "short": "データの各値の偏差を2乗して平均した値で、データのばらつきの大きさを表す",
+   "category": "要約（代表値・ばらつき）",
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-data-var.svg",
+   "basis": {
+    "text": "量的変数のデータ x₁, …, xₙ（n≧1）の偏差の2乗の平均 {(x₁−x̄)²＋…＋(xₙ−x̄)²}/n",
+    "terms": [
+     "stats2:TERM-dev"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
+  },
+  {
+   "id": "stats2:TERM-data-sd",
+   "name": "データの標準偏差",
+   "status": "skeleton",
+   "version": 1,
+   "units": [],
+   "problems": [],
+   "en": "standard deviation of data",
+   "short": "データの分散の正の平方根で、データのばらつきを元の単位で表す",
+   "category": "要約（代表値・ばらつき）",
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-data-sd.svg",
+   "basis": {
+    "text": "データの分散の正の平方根（データの値と同じ単位のばらつき）",
+    "terms": [
+     "stats2:TERM-data-var"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   }
  ],
  "relations": [
   {
-   "id": "stats2:REL-rv-expect",
-   "version": 1,
-   "from": "stats2:TERM-rv",
-   "to": "stats2:TERM-expect",
-   "legacy_type": "前提",
-   "description": "期待値は、確率変数のとる値とその確率から作る。",
-   "units": [
-    "stats2:U13"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-expect-var",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-expect",
    "to": "stats2:TERM-var",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "分散は「期待値からのずれ」の2乗の期待値。期待値がなければ測る基準がない。",
    "units": [
     "stats2:U13"
    ],
-   "premise": "mathematical"
+   "from_form": "operation",
+   "to_form": "operation"
   },
   {
    "id": "stats2:REL-fact-comb",
@@ -11290,30 +11498,6 @@
    ]
   },
   {
-   "id": "stats2:REL-var-std",
-   "version": 1,
-   "from": "stats2:TERM-var",
-   "to": "stats2:TERM-std",
-   "legacy_type": "前提",
-   "description": "標準化では、分散の平方根（標準偏差）で割る。",
-   "units": [
-    "stats2:U16"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-expect-std",
-   "version": 1,
-   "from": "stats2:TERM-expect",
-   "to": "stats2:TERM-std",
-   "legacy_type": "前提",
-   "description": "標準化では、まず期待値（平均）を引く。",
-   "units": [
-    "stats2:U16"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-std-normal",
    "version": 2,
    "from": "stats2:TERM-normal",
@@ -11325,6 +11509,7 @@
    ],
    "mode": "exact",
    "gist": "どの正規分布も、平均を引いて標準偏差で割れば同じ形（標準正規分布）になる。だから表は1つでよい。",
+   "claim": "stats2:CLM-2",
    "operation": "stats2:TERM-std",
    "reversible": true,
    "labs": [
@@ -11384,27 +11569,28 @@
   },
   {
    "id": "stats2:REL-dist-expect",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-dist",
    "to": "stats2:TERM-expect",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "期待値は、確率分布の「値×確率」を全部足して作る。分布を1つの数に要約したもの。",
    "units": [
     "stats2:U13"
    ],
-   "premise": "mathematical"
+   "to_form": "operation"
   },
   {
    "id": "stats2:REL-var-sd",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-var",
    "to": "stats2:TERM-sd",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "標準偏差は分散の正の平方根。2乗した単位を元の単位に戻す。",
    "units": [
     "stats2:U13"
    ],
-   "premise": "mathematical"
+   "from_form": "operation",
+   "to_form": "operation"
   },
   {
    "id": "stats2:REL-var-cov",
@@ -12045,15 +12231,15 @@
   },
   {
    "id": "stats2:REL-sd-std",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-sd",
    "to": "stats2:TERM-std",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "標準化では、平均を引いたあと標準偏差で割り、単位のない「標準偏差いくつ分」にする。",
    "units": [
     "stats2:U16"
    ],
-   "premise": "mathematical"
+   "from_form": "operation"
   },
   {
    "id": "stats2:REL-geom-negbinom",
@@ -12467,19 +12653,6 @@
    "question": "整数の棒を曲線で近似するとき、なぜ境目を 0.5 ずらす？"
   },
   {
-   "id": "stats2:REL-var-unbvar",
-   "version": 1,
-   "from": "stats2:TERM-var",
-   "to": "stats2:TERM-unbvar",
-   "legacy_type": "前提",
-   "description": "不偏分散は分散の計算で割る数を n から n−1 にしたもの。",
-   "units": [
-    "stats2:U07",
-    "stats2:U18"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-unbvar-df",
    "version": 1,
    "from": "stats2:TERM-unbvar",
@@ -12606,18 +12779,6 @@
    "type": "定める",
    "description": "有効性は、不偏推定量どうしを分散の小ささで比べて決める。不偏性が定義に直接出る。",
    "units": [
-    "stats2:U21"
-   ]
-  },
-  {
-   "id": "stats2:REL-unbiased-unbvar",
-   "version": 1,
-   "from": "stats2:TERM-unbiased",
-   "to": "stats2:TERM-unbvar",
-   "legacy_type": "応用",
-   "description": "不偏分散は、不偏性をもつように割る数を n−1 にした分散の推定量。",
-   "units": [
-    "stats2:U18",
     "stats2:U21"
    ]
   },
@@ -13000,45 +13161,6 @@
    "gist": "「何の種類か」を表すのが質的、「どれだけか」を表すのが量的。数字で書いてあっても、背番号のように分類なら質的。"
   },
   {
-   "id": "stats2:REL-sigma-mean",
-   "version": 1,
-   "from": "stats2:TERM-sigma",
-   "to": "stats2:TERM-mean",
-   "legacy_type": "前提",
-   "description": "平均は総和記号で（1/n）Σ xᵢ と書く。",
-   "units": [
-    "stats2:U02",
-    "stats2:U06"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-quant-mean",
-   "version": 1,
-   "from": "stats2:TERM-quant",
-   "to": "stats2:TERM-mean",
-   "legacy_type": "前提",
-   "description": "平均は値を足して求めるので、量的変数で使う。",
-   "units": [
-    "stats2:U04",
-    "stats2:U06"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-quant-median",
-   "version": 1,
-   "from": "stats2:TERM-quant",
-   "to": "stats2:TERM-median",
-   "legacy_type": "前提",
-   "description": "中央値は値を小さい順に並べて求めるので、順序のある値で使う。",
-   "units": [
-    "stats2:U04",
-    "stats2:U06"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-freqtable-mode",
    "version": 1,
    "from": "stats2:TERM-freqtable",
@@ -13053,91 +13175,83 @@
   },
   {
    "id": "stats2:REL-median-mean-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-median",
    "to": "stats2:TERM-mean",
-   "legacy_type": "対比",
-   "description": "どちらもデータの中心を表す。平均はすべての値を足すので外れ値に引っ張られ、中央値は並び順だけで決まるので外れ値の影響を受けにくい。右に裾が長い分布では平均が中央値より大きくなる。",
+   "type": "比べる",
+   "description": "どちらもデータの中心を表す。平均はすべての値を足すので外れ値に引っ張られ、中央値は並び順だけで決まるので外れ値の影響を受けにくい。右に裾が長い分布では平均が中央値より大きくなることが多い（いつもではない）。",
    "units": [
     "stats2:U06"
    ],
-   "gist": "年収のように一部にとても大きな値があると、平均は上に引っ張られる。「ふつうの人」に近いのは中央値のほう。"
-  },
-  {
-   "id": "stats2:REL-mean-expect",
-   "version": 1,
-   "from": "stats2:TERM-mean",
-   "to": "stats2:TERM-expect",
-   "legacy_type": "一般化",
-   "description": "期待値は、データの平均を確率の重みの平均に広げたもの。データの平均は、各値に「出た割合」の重みを付けた期待値と見られる。",
-   "units": [
-    "stats2:U06",
-    "stats2:U13"
-   ],
-   "gist": "データの平均は「出た値を出た割合で重み付けした平均」。期待値はその割合を確率に置き換えたもので、何度もくり返したときの平均の行き先。"
+   "axis": "何で中心を決めるか（値の並び順か、値の和か）",
+   "gist": "年収のように一部にとても大きな値があると、平均は上に引っ張られる。「ふつうの人」に近いのは中央値のほう。",
+   "same": "どちらもデータの中心（代表値）を元の単位の1つの数で表す",
+   "differ": "平均はすべての値の和から決まるので、外れ値1つで大きく動く。中央値は並び順だけで決まるので、外れ値の影響を受けにくい。右に裾が長い分布では、平均が中央値より大きくなることが多い（いつもではない）"
   },
   {
    "id": "stats2:REL-mean-dev",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-mean",
    "to": "stats2:TERM-dev",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "偏差は値から平均を引いたもの。",
    "units": [
     "stats2:U02",
     "stats2:U07"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-dev-var",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-dev",
-   "to": "stats2:TERM-var",
-   "legacy_type": "前提",
+   "to": "stats2:TERM-data-var",
+   "type": "定める",
    "description": "分散は偏差の2乗の平均。",
    "units": [
     "stats2:U07"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-median-quantile",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-median",
    "to": "stats2:TERM-quantile",
-   "legacy_type": "前提",
+   "type": "特別な場合",
    "description": "分位点は、中央値（真ん中＝50%の位置）を、ほかの割合の位置に広げたもの。",
    "units": [
     "stats2:U06"
    ],
-   "premise": "learning"
+   "gist": "中央値は、ちょうど真ん中（50%）の位置の分位点。分位点の割合を0.5に決めたものが中央値。",
+   "fix": "param_value",
+   "fix_text": "量的なデータでは、分位点の割合 p を 0.5 にすると中央値（線形補間で位置を 1＋p(n−1) 番目とする決め方では、n が奇数でも偶数でも一致する）"
   },
   {
    "id": "stats2:REL-quantile-quartile",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-quantile",
    "to": "stats2:TERM-quartile",
-   "legacy_type": "前提",
+   "type": "比べる",
    "description": "四分位数は、25%・50%・75%の位置の分位点。",
    "units": [
     "stats2:U05",
     "stats2:U06"
    ],
-   "premise": "mathematical"
+   "axis": "割合の位置の値の決め方",
+   "gist": "四分位数も分位点も「小さい順に並べて、決めた割合の位置の値」。ただし真ん中以外の決め方には流儀があり、同じデータでも値が少し違うことがある。",
+   "same": "どちらも、データを小さい順に並べたときの、決めた割合の位置（四分位数は 25%・50%・75%）の値",
+   "differ": "この教材の四分位数は、中央値と、その下と上の半分それぞれの中央値で決める。分位点（線形補間）は 1＋p(n−1) 番目の値を前後の値の比例で埋める。第2四分位数はどちらでも中央値に一致するが、第1・第3四分位数は p＝0.25・0.75 の分位点と違うことがある（1〜10 の10個では Q₁＝3、0.25 の分位点は 3.25）"
   },
   {
    "id": "stats2:REL-quartile-iqr",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-quartile",
    "to": "stats2:TERM-iqr",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "四分位範囲は、第3四分位数と第1四分位数の差。",
    "units": [
     "stats2:U05",
     "stats2:U07"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-quartile-boxplot",
@@ -13165,28 +13279,30 @@
   },
   {
    "id": "stats2:REL-iqr-outlier",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-iqr",
    "to": "stats2:TERM-outlier",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "箱ひげ図では、箱から四分位範囲の1.5倍より外の値を外れ値の目安にする。",
    "units": [
     "stats2:U05",
     "stats2:U08"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-range-iqr-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-range",
    "to": "stats2:TERM-iqr",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "どちらもデータの広がり。範囲は最大値と最小値だけで決まるので外れ値1つで大きく変わる。四分位範囲は真ん中の半分の広がりなので、外れ値の影響を受けにくい。",
    "units": [
     "stats2:U07"
    ],
-   "gist": "範囲は「いちばん端どうしの距離」、四分位範囲は「真ん中の半分の幅」。極端な1人がいると範囲だけが大きく変わる。"
+   "axis": "広がりをどの2つの値の差で測るか（両端か、真ん中の半分の両端か）",
+   "gist": "範囲は「いちばん端どうしの距離」、四分位範囲は「真ん中の半分の幅」。極端な1人がいると範囲だけが大きく変わる。",
+   "same": "どちらもデータの広がりを、2つの値の差として元の単位の1つの数で表す",
+   "differ": "範囲は最大値と最小値だけで決まるので、外れ値1つで大きく変わる。四分位範囲は真ん中の半分の幅なので、外れ値の影響を受けにくい"
   },
   {
    "id": "stats2:REL-freqtable-hist",
@@ -13202,27 +13318,14 @@
   },
   {
    "id": "stats2:REL-sd-cv",
-   "version": 1,
-   "from": "stats2:TERM-sd",
+   "version": 2,
+   "from": "stats2:TERM-unbvar",
    "to": "stats2:TERM-cv",
-   "legacy_type": "前提",
-   "description": "変動係数は標準偏差を平均で割ったもの。",
+   "type": "定める",
+   "description": "変動係数は、不偏分散の平方根を平均で割ったもの（単元 U07 の求め方。#310）。不偏分散が定義に直接出る。",
    "units": [
     "stats2:U07"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-mean-cv",
-   "version": 1,
-   "from": "stats2:TERM-mean",
-   "to": "stats2:TERM-cv",
-   "legacy_type": "前提",
-   "description": "変動係数は標準偏差を平均で割ったもの。",
-   "units": [
-    "stats2:U07"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-std-outlier",
@@ -13238,40 +13341,41 @@
   },
   {
    "id": "stats2:REL-sd-skew",
-   "version": 1,
-   "from": "stats2:TERM-sd",
+   "version": 2,
+   "from": "stats2:TERM-data-sd",
    "to": "stats2:TERM-skew",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "歪度は、偏差を標準偏差で割った値の3乗の平均。",
    "units": [
     "stats2:U08"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-sd-kurt",
-   "version": 1,
-   "from": "stats2:TERM-sd",
+   "version": 2,
+   "from": "stats2:TERM-data-sd",
    "to": "stats2:TERM-kurt",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "尖度は、偏差を標準偏差で割った値の4乗の平均（から3を引くこともある）。",
    "units": [
     "stats2:U08"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-mean-geomean-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-mean",
    "to": "stats2:TERM-geomean",
-   "legacy_type": "対比",
-   "description": "算術平均は値を足して個数で割り、幾何平均は値を掛けて個数の乗根をとる。伸び率のように掛け算で積み重なる量の平均は、幾何平均で求める。",
+   "type": "比べる",
+   "description": "算術平均は値を足して個数で割り、幾何平均は値を掛けて個数の乗根をとる。倍率（1＋伸び率）のように掛け算で積み重なる量の平均は、幾何平均で求める。",
    "units": [
     "stats2:U05T",
     "stats2:U06"
    ],
-   "gist": "1年目に2倍、2年目に半分になったら、元に戻っている。足し算の平均（1.25倍）では合わず、掛け算の平均（1倍）が合う。"
+   "axis": "値を足して平均するか、掛けて平均するか",
+   "gist": "1年目に2倍、2年目に半分になったら、元に戻っている。足し算の平均（1.25倍）では合わず、掛け算の平均（1倍）が合う。",
+   "same": "どちらも n 個の値を1つの代表の値にまとめる",
+   "differ": "算術平均は値の和を n で割る。幾何平均は正の値の積の n 乗根で、倍率（1＋伸び率）のように掛け算で積み重なる量では、幾何平均の倍率を n 回掛けると全体の倍率に戻る（2倍と半分なら幾何平均は1倍、算術平均は1.25倍）。正の値では幾何平均は算術平均以下（等しいのは全部の値が同じとき）"
   },
   {
    "id": "stats2:REL-mean-ma",
@@ -14342,34 +14446,12 @@
    ]
   },
   {
-   "id": "stats2:REL-samplemean-pairedt",
-   "version": 1,
-   "from": "stats2:TERM-sample-mean",
-   "to": "stats2:TERM-paired-t",
-   "type": "定める",
-   "description": "対応のある t 検定は、対の差の標本平均と不偏分散で作る t で検定する。標本平均が定義に直接出る。",
-   "units": [
-    "stats2:U25"
-   ]
-  },
-  {
    "id": "stats2:REL-unbvar-pairedt",
    "version": 1,
    "from": "stats2:TERM-unbvar",
    "to": "stats2:TERM-paired-t",
    "type": "定める",
    "description": "対応のある t 検定は、対の差の標本平均と不偏分散で作る t で検定する。不偏分散が定義に直接出る。",
-   "units": [
-    "stats2:U25"
-   ]
-  },
-  {
-   "id": "stats2:REL-samplemean-welch",
-   "version": 1,
-   "from": "stats2:TERM-sample-mean",
-   "to": "stats2:TERM-welch",
-   "type": "定める",
-   "description": "ウェルチの t 検定は、群ごとの標本平均と不偏分散で作る t で検定する。標本平均が定義に直接出る。",
    "units": [
     "stats2:U25"
    ]
@@ -14427,6 +14509,74 @@
    "description": "独立性検定は、クロス集計表の2つの変数が独立かを調べる仮説検定。",
    "units": [
     "stats2:U27"
+   ]
+  },
+  {
+   "id": "stats2:REL-median-quartile",
+   "version": 1,
+   "from": "stats2:TERM-median",
+   "to": "stats2:TERM-quartile",
+   "type": "定める",
+   "description": "この教材の四分位数は、中央値と、その下と上の半分それぞれの中央値で決める。中央値が定義に直接出る。",
+   "units": [
+    "stats2:U05"
+   ]
+  },
+  {
+   "id": "stats2:REL-samplemean-unbvar",
+   "version": 1,
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-unbvar",
+   "type": "定める",
+   "description": "不偏分散は、標本平均からのずれの2乗の和を n−1 で割った統計量。標本平均が定義に直接出る。",
+   "units": [
+    "stats2:U07"
+   ]
+  },
+  {
+   "id": "stats2:REL-unbvar-statistic",
+   "version": 1,
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-statistic",
+   "type": "一種",
+   "description": "不偏分散は、標本から作る統計量の1つ。",
+   "units": [
+    "stats2:U07"
+   ]
+  },
+  {
+   "id": "stats2:REL-datavar-datasd",
+   "version": 1,
+   "from": "stats2:TERM-data-var",
+   "to": "stats2:TERM-data-sd",
+   "type": "定める",
+   "description": "データの標準偏差は、データの分散の正の平方根。データの分散が定義に直接出る。",
+   "units": [
+    "stats2:U07"
+   ]
+  },
+  {
+   "id": "stats2:REL-sigma-mean",
+   "version": 2,
+   "from": "stats2:TERM-sigma",
+   "to": "stats2:TERM-mean",
+   "legacy_type": "前提",
+   "description": "平均の式は総和記号で（1/n）Σ xᵢ と書く。総和記号は記法なので定義の構成要素にはせず、式を読むための前提知識とする（#310）。",
+   "units": [
+    "stats2:U02",
+    "stats2:U06"
+   ],
+   "premise": "learning"
+  },
+  {
+   "id": "stats2:REL-mean-cv",
+   "version": 2,
+   "from": "stats2:TERM-mean",
+   "to": "stats2:TERM-cv",
+   "type": "定める",
+   "description": "変動係数は、不偏分散の平方根を平均で割ったもの。平均が定義に直接出る。",
+   "units": [
+    "stats2:U07"
    ]
   }
  ],
@@ -19087,6 +19237,52 @@
    ]
   },
   {
+   "id": "stats2:CLM-2",
+   "label": "④-2",
+   "kind": "従う",
+   "statement": {
+    "text": "X が N(μ, σ²)（σ＞0）に従うとき、(X−μ)/σ は N(0, 1) に従う"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "O",
+      "date": "2026-11-09",
+      "version": "3eaf05a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-normal"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-std"
+    ],
+    "predicates": [
+     "stats2:TERM-std-normal"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "密度の変数変換"
+     }
+    }
+   ]
+  },
+  {
    "id": "stats2:CLM-3",
    "label": "④-3",
    "kind": "極限",
@@ -19435,6 +19631,12 @@
       "by": "L",
       "date": "2026-11-09",
       "version": "02c937b"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "O",
+      "date": "2026-11-09",
+      "version": "3eaf05a"
      }
     ],
     "external": "未照合"
@@ -19455,12 +19657,6 @@
    },
    "conditions": [
     {
-     "text": "n≧2",
-     "kind": "仮定",
-     "outside": "不偏分散が定まらない",
-     "target": "claim"
-    },
-    {
      "text": "X₁, …, Xₙ が独立に同じ N(μ, σ²)（σ＞0）に従う",
      "kind": "仮定",
      "terms": [
@@ -19477,6 +19673,67 @@
       "title": "Helmert の直交変換で Σ(Xᵢ−X̄)²/σ² を n−1 個の独立な N(0, 1) の2乗の和に書く（Cochran の定理）"
      },
      "external": true
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-11",
+   "label": "④-11",
+   "kind": "推定量の性質",
+   "statement": {
+    "text": "n≧2 で X₁, …, Xₙ が独立に同じ分布に従い、分散 σ² が有限のとき、すべての母数の値で E(s²)＝σ²"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "扱う"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "O",
+      "date": "2026-11-09",
+      "version": "91f0acc"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-unbvar"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-unbvar"
+    ],
+    "predicates": [
+     "stats2:TERM-unbiased"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "X₁, …, Xₙ が独立に同じ分布に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep"
+     ],
+     "outside": "E(s²)＝σ² とは保証できない（平均が違うと大きい側にずれ、相関があると一般にずれる（共分散の和が正なら小さい側に）。分散が違うと E(s²) は分散の平均になる）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "E(ΣXᵢ²)−nE(X̄²)＝n(σ²＋μ²)−n(σ²/n＋μ²)＝(n−1)σ²（根拠の計算で使うのは、各 Xᵢ が同じ平均・同じ分散で互いに無相関なこと。これで足りる。独立同分布は教材で置く十分条件）"
+     }
     }
    ]
   },
@@ -19515,17 +19772,6 @@
      "stats2:TERM-uncorr"
     ]
    },
-   "conditions": [
-    {
-     "text": "X・Y の分散が有限",
-     "kind": "仮定",
-     "terms": [
-      "stats2:TERM-var"
-     ],
-     "outside": "共分散が定まらない",
-     "target": "claim"
-    }
-   ],
    "grounds": [
     {
      "source": {
