@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 2,
- "schema_revision": 1,
+ "schema_revision": 3,
  "experiment_revision": 3,
  "course": {
   "id": "stats2",
@@ -3059,7 +3059,7 @@
     "relations": [
      "stats2:REL-binom-normal"
     ],
-    "note": "二項分布 → 正規分布（近似）。1回の成功確率 p を保ったまま試行回数 n を増やすと、成功の期待回数 np と失敗の期待回数 n(1−p) がともに十分大きいとき、二項分布の確率を正規分布で近似できる。二項分布が連続の分布に変わるのではない。"
+    "note": "二項分布 → 標準正規分布（極限）。1回の成功確率 p を保ったまま試行回数 n を増やすと、標準化した成功回数の分布は標準正規分布に近づく。成功の期待回数 np と失敗の期待回数 n(1−p) がともに十分大きいとき、二項分布の確率を正規分布で近似できる。二項分布が連続の分布に変わるのではない。"
    },
    {
     "from": "stats2:GRP-dist-count",
@@ -3074,11 +3074,14 @@
     "from": "stats2:GRP-dist-wait",
     "to": "stats2:GRP-dist-cont",
     "label": "問いを入れ替える",
-    "relations": [
-     "stats2:REL-poisson-expo"
+    "claims": [
+     "stats2:CLM-25"
     ],
-    "note": "ポアソン分布 → 指数分布（導出）。一定の割合で独立に起きる出来事（ポアソン過程）で、「一定時間に何件起きるか」から「次の1件まで何分待つか」へ問いを替えると、待ち時間は指数分布になる。件数がポアソン分布というだけでは言えない。"
+    "note": "ポアソン過程の2つの見方（④-25。線にしない主張）。一定の割合で独立に起きる出来事（ポアソン過程）で、「一定時間に何件起きるか」から「次の1件まで何分待つか」へ問いを替えると、待ち時間は指数分布になる。件数がポアソン分布というだけでは言えない。"
    }
+  ],
+  "v2_ready": [
+   "確率分布"
   ]
  },
  "concepts": [
@@ -3265,6 +3268,9 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "forms": [
+    "number"
    ]
   },
   {
@@ -3379,6 +3385,9 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "forms": [
+    "number"
    ]
   },
   {
@@ -3453,7 +3462,10 @@
    "en": "sample space",
    "short": "1回の試行で起こりうる結果を、すべて集めた集合",
    "category": "確率",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-space.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-space.svg",
+   "forms": [
+    "event"
+   ]
   },
   {
    "id": "stats2:TERM-event",
@@ -4006,6 +4018,10 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "forms": [
+    "operation",
+    "number"
    ]
   },
   {
@@ -4152,6 +4168,10 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "forms": [
+    "operation",
+    "number"
    ]
   },
   {
@@ -4393,6 +4413,9 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "forms": [
+    "operation"
    ]
   },
   {
@@ -4682,6 +4705,24 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-normal-pdf",
+    "excludes": [
+     {
+      "concept": "stats2:TERM-expect",
+      "kind": "1つの概念の中の式・性質",
+      "text": "密度の μ が期待値に等しいことは、密度から導く正規分布の性質で、定義の構成要素ではない"
+     },
+     {
+      "concept": "stats2:TERM-sd",
+      "kind": "1つの概念の中の式・性質",
+      "text": "密度の σ が標準偏差に等しいことは、密度から導く正規分布の性質で、定義の構成要素ではない"
+     }
+    ]
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -5060,6 +5101,10 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "forms": [
+    "operation",
+    "number"
    ]
   },
   {
@@ -5291,6 +5336,9 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "forms": [
+    "property"
    ]
   },
   {
@@ -5532,6 +5580,15 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "text": "試行の結果（標本空間の要素）の1つ1つに、実数を1つ対応させるもの。どの結果が起きるかで値が決まる",
+    "terms": [
+     "stats2:TERM-sample-space"
+    ]
+   },
+   "forms": [
+    "rv"
    ]
   },
   {
@@ -5668,6 +5725,16 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "text": "確率変数がとる値（連続なら値の範囲）のそれぞれに、その確率を対応させたもの",
+    "terms": [
+     "stats2:TERM-rv",
+     "stats2:TERM-prob"
+    ]
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -5995,6 +6062,13 @@
      "title": "公式2級範囲表",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-cov-def"
+   },
+   "forms": [
+    "operation",
+    "number"
    ]
   },
   {
@@ -6670,6 +6744,12 @@
      "locator": "1.3.6.6.18 Binomial Distribution",
      "url": "https://www.itl.nist.gov/div898/handbook/"
     }
+   ],
+   "basis": {
+    "formula": "F-binom-pmf"
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -6975,6 +7055,12 @@
      "locator": "確率モデルの導入（確率変数・確率分布）",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-poisson-pmf"
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -7308,6 +7394,12 @@
      "title": "公式2級範囲表",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-geom-pmf"
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -7373,7 +7465,8 @@
        "range": "0より大きく1以下",
        "domain": {
         "min": 0,
-        "max": 1
+        "max": 1,
+        "minOpen": true
        }
       },
       {
@@ -7558,6 +7651,12 @@
       "task": "解いてから、問題が数えているもの（区間の件数・n 回中・成功まで・戻さない）に合うモードで確かめる。"
      }
     }
+   ],
+   "basis": {
+    "formula": "F-negbinom-pmf"
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -7935,6 +8034,12 @@
      "title": "公式2級範囲表",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-hyper-pmf"
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -8320,6 +8425,12 @@
      "title": "公式2級範囲表",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-expo-pdf"
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -8527,6 +8638,7 @@
      "scope": "data"
     }
    ],
+   "basis_formula": "F-pdf-interval",
    "labs": [
     {
      "id": "LAB-cont",
@@ -8550,6 +8662,12 @@
      "title": "公式2級範囲表",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-pdf-interval"
+   },
+   "forms": [
+    "function"
    ]
   },
   {
@@ -8853,6 +8971,12 @@
      "title": "公式2級範囲表",
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
+   ],
+   "basis": {
+    "formula": "F-uniform-pdf"
+   },
+   "forms": [
+    "distribution"
    ]
   },
   {
@@ -8913,7 +9037,13 @@
    "en": "central limit theorem",
    "short": "独立に同じ分布から取った標本平均の分布は、n が大きいと正規分布に近づくという定理",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-clt.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-clt.svg",
+   "forms": [
+    "proposition"
+   ],
+   "claims": [
+    "stats2:CLM-6b"
+   ]
   },
   {
    "id": "stats2:TERM-cc",
@@ -8943,7 +9073,10 @@
    "en": "t distribution",
    "short": "母分散を不偏分散で置き換えて標準化した標本平均が従う分布で、自由度が大きいと標準正規分布に近づく",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-t.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-t.svg",
+   "forms": [
+    "distribution"
+   ]
   },
   {
    "id": "stats2:TERM-chi2",
@@ -9705,7 +9838,11 @@
    "en": "probability (axioms)",
    "short": "事象の起こりやすさを0〜1の数で表したもので、全体は1、排反な事象では確率を足せる",
    "category": "確率",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-prob.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-prob.svg",
+   "forms": [
+    "function",
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-addition",
@@ -9752,7 +9889,7 @@
   {
    "id": "stats2:TERM-bernoulli",
    "name": "ベルヌーイ分布",
-   "status": "skeleton",
+   "status": "filled",
    "version": 1,
    "units": [
     "stats2:U14"
@@ -9762,7 +9899,146 @@
    "short": "1回の試行で、成功（1）を確率 p、失敗（0）を確率 1−p でとる分布",
    "category": "確率分布",
    "group": "stats2:GRP-dist-count",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-bernoulli.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-bernoulli.svg",
+   "definition": "値 1 を確率 p、値 0 を確率 1−p でとる確率変数の分布。成功を1、失敗を0と数えた1回の試行の結果の分布。",
+   "principle": "とる値が 0 と 1 の2つだけなので、確率 p 1つで分布が決まる。1回の成功の回数（0回か1回）とみると、n 回分を足したものが二項分布になる。",
+   "formulas": [
+    {
+     "id": "F-bernoulli-pmf",
+     "symbols": [
+      {
+       "symbol": "P( )",
+       "meaning": "確率",
+       "key": "P",
+       "concept": "stats2:TERM-dist"
+      },
+      {
+       "symbol": "X",
+       "meaning": "確率変数",
+       "key": "X",
+       "kind": "rv"
+      },
+      {
+       "symbol": "k",
+       "meaning": "X がとる値（成功なら1、失敗なら0）",
+       "range": "0 か 1",
+       "key": "k",
+       "kind": "value",
+       "domain": {
+        "min": 0,
+        "max": 1,
+        "integer": true
+       }
+      },
+      {
+       "symbol": "p",
+       "meaning": "1回の成功確率",
+       "range": "0以上1以下",
+       "key": "p",
+       "kind": "param",
+       "domain": {
+        "min": 0,
+        "max": 1
+       }
+      }
+     ],
+     "tree": {
+      "op": "eq",
+      "args": [
+       {
+        "op": "fn",
+        "args": [
+         {
+          "op": "eq",
+          "args": [
+           {
+            "sym": "X"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         }
+        ],
+        "name": "P"
+       },
+       {
+        "op": "mul",
+        "args": [
+         {
+          "op": "pow",
+          "args": [
+           {
+            "sym": "p"
+           },
+           {
+            "sym": "k"
+           }
+          ]
+         },
+         {
+          "op": "pow",
+          "args": [
+           {
+            "op": "sub",
+            "args": [
+             {
+              "num": 1
+             },
+             {
+              "sym": "p"
+             }
+            ]
+           },
+           {
+            "op": "sub",
+            "args": [
+             {
+              "num": 1
+             },
+             {
+              "sym": "k"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     },
+     "tex": "P(X=k)=p^{k}(1-p)^{1-k}",
+     "unverified": true
+    }
+   ],
+   "conditions": {
+    "math": [
+     "0≦p≦1"
+    ]
+   },
+   "example": "表が出る確率 0.5 の硬貨を1回投げ、表を1、裏を0とすると、X はベルヌーイ分布に従う。P(X＝1)＝0.5、P(X＝0)＝0.5。",
+   "counterexample": "さいころを1回投げた目そのもの（1〜6）は、値が2つでないのでベルヌーイ分布ではない。「6が出たら1、それ以外は0」と数え直せば、p＝1/6 のベルヌーイ分布になる。",
+   "conditions_detail": [
+    {
+     "text": "0≦p≦1",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "母数が範囲の外なら、この定義のベルヌーイ分布として扱えない"
+    }
+   ],
+   "basis_formula": "F-bernoulli-pmf",
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ],
+   "basis": {
+    "formula": "F-bernoulli-pmf"
+   },
+   "forms": [
+    "distribution"
+   ]
   },
   {
    "id": "stats2:TERM-sample-mean",
@@ -9777,7 +10053,10 @@
    "en": "sample mean",
    "short": "標本のデータの値を足し、データの個数で割った値",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-mean.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-mean.svg",
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-sample-prop",
@@ -9792,7 +10071,10 @@
    "en": "sample proportion",
    "short": "標本の中で、ある性質をもつものの割合",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-prop.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-prop.svg",
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-interval-est",
@@ -9863,6 +10145,38 @@
    "short": "1つの説明変数で目的変数を表す直線の式（回帰直線）を求める分析",
    "category": "相関・回帰",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-slr.svg"
+  },
+  {
+   "id": "stats2:TERM-std-normal",
+   "name": "標準正規分布",
+   "status": "skeleton",
+   "version": 1,
+   "units": [],
+   "problems": [],
+   "en": "standard normal distribution",
+   "short": "平均0・標準偏差1の正規分布 N(0, 1) で、正規分布に従う量を標準化するとこの分布に従う",
+   "category": "確率分布",
+   "group": "stats2:GRP-dist-cont",
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-std-normal.svg",
+   "forms": [
+    "distribution"
+   ]
+  },
+  {
+   "id": "stats2:TERM-uncorr",
+   "name": "無相関",
+   "status": "skeleton",
+   "version": 1,
+   "units": [],
+   "problems": [],
+   "en": "uncorrelated",
+   "short": "2つの確率変数の共分散が0で、直線的に一緒に増える・減る傾向がないこと",
+   "category": "確率分布",
+   "group": "stats2:GRP-dist-base",
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-uncorr.svg",
+   "forms": [
+    "property"
+   ]
   }
  ],
  "relations": [
@@ -9904,10 +10218,10 @@
   },
   {
    "id": "stats2:REL-comb-binom",
-   "version": 2,
+   "version": 3,
    "from": "stats2:TERM-comb",
    "to": "stats2:TERM-binom",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "成功が k 回ある並びは、n 回のうちどの k 回を成功にするかの選び方の数 ₙCₖ 通りあり、どれも同じ確率なので、1つの並びの確率に ₙCₖ を掛ける。",
    "units": [
     "stats2:U14"
@@ -9942,16 +10256,13 @@
   },
   {
    "id": "stats2:REL-binom-poisson",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-binom",
    "to": "stats2:TERM-poisson",
-   "legacy_type": "変換",
+   "type": "移る",
    "description": "二項分布で n を大きく、p を小さくして np＝λ を保つと、ポアソン分布に近づく。",
    "units": [
     "stats2:U15"
-   ],
-   "conditions": [
-    "n を大きくし、np＝λ を一定に保つ（p は小さくなる）"
    ],
    "mode": "limit",
    "gist": "めったに起きない事をたくさんの機会で数えると、回数の上限が効かなくなる。平均 λ だけで確率をおよそ出せる。",
@@ -9976,14 +10287,8 @@
     },
     "note": "どちらも平均は3回。n＝50 でも棒の高さはほとんど同じで、n を大きくするほど差が縮む。"
    },
-   "conditions_detail": [
-    {
-     "text": "n を大きくし、np＝λ を一定に保つ（p は小さくなる）",
-     "kind": "仮定",
-     "claim": "二項分布 B(n, p) がポアソン分布 Po(λ) に近づく",
-     "outside": "近づくとは保証できない。n が小さい・p が大きいままなら差を別に確かめる"
-    }
-   ],
+   "claim": "stats2:CLM-3",
+   "operation": "λ＞0 を決め、p＝λ/n（np＝λ）を保って n→∞ とする（各 k の確率が近づく）",
    "labs": [
     {
      "id": "LAB-pois",
@@ -10115,11 +10420,11 @@
   },
   {
    "id": "stats2:REL-binom-normal",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-binom",
-   "to": "stats2:TERM-normal",
-   "legacy_type": "変換",
-   "description": "n が大きいと、二項分布は平均 np・分散 np(1−p) の正規分布で近似できる（正規近似）。",
+   "to": "stats2:TERM-std-normal",
+   "type": "移る",
+   "description": "成功回数を標準化した量 (X−np)/√(np(1−p)) の分布は、n を大きくすると標準正規分布に近づく。有限の n では、二項分布を平均 np・分散 np(1−p) の正規分布で近似して使う（正規近似）。",
    "units": [
     "stats2:U14",
     "stats2:U16"
@@ -10127,13 +10432,13 @@
    "conditions": [
     "np≧5 かつ n(1−p)≧5"
    ],
-   "mode": "approximation",
+   "mode": "limit",
    "gist": "試行回数が多く、成功も失敗もある程度起きるなら、成功回数の分布はなめらかな山（正規分布）でよく近似できる。平均と標準偏差だけで、範囲の確率をおよそ出せる。",
    "question": "回数を増やすと、形はどうなる？",
    "stages": {
     "origin": "二項分布 B(n, p)。0〜n の飛び飛びの棒。",
     "operation": "平均 np・分散 np(1−p) が同じ正規分布の曲線を重ねる。",
-    "result": "正規分布 N(np, np(1−p))。なめらかな山。"
+    "result": "標準化した量は標準正規分布へ近づく。有限の n では、正規分布 N(np, np(1−p)) のなめらかな山で近似して使う。"
    },
    "chart": {
     "kind": "normal",
@@ -10141,6 +10446,8 @@
     "p": 0.3,
     "note": "平均 9 回・標準偏差 約 2.5 回。np＝9 と n(1−p)＝21 がどちらも5以上なので、棒の頭が曲線に沿う。"
    },
+   "claim": "stats2:CLM-5a",
+   "operation": "p を固定して n→∞ とし、成功回数 X を標準化する（(X−np)/√(np(1−p))）",
    "conditions_detail": [
     {
      "text": "np≧5 かつ n(1−p)≧5",
@@ -10282,29 +10589,25 @@
   },
   {
    "id": "stats2:REL-binom-sampleprop",
-   "version": 1,
-   "from": "stats2:TERM-binom",
-   "to": "stats2:TERM-sample-prop",
-   "legacy_type": "変換",
-   "description": "成功の回数 X が二項分布 B(n, p) に従うとき、X を n で割った標本比率 p̂＝X÷n は、同じ形の分布を横に 1/n に縮めたもの。平均は p、分散は p(1−p)÷n。",
+   "version": 2,
+   "from": "stats2:TERM-sample-prop",
+   "to": "stats2:TERM-binom",
+   "type": "従う",
+   "description": "成功の回数 X が二項分布 B(n, p) に従うとき、標本比率 p̂＝X÷n の分布は B(n, p) を横に 1/n に縮めたもの（n·p̂ が B(n, p) に従う）。平均は p、分散は p(1−p)÷n。",
    "units": [
     "stats2:U14",
     "stats2:U22"
    ],
-   "conditions": [
-    "X は二項分布 B(n, p) に従う（各回が独立・毎回同じ p）",
-    "n は決まった数"
-   ],
-   "mode": "exact",
    "gist": "回数を割合に直しても、分布の形は変わらず目盛りが縮むだけ。だから割合の標準偏差は、回数の標準偏差を n で割った大きさになる（分散なら n² で割る）。",
-   "question": "回数を割合に直すと、分布はどう変わる？"
+   "question": "回数を割合に直すと、分布はどう変わる？",
+   "claim": "stats2:CLM-31"
   },
   {
    "id": "stats2:REL-binom-poisson-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-binom",
    "to": "stats2:TERM-poisson",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "二項分布は回数に上限 n があり、分散 np(1−p) は平均 np より小さい。ポアソン分布は上限がなく、分散と平均が同じ λ。",
    "units": [
     "stats2:U15"
@@ -10332,6 +10635,8 @@
     },
     "note": "どちらも平均は3回。二項分布は6回で切れ、ポアソン分布は7回以上も起こりうる。"
    },
+   "same": "どちらも、出来事が起きた回数（0以上の整数）の分布で、平均をそろえて（np＝λ）比べられる",
+   "differ": "二項分布は回数に上限 n があり、分散 np(1−p) は平均 np より小さい（0＜p のとき）。ポアソン分布は上限がなく、分散と平均がどちらも λ",
    "labs": [
     {
      "id": "LAB-pois",
@@ -10452,25 +10757,18 @@
   },
   {
    "id": "stats2:REL-std-normal",
-   "version": 1,
-   "from": "stats2:TERM-std",
-   "to": "stats2:TERM-normal",
-   "legacy_type": "応用",
-   "description": "正規分布に従う値を標準化すると標準正規分布 N(0, 1) になり、1つの表で確率が読める。",
+   "version": 2,
+   "from": "stats2:TERM-normal",
+   "to": "stats2:TERM-std-normal",
+   "type": "移る",
+   "description": "正規分布 N(μ, σ²) に従う値を標準化（(X−μ)/σ）すると、標準正規分布 N(0, 1) に従う。逆に Z から μ＋σZ に戻せる。だから1つの表で、どの正規分布の確率も読める。",
    "units": [
     "stats2:U16"
    ],
-   "conditions": [
-    "X が正規分布に従う"
-   ],
-   "conditions_detail": [
-    {
-     "text": "X が正規分布に従う",
-     "kind": "仮定",
-     "claim": "標準化した値 Z が標準正規分布 N(0, 1) に従う",
-     "outside": "標準化はできるが、Z が N(0, 1) に従うとは保証できない（正規分布の表で確率を読めない）"
-    }
-   ],
+   "mode": "exact",
+   "gist": "どの正規分布も、平均を引いて標準偏差で割れば同じ形（標準正規分布）になる。だから表は1つでよい。",
+   "operation": "stats2:TERM-std",
+   "reversible": true,
    "labs": [
     {
      "id": "LAB-z",
@@ -10488,56 +10786,39 @@
       "task": "z を動かし、正規分布で z 以上になる割合と、±z の内側の割合を見る。次に「z から値へ」で、平均・標準偏差と z から元の値と偏差値を出す。"
      }
     }
-   ]
-  },
-  {
-   "id": "stats2:REL-clt-normal",
-   "version": 1,
-   "from": "stats2:TERM-clt",
-   "to": "stats2:TERM-normal",
-   "legacy_type": "応用",
-   "description": "独立な要因の和や平均は、元の分布によらず正規分布に近づく。正規分布がよく使われる理由。",
-   "units": [
-    "stats2:U19"
    ],
-   "conditions": [
-    "足し合わせる量が独立",
-    "分散が有限",
-    "個数が十分多い"
-   ],
-   "conditions_detail": [
+   "figures": [
     {
-     "text": "足し合わせる量が独立",
-     "kind": "仮定",
-     "claim": "和や平均の分布が正規分布に近づく",
-     "outside": "正規分布で近似できるとは保証できない",
-     "terms": [
-      "stats2:TERM-indep"
-     ]
+     "id": "FIG-U16-concept",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U16-concept.svg",
+     "caption": "平均100・標準偏差10 の正規分布（例題A）。90〜110 に約68%、80〜120 の外側に合わせて約5%。確率は高さではなく面積。"
     },
     {
-     "text": "分散が有限",
-     "kind": "仮定",
-     "claim": "和や平均の分布が正規分布に近づく",
-     "outside": "正規分布で近似できるとは保証できない（裾の重い分布では近づかない）",
-     "terms": [
-      "stats2:TERM-var"
-     ]
-    },
-    {
-     "text": "個数が十分多い",
-     "kind": "仮定",
-     "claim": "和や平均の分布が正規分布に近づく",
-     "outside": "近似の精度は保証できない。元の分布の偏りが強いほど多くの個数が要る"
+     "id": "FIG-U16-stdnormal",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U16-stdnormal.svg",
+     "caption": "標準正規分布 N(0, 1)。どの正規分布も、平均を引いて標準偏差で割ると、この形になる。−1〜1 に約68%。"
     }
    ]
   },
   {
-   "id": "stats2:REL-rv-dist",
+   "id": "stats2:REL-clt-normal",
    "version": 2,
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-std-normal",
+   "type": "従う",
+   "description": "独立に同じ分布に従う n 個の標本平均を標準化した量 √n(X̄−μ)/σ の分布は、元の分布によらず、n を大きくすると標準正規分布に近づく（中心極限定理）。",
+   "units": [
+    "stats2:U19"
+   ],
+   "claim": "stats2:CLM-6b",
+   "theorem": "stats2:TERM-clt"
+  },
+  {
+   "id": "stats2:REL-rv-dist",
+   "version": 3,
    "from": "stats2:TERM-rv",
    "to": "stats2:TERM-dist",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "確率分布は、確率変数がとる値と、それぞれの値をとる確率の対応。確率変数がなければ分布は作れない。",
    "units": [
     "stats2:U13"
@@ -10569,15 +10850,19 @@
   },
   {
    "id": "stats2:REL-var-cov",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-var",
    "to": "stats2:TERM-cov",
-   "legacy_type": "一般化",
+   "type": "特別な場合",
    "description": "分散は1つの変数のずれの2乗の期待値。2つの変数のずれの積に広げると共分散になる（Cov(X, X)＝V(X)）。",
    "units": [
     "stats2:U13"
    ],
    "gist": "分散は「1つの量が平均からどれだけずれるか」。共分散は「2つの量が一緒にずれるか」。同じものどうしの共分散が分散。",
+   "fix": "equal",
+   "fix_text": "共分散 Cov(X, Y) で Y＝X とすると Cov(X, X)＝V(X)（分散）",
+   "from_form": "operation",
+   "to_form": "operation",
    "labs": [
     {
      "id": "LAB-expect",
@@ -10660,39 +10945,16 @@
   },
   {
    "id": "stats2:REL-indep-cov",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-indep",
-   "to": "stats2:TERM-cov",
-   "legacy_type": "導出",
-   "description": "独立なら E(XY)＝E(X)E(Y) なので、共分散は0になる。逆（共分散0なら独立）は成り立たない。",
+   "to": "stats2:TERM-uncorr",
+   "type": "導ける",
+   "description": "X と Y が独立なら E(XY)＝E(X)E(Y) なので Cov(X, Y)＝0、つまり無相関。逆（無相関なら独立）は一般には成り立たない。",
    "units": [
     "stats2:U13"
    ],
-   "conditions": [
-    "X と Y が独立",
-    "期待値が有限"
-   ],
    "gist": "お互いに影響しない2つの量は、一緒にずれる傾向がないので共分散は0。ただし共分散が0でも、影響し合っていることはある。",
-   "conditions_detail": [
-    {
-     "text": "X と Y が独立",
-     "kind": "仮定",
-     "claim": "E(XY)＝E(X)E(Y) なので Cov(X, Y)＝0",
-     "outside": "共分散が0になるとは保証できない（独立でなくても0になることはある）",
-     "terms": [
-      "stats2:TERM-indep"
-     ]
-    },
-    {
-     "text": "期待値が有限",
-     "kind": "仮定",
-     "claim": "E(XY)＝E(X)E(Y) が使える",
-     "outside": "期待値が存在しなければ、共分散も定まらない",
-     "terms": [
-      "stats2:TERM-expect"
-     ]
-    }
-   ],
+   "claim": "stats2:CLM-13",
    "labs": [
     {
      "id": "LAB-expect",
@@ -10806,10 +11068,10 @@
   },
   {
    "id": "stats2:REL-binom-geom-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-binom",
    "to": "stats2:TERM-geom",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "二項分布は回数 n を決めて成功の数を数える。幾何分布は成功を1回と決めて、そこまでの回数を数える。何を固定し、何を数えるかが逆。",
    "units": [
     "stats2:U15"
@@ -10817,6 +11079,8 @@
    "axis": "何を決めて、何を数えるか",
    "gist": "二項は「回数を決めて、当たりの数を数える」。幾何は「当たり1回を決めて、そこまでの回数を数える」。決める物と数える物が逆。",
    "question": "何を数えているかが、どう違う？",
+   "same": "どちらも、成功確率 p が毎回同じで独立な試行のくり返しから、ある回数を数える分布",
+   "differ": "二項分布は試行の回数 n を決めて、成功の回数を数える（上限 n）。幾何分布は成功を1回と決めて、そこまでの試行の回数を数える（上限なし）",
    "labs": [
     {
      "id": "LAB-pois",
@@ -10915,35 +11179,19 @@
   },
   {
    "id": "stats2:REL-hyper-binom",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-hyper",
    "to": "stats2:TERM-binom",
-   "legacy_type": "変換",
-   "description": "集団 N を大きくして当たりの割合 M/N を保つと、超幾何分布は二項分布 B(n, M/N) に近づく（戻すか戻さないかの違いが消える）。",
+   "type": "移る",
+   "description": "取り出す数 n を固定し、当たりの割合 M/N を保って集団 N を大きくすると、超幾何分布は二項分布 B(n, M/N) に近づく（戻すか戻さないかの違いが消える）。N が n に比べて十分大きければ、二項分布で代えてよい（数の目安は出典がないので書かない）。",
    "units": [
     "stats2:U15"
-   ],
-   "conditions": [
-    "N が取り出す数 n に比べて十分大きい",
-    "当たりの割合 M/N を一定に保つ"
    ],
    "mode": "limit",
    "gist": "箱がとても大きければ、取り出して戻さなくても中身の割合はほとんど変わらない。戻しても戻さなくても同じとみなせる。",
    "question": "箱を大きくすると、戻さない取り方はどう近づく？",
-   "conditions_detail": [
-    {
-     "text": "N が取り出す数 n に比べて十分大きい",
-     "kind": "仮定",
-     "claim": "超幾何分布が二項分布 B(n, M/N) に近づく",
-     "outside": "近づくとは保証できない。取り出す割合 n/N が大きいと、二項分布より散らばりが小さい"
-    },
-    {
-     "text": "当たりの割合 M/N を一定に保つ",
-     "kind": "仮定",
-     "claim": "超幾何分布が二項分布 B(n, M/N) に近づく",
-     "outside": "近づく先の二項分布が決まらない"
-    }
-   ],
+   "claim": "stats2:CLM-4",
+   "operation": "取り出す数 n を固定し、当たりの割合 M/N→p を保って N→∞ とする",
    "labs": [
     {
      "id": "LAB-pois",
@@ -11043,10 +11291,10 @@
   },
   {
    "id": "stats2:REL-binom-hyper-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-binom",
    "to": "stats2:TERM-hyper",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "二項分布は戻して取り出す（各回が独立で確率が一定）。超幾何分布は戻さずに取り出す（取るたびに確率が変わる）。超幾何分布の分散は、二項分布の分散の (N−n)/(N−1) 倍（2 個以上取れば 1 より小さい）。",
    "units": [
     "stats2:U15"
@@ -11076,6 +11324,8 @@
     },
     "note": "どちらも平均は3個。戻さない方が3個の近くに集まり、山が細い。"
    },
+   "same": "取る数 n と当たりの割合が同じなら、当たりの数の平均はどちらも np",
+   "differ": "二項分布は各回が独立で確率が一定。超幾何分布は取るたびに残りの割合が変わり、分散が二項分布の (N−n)/(N−1) 倍になる",
    "labs": [
     {
      "id": "LAB-pois",
@@ -11192,154 +11442,11 @@
    ]
   },
   {
-   "id": "stats2:REL-poisson-expo",
-   "version": 1,
-   "from": "stats2:TERM-poisson",
-   "to": "stats2:TERM-expo",
-   "legacy_type": "導出",
-   "description": "一定の割合 λ で独立に起きる出来事では、一定時間の件数がポアソン分布、次に起きるまでの待ち時間が指数分布になる。",
-   "units": [
-    "stats2:U15",
-    "stats2:U16"
-   ],
-   "conditions": [
-    "出来事が一定の割合 λ で起きる",
-    "重ならない時間の件数が互いに独立"
-   ],
-   "gist": "同じ出来事を「一定時間に何件来るか」で見るとポアソン、「次の1件まで何分待つか」で見ると指数分布。見方が違うだけ。",
-   "conditions_detail": [
-    {
-     "text": "出来事が一定の割合 λ で起きる",
-     "kind": "仮定",
-     "claim": "件数がポアソン分布、待ち時間が指数分布に従う",
-     "outside": "どちらの分布も使えるとは保証できない（時間帯で割合が変わるなら分けて見る）"
-    },
-    {
-     "text": "重ならない時間の件数が互いに独立",
-     "kind": "仮定",
-     "claim": "件数がポアソン分布、待ち時間が指数分布に従う",
-     "outside": "どちらの分布も使えるとは保証できない",
-     "terms": [
-      "stats2:TERM-indep"
-     ]
-    }
-   ],
-   "labs": [
-    {
-     "id": "LAB-pois",
-     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-expo-tour",
-     "title": "離散分布ラボ",
-     "kind": "tour",
-     "preset": "rel-expo-tour",
-     "purpose": "t 時間に0件の確率が、次の1件まで t より長く待つ確率になることを段ごとに見る",
-     "play": {
-      "mode": "pois",
-      "kmax": 8,
-      "decimals": 3,
-      "steps": [
-       {
-        "title": "1時間に0件",
-        "text": "1時間に平均2件（λ＝2）。**1時間に0件**の確率は e⁻²≒0.135。",
-        "states": [
-         {
-          "rate": 2,
-          "t": 1,
-          "k": 0,
-          "kind": "eq"
-         }
-        ],
-        "focus": "p0"
-       },
-       {
-        "title": "時間を延ばす",
-        "text": "時間 t を延ばすと λ＝2t が増え、**0件の確率 e^(−2t)** は小さくなる。",
-        "states": [
-         {
-          "rate": 2,
-          "t": 1,
-          "k": 0,
-          "kind": "eq"
-         },
-         {
-          "rate": 2,
-          "t": 1.5,
-          "k": 0,
-          "kind": "eq"
-         },
-         {
-          "rate": 2,
-          "t": 2,
-          "k": 0,
-          "kind": "eq"
-         },
-         {
-          "rate": 2,
-          "t": 3,
-          "k": 0,
-          "kind": "eq"
-         }
-        ],
-        "focus": "p0"
-       },
-       {
-        "title": "待ち時間の見方",
-        "text": "「t 時間に0件」＝「次の1件まで **t より長く待つ**」。だから P(待ち＞t)＝e^(−λt)。これが指数分布。",
-        "states": [
-         {
-          "rate": 2,
-          "t": 3,
-          "k": 0,
-          "kind": "eq"
-         }
-        ],
-        "focus": "lambda"
-       },
-       {
-        "title": "つまり",
-        "text": "💡 同じ出来事を「一定時間に何件来るか」で見るとポアソン、「次の1件まで何分待つか」で見ると指数分布。見方が違うだけ。",
-        "states": [],
-        "gist": true
-       }
-      ]
-     }
-    },
-    {
-     "id": "LAB-pois",
-     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s5-free",
-     "title": "離散分布ラボ",
-     "kind": "check",
-     "preset": "s5-free",
-     "purpose": "0件の確率を時間を延ばして見ると、待ち時間の確率になる",
-     "play": {
-      "mode": "pois",
-      "modes": [
-       "pois",
-       "approx",
-       "hyper"
-      ],
-      "task": "「ポアソン分布」で k＝0 にし、時間を延ばすと0件の確率（＝待ち時間がそれより長い確率）がどう下がるかを見る（発展1）。「戻さず取り出す」で N を大きくして二項分布に近づくのを見る（発展3）。"
-     }
-    }
-   ],
-   "figures": [
-    {
-     "id": "FIG-LAB-pois-rel-expo-tour-1",
-     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-expo-tour-1.svg",
-     "caption": "1時間に平均2件（λ＝2）。1時間に0件の確率は e⁻²≒0.135。"
-    },
-    {
-     "id": "FIG-LAB-pois-rel-expo-tour-2",
-     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-expo-tour-2.svg",
-     "caption": "時間 t を延ばすと λ＝2t が増え、0件の確率 e^(−2t) は小さくなる。"
-    }
-   ]
-  },
-  {
    "id": "stats2:REL-dist-pdf",
-   "version": 3,
+   "version": 4,
    "from": "stats2:TERM-dist",
    "to": "stats2:TERM-pdf",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "確率密度関数は、確率分布のうち区間の確率を積分で表せるもの（連続な確率変数の分布）について使う関数で、その定義に確率分布を使う。離散の分布には密度はない（すべての確率分布に密度があるわけではない）。",
    "units": [
     "stats2:U16"
@@ -11347,10 +11454,10 @@
   },
   {
    "id": "stats2:REL-pdf-normal",
-   "version": 2,
+   "version": 3,
    "from": "stats2:TERM-pdf",
    "to": "stats2:TERM-normal",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "正規分布は確率密度関数 f(x) で定義され、確率は曲線の下の面積で読む。",
    "units": [
     "stats2:U16"
@@ -11358,10 +11465,10 @@
   },
   {
    "id": "stats2:REL-pdf-uniform",
-   "version": 2,
+   "version": 3,
    "from": "stats2:TERM-pdf",
    "to": "stats2:TERM-uniform",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "一様分布は、密度が一定の確率密度関数 1/(b−a) で定義される。",
    "units": [
     "stats2:U16"
@@ -11369,10 +11476,10 @@
   },
   {
    "id": "stats2:REL-pdf-expo",
-   "version": 2,
+   "version": 3,
    "from": "stats2:TERM-pdf",
    "to": "stats2:TERM-expo",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "指数分布は、確率密度関数 λe^(−λx) で定義される。",
    "units": [
     "stats2:U16"
@@ -11392,15 +11499,17 @@
   },
   {
    "id": "stats2:REL-geom-negbinom",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-geom",
    "to": "stats2:TERM-negbinom",
-   "legacy_type": "一般化",
+   "type": "特別な場合",
    "description": "幾何分布は「1回目の成功」まで待つ。待つ成功を r 回に広げると負の二項分布（r＝1 が幾何分布）。",
    "units": [
     "stats2:U15"
    ],
    "gist": "幾何は「最初の当たりまで」待つ。負の二項は「r 回目の当たりまで」待つ。r＝1 にすると幾何に戻る。",
+   "fix": "param_value",
+   "fix_text": "負の二項分布の r を 1 にすると、幾何分布（初めて成功するまでの試行回数）と同じものになる",
    "labs": [
     {
      "id": "LAB-pois",
@@ -12030,28 +12139,19 @@
   },
   {
    "id": "stats2:REL-t-normal",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-t",
-   "to": "stats2:TERM-normal",
-   "legacy_type": "変換",
+   "to": "stats2:TERM-std-normal",
+   "type": "移る",
    "description": "自由度を大きくすると、t 分布は標準正規分布に近づく。",
    "units": [
     "stats2:U20",
     "stats2:U22"
    ],
-   "conditions": [
-    "自由度を大きくする"
-   ],
    "mode": "limit",
    "gist": "データが多いと、不偏分散で σ を置き換えたばらつきがほとんど消える。だから t 分布の裾は細くなり、正規分布と見分けがつかなくなる。",
-   "conditions_detail": [
-    {
-     "text": "自由度を大きくする",
-     "kind": "仮定",
-     "claim": "t 分布が標準正規分布に近づく",
-     "outside": "近づくとは保証できない。自由度が小さいと裾が重く、正規分布の値を使うと区間が狭すぎる"
-    }
-   ]
+   "claim": "stats2:CLM-7",
+   "operation": "自由度 k→∞ とする"
   },
   {
    "id": "stats2:REL-estimator-statistic",
@@ -13063,16 +13163,18 @@
   },
   {
    "id": "stats2:REL-bernoulli-binom",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-bernoulli",
    "to": "stats2:TERM-binom",
-   "legacy_type": "一般化",
+   "type": "特別な場合",
    "description": "二項分布は、独立なベルヌーイ試行を n 回くり返したときの成功の数の分布。n＝1 の二項分布がベルヌーイ分布。",
    "units": [
     "stats2:U14"
    ],
    "gist": "1回の当たり外れがベルヌーイ分布。それを n 回くり返して当たりの数を数えると二項分布になる。",
    "question": "1回の試行から、分布はどう生まれる？",
+   "fix": "param_value",
+   "fix_text": "二項分布 B(n, p) の n を 1 にすると、ベルヌーイ分布 Bern(p) と同じものになる",
    "figures": [
     {
      "id": "FIG-U14-concept",
@@ -13542,121 +13644,36 @@
    "premise": "learning"
   },
   {
-   "id": "stats2:REL-prob-rv",
-   "version": 1,
-   "from": "stats2:TERM-prob",
-   "to": "stats2:TERM-rv",
-   "legacy_type": "材料",
-   "description": "確率変数は、試行の結果に応じて値が決まり、どの値が出るかが確率で表される量。確率がなければ作れない。",
-   "units": [
-    "stats2:U13"
-   ]
-  },
-  {
    "id": "stats2:REL-prob-dist",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-prob",
    "to": "stats2:TERM-dist",
-   "legacy_type": "材料",
-   "description": "確率分布は、確率変数のそれぞれの値に、その値をとる確率を対応させたもの。",
+   "type": "定める",
+   "description": "確率分布は、確率変数の値の範囲ごとに確率を対応させたもの。確率は確率分布の定義に直接出る。",
    "units": [
     "stats2:U13"
-   ]
-  },
-  {
-   "id": "stats2:REL-rv-pdf",
-   "version": 1,
-   "from": "stats2:TERM-rv",
-   "to": "stats2:TERM-pdf",
-   "legacy_type": "材料",
-   "description": "確率密度関数は、連続な確率変数が区間に入る確率を表す関数。",
-   "units": [
-    "stats2:U16"
-   ]
-  },
-  {
-   "id": "stats2:REL-prob-pdf",
-   "version": 1,
-   "from": "stats2:TERM-prob",
-   "to": "stats2:TERM-pdf",
-   "legacy_type": "材料",
-   "description": "確率密度関数は、区間に入る確率を、その区間の下の面積で表す。値そのものは確率ではない。",
-   "units": [
-    "stats2:U16"
-   ]
-  },
-  {
-   "id": "stats2:REL-rv-cov",
-   "version": 1,
-   "from": "stats2:TERM-rv",
-   "to": "stats2:TERM-cov",
-   "legacy_type": "材料",
-   "description": "共分散は、2つの確率変数が同じ向きにずれるか逆向きにずれるかを表す量。",
-   "units": [
-    "stats2:U13"
-   ]
+   ],
+   "from_form": "function"
   },
   {
    "id": "stats2:REL-expect-cov",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-expect",
    "to": "stats2:TERM-cov",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "共分散は、それぞれの期待値からのずれを掛け合わせた値の期待値。",
    "units": [
     "stats2:U13"
-   ]
-  },
-  {
-   "id": "stats2:REL-prob-bernoulli",
-   "version": 1,
-   "from": "stats2:TERM-prob",
-   "to": "stats2:TERM-bernoulli",
-   "legacy_type": "材料",
-   "description": "ベルヌーイ分布は、成功（1）を確率 p、失敗（0）を確率 1−p でとる分布。",
-   "units": [
-    "stats2:U14"
-   ]
-  },
-  {
-   "id": "stats2:REL-prob-binom",
-   "version": 1,
-   "from": "stats2:TERM-prob",
-   "to": "stats2:TERM-binom",
-   "legacy_type": "材料",
-   "description": "二項分布は、成功確率 p の試行をくり返したときに、成功の回数がどんな確率で現れるかを表す。",
-   "units": [
-    "stats2:U14"
-   ]
-  },
-  {
-   "id": "stats2:REL-prob-geom",
-   "version": 1,
-   "from": "stats2:TERM-prob",
-   "to": "stats2:TERM-geom",
-   "legacy_type": "材料",
-   "description": "幾何分布は、成功確率 p の試行を、初めて成功するまでくり返したときの回数の分布。",
-   "units": [
-    "stats2:U15"
-   ]
-  },
-  {
-   "id": "stats2:REL-prob-negbinom",
-   "version": 1,
-   "from": "stats2:TERM-prob",
-   "to": "stats2:TERM-negbinom",
-   "legacy_type": "材料",
-   "description": "負の二項分布は、成功確率 p の試行を、r 回目の成功が起きるまでくり返したときの回数の分布。",
-   "units": [
-    "stats2:U15"
-   ]
+   ],
+   "from_form": "operation",
+   "to_form": "operation"
   },
   {
    "id": "stats2:REL-comb-hyper",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-comb",
    "to": "stats2:TERM-hyper",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "超幾何分布の確率は、当たりからの選び方と外れからの選び方の積を、全体からの選び方で割る。3つとも組合せの数。",
    "units": [
     "stats2:U15"
@@ -13664,10 +13681,10 @@
   },
   {
    "id": "stats2:REL-comb-negbinom",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-comb",
    "to": "stats2:TERM-negbinom",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "負の二項分布の確率は、最後の1回が r 回目の成功で、それまでの k−1 回のどこで r−1 回成功するかの選び方（組合せ）を掛ける。",
    "units": [
     "stats2:U15"
@@ -13675,13 +13692,144 @@
   },
   {
    "id": "stats2:REL-fact-poisson",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-fact",
    "to": "stats2:TERM-poisson",
-   "legacy_type": "材料",
+   "type": "定める",
    "description": "ポアソン分布の確率 e^(−λ)λᵏ／k! は、分母に k の階乗を持つ。",
    "units": [
     "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:REL-sample-space-rv",
+   "version": 1,
+   "from": "stats2:TERM-sample-space",
+   "to": "stats2:TERM-rv",
+   "type": "定める",
+   "description": "確率変数は、標本空間の要素（試行の結果）の1つ1つに実数を対応させる関数。標本空間が定義に直接出る。",
+   "units": [
+    "stats2:U13"
+   ]
+  },
+  {
+   "id": "stats2:REL-bernoulli-binom-sum",
+   "version": 1,
+   "from": "stats2:TERM-bernoulli",
+   "to": "stats2:TERM-binom",
+   "type": "移る",
+   "description": "独立に Bern(p) に従う n 個の和は、二項分布 B(n, p) に従う。1回ごとの成功（1）・失敗（0）を足すと成功の回数になる。",
+   "units": [
+    "stats2:U14"
+   ],
+   "mode": "exact",
+   "gist": "成功を1、失敗を0として n 回分を足せば、成功の回数になる。だから二項分布は、ベルヌーイ分布を n 個足したもの。",
+   "claim": "stats2:CLM-1",
+   "operation": "独立に Bern(p) に従う n 個を足す",
+   "figures": [
+    {
+     "id": "FIG-U14-concept",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U14-concept.svg",
+     "caption": "二項分布 B(4, 0.25)。購入率25%の売場に4人。ちょうど1人がいちばん起きやすく、▲の平均 np＝1人。"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-stdnormal-normal",
+   "version": 1,
+   "from": "stats2:TERM-std-normal",
+   "to": "stats2:TERM-normal",
+   "type": "特別な場合",
+   "description": "標準正規分布は、平均0・標準偏差1の正規分布。",
+   "units": [
+    "stats2:U16"
+   ],
+   "gist": "正規分布の中で、平均0・標準偏差1に決めたものが標準正規分布。",
+   "fix": "param_value",
+   "fix_text": "正規分布 N(μ, σ²) の μ を 0、σ を 1 にすると、標準正規分布 N(0, 1) と同じものになる",
+   "figures": [
+    {
+     "id": "FIG-U16-stdnormal",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-U16-stdnormal.svg",
+     "caption": "標準正規分布 N(0, 1)。どの正規分布も、平均を引いて標準偏差で割ると、この形になる。−1〜1 に約68%。"
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-binom-dist",
+   "version": 1,
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率関数（連続なら確率密度）の形で区別される族の1つ。",
+   "units": [
+    "stats2:U14"
+   ]
+  },
+  {
+   "id": "stats2:REL-poisson-dist",
+   "version": 1,
+   "from": "stats2:TERM-poisson",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率関数（連続なら確率密度）の形で区別される族の1つ。",
+   "units": [
+    "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:REL-negbinom-dist",
+   "version": 1,
+   "from": "stats2:TERM-negbinom",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率関数（連続なら確率密度）の形で区別される族の1つ。",
+   "units": [
+    "stats2:U14"
+   ]
+  },
+  {
+   "id": "stats2:REL-hyper-dist",
+   "version": 1,
+   "from": "stats2:TERM-hyper",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率関数（連続なら確率密度）の形で区別される族の1つ。",
+   "units": [
+    "stats2:U14"
+   ]
+  },
+  {
+   "id": "stats2:REL-normal-dist",
+   "version": 1,
+   "from": "stats2:TERM-normal",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率関数（連続なら確率密度）の形で区別される族の1つ。",
+   "units": [
+    "stats2:U16"
+   ]
+  },
+  {
+   "id": "stats2:REL-expo-dist",
+   "version": 1,
+   "from": "stats2:TERM-expo",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率関数（連続なら確率密度）の形で区別される族の1つ。",
+   "units": [
+    "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:REL-uniform-dist",
+   "version": 1,
+   "from": "stats2:TERM-uniform",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率関数（連続なら確率密度）の形で区別される族の1つ。",
+   "units": [
+    "stats2:U16"
    ]
   }
  ],
@@ -18301,5 +18449,524 @@
     "text": "{key}＝{x} のとき。"
    }
   }
- }
+ },
+ "claims": [
+  {
+   "id": "stats2:CLM-1",
+   "label": "④-1",
+   "kind": "従う",
+   "statement": {
+    "text": "0≦p≦1 とし、X₁, …, Xₙ が独立に Bern(p) に従うとき、和 X₁＋…＋Xₙ は B(n, p) に従う（値は k＝0, 1, …, n）"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-bernoulli"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-binom"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "和が k になる並びは ₙCₖ 通りで、どの並びの確率も（独立なので）pᵏ(1−p)ⁿ⁻ᵏ"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-3",
+   "label": "④-3",
+   "kind": "極限",
+   "statement": {
+    "text": "λ＞0 とし、X_n が B(n, λ/n)（n≧λ）に従うとき、n→∞ で、各 k＝0, 1, 2, … について P(X_n＝k) は e^(−λ)λᵏ/k! に近づく"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-binom"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-poisson"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "ₙCₖp_nᵏ(1−p_n)ⁿ⁻ᵏ＝(λᵏ/k!)·[n(n−1)…(n−k+1)/nᵏ]·(1−λ/n)ⁿ·(1−λ/n)^(−k)。[ ] と最後の因子は 1 に、(1−λ/n)ⁿ は e^(−λ) に近づく"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-4",
+   "label": "④-4",
+   "kind": "極限",
+   "statement": {
+    "text": "取り出す数 n を固定し、M/N → p を保って N→∞ とすると、超幾何分布の確率関数は B(n, p) の確率関数に近づく"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-hyper"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-binom"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "確率関数の各因子の極限"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-5a",
+   "label": "④-5a",
+   "kind": "極限",
+   "statement": {
+    "text": "X が B(n, p)（0＜p＜1 を固定）に従うとき、n→∞ で (X−np)/√(np(1−p)) の分布は N(0, 1) に近づく"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-binom"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-std-normal"
+    ]
+   },
+   "grounds": [
+    {
+     "claim": "stats2:CLM-1"
+    },
+    {
+     "claim": "stats2:CLM-6b"
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-6b",
+   "label": "④-6b",
+   "kind": "極限",
+   "statement": {
+    "text": "X₁, …, Xₙ が独立に同じ分布に従い、平均が μ、分散 σ² が 0＜σ²＜∞ のとき、n→∞ で √n(X̄−μ)/σ の分布は N(0, 1) に近づく"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-sample-mean"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-sample-mean"
+    ],
+    "predicates": [
+     "stats2:TERM-std-normal"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "X₁, …, Xₙ が独立に同じ分布に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep"
+     ],
+     "outside": "標準化した標本平均が標準正規分布に近づくとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "分散 σ² が 0＜σ²＜∞",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-var"
+     ],
+     "outside": "近づくとは保証できない（裾の重い分布では近づかない）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "中心極限定理"
+     },
+     "external": true
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-7",
+   "label": "④-7",
+   "kind": "極限",
+   "statement": {
+    "text": "T_k が t(k) に従うとき、k→∞ で T_k の分布は N(0, 1) に近づく"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "D",
+      "date": "2026-11-08",
+      "version": "525bbdb"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-t"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-std-normal"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "スルツキーの定理"
+     },
+     "external": true
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-13",
+   "label": "④-13",
+   "kind": "ならば",
+   "statement": {
+    "text": "X と Y が独立で、どちらも分散が有限のとき、Cov(X, Y)＝0"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-rv"
+    ],
+    "predicates": [
+     "stats2:TERM-indep"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-cov"
+    ],
+    "predicates": [
+     "stats2:TERM-uncorr"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "X・Y の分散が有限",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-var"
+     ],
+     "outside": "共分散が定まらない",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "独立なら E(XY)＝E(X)E(Y)"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-25",
+   "label": "④-25",
+   "kind": "従う",
+   "statement": {
+    "text": "単位時間あたりの平均件数が λ（λ＞0）のポアソン過程で、長さ t の区間の件数は Po(λt) に従い、時刻0から次に起きるまでの待ち時間 T は、平均 1/λ の指数分布に従う"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "gist": "同じ出来事を「一定時間に何件来るか」で見るとポアソン、「次の1件まで何分待つか」で見ると指数分布。見方が違うだけ。",
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "labs": [
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-expo-tour",
+     "title": "離散分布ラボ",
+     "kind": "tour",
+     "preset": "rel-expo-tour",
+     "purpose": "t 時間に0件の確率が、次の1件まで t より長く待つ確率になることを段ごとに見る",
+     "play": {
+      "mode": "pois",
+      "kmax": 8,
+      "decimals": 3,
+      "steps": [
+       {
+        "title": "1時間に0件",
+        "text": "1時間に平均2件（λ＝2）。**1時間に0件**の確率は e⁻²≒0.135。",
+        "states": [
+         {
+          "rate": 2,
+          "t": 1,
+          "k": 0,
+          "kind": "eq"
+         }
+        ],
+        "focus": "p0"
+       },
+       {
+        "title": "時間を延ばす",
+        "text": "時間 t を延ばすと λ＝2t が増え、**0件の確率 e^(−2t)** は小さくなる。",
+        "states": [
+         {
+          "rate": 2,
+          "t": 1,
+          "k": 0,
+          "kind": "eq"
+         },
+         {
+          "rate": 2,
+          "t": 1.5,
+          "k": 0,
+          "kind": "eq"
+         },
+         {
+          "rate": 2,
+          "t": 2,
+          "k": 0,
+          "kind": "eq"
+         },
+         {
+          "rate": 2,
+          "t": 3,
+          "k": 0,
+          "kind": "eq"
+         }
+        ],
+        "focus": "p0"
+       },
+       {
+        "title": "待ち時間の見方",
+        "text": "「t 時間に0件」＝「次の1件まで **t より長く待つ**」。だから P(待ち＞t)＝e^(−λt)。これが指数分布。",
+        "states": [
+         {
+          "rate": 2,
+          "t": 3,
+          "k": 0,
+          "kind": "eq"
+         }
+        ],
+        "focus": "lambda"
+       },
+       {
+        "title": "つまり",
+        "text": "💡 同じ出来事を「一定時間に何件来るか」で見るとポアソン、「次の1件まで何分待つか」で見ると指数分布。見方が違うだけ。",
+        "states": [],
+        "gist": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "LAB-pois",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s5-free",
+     "title": "離散分布ラボ",
+     "kind": "check",
+     "preset": "s5-free",
+     "purpose": "0件の確率を時間を延ばして見ると、待ち時間の確率になる",
+     "play": {
+      "mode": "pois",
+      "modes": [
+       "pois",
+       "approx",
+       "hyper"
+      ],
+      "task": "「ポアソン分布」で k＝0 にし、時間を延ばすと0件の確率（＝待ち時間がそれより長い確率）がどう下がるかを見る（発展1）。「戻さず取り出す」で N を大きくして二項分布に近づくのを見る（発展3）。"
+     }
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-pois-rel-expo-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-expo-tour-1.svg",
+     "caption": "1時間に平均2件（λ＝2）。1時間に0件の確率は e⁻²≒0.135。"
+    },
+    {
+     "id": "FIG-LAB-pois-rel-expo-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-pois-rel-expo-tour-2.svg",
+     "caption": "時間 t を延ばすと λ＝2t が増え、0件の確率 e^(−2t) は小さくなる。"
+    }
+   ],
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-poisson",
+     "stats2:TERM-expo"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "出来事が一定の割合 λ で起きる",
+     "kind": "仮定",
+     "outside": "どちらの分布も使えるとは保証できない（時間帯で割合が変わるなら分けて見る）",
+     "target": "claim"
+    },
+    {
+     "text": "重ならない時間の件数が互いに独立",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep"
+     ],
+     "outside": "どちらの分布も使えるとは保証できない",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "前半はポアソン過程の定義（独立増分と件数の分布）から。後半は P(T＞t)＝P([0, t] の件数が0)＝e^(−λt)"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-31",
+   "label": "④-31",
+   "kind": "従う",
+   "statement": {
+    "text": "0≦p≦1 とし、X₁, …, Xₙ が独立に Bern(p) に従い、n が決まった数のとき、標本比率 p̂＝(X₁＋…＋Xₙ)/n について n·p̂ は B(n, p) に従う（p̂ の分布は B(n, p) を 1/n 倍の尺度にしたもの）"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-sample-prop"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-sample-prop"
+    ],
+    "predicates": [
+     "stats2:TERM-binom"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "X₁, …, Xₙ が独立に同じ Bern(p) に従う（各回が独立・毎回同じ p）",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep",
+      "stats2:TERM-bernoulli"
+     ],
+     "target": "claim"
+    },
+    {
+     "text": "n は決まった数",
+     "kind": "仮定",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "claim": "stats2:CLM-1"
+    }
+   ]
+  }
+ ]
 }
