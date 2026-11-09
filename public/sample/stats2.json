@@ -3083,7 +3083,8 @@
   "v2_ready": [
    "確率分布",
    "確率",
-   "標本分布・極限"
+   "標本分布・極限",
+   "推定"
   ]
  },
  "concepts": [
@@ -3434,7 +3435,10 @@
    "en": "parameter",
    "short": "母集団の性質を表す値（母平均・母分散など）で、ふつうは分からないので標本から推定する",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-parameter.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-parameter.svg",
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-statistic",
@@ -4221,7 +4225,17 @@
    "en": "unbiasedness",
    "short": "推定量の期待値が、推定したい母数と一致する性質",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-unbiased.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-unbiased.svg",
+   "basis": {
+    "text": "母数 θ の推定量 θ̂ について、モデルのすべての母数の値で（θ 以外の母数を含む） E(θ̂)＝θ が成り立つこと",
+    "terms": [
+     "stats2:TERM-estimator",
+     "stats2:TERM-expect"
+    ]
+   },
+   "forms": [
+    "property"
+   ]
   },
   {
    "id": "stats2:TERM-std",
@@ -9323,6 +9337,13 @@
    "short": "母数を推定するために使う統計量（標本から値が決まる式）",
    "category": "推定",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-estimator.svg",
+   "basis": {
+    "text": "母数 θ を推定する目的で使う統計量 θ̂（標本 X₁, …, Xₙ の関数で、分からない母数を含まないもの。観測したあとの値は推定値と呼ぶ）",
+    "terms": [
+     "stats2:TERM-statistic",
+     "stats2:TERM-parameter"
+    ]
+   },
    "forms": [
     "rv"
    ]
@@ -9339,7 +9360,16 @@
    "en": "point estimation",
    "short": "母数の値を、推定量から求めた1つの値で推定すること",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-point-est.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-point-est.svg",
+   "basis": {
+    "text": "標本の値を推定量 θ̂ に入れて得た1つの値（推定値）を、母数 θ の値の推定とする手続き",
+    "terms": [
+     "stats2:TERM-estimator"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-consistency",
@@ -9353,7 +9383,17 @@
    "en": "consistency",
    "short": "標本の大きさを大きくすると、推定量が母数に近づいていく性質",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-consistency.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-consistency.svg",
+   "basis": {
+    "text": "標本の大きさ n ごとの母数 θ の推定量 θ̂ₙ が、モデルのすべての母数の値で（θ 以外の母数を含む）、どの ε＞0 についても n→∞ で P(|θ̂ₙ−θ|≧ε)→0 となること（θ̂ₙ は θ に確率収束する）",
+    "terms": [
+     "stats2:TERM-estimator",
+     "stats2:TERM-prob"
+    ]
+   },
+   "forms": [
+    "property"
+   ]
   },
   {
    "id": "stats2:TERM-efficiency",
@@ -9367,7 +9407,17 @@
    "en": "efficiency",
    "short": "不偏な推定量のうち、分散が小さい（ばらつきが小さい）ものほどよいとする性質",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-efficiency.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-efficiency.svg",
+   "basis": {
+    "text": "同じ母数 θ の2つの不偏推定量 θ̂₁・θ̂₂ について、モデルのすべての母数の値で（θ 以外の母数を含む） V(θ̂₁)≦V(θ̂₂) のとき、θ̂₁ は θ̂₂ より有効という（分散の小さい不偏推定量ほどよいとする比べ方）",
+    "terms": [
+     "stats2:TERM-unbiased",
+     "stats2:TERM-var"
+    ]
+   },
+   "forms": [
+    "property"
+   ]
   },
   {
    "id": "stats2:TERM-mse",
@@ -9381,7 +9431,17 @@
    "en": "mean squared error",
    "short": "推定量と母数のずれの2乗の期待値で、推定量の分散と偏りの2乗の和になる",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mse.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mse.svg",
+   "basis": {
+    "text": "母数 θ の推定量 θ̂ について、E[(θ̂−θ)²]（推定量と母数のずれの2乗の期待値。母数の値ごとに決まる）",
+    "terms": [
+     "stats2:TERM-estimator",
+     "stats2:TERM-expect"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-ci",
@@ -9394,9 +9454,19 @@
    ],
    "problems": [],
    "en": "confidence interval",
-   "short": "区間推定で求める区間で、同じ方法をくり返すと決めた割合で母数を含む",
+   "short": "標本から作る、母数を推定するための区間で、作り方ごとに母数を含む確率の下限（信頼係数）が決まる",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ci.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ci.svg",
+   "basis": {
+    "text": "母数 θ を区間で推定するために、標本から作る2つの統計量 L≦U でつくる区間 [L, U]（観測したあとの区間も同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-statistic",
+     "stats2:TERM-parameter"
+    ]
+   },
+   "forms": [
+    "random_set"
+   ]
   },
   {
    "id": "stats2:TERM-conf-level",
@@ -9408,9 +9478,19 @@
    ],
    "problems": [],
    "en": "confidence level",
-   "short": "信頼区間を作る方法が、くり返したときに母数を含む割合（95%など）",
+   "short": "信頼区間の作り方が、母数のどの値でも母数を含む確率の下限（95%など）",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-conf-level.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-conf-level.svg",
+   "basis": {
+    "text": "信頼区間 [L, U] を作る方法について、モデルのすべての母数の値で（θ 以外の母数を含む）とった、区間が θ を含む確率 P(L≦θ≦U) の下限（これが 1−α のとき、信頼係数 1−α の信頼区間という。95% など）",
+    "terms": [
+     "stats2:TERM-ci",
+     "stats2:TERM-prob"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-paired-t",
@@ -10345,7 +10425,18 @@
    "en": "interval estimation",
    "short": "母数の値を、幅をもった区間で推定すること",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-interval-est.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-interval-est.svg",
+   "basis": {
+    "text": "信頼係数 1−α（名目）を決め、それに合わせて作った信頼区間を標本から求めて、母数 θ の値の範囲として示す手続き（作り方ごとの保証は、その手続きの成立条件で言う。近似の作り方では、1−α に近づくのは各母数の値ごと：④-19）",
+    "terms": [
+     "stats2:TERM-conf-level",
+     "stats2:TERM-ci",
+     "stats2:TERM-parameter"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-test",
@@ -11884,7 +11975,7 @@
    "from": "stats2:TERM-sample-space",
    "to": "stats2:TERM-event",
    "type": "定める",
-   "description": "事象は標本空間の部分集合として決める。まず起こりうる結果の全体を決める。",
+   "description": "事象は標本空間の部分集合として決める。標本空間が定義に直接出る。",
    "units": [
     "stats2:U10"
    ]
@@ -12253,10 +12344,10 @@
   },
   {
    "id": "stats2:REL-estimator-statistic",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-estimator",
    "to": "stats2:TERM-statistic",
-   "legacy_type": "一般化",
+   "type": "一種",
    "description": "推定量は、母数を推定する目的で使う統計量。統計量は推定量を含む、より広いもの（検定統計量なども統計量）。",
    "units": [
     "stats2:U18",
@@ -12266,10 +12357,10 @@
   },
   {
    "id": "stats2:REL-estimator-pointest",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-estimator",
    "to": "stats2:TERM-point-est",
-   "legacy_type": "応用",
+   "type": "定める",
    "description": "点推定は、推定量に標本の値を入れて1つの値を出すこと。",
    "units": [
     "stats2:U21"
@@ -12277,63 +12368,36 @@
   },
   {
    "id": "stats2:REL-estimator-unbiased",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-estimator",
    "to": "stats2:TERM-unbiased",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "不偏性は推定量の性質。",
    "units": [
     "stats2:U21"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-estimator-consistency",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-estimator",
    "to": "stats2:TERM-consistency",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "一致性は推定量の性質。",
    "units": [
     "stats2:U21"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-estimator-efficiency",
-   "version": 1,
-   "from": "stats2:TERM-estimator",
-   "to": "stats2:TERM-efficiency",
-   "legacy_type": "前提",
-   "description": "有効性は推定量どうしを分散で比べる性質。",
-   "units": [
-    "stats2:U21"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-bias-unbiased",
-   "version": 1,
-   "from": "stats2:TERM-bias",
-   "to": "stats2:TERM-unbiased",
-   "legacy_type": "前提",
-   "description": "不偏性は、推定量の偏り（期待値と母数の差）が0であること。",
-   "units": [
-    "stats2:U21"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-unbiased-efficiency",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-unbiased",
    "to": "stats2:TERM-efficiency",
-   "legacy_type": "前提",
-   "description": "有効性は、不偏な推定量の中で比べる。まず不偏性を知る。",
+   "type": "定める",
+   "description": "有効性は、不偏推定量どうしを分散の小ささで比べて決める。不偏性が定義に直接出る。",
    "units": [
     "stats2:U21"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-unbiased-unbvar",
@@ -12361,77 +12425,31 @@
    "premise": "learning"
   },
   {
-   "id": "stats2:REL-bias-mse",
-   "version": 1,
-   "from": "stats2:TERM-bias",
-   "to": "stats2:TERM-mse",
-   "legacy_type": "前提",
-   "description": "平均二乗誤差は、推定量の分散と偏りの2乗の和。",
-   "units": [
-    "stats2:U21"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-var-mse",
-   "version": 1,
-   "from": "stats2:TERM-var",
-   "to": "stats2:TERM-mse",
-   "legacy_type": "前提",
-   "description": "平均二乗誤差は、推定量の分散と偏りの2乗の和。",
-   "units": [
-    "stats2:U21"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-point-interval-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-point-est",
    "to": "stats2:TERM-interval-est",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "点推定は1つの値で、区間推定は幅をもった区間で母数を推定する。区間推定は、推定がどれだけばらつくか（標準誤差）を幅で示す。",
    "units": [
     "stats2:U21",
     "stats2:U22"
    ],
-   "gist": "「たぶん50」と1つの値で言うのが点推定、「45〜55のどこか」と幅で言うのが区間推定。幅があると、推定の確かさまで伝わる。"
-  },
-  {
-   "id": "stats2:REL-intervalest-ci",
-   "version": 1,
-   "from": "stats2:TERM-interval-est",
-   "to": "stats2:TERM-ci",
-   "legacy_type": "前提",
-   "description": "信頼区間は、区間推定で求める区間。",
-   "units": [
-    "stats2:U22"
-   ],
-   "premise": "mathematical"
+   "axis": "母数の値を、標本から何の形で示すか（1つの値か、区間か）",
+   "gist": "「たぶん50」と1つの値で言うのが点推定、「この作り方なら95%の確率で母数を含む区間として45〜55」と幅で言うのが区間推定。幅があると、推定の確かさまで伝わる。",
+   "same": "どちらも、標本から作るもので、分からない母数 θ の値を推定する手続き",
+   "differ": "点推定は推定量の値1つで θ を示し、その値がどれだけ確かかは示さない。区間推定は信頼区間 [L, U] で θ を示し、区間が θ を含む確率の下限（信頼係数）で推定の確かさを言う。同じ作り方では、信頼係数を上げると区間は広くなる"
   },
   {
    "id": "stats2:REL-conflevel-ci",
-   "version": 1,
-   "from": "stats2:TERM-conf-level",
-   "to": "stats2:TERM-ci",
-   "legacy_type": "前提",
-   "description": "信頼区間の幅は、信頼係数（95%など）を決めてから決まる。",
+   "version": 2,
+   "from": "stats2:TERM-ci",
+   "to": "stats2:TERM-conf-level",
+   "type": "定める",
+   "description": "信頼係数は、信頼区間を作る方法について、母数のすべての値でとった、区間が母数を含む確率の下限。信頼区間が定義に直接出る。",
    "units": [
     "stats2:U22"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-se-ci",
-   "version": 1,
-   "from": "stats2:TERM-se",
-   "to": "stats2:TERM-ci",
-   "legacy_type": "前提",
-   "description": "平均の信頼区間は、推定値 ± 係数 × 標準誤差 で作る。",
-   "units": [
-    "stats2:U22"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-clt-ci",
@@ -12445,29 +12463,6 @@
     "stats2:U22"
    ],
    "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-t-ci",
-   "version": 1,
-   "from": "stats2:TERM-t",
-   "to": "stats2:TERM-ci",
-   "legacy_type": "前提",
-   "description": "母分散が分からないときの平均の信頼区間は、t 分布の値で作る。",
-   "units": [
-    "stats2:U22"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-sampleprop-ci",
-   "version": 1,
-   "from": "stats2:TERM-sample-prop",
-   "to": "stats2:TERM-ci",
-   "legacy_type": "応用",
-   "description": "割合の信頼区間は、標本比率と、その標準誤差 √(p̂(1−p̂)÷n) から作る。",
-   "units": [
-    "stats2:U22"
-   ]
   },
   {
    "id": "stats2:REL-t-pairedt",
@@ -12864,16 +12859,15 @@
   },
   {
    "id": "stats2:REL-parameter-estimator",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-parameter",
    "to": "stats2:TERM-estimator",
-   "legacy_type": "前提",
-   "description": "推定量は、母数を推定するためのもの。何を推定するか（母数）を先に知る。",
+   "type": "定める",
+   "description": "推定量は、母数 θ を推定する目的で使う統計量。母数が定義に直接出る。",
    "units": [
     "stats2:U03",
     "stats2:U21"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-scale-qual",
@@ -14081,6 +14075,125 @@
    "units": [
     "stats2:U20"
    ]
+  },
+  {
+   "id": "stats2:REL-expect-unbiased",
+   "version": 1,
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-unbiased",
+   "type": "定める",
+   "description": "不偏性は E(θ̂)＝θ で決める。期待値が定義に直接出る。",
+   "units": [
+    "stats2:U21"
+   ],
+   "from_form": "operation"
+  },
+  {
+   "id": "stats2:REL-prob-consistency",
+   "version": 1,
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-consistency",
+   "type": "定める",
+   "description": "一致性は P(|θ̂ₙ−θ|≧ε)→0 で決める。確率が定義に直接出る。",
+   "units": [
+    "stats2:U21"
+   ],
+   "from_form": "function"
+  },
+  {
+   "id": "stats2:REL-var-efficiency",
+   "version": 1,
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-efficiency",
+   "type": "定める",
+   "description": "有効性は、不偏推定量どうしを分散 V(θ̂) の小ささで比べて決める。分散が定義に直接出る。",
+   "units": [
+    "stats2:U21"
+   ],
+   "from_form": "operation"
+  },
+  {
+   "id": "stats2:REL-estimator-mse",
+   "version": 1,
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-mse",
+   "type": "定める",
+   "description": "平均二乗誤差は、推定量 θ̂ と母数 θ のずれの2乗の期待値。推定量が定義に直接出る。",
+   "units": [
+    "stats2:U21"
+   ]
+  },
+  {
+   "id": "stats2:REL-expect-mse",
+   "version": 1,
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-mse",
+   "type": "定める",
+   "description": "平均二乗誤差は E[(θ̂−θ)²]。期待値が定義に直接出る。",
+   "units": [
+    "stats2:U21"
+   ],
+   "from_form": "operation"
+  },
+  {
+   "id": "stats2:REL-statistic-ci",
+   "version": 1,
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-ci",
+   "type": "定める",
+   "description": "信頼区間は、標本から作る2つの統計量 L≦U でつくる区間。統計量が定義に直接出る。",
+   "units": [
+    "stats2:U22"
+   ]
+  },
+  {
+   "id": "stats2:REL-param-ci",
+   "version": 1,
+   "from": "stats2:TERM-parameter",
+   "to": "stats2:TERM-ci",
+   "type": "定める",
+   "description": "信頼区間は、母数 θ を区間で推定するためにつくる区間。母数が定義に直接出る。",
+   "units": [
+    "stats2:U22"
+   ]
+  },
+  {
+   "id": "stats2:REL-prob-conflevel",
+   "version": 1,
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-conf-level",
+   "type": "定める",
+   "description": "信頼係数は、区間が母数を含む確率 P(L≦θ≦U) の下限。確率が定義に直接出る。",
+   "units": [
+    "stats2:U22"
+   ],
+   "from_form": "function"
+  },
+  {
+   "id": "stats2:REL-conflevel-intervalest",
+   "version": 1,
+   "from": "stats2:TERM-conf-level",
+   "to": "stats2:TERM-interval-est",
+   "type": "定める",
+   "description": "区間推定は、信頼係数を決め、信頼係数がそれ以上になる信頼区間を標本から求めて示す手続き。信頼係数が定義に直接出る（信頼区間は信頼係数をたどって着く）。",
+   "units": [
+    "stats2:U22"
+   ]
+  },
+  {
+   "id": "stats2:REL-unbiased-consistency-contrast",
+   "version": 1,
+   "from": "stats2:TERM-unbiased",
+   "to": "stats2:TERM-consistency",
+   "type": "比べる",
+   "description": "不偏性は平均で母数に当たること、一致性は標本を大きくすると母数に近づくこと。どちらも他方を導かない。",
+   "units": [
+    "stats2:U21"
+   ],
+   "axis": "決まった n での平均の位置か、n を増やしたときの近づき方か",
+   "gist": "「平均すれば当たる」と「たくさん取れば近づく」は別の性質。片方だけを満たす推定量がある。",
+   "same": "どちらも、推定量が母数をどう捉えるかを言う、推定量の性質",
+   "differ": "不偏性は決まった n で E(θ̂)＝θ（ばらつきは問わない）。一致性は n→∞ で θ̂ₙ が θ に確率収束する（有限の n での偏りは問わない）。どちらも他方を導かない（例：独立に同じ分布で 0＜σ²＜∞ のとき、n で割る標本分散は σ² の推定量として不偏でないが一致。最初の1個 X₁ だけを使う推定量は μ の推定量として不偏だが一致しない）"
   }
  ],
  "derivations": [
@@ -19183,6 +19296,68 @@
     {
      "source": {
       "title": "独立なら E(XY)＝E(X)E(Y)"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-19",
+   "label": "④-19",
+   "kind": "極限",
+   "statement": {
+    "text": "X₁, …, Xₙ が独立に Bern(p)（0＜p＜1 を固定）に従うとき、n→∞ で (p̂−p)/√(p̂(1−p̂)/n) の分布は N(0, 1) に近づく。だから、各 p（固定）での p̂ ± z_{α/2}·√(p̂(1−p̂)/n) の被覆確率は、n→∞ で 1−α に近づく（有限の n では近似）。信頼係数（p についての被覆確率の下限）は、どの n でも 0 で、1−α には近づかない（X＝0 のとき区間は {0} なので、被覆確率は 1−(1−p)ⁿ 以下）"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "D",
+      "date": "2026-11-08",
+      "version": "525bbdb"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "M",
+      "date": "2026-11-09",
+      "version": "6a03c21"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-sample-prop"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-ci"
+    ],
+    "predicates": [
+     "stats2:TERM-conf-level"
+    ]
+   },
+   "grounds": [
+    {
+     "claim": "stats2:CLM-6b"
+    },
+    {
+     "claim": "stats2:CLM-20b"
+    },
+    {
+     "source": {
+      "title": "スルツキーの定理（p̂(1−p̂) → p(1−p) の平方根をとる所は連続写像定理）"
+     },
+     "external": true
+    },
+    {
+     "source": {
+      "title": "p̂ が 0 か 1 のとき分母は 0 になるが、その確率は n→∞ で 0 に近づくので、その場合の値をどう決めても極限は同じ（区間の幅は 0 になる。④ §8）"
      }
     }
    ]
