@@ -67,6 +67,11 @@ describe("型 v2 の読み込み", () => {
     expect([...net.missing].filter((x) => x.includes("CLM-"))).toEqual([]);
     expect(net.learning).toHaveLength(1);
   });
+  // 確かめる対象：公開データの v2 の関係が、通す定理（theorem）の id と、その定理の基準の定義の文を、画面の形に写して持つこと。
+  // 想定する故障：merge が theorem か概念の basis を落とし、関係のページで通す定理と要件を出せない。要件を関係の条件の行に写してしまう。
+  // 見つけ方：見本（教材の公開データ）のベイズの更新の関係で、条件の行が0で、theorem がベイズの定理を指し、その basis.text に P(D)＞0・P(H)＞0 があること。
+  // 既存との違い：表示は e2e（relation-open.spec.ts の「通す定理」）が見る。ここはデータの写しだけ。
+  // 検出の確かめ：merge で概念の basis を落とす（net.concepts に入れる所で basis を消す）と落ちることを手元で確かめた（2026-11-09、knowledge-net #164 の再レビューの続き）
   it("ベイズ更新の要件は関係へ複製せず参照する定理の定義から取得できる（#162）", () => {
     const { net, errors } = merge([{ id: "stats2", data: j("public/sample/stats2.json") }]);
     expect(errors).toEqual([]);
