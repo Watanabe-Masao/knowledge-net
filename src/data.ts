@@ -3,6 +3,7 @@
 // v2 のデータは、読んだあとで画面の形（v1 と同じ形の Relation・Concept）に写す（toScreen）。移していない関係は legacy_type を type として読む。
 import Ajv2020 from "ajv/dist/2020";
 import schema from "../schema/kn-schema-v1.json";
+import screenKinds from "./screen-kinds.json";
 import schemaV2 from "../schema/kn-schema-v2.json";
 import experimentSchema from "../schema/kn-experiment-v1.json";
 import kinds from "./generated/relation-types.json";
@@ -298,18 +299,7 @@ const condDetail = (c: V2Cond): ConditionDetail => ({
  * 関係図を ⑤ の種類で描き直すのは M6（stats2-course の issue 270）。それまでの仮の形で、意味は製本 ⑤ のまま（元の種類は kind_v2 に残す）。
  * 見直す条件：画面が ⑤ の種類を描けるようになったら外す（docs/decisions.md）。
  */
-export const SCREEN_KIND_OF_V2: Record<string, string> = {
-  定める: "材料",
-  一種: "種類",
-  特別な場合: "一般化",
-  移る: "変換",
-  従う: "変換",
-  同値: "変換",
-  推定する: "応用",
-  根拠: "応用",
-  導ける: "導出",
-  比べる: "対比",
-};
+export const SCREEN_KIND_OF_V2: Record<string, string> = screenKinds.v2_to_screen;
 
 export function toScreen(d: CourseData): CourseData {
   if (d.version !== 2) return d;

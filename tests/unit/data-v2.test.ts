@@ -39,6 +39,14 @@ describe("型 v2 の読み込み", () => {
     }
     expect(net.relations.filter((x) => x.kind_v2).length).toBeGreaterThan(5);
   });
+  it("描ける種類の表（src/screen-kinds.json）は、型 v2 の ⑤ の種類をちょうど全部持つ（stats2-course #293）", () => {
+    // 確かめる対象：教材の公開の前の確かめ（stats2-course の build/screen_check.py）が読む表と、型の ⑤ の種類が合っていること。
+    // 想定する故障：型に ⑤ の種類を足したのに表に足さず、画面がその種類を読み替えずに線や受け継ぎを落とす（教材の確かめも止まらないまま進む）。
+    // 既存との違い：上のテストは見本にある種類だけを見る。ここは型の全部の種類。
+    // 検出の確かめ：表から「根拠」を外すと落ちることを手元で確かめた（2026-11-09）
+    const types = j("schema/kn-schema-v2.json").properties.relations.items.properties.type.enum as string[];
+    expect(Object.keys(SCREEN_KIND_OF_V2).sort()).toEqual([...types].sort());
+  });
   it("条件の行は、文の一覧と区分に写す（概念と関係の両方）", () => {
     const { net } = merge([{ id: "t", data: v2() }]);
     const binom = net.concepts.get("t:TERM-binom")!;
