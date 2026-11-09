@@ -16,11 +16,12 @@ test("ライブラリ → 分類のページ：正方形（長押しで説明）
   await expect(list).toHaveAttribute("data-layout", "grid");
   const items = list.locator("[data-testid^=cat-item-]");
   await expect(items).toHaveCount(20);
-  // 学ぶ順：仮説検定 → 帰無仮説 → … → 多重比較（教材の並びでは対応のある t 検定が先頭、仮説検定が最後）
+  // 学ぶ順：定義に使う概念が先（帰無仮説 → … → 仮説検定 → 一種の対応のある t 検定 → … → 多重比較）。教材の並び（対応のある t 検定が先頭）ではない。
+  // 検定を製本 ⑤ に移して（stats2-course #304）、仮説検定は帰無仮説・有意水準などを定義に使う側になった（前は仮説検定が先頭）
   const ids = await items.evaluateAll((es) =>
     es.map((e) => e.getAttribute("data-testid")!.replace("cat-item-stats2:TERM-", "")),
   );
-  expect(ids.indexOf("test")).toBeLessThan(ids.indexOf("h0"));
+  expect(ids.indexOf("h0")).toBeLessThan(ids.indexOf("test"));
   expect(ids.indexOf("test")).toBeLessThan(ids.indexOf("paired-t"));
   expect(ids.at(-1)).toBe("multcomp");
   const box = (await items.first().boundingBox())!;

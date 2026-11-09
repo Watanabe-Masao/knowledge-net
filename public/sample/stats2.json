@@ -3084,7 +3084,8 @@
    "確率分布",
    "確率",
    "標本分布・極限",
-   "推定"
+   "推定",
+   "検定"
   ]
  },
  "concepts": [
@@ -9505,7 +9506,18 @@
    "en": "paired t-test",
    "short": "同じ対象の2つの測定値の差をとり、差の平均が0かどうかを t 分布で調べる方法",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-paired-t.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-paired-t.svg",
+   "basis": {
+    "text": "同じ対象の2つの測定値の対 (Xᵢ, Yᵢ)（i＝1, …, n）の差 Dᵢ＝Xᵢ−Yᵢ について、H₀：差の母平均が 0 を、t＝D̄/(s_D/√n)（D̄・s_D² は差の標本平均・不偏分散）で検定する仮説検定",
+    "terms": [
+     "stats2:TERM-test",
+     "stats2:TERM-sample-mean",
+     "stats2:TERM-unbvar"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-welch",
@@ -9520,7 +9532,18 @@
    "en": "Welch's t-test",
    "short": "2群の分散が等しいと仮定せずに、2群の平均の差を t 分布で調べる方法",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-welch.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-welch.svg",
+   "basis": {
+    "text": "独立な2群の標本について、H₀：2つの母平均が等しい を、2群の母分散が等しいと仮定せずに、t＝(X̄₁−X̄₂)/√(s₁²/n₁＋s₂²/n₂)（X̄ⱼ・sⱼ² は群ごとの標本平均・不偏分散）で検定する仮説検定",
+    "terms": [
+     "stats2:TERM-test",
+     "stats2:TERM-sample-mean",
+     "stats2:TERM-unbvar"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-h0",
@@ -9534,7 +9557,16 @@
    "en": "null hypothesis",
    "short": "検定で「差がない・効果がない」などとして立て、データで棄却されるかを調べる仮説",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-h0.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-h0.svg",
+   "basis": {
+    "text": "母集団の分布（その母数）について置く仮説（真か偽かが決まる命題）で、データがそれと食い違うかを調べる対象にするもの。分布をただ1つに決める形（単純仮説。μ＝μ₀ など）か、決めた集まりに置く形（複合仮説）で立てる",
+    "terms": [
+     "stats2:TERM-dist"
+    ]
+   },
+   "forms": [
+    "proposition"
+   ]
   },
   {
    "id": "stats2:TERM-h1",
@@ -9548,7 +9580,16 @@
    "en": "alternative hypothesis",
    "short": "帰無仮説を棄却したときに採る仮説で、調べたい差や効果があるとするもの",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-h1.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-h1.svg",
+   "basis": {
+    "text": "帰無仮説 H₀ が偽のときに母集団の分布がとりうるもの（の全部か一部）についての仮説で、H₀ を棄却したときに採るもの。ずれの向きを決める形（μ＞μ₀）と決めない形（μ≠μ₀）がある",
+    "terms": [
+     "stats2:TERM-h0"
+    ]
+   },
+   "forms": [
+    "proposition"
+   ]
   },
   {
    "id": "stats2:TERM-test-stat",
@@ -9564,7 +9605,17 @@
    "en": "test statistic",
    "short": "帰無仮説のもとでの分布が分かるように作った統計量で、データのずれの大きさを1つの数にしたもの",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-test-stat.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-test-stat.svg",
+   "basis": {
+    "text": "帰無仮説 H₀ を棄却するかを決めるために使う統計量 T（H₀ のもとでの T の分布が分かるか、近似できるように作る。観測したあとの値も同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-statistic",
+     "stats2:TERM-h0"
+    ]
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-pvalue",
@@ -9579,7 +9630,19 @@
    "en": "p-value",
    "short": "帰無仮説が正しいとしたとき、観測した値か、それより極端な値が出る確率",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-pvalue.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-pvalue.svg",
+   "basis": {
+    "text": "検定統計量 T の観測値について、H₀ が正しいとしたとき T が観測値と同じかそれより極端な値（極端さの向きは前もって決める）をとる確率。H₀ が複合仮説なら H₀ の中での上限（T の関数とみると確率変数、観測したあとの値も p 値と呼ぶ）",
+    "terms": [
+     "stats2:TERM-test-stat",
+     "stats2:TERM-h0",
+     "stats2:TERM-prob"
+    ]
+   },
+   "forms": [
+    "rv",
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-alpha",
@@ -9593,7 +9656,16 @@
    "en": "significance level",
    "short": "帰無仮説を棄却する基準の確率で、正しい帰無仮説を誤って棄却する確率の上限（5%など）",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-alpha.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-alpha.svg",
+   "basis": {
+    "text": "第1種の過誤の確率に、データを見る前に置く上限 α（5%・1% など）",
+    "terms": [
+     "stats2:TERM-type1"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-reject",
@@ -9608,7 +9680,16 @@
    "en": "rejection region",
    "short": "検定統計量がその範囲に入ったら帰無仮説を棄却すると、前もって決めた範囲",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-reject.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-reject.svg",
+   "basis": {
+    "text": "検定統計量 T のとる値の集合 R で、T の観測値が R に入れば帰無仮説を棄却すると、データを見る前に決めたもの",
+    "terms": [
+     "stats2:TERM-test-stat"
+    ]
+   },
+   "forms": [
+    "event"
+   ]
   },
   {
    "id": "stats2:TERM-sides",
@@ -9620,9 +9701,20 @@
    ],
    "problems": [],
    "en": "one-sided and two-sided tests",
-   "short": "対立仮説の向きによって、棄却域を分布の片方の端だけに置くか、両端に置くかの違い",
+   "short": "対立仮説が母数のずれの向きを1つに決めるか（片側）、決めないか（両側）の違いで、棄却域の置き方はそれで決まる",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sides.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sides.svg",
+   "basis": {
+    "text": "仮説検定のうち、対立仮説 H₁ が母数のずれの向きを1つに決めるもの（片側検定）と、向きを決めないもの（両側検定）。棄却域はそれに合わせて置く（片側なら検定統計量の分布のその向きの端、両側ならふつう両端。ずれの向きによらず大きい値が出る統計量では、両側でも上側だけ）",
+    "terms": [
+     "stats2:TERM-test",
+     "stats2:TERM-h1",
+     "stats2:TERM-reject"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-type1",
@@ -9636,7 +9728,19 @@
    "en": "type I error",
    "short": "帰無仮説が正しいのに、誤って棄却してしまう誤り",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-type1.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-type1.svg",
+   "basis": {
+    "text": "帰無仮説 H₀ が正しいときに、検定統計量が棄却域に入る（H₀ を棄却する）という判定の誤り（事象）。その確率も同じ名前で呼ぶ（その確率は H₀ の中のどの分布かで変わり、有意水準はその上限）",
+    "terms": [
+     "stats2:TERM-reject",
+     "stats2:TERM-h0",
+     "stats2:TERM-prob"
+    ]
+   },
+   "forms": [
+    "event",
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-type2",
@@ -9650,7 +9754,19 @@
    "en": "type II error",
    "short": "帰無仮説が誤っているのに、棄却されない誤り",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-type2.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-type2.svg",
+   "basis": {
+    "text": "帰無仮説 H₀ が誤っているとき（分布が H₀ の外にあるとき）に、検定統計量が棄却域に入らない（H₀ を棄却しない）という判定の誤り（事象）。その確率 β も同じ名前で呼ぶ（β は H₀ の外のどの分布かで変わる）",
+    "terms": [
+     "stats2:TERM-reject",
+     "stats2:TERM-h0",
+     "stats2:TERM-prob"
+    ]
+   },
+   "forms": [
+    "event",
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-power",
@@ -9664,7 +9780,16 @@
    "en": "power",
    "short": "帰無仮説が誤っているときに、正しく棄却される確率（1−第2種の過誤の確率）",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-power.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-power.svg",
+   "basis": {
+    "text": "帰無仮説 H₀ が誤っているときに H₀ を棄却する確率 1−β（β は第2種の過誤の確率。H₀ の外のどの分布かで値が変わる）",
+    "terms": [
+     "stats2:TERM-type2"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-pool",
@@ -9678,7 +9803,16 @@
    "en": "pooled proportion",
    "short": "2群の割合の差を検定するとき、帰無仮説（割合が等しい）のもとで2群を合わせて求めた割合",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-pool.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-pool.svg",
+   "basis": {
+    "text": "2群の標本の大きさ n₁・n₂ と標本比率 p̂₁・p̂₂ から作る (n₁p̂₁＋n₂p̂₂)/(n₁＋n₂)（2群を合わせた標本の中で性質をもつものの割合。観測したあとの値も同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-sample-prop"
+    ]
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-expected",
@@ -9693,8 +9827,16 @@
    "short": "帰無仮説（独立・決めた割合どおり）が正しいとしたとき、各欄に入ると見込まれる度数",
    "category": "検定",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-expected.svg",
+   "basis": {
+    "text": "帰無仮説 H₀ のもとでの各欄（区分）の度数 Oᵢ の期待値 n·pᵢ（n は総数、pᵢ は H₀ のもとでその欄に入る確率）。H₀ が確率を1つに決めないとき（独立性検定、母数を推定する適合度検定）は、pᵢ の代わりに度数から推定した p̂ᵢ を使った n·p̂ᵢ（その期待値の推定値）（独立性検定では 行の合計×列の合計÷総数）",
+    "terms": [
+     "stats2:TERM-h0",
+     "stats2:TERM-expect"
+    ]
+   },
    "forms": [
-    "number"
+    "number",
+    "rv"
    ]
   },
   {
@@ -9709,7 +9851,19 @@
    "en": "test of independence",
    "short": "クロス集計表の2つの変数が独立かどうかを、期待度数とのずれからカイ二乗分布で調べる検定",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-indep-test.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-indep-test.svg",
+   "basis": {
+    "text": "クロス集計表の2つの質的変数について、H₀：2つの変数は独立 を、統計量 Σ(O−E)²/E（O は観測度数、E は期待度数）で検定する仮説検定",
+    "terms": [
+     "stats2:TERM-test",
+     "stats2:TERM-crosstab",
+     "stats2:TERM-indep",
+     "stats2:TERM-expected"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-gof",
@@ -9723,7 +9877,17 @@
    "en": "goodness-of-fit test",
    "short": "観測した度数が、決めた理論の割合に合っているかを、カイ二乗分布で調べる検定",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-gof.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-gof.svg",
+   "basis": {
+    "text": "k 個の区分に入った観測度数 O₁, …, O_k について、H₀：各区分の確率が決めた値（または決めた分布の族から出る値）である を、統計量 Σ(Oᵢ−Eᵢ)²/Eᵢ（Eᵢ は期待度数）で検定する仮説検定",
+    "terms": [
+     "stats2:TERM-test",
+     "stats2:TERM-expected"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-crosstab",
@@ -9737,7 +9901,10 @@
    "en": "cross tabulation",
    "short": "2つの質的変数の組合せごとに度数を数えて並べた表",
    "category": "図表",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-crosstab.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-crosstab.svg",
+   "forms": [
+    "random_set"
+   ]
   },
   {
    "id": "stats2:TERM-scatter",
@@ -9907,7 +10074,16 @@
    "en": "mean square",
    "short": "平方和をその自由度で割った値で、分散分析や回帰でばらつきの大きさを比べるのに使う",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ms.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ms.svg",
+   "basis": {
+    "text": "平方和をその自由度で割った値（群間・群内・回帰・残差などの平方和ごとに作る）",
+    "terms": [
+     "stats2:TERM-df"
+    ]
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-multicol",
@@ -10047,7 +10223,17 @@
    "en": "analysis of variance",
    "short": "3つ以上の群の平均に差があるかを、群の間と群の中のばらつきの比（F 分布）で調べる方法",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-anova.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-anova.svg",
+   "basis": {
+    "text": "g 個の群の母平均がすべて等しいという H₀ を、F＝群間の平均平方÷群内の平均平方 で検定する仮説検定（教材の範囲は一元配置。g≧2 で定義でき、2級では主に g≧3 で使う）",
+    "terms": [
+     "stats2:TERM-test",
+     "stats2:TERM-ms"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-multcomp",
@@ -10061,7 +10247,18 @@
    "en": "multiple comparisons",
    "short": "多くの群の組を検定するとき、全体として誤る確率が大きくならないように調整して比べる方法",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-multcomp.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-multcomp.svg",
+   "basis": {
+    "text": "複数の帰無仮説（群の組ごとなど）をそれぞれ仮説検定するとき、正しい帰無仮説のうちどれか1つでも第1種の過誤を起こす確率（ファミリーワイズの誤り率）が決めた有意水準 α 以下になるように、各検定の基準を調整して判定する手続き（ボンフェローニの方法など）",
+    "terms": [
+     "stats2:TERM-test",
+     "stats2:TERM-type1",
+     "stats2:TERM-alpha"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-posterior",
@@ -10450,7 +10647,20 @@
    "en": "hypothesis testing",
    "short": "母集団についての仮説を立て、その仮説のもとでデータが起こりにくいかどうかで、仮説を棄却するかを決める方法",
    "category": "検定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-test.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-test.svg",
+   "basis": {
+    "text": "母集団の分布についての帰無仮説 H₀ と対立仮説 H₁ を立て、有意水準 α を前もって決め、H₀ が正しいときに検定統計量 T が入る確率が α 以下になる棄却域 R を（H₁ の向きに合わせて）選び、T の観測値が R に入れば H₀ を棄却し、入らなければ棄却しない手続き",
+    "terms": [
+     "stats2:TERM-h0",
+     "stats2:TERM-h1",
+     "stats2:TERM-alpha",
+     "stats2:TERM-test-stat",
+     "stats2:TERM-reject"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-quantile",
@@ -12465,43 +12675,20 @@
    "premise": "learning"
   },
   {
-   "id": "stats2:REL-t-pairedt",
-   "version": 1,
-   "from": "stats2:TERM-t",
-   "to": "stats2:TERM-paired-t",
-   "legacy_type": "前提",
-   "description": "対応のある t 検定は、差の平均を t 分布で調べる。",
-   "units": [
-    "stats2:U23",
-    "stats2:U25"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-t-welch",
-   "version": 1,
-   "from": "stats2:TERM-t",
-   "to": "stats2:TERM-welch",
-   "legacy_type": "前提",
-   "description": "ウェルチの t 検定は、2群の平均の差を t 分布（自由度を近似で決める）で調べる。",
-   "units": [
-    "stats2:U23",
-    "stats2:U25"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-pairedt-welch-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-paired-t",
    "to": "stats2:TERM-welch",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "どちらも2つの平均の差を t 分布で調べる。対応のある t 検定は同じ対象の前後の差を1つの列として扱い、ウェルチの t 検定は別々の2群を、分散が違ってもよいとして比べる。",
    "units": [
     "stats2:U23",
     "stats2:U25"
    ],
-   "gist": "同じ人の前と後なら、差を1人ずつ取って比べる（対応あり）。別の人たちの2群なら、群ごとのばらつきの違いも込みで比べる（ウェルチ）。データの取り方で方法が決まる。"
+   "axis": "2つの平均の差を調べるときの、データの取り方とばらつきの扱い",
+   "gist": "同じ人の前と後なら、差を1人ずつ取って比べる（対応あり）。別の人たちの2群なら、群ごとのばらつきの違いも込みで比べる（ウェルチ）。データの取り方で方法が決まる。",
+   "same": "どちらも「2つの母平均が等しい」という帰無仮説を、平均の差を標準誤差で割った t の形の統計量で調べる仮説検定",
+   "differ": "対応のある t 検定は、同じ対象の対の差 Dᵢ を1つの標本として扱い（対に共通する個体の効果が差で打ち消される）、t(n−1) で棄却域を決める。ウェルチの t 検定は、独立な2群を母分散が等しいと仮定せずに比べ、自由度を近似で決めた t 分布で棄却域を決める"
   },
   {
    "id": "stats2:REL-sampdist-test",
@@ -12516,201 +12703,143 @@
    "premise": "learning"
   },
   {
-   "id": "stats2:REL-test-h0",
-   "version": 1,
-   "from": "stats2:TERM-test",
-   "to": "stats2:TERM-h0",
-   "legacy_type": "前提",
-   "description": "帰無仮説は検定の出発点として立てる仮説。",
-   "units": [
-    "stats2:U24"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-h0-h1",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-h0",
    "to": "stats2:TERM-h1",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "対立仮説は、帰無仮説を棄却したときに採る仮説として決める。",
    "units": [
     "stats2:U24"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-h0-teststat",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-h0",
    "to": "stats2:TERM-test-stat",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "検定統計量は、帰無仮説のもとでの分布が分かるように作る。",
    "units": [
     "stats2:U24",
     "stats2:U25",
     "stats2:U26"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-teststat-pvalue",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-test-stat",
    "to": "stats2:TERM-pvalue",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "p値は、検定統計量が観測した値より極端になる確率。",
    "units": [
     "stats2:U24",
     "stats2:U26"
    ],
-   "premise": "mathematical"
+   "to_form": "rv"
   },
   {
    "id": "stats2:REL-teststat-reject",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-test-stat",
    "to": "stats2:TERM-reject",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "棄却域は、検定統計量のとる値の範囲として決める。",
    "units": [
     "stats2:U24",
     "stats2:U25"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-alpha-reject",
-   "version": 1,
-   "from": "stats2:TERM-alpha",
-   "to": "stats2:TERM-reject",
-   "legacy_type": "前提",
-   "description": "棄却域は、帰無仮説のもとで入る確率が有意水準になるように決める。",
-   "units": [
-    "stats2:U24",
-    "stats2:U25"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-pvalue-alpha-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-pvalue",
    "to": "stats2:TERM-alpha",
-   "legacy_type": "対比",
+   "type": "比べる",
    "description": "どちらも確率で、比べて帰無仮説を棄却するか決める。有意水準はデータを見る前に決める基準、p値はデータから計算する値。p値が有意水準以下なら棄却する。",
    "units": [
     "stats2:U24"
    ],
-   "gist": "有意水準は前もって引いておく線、p値はデータが出した数。線より小さければ「偶然とは考えにくい」と判断する。"
-  },
-  {
-   "id": "stats2:REL-h1-sides",
-   "version": 1,
-   "from": "stats2:TERM-h1",
-   "to": "stats2:TERM-sides",
-   "legacy_type": "前提",
-   "description": "片側か両側かは、対立仮説が差の向きを決めているかどうかで決まる。",
-   "units": [
-    "stats2:U24"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-reject-sides",
-   "version": 1,
-   "from": "stats2:TERM-reject",
-   "to": "stats2:TERM-sides",
-   "legacy_type": "前提",
-   "description": "片側・両側は、棄却域を分布のどちらの端に置くかの違いとして理解する。",
-   "units": [
-    "stats2:U24"
-   ],
-   "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-h0-type1",
-   "version": 1,
-   "from": "stats2:TERM-h0",
-   "to": "stats2:TERM-type1",
-   "legacy_type": "前提",
-   "description": "第1種の過誤は、正しい帰無仮説を棄却する誤り。",
-   "units": [
-    "stats2:U24"
-   ],
-   "premise": "mathematical"
+   "axis": "いつ・何から決まるか",
+   "gist": "有意水準は前もって引いておく線、p値はデータが出した数。線より小さければ「偶然とは考えにくい」と判断する。",
+   "from_form": "number",
+   "same": "どちらも帰無仮説のもとでの確率の大きさで、2つを比べて帰無仮説を棄却するかを決める",
+   "differ": "有意水準はデータを見る前に決める数（第1種の過誤の確率の上限）。p値は検定統計量の観測値から計算する値で、標本を取り直すと変わる（確率変数の値）"
   },
   {
    "id": "stats2:REL-type1-alpha",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-type1",
    "to": "stats2:TERM-alpha",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "有意水準は、第1種の過誤が起こる確率の上限として決める。",
    "units": [
     "stats2:U24"
    ],
-   "premise": "mathematical"
+   "from_form": "number"
   },
   {
    "id": "stats2:REL-type1-type2-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-type1",
    "to": "stats2:TERM-type2",
-   "legacy_type": "対比",
-   "description": "第1種の過誤は正しい帰無仮説を棄却する誤り、第2種の過誤は誤った帰無仮説を棄却しない誤り。データの数が同じなら、有意水準を小さくして第1種を減らすと、第2種は増える。",
+   "type": "比べる",
+   "description": "第1種の過誤は正しい帰無仮説を棄却する誤り、第2種の過誤は誤った帰無仮説を棄却しない誤り。同じ検定統計量・同じデータの数で、棄却域を狭めて第1種を減らすと、第2種は減らない（ふつうは増える）。",
    "units": [
     "stats2:U24"
    ],
-   "gist": "「無実の人を有罪にする」のが第1種、「犯人を見逃す」のが第2種。片方を厳しくすると、もう片方が起こりやすくなる。"
+   "axis": "帰無仮説が正しいか誤っているか と、判定（棄却する・しない）の組",
+   "gist": "「無実の人を有罪にする」のが第1種、「犯人を見逃す」のが第2種。片方を厳しくすると、もう片方が起こりやすくなる。",
+   "from_form": "event",
+   "to_form": "event",
+   "same": "どちらも検定の判定の誤りで、棄却域から決まる事象（とその確率）",
+   "differ": "第1種の過誤は、帰無仮説が正しいのに棄却する誤り。第2種の過誤は、帰無仮説が誤っているのに棄却しない誤り。同じ検定統計量・同じ標本の大きさで、棄却域を今の棄却域の一部に狭めると、第1種の過誤の確率は上がらず、第2種の過誤の確率は下がらない（ふつうは上がる）"
   },
   {
    "id": "stats2:REL-type2-power",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-type2",
    "to": "stats2:TERM-power",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "検出力は1から第2種の過誤の確率を引いたもの。",
    "units": [
     "stats2:U24"
    ],
-   "premise": "mathematical"
+   "from_form": "number"
   },
   {
    "id": "stats2:REL-test-pairedt",
-   "version": 1,
-   "from": "stats2:TERM-test",
-   "to": "stats2:TERM-paired-t",
-   "legacy_type": "前提",
+   "version": 2,
+   "from": "stats2:TERM-paired-t",
+   "to": "stats2:TERM-test",
+   "type": "一種",
    "description": "対応のある t 検定は、仮説検定の手順を差の平均に当てはめたもの。",
    "units": [
     "stats2:U25"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-test-welch",
-   "version": 1,
-   "from": "stats2:TERM-test",
-   "to": "stats2:TERM-welch",
-   "legacy_type": "前提",
+   "version": 2,
+   "from": "stats2:TERM-welch",
+   "to": "stats2:TERM-test",
+   "type": "一種",
    "description": "ウェルチの t 検定は、仮説検定の手順を2群の平均の差に当てはめたもの。",
    "units": [
     "stats2:U25"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-sampleprop-pool",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-sample-prop",
    "to": "stats2:TERM-pool",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "プールした比率は、2群の標本比率を、標本の大きさで重みを付けて合わせたもの。",
    "units": [
     "stats2:U26"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-h0-pool",
@@ -12726,99 +12855,64 @@
   },
   {
    "id": "stats2:REL-crosstab-indeptest",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-crosstab",
    "to": "stats2:TERM-indep-test",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "独立性検定は、クロス集計表の度数から行う。",
    "units": [
-    "stats2:U27"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-indep-expected",
-   "version": 1,
-   "from": "stats2:TERM-indep",
-   "to": "stats2:TERM-expected",
-   "legacy_type": "前提",
-   "description": "独立性検定の期待度数は、独立なら同時確率が積になることから、行の合計×列の合計÷総数で求める。",
-   "units": [
-    "stats2:U27"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-h0-expected",
-   "version": 1,
-   "from": "stats2:TERM-h0",
-   "to": "stats2:TERM-expected",
-   "legacy_type": "前提",
-   "description": "期待度数は、帰無仮説（適合度検定なら仮定した分布、独立性検定なら独立）が正しいとしたときに、各欄に入ると見込む度数。帰無仮説を決めないと求められない。",
-   "units": [
-    "stats2:U27"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-expect-expected",
-   "version": 1,
-   "from": "stats2:TERM-expect",
-   "to": "stats2:TERM-expected",
-   "legacy_type": "応用",
-   "description": "期待度数は、各欄に入る数の期待値（総数×その欄の確率）。名前は似ているが、確率変数の平均（期待値）を度数に当てはめたもの。",
-   "units": [
-    "stats2:U13",
     "stats2:U27"
    ]
   },
   {
+   "id": "stats2:REL-h0-expected",
+   "version": 2,
+   "from": "stats2:TERM-h0",
+   "to": "stats2:TERM-expected",
+   "type": "定める",
+   "description": "期待度数は、帰無仮説（適合度検定なら仮定した分布、独立性検定なら独立）が正しいとしたときに、各欄に入ると見込む度数。帰無仮説を決めないと求められない。",
+   "units": [
+    "stats2:U27"
+   ],
+   "to_form": "number"
+  },
+  {
+   "id": "stats2:REL-expect-expected",
+   "version": 2,
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-expected",
+   "type": "定める",
+   "description": "期待度数は、帰無仮説のもとで各欄に入ると見込む数（総数×その欄の確率。確率が決まらないときは推定した確率）。名前は似ているが、確率変数の平均（期待値）を度数に当てはめたもの。",
+   "units": [
+    "stats2:U13",
+    "stats2:U27"
+   ],
+   "from_form": "operation",
+   "to_form": "number"
+  },
+  {
    "id": "stats2:REL-expected-gof",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-expected",
    "to": "stats2:TERM-gof",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "適合度検定は、観測度数と期待度数のずれから統計量を作る。",
    "units": [
     "stats2:U27"
    ],
-   "premise": "mathematical"
+   "from_form": "number"
   },
   {
    "id": "stats2:REL-expected-indeptest",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-expected",
    "to": "stats2:TERM-indep-test",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "独立性検定は、観測度数と期待度数のずれから統計量を作る。",
    "units": [
     "stats2:U27"
    ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-chi2-gof",
-   "version": 1,
-   "from": "stats2:TERM-chi2",
-   "to": "stats2:TERM-gof",
-   "legacy_type": "前提",
-   "description": "適合度検定の統計量は、近似的にカイ二乗分布に従う。",
-   "units": [
-    "stats2:U27"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-chi2-indeptest",
-   "version": 1,
-   "from": "stats2:TERM-chi2",
-   "to": "stats2:TERM-indep-test",
-   "legacy_type": "前提",
-   "description": "独立性検定の統計量は、近似的にカイ二乗分布に従う。",
-   "units": [
-    "stats2:U27"
-   ],
-   "premise": "mathematical"
+   "from_form": "rv"
   },
   {
    "id": "stats2:REL-ratio-point",
@@ -13504,52 +13598,37 @@
   },
   {
    "id": "stats2:REL-df-ms",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-df",
    "to": "stats2:TERM-ms",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "平均平方は、平方和を自由度で割ったもの。",
    "units": [
     "stats2:U30",
     "stats2:U32"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-ms-anova",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-ms",
    "to": "stats2:TERM-anova",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "分散分析の F 値は、群間の平均平方を群内の平均平方で割ったもの。",
    "units": [
     "stats2:U32"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-f-anova",
-   "version": 1,
-   "from": "stats2:TERM-f",
-   "to": "stats2:TERM-anova",
-   "legacy_type": "前提",
-   "description": "分散分析の F 値は、帰無仮説のもとで F 分布に従う。",
-   "units": [
-    "stats2:U32"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-test-anova",
-   "version": 1,
-   "from": "stats2:TERM-test",
-   "to": "stats2:TERM-anova",
-   "legacy_type": "前提",
+   "version": 2,
+   "from": "stats2:TERM-anova",
+   "to": "stats2:TERM-test",
+   "type": "一種",
    "description": "分散分析は、仮説検定の手順を3つ以上の群の平均に当てはめたもの。",
    "units": [
     "stats2:U32"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-anova-multcomp",
@@ -13562,18 +13641,6 @@
     "stats2:U32"
    ],
    "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-type1-multcomp",
-   "version": 1,
-   "from": "stats2:TERM-type1",
-   "to": "stats2:TERM-multcomp",
-   "legacy_type": "前提",
-   "description": "検定をくり返すと、どれかで第1種の過誤が起こる確率が大きくなる。多重比較はそれを抑える調整。",
-   "units": [
-    "stats2:U32"
-   ],
-   "premise": "mathematical"
   },
   {
    "id": "stats2:REL-random-strat",
@@ -14194,6 +14261,173 @@
    "gist": "「平均すれば当たる」と「たくさん取れば近づく」は別の性質。片方だけを満たす推定量がある。",
    "same": "どちらも、推定量が母数をどう捉えるかを言う、推定量の性質",
    "differ": "不偏性は決まった n で E(θ̂)＝θ（ばらつきは問わない）。一致性は n→∞ で θ̂ₙ が θ に確率収束する（有限の n での偏りは問わない）。どちらも他方を導かない（例：独立に同じ分布で 0＜σ²＜∞ のとき、n で割る標本分散は σ² の推定量として不偏でないが一致。最初の1個 X₁ だけを使う推定量は μ の推定量として不偏だが一致しない）"
+  },
+  {
+   "id": "stats2:REL-reject-type1",
+   "version": 1,
+   "from": "stats2:TERM-reject",
+   "to": "stats2:TERM-type1",
+   "type": "定める",
+   "description": "第1種の過誤は、帰無仮説が正しいときに検定統計量が棄却域に入る判定の誤り。棄却域が定義に直接出る。",
+   "units": [
+    "stats2:U24"
+   ],
+   "to_form": "event"
+  },
+  {
+   "id": "stats2:REL-reject-type2",
+   "version": 1,
+   "from": "stats2:TERM-reject",
+   "to": "stats2:TERM-type2",
+   "type": "定める",
+   "description": "第2種の過誤は、帰無仮説が誤っているときに検定統計量が棄却域に入らない判定の誤り。棄却域が定義に直接出る。",
+   "units": [
+    "stats2:U24"
+   ],
+   "to_form": "event"
+  },
+  {
+   "id": "stats2:REL-alpha-test",
+   "version": 1,
+   "from": "stats2:TERM-alpha",
+   "to": "stats2:TERM-test",
+   "type": "定める",
+   "description": "仮説検定は、有意水準 α を前もって決め、それに合わせて棄却域を選ぶ手続き。有意水準が定義に直接出る。",
+   "units": [
+    "stats2:U24"
+   ]
+  },
+  {
+   "id": "stats2:REL-h1-test",
+   "version": 1,
+   "from": "stats2:TERM-h1",
+   "to": "stats2:TERM-test",
+   "type": "定める",
+   "description": "仮説検定は、対立仮説の向きに合わせて棄却域を選ぶ。対立仮説が定義に直接出る。",
+   "units": [
+    "stats2:U24"
+   ]
+  },
+  {
+   "id": "stats2:REL-dist-h0",
+   "version": 1,
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-h0",
+   "type": "定める",
+   "description": "帰無仮説は、母集団の分布（その母数）についての仮説。確率分布が定義に直接出る。",
+   "units": [
+    "stats2:U24"
+   ]
+  },
+  {
+   "id": "stats2:REL-test-multcomp",
+   "version": 1,
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-multcomp",
+   "type": "定める",
+   "description": "多重比較は、複数の帰無仮説をそれぞれ仮説検定するときの判定の手続き。仮説検定が定義に直接出る。",
+   "units": [
+    "stats2:U32"
+   ]
+  },
+  {
+   "id": "stats2:REL-indep-indeptest",
+   "version": 1,
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-indep-test",
+   "type": "定める",
+   "description": "独立性検定の帰無仮説は「2つの変数は独立」。独立が定義に直接出る。",
+   "units": [
+    "stats2:U27"
+   ]
+  },
+  {
+   "id": "stats2:REL-samplemean-pairedt",
+   "version": 1,
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-paired-t",
+   "type": "定める",
+   "description": "対応のある t 検定は、対の差の標本平均と不偏分散で作る t で検定する。標本平均が定義に直接出る。",
+   "units": [
+    "stats2:U25"
+   ]
+  },
+  {
+   "id": "stats2:REL-unbvar-pairedt",
+   "version": 1,
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-paired-t",
+   "type": "定める",
+   "description": "対応のある t 検定は、対の差の標本平均と不偏分散で作る t で検定する。不偏分散が定義に直接出る。",
+   "units": [
+    "stats2:U25"
+   ]
+  },
+  {
+   "id": "stats2:REL-samplemean-welch",
+   "version": 1,
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-welch",
+   "type": "定める",
+   "description": "ウェルチの t 検定は、群ごとの標本平均と不偏分散で作る t で検定する。標本平均が定義に直接出る。",
+   "units": [
+    "stats2:U25"
+   ]
+  },
+  {
+   "id": "stats2:REL-unbvar-welch",
+   "version": 1,
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-welch",
+   "type": "定める",
+   "description": "ウェルチの t 検定は、群ごとの標本平均と不偏分散で作る t で検定する。不偏分散が定義に直接出る。",
+   "units": [
+    "stats2:U25"
+   ]
+  },
+  {
+   "id": "stats2:REL-teststat-statistic",
+   "version": 1,
+   "from": "stats2:TERM-test-stat",
+   "to": "stats2:TERM-statistic",
+   "type": "一種",
+   "description": "検定統計量は、帰無仮説を棄却するかを決めるために使う統計量。",
+   "units": [
+    "stats2:U24"
+   ]
+  },
+  {
+   "id": "stats2:REL-sides-test",
+   "version": 1,
+   "from": "stats2:TERM-sides",
+   "to": "stats2:TERM-test",
+   "type": "一種",
+   "description": "片側検定・両側検定は、対立仮説の向きで棄却域の置き方を決めた仮説検定。",
+   "units": [
+    "stats2:U24"
+   ]
+  },
+  {
+   "id": "stats2:REL-gof-test",
+   "version": 1,
+   "from": "stats2:TERM-gof",
+   "to": "stats2:TERM-test",
+   "type": "一種",
+   "description": "適合度検定は、区分ごとの度数が決めた確率に合うかを調べる仮説検定。",
+   "units": [
+    "stats2:U27"
+   ]
+  },
+  {
+   "id": "stats2:REL-indeptest-test",
+   "version": 1,
+   "from": "stats2:TERM-indep-test",
+   "to": "stats2:TERM-test",
+   "type": "一種",
+   "description": "独立性検定は、クロス集計表の2つの変数が独立かを調べる仮説検定。",
+   "units": [
+    "stats2:U27"
+   ]
   }
  ],
  "derivations": [
@@ -19301,6 +19535,142 @@
    ]
   },
   {
+   "id": "stats2:CLM-17",
+   "label": "④-17",
+   "kind": "同値",
+   "statement": {
+    "text": "同じデータ（n≧2、s＞0）と同じ α で、1標本の両側 t 検定が H₀：μ＝μ₀ を棄却しない（|X̄−μ₀|/(s/√n)≦t_{α/2}(n−1)）ことと、μ₀ が区間 X̄ ± t_{α/2}(n−1)·s/√n に入ることは同値"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-sides"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-ci"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "不等式を μ₀ について解く（データの値についての恒等式。正規性は、検定と区間が約束する性質の側の仮定）"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-18a",
+   "label": "④-18a",
+   "kind": "等しい",
+   "statement": {
+    "text": "2群のデータ（n₁＋n₂≧3、群内平方和 SSW＞0）で、一元配置分散分析の F 統計量は、プールした分散を使う2標本 t 統計量の2乗に等しい"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-anova"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-anova"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "平方和の計算（データの値についての恒等式。独立・正規性などの分布の仮定は条件にしない。それは 18b の手続きの保証の側）"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-18b",
+   "label": "④-18b",
+   "kind": "等しい",
+   "statement": {
+    "text": "F(1, ν) の上側 α 点は t(ν) の上側 α/2 点の2乗に等しいので、水準 α の F 検定と両側 t 検定の判定は一致する（ν＝n₁＋n₂−2）"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-anova"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-f",
+     "stats2:TERM-t"
+    ]
+   },
+   "grounds": [
+    {
+     "claim": "stats2:CLM-18a"
+    },
+    {
+     "claim": "stats2:CLM-9"
+    },
+    {
+     "source": {
+      "title": "独立・正規性・等分散は、2つの検定が水準 α を守るための仮定（③）。判定の一致そのものは、仮定によらない"
+     }
+    }
+   ]
+  },
+  {
    "id": "stats2:CLM-19",
    "label": "④-19",
    "kind": "極限",
@@ -19418,6 +19788,55 @@
     {
      "source": {
       "title": "V(X̄)＝σ²/n とチェビシェフの不等式 P(|X̄−μ|≧ε)≦σ²/(nε²)→0"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-22",
+   "label": "④-22",
+   "kind": "同値",
+   "statement": {
+    "text": "H₀ が単純仮説（1つの分布。合成なら P_H₀ を H₀ の中での上限に替える）で、極端さを測る量（片側なら T、両側なら |T−中心| など）が連続分布か、値が離散で上から集まらない分布（整数値など）のとき、同じ検定統計量と同じ極端さの向きで、p 値を P_H₀(T が観測値と同じかそれより極端)、水準 α の棄却域を P_H₀(T∈棄却域)≦α となる最大の「c 以上に極端」の集合と定めると、p 値≦α であることと、観測値が棄却域に入ることは同値"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "D",
+      "date": "2026-11-08",
+      "version": "525bbdb"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-pvalue"
+    ],
+    "predicates": [
+     "stats2:TERM-alpha"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-test-stat"
+    ],
+    "predicates": [
+     "stats2:TERM-reject"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "p 値と棄却域の定義から"
      }
     }
    ]
@@ -19678,6 +20097,157 @@
    ]
   },
   {
+   "id": "stats2:CLM-28a",
+   "label": "④-28a",
+   "kind": "従う",
+   "statement": {
+    "text": "n≧2 の正規母集団（σ＞0）の無作為標本で、H₀：μ＝μ₀ が正しいとき、t 統計量 (X̄−μ₀)/(s/√n) は t(n−1) に従う"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-sample-mean",
+     "stats2:TERM-unbvar"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-test-stat"
+    ],
+    "predicates": [
+     "stats2:TERM-t"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "X₁, …, Xₙ が独立に同じ N(μ, σ²) に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep",
+      "stats2:TERM-normal"
+     ],
+     "outside": "t(n−1) に従うとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "H₀（μ＝μ₀）が正しい",
+     "kind": "仮定",
+     "outside": "t(n−1) に従うとは保証できない（H₀ が誤りなら非心 t 分布になる）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "claim": "stats2:CLM-6a"
+    },
+    {
+     "claim": "stats2:CLM-10"
+    },
+    {
+     "source": {
+      "title": "正規母集団の標本で X̄ と s² は独立"
+     },
+     "external": true
+    },
+    {
+     "source": {
+      "title": "t 分布の定義から"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-28b",
+   "label": "④-28b",
+   "kind": "極限",
+   "statement": {
+    "text": "n 個の観測が独立に k 個の区分に入り（区分の境目はデータを見る前に決める。どの区分の確率も正）、H₀ が正しく、m 個の母数を区分の度数から最尤法（または修正した最小カイ二乗法）で推定し、Cramér（1946、pp.477–479）の正則条件を満たすとき、Σ(O−E)²/E の分布は n→∞ で χ²(k−1−m) に近づく（教材では k−1−m≧1 の場合だけを扱う。適用の目安「期待度数が5以上」は、主張ではなく適合度検定（手続き）の条件。③ の 2。#278）。正則条件の中身（真の母数が内点・区分の確率が母数で微分でき、そのヤコビ行列の階数が m、など）は記憶によるもので、原典でも2次資料でも確かめていない。確定した条件に数えない"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "D",
+      "date": "2026-11-08",
+      "version": "525bbdb"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "E",
+      "date": "2026-11-08",
+      "version": "10c901e"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "#278 の PR の確かめ",
+      "date": "2026-11-08",
+      "version": "94d80c2"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-expected"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-test-stat"
+    ],
+    "predicates": [
+     "stats2:TERM-chi2"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "Cramér 1946（原典は未照合。2次資料で結論と頁まで確かめた）"
+     },
+     "external": true
+    },
+    {
+     "source": {
+      "title": "区分の境目を前もって決め、生のデータ（区分する前の値）から最尤法で推定すると、極限は χ²(k−1−m)＋Σ_{j=1}^{m} λⱼZⱼ²（Z は独立に N(0, 1)、0≦λⱼ＜1、λ は未知の母数による）の形で、確率の大小の意味で χ²(k−1−m) と χ²(k−1) の間になり、分布によらない検定にならない（Chernoff・Lehmann 1954。原典は未照合）。境目をデータから決める場合は範囲外",
+      "locator": "照合した2次資料：Cornell BU-503-M、core.ac.uk 85220922"
+     },
+     "external": true
+    }
+   ]
+  },
+  {
    "id": "stats2:CLM-31",
    "label": "④-31",
    "kind": "従う",
@@ -19863,6 +20433,149 @@
     },
     {
      "claim": "stats2:CLM-33"
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-35",
+   "label": "④-35",
+   "kind": "従う",
+   "statement": {
+    "text": "n≧2 で、対の差 D₁, …, Dₙ が独立に同じ正規分布 N(μ_D, σ_D²)（σ_D＞0）に従い、H₀：μ_D＝0 が正しいとき、t＝D̄/(s_D/√n) は t(n−1) に従う"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-paired-t"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-test-stat"
+    ],
+    "predicates": [
+     "stats2:TERM-t"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "D₁, …, Dₙ が独立に同じ正規分布に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep",
+      "stats2:TERM-normal"
+     ],
+     "outside": "t(n−1) に従うとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "H₀（μ_D＝0）が正しい",
+     "kind": "仮定",
+     "outside": "t(n−1) に従うとは保証できない（H₀ が誤りなら非心 t 分布になる。t(n−1) をずらしただけの形ではない）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "claim": "stats2:CLM-28a"
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-36",
+   "label": "④-36",
+   "kind": "従う",
+   "statement": {
+    "text": "g 群（g≧2、全体の大きさ n＞g）の観測が独立で、各群が同じ分散 σ²（σ＞0）の正規分布に従い、H₀：g 個の母平均がすべて等しい が正しいとき、F＝群間の平均平方÷群内の平均平方 は F(g−1, n−g) に従う"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "N",
+      "date": "2026-11-09",
+      "version": "60d6f01"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-anova",
+     "stats2:TERM-ms"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-test-stat"
+    ],
+    "predicates": [
+     "stats2:TERM-f"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "観測がすべて独立",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep"
+     ],
+     "outside": "F(g−1, n−g) に従うとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "各群が正規分布に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-normal"
+     ],
+     "outside": "F(g−1, n−g) に従うとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "各群の分散が等しい",
+     "kind": "仮定",
+     "outside": "F(g−1, n−g) に従うとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "H₀ が正しい",
+     "kind": "仮定",
+     "outside": "F(g−1, n−g) に従うとは保証できない（H₀ が誤りなら非心 F 分布になり、確率の大小の意味で大きい側にずれる）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "群間平方和/σ²・群内平方和/σ² が独立に χ²(g−1)・χ²(n−g) に従う（Cochran の定理）"
+     },
+     "external": true
+    },
+    {
+     "source": {
+      "title": "F 分布の定義"
+     }
     }
    ]
   }
