@@ -3086,7 +3086,8 @@
    "標本分布・極限",
    "推定",
    "検定",
-   "要約（代表値・ばらつき）"
+   "要約（代表値・ばらつき）",
+   "相関・回帰"
   ]
  },
  "concepts": [
@@ -3567,7 +3568,10 @@
    "en": "qualitative variable",
    "short": "値が分類（性別・血液型など）を表し、そのままでは足したり平均したりできない変数",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-qual.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-qual.svg",
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-quant",
@@ -5356,7 +5360,17 @@
    "en": "correlation coefficient",
    "short": "2つの量的変数の直線的な関係の強さと向きを、−1から1の数で表した値",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-corr.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-corr.svg",
+   "basis": {
+    "text": "量的な2変数のデータ (x₁, y₁), …, (xₙ, yₙ)（n≧2。x と y のデータの標準偏差がどちらも0でないことは定義の要件）について、データの共分散を x と y のデータの標準偏差の積で割った値 r＝s_xy/(s_x·s_y)（割る数は分子と分母で消えるので、r＝Σ(xᵢ−x̄)(yᵢ−ȳ)/√{Σ(xᵢ−x̄)²·Σ(yᵢ−ȳ)²} と同じ値）",
+    "terms": [
+     "stats2:TERM-data-cov",
+     "stats2:TERM-data-sd"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-complement",
@@ -10088,7 +10102,16 @@
    "en": "partial correlation coefficient",
    "short": "第3の変数の影響を取り除いたあとの、2つの変数の相関係数",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-partial-corr.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-partial-corr.svg",
+   "basis": {
+    "text": "3つの量的変数 x・y・z のデータについて、2つずつの相関係数 r_xy・r_xz・r_yz から求める r_xy・z＝(r_xy−r_xz r_yz)/√{(1−r_xz²)(1−r_yz²)}（r_xz²＜1 かつ r_yz²＜1 は定義の要件）",
+    "terms": [
+     "stats2:TERM-corr"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-spurious",
@@ -10102,7 +10125,16 @@
    "en": "spurious correlation",
    "short": "2つの変数に直接の関係がないのに、共通の第3の変数などのために見かけ上あらわれる相関",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-spurious.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-spurious.svg",
+   "basis": {
+    "text": "2つの変数の間に直接の因果の関係がないのに、両方に関係する第3の変数などのために、2つの変数の相関係数が0から離れて見えること",
+    "terms": [
+     "stats2:TERM-corr"
+    ]
+   },
+   "forms": [
+    "property"
+   ]
   },
   {
    "id": "stats2:TERM-ols",
@@ -10116,7 +10148,16 @@
    "en": "least squares method",
    "short": "残差の2乗の和が最小になるように、回帰式の係数を決める方法",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ols.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-ols.svg",
+   "basis": {
+    "text": "回帰式の係数を、データの残差の2乗の和 Σeᵢ² が最小になるように決める方法（最小にする係数が1つに決まることは、切片の列（すべて1）と説明変数の値の列が1次独立であること（単回帰では x が全部同じでないこと）で保たれる）",
+    "terms": [
+     "stats2:TERM-resid"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-regcoef",
@@ -10130,7 +10171,16 @@
    "en": "regression coefficient",
    "short": "回帰式で、説明変数が1増えたときに目的変数がどれだけ変わると見込むかを表す係数",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-regcoef.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-regcoef.svg",
+   "basis": {
+    "text": "目的変数 y を説明変数 x₁, …, x_k の1次式 ŷ＝b₀＋b₁x₁＋…＋b_kx_k で表す回帰式を最小二乗法で求めたときの、説明変数 x_j に掛かる係数 b_j（切片の列（すべて1）と説明変数の値の列が1次独立であることは定義の要件。そうでないと係数が1つに決まらない。単回帰では x が全部同じでないこと）",
+    "terms": [
+     "stats2:TERM-ols"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-resid",
@@ -10144,7 +10194,14 @@
    "en": "residual",
    "short": "観測した値から、回帰式で予測した値を引いた値",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-resid.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-resid.svg",
+   "basis": {
+    "text": "データに当てはめた回帰式について、i 番目の観測値 yᵢ から、その説明変数の値での回帰式の予測値 ŷᵢ を引いた値 eᵢ＝yᵢ−ŷᵢ",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-r2",
@@ -10157,9 +10214,19 @@
    ],
    "problems": [],
    "en": "coefficient of determination",
-   "short": "目的変数のばらつきのうち、回帰式で説明できる割合（0〜1）",
+   "short": "目的変数のばらつきのうち、回帰式で説明できる割合（切片を含む最小二乗では0〜1）",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-r2.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-r2.svg",
+   "basis": {
+    "text": "回帰式を当てはめたデータで、残差の2乗の和を目的変数の偏差の2乗の和で割り、1から引いた値 R²＝1−Σeᵢ²/Σ(yᵢ−ȳ)²（Σ(yᵢ−ȳ)²＞0 は定義の要件）",
+    "terms": [
+     "stats2:TERM-resid",
+     "stats2:TERM-dev"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-extrap",
@@ -10173,7 +10240,14 @@
    "en": "extrapolation",
    "short": "回帰式を、データのある範囲の外の説明変数の値に当てはめて予測すること",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-extrap.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-extrap.svg",
+   "basis": {
+    "text": "回帰式を、当てはめに使ったデータの説明変数の値の範囲の外の値に当てはめて、目的変数を予測すること",
+    "terms": []
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-mreg",
@@ -10187,7 +10261,16 @@
    "en": "multiple regression analysis",
    "short": "2つ以上の説明変数で目的変数を表す式を求める分析",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mreg.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-mreg.svg",
+   "basis": {
+    "text": "目的変数 y を k 個（k≧1）の説明変数 x₁, …, x_k の1次式 ŷ＝b₀＋b₁x₁＋…＋b_kx_k で表す回帰式を、最小二乗法で求める分析（名前の「重」は k≧2 の場合を指して使う）",
+    "terms": [
+     "stats2:TERM-ols"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-dummy",
@@ -10201,7 +10284,16 @@
    "en": "dummy variable",
    "short": "質的変数を回帰分析で使うため、当てはまれば1・当てはまらなければ0とした変数",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-dummy.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-dummy.svg",
+   "basis": {
+    "text": "質的変数の1つのカテゴリについて、そのカテゴリに当てはまる個体で1、当てはまらない個体で0をとる変数",
+    "terms": [
+     "stats2:TERM-qual"
+    ]
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-adjr2",
@@ -10215,7 +10307,17 @@
    "en": "adjusted coefficient of determination",
    "short": "説明変数を増やすだけでは大きくならないように、自由度で補正した決定係数",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-adjr2.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-adjr2.svg",
+   "basis": {
+    "text": "k 個の説明変数の回帰式を n 個のデータに当てはめたとき（n−k−1≧1 は定義の要件）、決定係数 R² を全体の自由度 n−1 と残差の自由度 n−k−1 で補正した 1−(1−R²)(n−1)/(n−k−1)",
+    "terms": [
+     "stats2:TERM-r2",
+     "stats2:TERM-df"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-ms",
@@ -10253,7 +10355,16 @@
    "en": "multicollinearity",
    "short": "重回帰分析で、説明変数どうしの相関が強く、回帰係数の推定が不安定になること",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-multicol.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-multicol.svg",
+   "basis": {
+    "text": "重回帰分析で、説明変数どうしの間に強い1次の関係がある（ある説明変数が、ほかの説明変数の1次式でほぼ表せる）こと",
+    "terms": [
+     "stats2:TERM-mreg"
+    ]
+   },
+   "forms": [
+    "property"
+   ]
   },
   {
    "id": "stats2:TERM-strat-sampling",
@@ -10879,7 +10990,16 @@
    "en": "simple linear regression",
    "short": "1つの説明変数で目的変数を表す直線の式（回帰直線）を求める分析",
    "category": "相関・回帰",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-slr.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-slr.svg",
+   "basis": {
+    "text": "1つの説明変数 x で目的変数 y を表す直線の式 ŷ＝a＋bx（回帰直線）を、最小二乗法で求める分析",
+    "terms": [
+     "stats2:TERM-ols"
+    ]
+   },
+   "forms": [
+    "procedure"
+   ]
   },
   {
    "id": "stats2:TERM-std-normal",
@@ -10918,7 +11038,9 @@
    "name": "データの分散",
    "status": "skeleton",
    "version": 1,
-   "units": [],
+   "units": [
+    "stats2:U07"
+   ],
    "problems": [],
    "en": "variance of data",
    "short": "データの各値の偏差を2乗して平均した値で、データのばらつきの大きさを表す",
@@ -10939,7 +11061,9 @@
    "name": "データの標準偏差",
    "status": "skeleton",
    "version": 1,
-   "units": [],
+   "units": [
+    "stats2:U07"
+   ],
    "problems": [],
    "en": "standard deviation of data",
    "short": "データの分散の正の平方根で、データのばらつきを元の単位で表す",
@@ -10949,6 +11073,29 @@
     "text": "データの分散の正の平方根（データの値と同じ単位のばらつき）",
     "terms": [
      "stats2:TERM-data-var"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
+  },
+  {
+   "id": "stats2:TERM-data-cov",
+   "name": "データの共分散",
+   "status": "skeleton",
+   "version": 1,
+   "units": [
+    "stats2:U28"
+   ],
+   "problems": [],
+   "en": "covariance of data",
+   "short": "2つの量的変数のデータで、偏差の積を平均した値で、2つが同じ向きにずれるか逆向きにずれるかを表す",
+   "category": "相関・回帰",
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-data-cov.svg",
+   "basis": {
+    "text": "量的な2変数のデータ (x₁, y₁), …, (xₙ, yₙ)（n≧1）の、x と y の偏差の積の平均 {(x₁−x̄)(y₁−ȳ)＋…＋(xₙ−x̄)(yₙ−ȳ)}/n",
+    "terms": [
+     "stats2:TERM-dev"
     ]
    },
    "forms": [
@@ -13390,31 +13537,6 @@
    "premise": "mathematical"
   },
   {
-   "id": "stats2:REL-cov-corr",
-   "version": 1,
-   "from": "stats2:TERM-cov",
-   "to": "stats2:TERM-corr",
-   "legacy_type": "前提",
-   "description": "相関係数は、共分散をそれぞれの標準偏差で割ったもの。",
-   "units": [
-    "stats2:U05T",
-    "stats2:U28"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-sd-corr",
-   "version": 1,
-   "from": "stats2:TERM-sd",
-   "to": "stats2:TERM-corr",
-   "legacy_type": "前提",
-   "description": "相関係数は、共分散をそれぞれの標準偏差で割ったもの。",
-   "units": [
-    "stats2:U28"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-corr-acf",
    "version": 1,
    "from": "stats2:TERM-corr",
@@ -13486,35 +13608,22 @@
   },
   {
    "id": "stats2:REL-corr-partialcorr",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-corr",
    "to": "stats2:TERM-partial-corr",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "偏相関係数は、3つの変数の相関係数から計算する。",
    "units": [
     "stats2:U28"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-corr-spurious",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-corr",
    "to": "stats2:TERM-spurious",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "擬相関は「相関があっても直接の関係とは限らない」という、相関の読み方の注意。",
-   "units": [
-    "stats2:U28"
-   ],
-   "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-partialcorr-spurious",
-   "version": 1,
-   "from": "stats2:TERM-partial-corr",
-   "to": "stats2:TERM-spurious",
-   "legacy_type": "応用",
-   "description": "偏相関係数で第3の変数の影響を取り除くと、擬相関かどうかの手掛かりになる。",
    "units": [
     "stats2:U28"
    ]
@@ -13532,65 +13641,53 @@
    "premise": "learning"
   },
   {
-   "id": "stats2:REL-slr-resid",
-   "version": 1,
-   "from": "stats2:TERM-slr",
-   "to": "stats2:TERM-resid",
-   "legacy_type": "前提",
-   "description": "残差は、回帰式の予測からのずれ。",
-   "units": [
-    "stats2:U29"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-resid-ols",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-resid",
    "to": "stats2:TERM-ols",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "最小二乗法は、残差の2乗の和を最小にする。",
    "units": [
     "stats2:U29"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-ols-regcoef",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-ols",
    "to": "stats2:TERM-regcoef",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "回帰係数は最小二乗法で求める。",
    "units": [
     "stats2:U29"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-dev-resid-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-dev",
    "to": "stats2:TERM-resid",
-   "legacy_type": "対比",
-   "description": "どちらも観測値から何かを引いたずれ。偏差は平均を、残差は回帰式の予測値を引く。回帰式が使えると、残差は偏差より小さくなる（その減り方が決定係数）。",
+   "type": "比べる",
+   "description": "どちらも観測値から基準の値を引いたずれ。偏差は平均を、残差は回帰式の予測値を引く。切片を含む回帰式を最小二乗で当てはめると、残差の2乗和は偏差の2乗和以下になる（その減った割合が決定係数）。",
    "units": [
     "stats2:U07",
     "stats2:U29"
    ],
-   "gist": "偏差は「みんなの平均」からのずれ、残差は「その人の条件から見込んだ値」からのずれ。見込みが当たるほど残差は小さい。"
+   "axis": "観測値から何を引いたずれか（全体の平均か、説明変数の値ごとの回帰式の予測値か）",
+   "gist": "偏差は「みんなの平均」からのずれ、残差は「その人の条件から見込んだ値」からのずれ。見込みが当たるほど残差は小さい。",
+   "same": "どちらも1つの観測値から基準の値を引いたずれで、データ全体で足すと0になる（残差は、切片を含む回帰式を最小二乗で当てはめたとき）",
+   "differ": "偏差は目的変数の平均 ȳ を引き、説明変数を使わない。残差は回帰式の予測値 ŷᵢ を引き、説明変数の値ごとに基準が変わる。切片を含む回帰式を最小二乗で当てはめると、残差の2乗和は偏差の2乗和以下で、減った割合が決定係数。1つ1つの残差が偏差より小さいとは限らない"
   },
   {
    "id": "stats2:REL-resid-r2",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-resid",
    "to": "stats2:TERM-r2",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "決定係数は、1から（残差の2乗和÷偏差の2乗和）を引いたもの。",
    "units": [
     "stats2:U29"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-slr-extrap",
@@ -13606,63 +13703,51 @@
   },
   {
    "id": "stats2:REL-slr-mreg",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-slr",
    "to": "stats2:TERM-mreg",
-   "legacy_type": "一般化",
-   "description": "重回帰分析は、単回帰の説明変数を2つ以上に広げたもの。説明変数が1つの重回帰が単回帰。",
+   "type": "特別な場合",
+   "description": "単回帰は、重回帰分析の説明変数の個数を1にしたもの。",
    "units": [
     "stats2:U29",
     "stats2:U30"
    ],
-   "gist": "身長だけで体重を見込むのが単回帰、身長と年齢と運動量で見込むのが重回帰。手掛かりを増やしても、考え方（残差を小さく）は同じ。"
+   "gist": "身長だけで体重を見込むのが単回帰、身長と年齢と運動量で見込むのが重回帰。手掛かりを増やしても、考え方（残差を小さく）は同じ。",
+   "fix": "count",
+   "fix_text": "重回帰分析の説明変数の個数 k を1にすると、1つの説明変数 x で y を表す直線 ŷ＝b₀＋b₁x を最小二乗法で求める単回帰と同じものになる"
   },
   {
    "id": "stats2:REL-qual-dummy",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-qual",
    "to": "stats2:TERM-dummy",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "ダミー変数は、質的変数を0と1の数にしたもの。",
-   "units": [
-    "stats2:U30"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-dummy-mreg",
-   "version": 1,
-   "from": "stats2:TERM-dummy",
-   "to": "stats2:TERM-mreg",
-   "legacy_type": "応用",
-   "description": "ダミー変数を使うと、質的変数も重回帰分析の説明変数に入れられる。",
    "units": [
     "stats2:U30"
    ]
   },
   {
    "id": "stats2:REL-r2-adjr2",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-r2",
    "to": "stats2:TERM-adjr2",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "自由度調整済み決定係数は、決定係数を自由度で補正したもの。",
    "units": [
     "stats2:U30"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-df-adjr2",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-df",
    "to": "stats2:TERM-adjr2",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "補正には、残差と全体の自由度を使う。",
    "units": [
     "stats2:U30"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-mreg-adjr2",
@@ -13678,15 +13763,14 @@
   },
   {
    "id": "stats2:REL-mreg-multicol",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-mreg",
    "to": "stats2:TERM-multicol",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "多重共線性は、重回帰分析の説明変数どうしの関係で起こる。",
    "units": [
     "stats2:U30"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-corr-multicol",
@@ -14578,6 +14662,150 @@
    "units": [
     "stats2:U07"
    ]
+  },
+  {
+   "id": "stats2:REL-datacov-corr",
+   "version": 1,
+   "from": "stats2:TERM-data-cov",
+   "to": "stats2:TERM-corr",
+   "type": "定める",
+   "description": "相関係数は、データの共分散を x と y のデータの標準偏差の積で割った値。データの共分散が定義に直接出る。",
+   "units": [
+    "stats2:U28"
+   ]
+  },
+  {
+   "id": "stats2:REL-datasd-corr",
+   "version": 1,
+   "from": "stats2:TERM-data-sd",
+   "to": "stats2:TERM-corr",
+   "type": "定める",
+   "description": "相関係数は、データの共分散を x と y のデータの標準偏差の積で割った値。データの標準偏差が定義に直接出る。",
+   "units": [
+    "stats2:U28"
+   ]
+  },
+  {
+   "id": "stats2:REL-dev-datacov",
+   "version": 1,
+   "from": "stats2:TERM-dev",
+   "to": "stats2:TERM-data-cov",
+   "type": "定める",
+   "description": "データの共分散は、x と y の偏差の積の平均。偏差が定義に直接出る。",
+   "units": [
+    "stats2:U28"
+   ]
+  },
+  {
+   "id": "stats2:REL-dev-r2",
+   "version": 1,
+   "from": "stats2:TERM-dev",
+   "to": "stats2:TERM-r2",
+   "type": "定める",
+   "description": "決定係数は、1から（残差の2乗和÷目的変数の偏差の2乗和）を引いた値。偏差が定義に直接出る。",
+   "units": [
+    "stats2:U29"
+   ]
+  },
+  {
+   "id": "stats2:REL-ols-slr",
+   "version": 1,
+   "from": "stats2:TERM-ols",
+   "to": "stats2:TERM-slr",
+   "type": "定める",
+   "description": "単回帰は、回帰直線の係数を最小二乗法で求める分析。最小二乗法が定義に直接出る。",
+   "units": [
+    "stats2:U29"
+   ]
+  },
+  {
+   "id": "stats2:REL-ols-mreg",
+   "version": 1,
+   "from": "stats2:TERM-ols",
+   "to": "stats2:TERM-mreg",
+   "type": "定める",
+   "description": "重回帰分析は、回帰式の係数を最小二乗法で求める分析。最小二乗法が定義に直接出る。",
+   "units": [
+    "stats2:U30"
+   ]
+  },
+  {
+   "id": "stats2:REL-corr-r2",
+   "version": 1,
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-r2",
+   "type": "移る",
+   "description": "切片を含む単回帰を最小二乗で当てはめると、決定係数は相関係数の2乗に等しい。",
+   "units": [
+    "stats2:U28",
+    "stats2:U29"
+   ],
+   "mode": "exact",
+   "gist": "単回帰では、相関係数を2乗すると、y のばらつきのうち直線で説明できる割合（決定係数）になる。r＝0.9 なら 81%。",
+   "claim": "stats2:CLM-15",
+   "operation": "2乗する"
+  },
+  {
+   "id": "stats2:REL-corr-regcoef",
+   "version": 1,
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-regcoef",
+   "type": "移る",
+   "description": "切片を含む単回帰を最小二乗で当てはめると、傾きは相関係数に s_y/s_x を掛けたものに等しい。",
+   "units": [
+    "stats2:U28",
+    "stats2:U29"
+   ],
+   "mode": "exact",
+   "gist": "相関係数は単位のない「そろい方」。y と x のばらつきの比を掛けると、x が1増えたとき y がいくつ増えるかという傾きになる。",
+   "claim": "stats2:CLM-37",
+   "operation": "y と x の標準偏差の比 s_y/s_x を掛ける（同じ割る数で求めた s_x・s_y）"
+  },
+  {
+   "id": "stats2:REL-corr-regcoef-contrast",
+   "version": 1,
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-regcoef",
+   "type": "比べる",
+   "description": "相関係数は単位のない対称な強さ、単回帰の傾き（回帰係数）は単位つきの向きのある傾き。",
+   "units": [
+    "stats2:U28",
+    "stats2:U29"
+   ],
+   "axis": "単位のない対称な強さか、単位つきの向きのある傾きか（単回帰の傾き）",
+   "gist": "どちらも x と y の直線的な関係を表すが、相関係数は単位によらない「そろい方」、単回帰の傾きは単位つきの「傾き」。そろい方が同じでも、傾きは違うことがある。",
+   "same": "どちらも同じデータの x と y の直線的な関係を1つの数で表す。単回帰の傾きは r と同じく偏差の積の和 S_xy から作り、符号が r と同じ",
+   "differ": "相関係数は −1〜1 で単位によらず、x と y を入れ替えても変わらない（直線へのそろい方）。単回帰の傾きは「y の単位 ÷ x の単位」を持ち、大きさに上限がなく、x と y を入れ替えると変わる（y を x で回帰した傾きと x を y で回帰した傾きの積が r²）。r が大きくても傾きが小さいことも、その逆もある。重回帰の係数は、ほかの説明変数を固定したときの傾きで、r と符号が逆になることもある"
+  },
+  {
+   "id": "stats2:REL-r2-adjr2-contrast",
+   "version": 1,
+   "from": "stats2:TERM-r2",
+   "to": "stats2:TERM-adjr2",
+   "type": "比べる",
+   "description": "決定係数は説明変数を足すと下がらない。自由度調整済み決定係数は、変数の数で補正するので下がりうる。説明変数の数が違う式どうしを比べるときは、自由度調整済みを使う。",
+   "units": [
+    "stats2:U30"
+   ],
+   "axis": "説明変数を足したときに下がりうるか（説明変数の数で補正するか）",
+   "gist": "決定係数は、説明変数を足すだけで上がる（下がらない）。自由度調整済みは変数の数の分を差し引くので、役に立たない変数を足すと下がる。",
+   "same": "どちらも、回帰式が目的変数のばらつきをどれだけ説明するかを1つの数で表す",
+   "differ": "決定係数は、同じデータで説明変数を足して最小二乗で当てはめ直すと下がらない（切片を含むとき 0〜1）。自由度調整済み決定係数は、説明変数の数 k の分を自由度で補正するので、足した変数の t 値の絶対値が1より小さいときは下がり、負にもなる"
+  },
+  {
+   "id": "stats2:REL-datavar-datacov",
+   "version": 1,
+   "from": "stats2:TERM-data-var",
+   "to": "stats2:TERM-data-cov",
+   "type": "特別な場合",
+   "description": "データの共分散で2つの変数を同じにすると、データの分散になる（どちらも n で割る）。",
+   "units": [
+    "stats2:U07",
+    "stats2:U28"
+   ],
+   "gist": "データの分散は「1つの量が平均からどれだけずれるか」。データの共分散は「2つの量が一緒にずれるか」。同じものどうしの共分散が分散。",
+   "fix": "equal",
+   "fix_text": "データの共分散で y を x と同じにすると、x の偏差の2乗の平均になり、データの分散と一致する"
   }
  ],
  "derivations": [
@@ -19361,15 +19589,15 @@
    "label": "④-5a",
    "kind": "極限",
    "statement": {
-    "text": "X が B(n, p)（0＜p＜1 を固定）に従うとき、n→∞ で (X−np)/√(np(1−p)) の分布は N(0, 1) に近づく"
+    "text": "X が B(n, p)（0＜p＜1）に従うとき、n→∞ で (X−np)/√(np(1−p)) の分布は N(0, 1) に近づく"
    },
    "verification": {
     "math": [
      {
       "method": "独立な確かめ",
-      "by": "C",
-      "date": "2026-11-08",
-      "version": "dc2b65a"
+      "by": "P",
+      "date": "2026-11-09",
+      "version": "51a388a"
      }
     ],
     "external": "未照合"
@@ -19385,6 +19613,14 @@
      "stats2:TERM-std-normal"
     ]
    },
+   "conditions": [
+    {
+     "text": "p は n によらず固定する",
+     "kind": "仮定",
+     "outside": "p が n とともに変わる場合、この正規極限は保証されない（np が正の定数に近づく場合はポアソン極限となる）",
+     "target": "claim"
+    }
+   ],
    "grounds": [
     {
      "claim": "stats2:CLM-1"
@@ -19776,6 +20012,49 @@
     {
      "source": {
       "title": "独立なら E(XY)＝E(X)E(Y)"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-15",
+   "label": "④-15",
+   "kind": "等しい",
+   "statement": {
+    "text": "切片を含む単回帰を最小二乗で当てはめ、S_xx＞0 かつ S_yy＞0 のとき、決定係数 R² は相関係数 r の2乗に等しい"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-slr"
+    ],
+    "predicates": [
+     "stats2:TERM-ols"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-r2"
+    ],
+    "predicates": [
+     "stats2:TERM-corr"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "平方和の分解 S_yy＝回帰平方和＋残差平方和（切片があるので成り立つ）。回帰平方和＝b²S_xx＝S_xy²/S_xx"
      }
     }
    ]
@@ -20821,6 +21100,57 @@
     {
      "source": {
       "title": "F 分布の定義"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-37",
+   "label": "④-37",
+   "kind": "等しい",
+   "statement": {
+    "text": "単回帰 ŷ＝a＋bx の傾き b は、相関係数 r に x・y の標準偏差の比 s_y/s_x を掛けたものに等しい"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "Q",
+      "date": "2026-11-10",
+      "version": "c69a6d9"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-slr"
+    ],
+    "predicates": [
+     "stats2:TERM-ols"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-regcoef"
+    ],
+    "predicates": [
+     "stats2:TERM-corr"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "s_x・s_y を同じ割る数（n か n−1）で求める",
+     "kind": "仮定",
+     "outside": "割る数が違うと比 s_y/s_x がずれ、√(n/(n−1)) 倍などの違いが出る",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "最小二乗の解 b＝S_xy/S_xx（正規方程式）と r の定義 S_xy/√(S_xx·S_yy) から b＝r·√(S_yy/S_xx)。s_y/s_x＝√(S_yy/S_xx)（割る数が比で消える）"
      }
     }
    ]
