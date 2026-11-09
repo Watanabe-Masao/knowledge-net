@@ -418,7 +418,7 @@ export function RelationOpen({
 }) {
   const p = relationParts(net, r);
   const rows = (STAGE_LABEL[r.type] ?? []).filter(([k]) => r.stages?.[k as keyof NonNullable<Relation["stages"]>]);
-  // 変換が通す定理の基準の定義を参照。条件の正本を関係へ複製しない。
+  // 関係が通す定理の基準の定義を出す。定理の要件（ベイズの定理の P(D)＞0 など）の正本は概念の側で、関係の条件の行に写さない（docs/decisions.md「通す定理は定理の基準の定義で見せる」）
   const theorem = r.theorem ? net.concepts.get(r.theorem) : undefined;
   const theoremBasis = theorem?.basis?.text;
   return (
@@ -451,7 +451,7 @@ export function RelationOpen({
       {r.chart && <RelChart r={r} />}
       {theoremBasis && (
         <section className={s.block} data-testid="rel-theorem-basis">
-          <span className={s.lab}>参照する定理の定義・要件（{theorem!.name}）</span>
+          <span className={s.lab}>通す定理（{theorem!.name}）</span>
           <p className={s.desc0}>{theoremBasis}</p>
         </section>
       )}

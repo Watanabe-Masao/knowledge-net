@@ -103,3 +103,25 @@ test("前提：なぜ前に要るか の1段だけ（段・図なし）", async 
   await expect(panel.getByTestId("rel-stages")).toHaveCount(0);
   await expect(panel.getByTestId("rel-chart")).toHaveCount(0);
 });
+
+// 確かめる対象：関係のページで、関係が通す定理の基準の定義（要件を含む）を、関係の条件の行とは別の段に出すこと（knowledge-net #164）。
+// 想定する故障：通す定理の段が出ない（要件が画面から消える）・要件を関係の成立条件の段に重ねて出す・ベイズの例だけで、ほかの定理の関係に出ない。
+// 見つけ方：事前確率 → 事後確率（通す定理：ベイズの定理）で段に「ベイズの定理」と P(D)＞0 が出て、成立条件の段はないこと。
+//   標本平均 → 標準正規分布（通す定理：中心極限定理）でも段が出ること。
+// 既存との違い：data-v2.test.ts はデータの写しだけを見る。ここは画面の表示。
+// 検出の確かめ：Relation.tsx の段の行を外すと落ちることを手元で確かめた（2026-11-09）
+test("通す定理：関係のページに定理の基準の定義を出し、関係の成立条件には写さない", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [c, name, theorem, text] of [
+    ["TERM-prior", /を変換すると 事後確率/, "ベイズの定理", "P(D)＞0"],
+    ["TERM-sample-mean", /標準正規分布/, "中心極限定理", "N(0, 1)"],
+  ] as const) {
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3A${c}`);
+    await openTab(page, "関係");
+    await page.getByTestId("edge-list").getByRole("button", { name }).first().click();
+    const panel = page.getByTestId("edge-panel");
+    await expect(panel.getByTestId("rel-theorem-basis")).toContainText(theorem);
+    await expect(panel.getByTestId("rel-theorem-basis")).toContainText(text);
+    if (c === "TERM-prior") await expect(panel.getByTestId("rel-conds")).toHaveCount(0);
+  }
+});
