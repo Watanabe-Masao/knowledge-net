@@ -39,11 +39,8 @@ export function RelMap({
   // 側ごとに、見出し（定義に使う概念・前提知識 など）の行をまとめる。点の読み上げはその行の見出し
   const rowsOf = (k: Side): (MapRow & { group: string })[] =>
     groups.filter((g) => g.side === k).flatMap((g) => g.rows.map((r) => ({ ...r, group: g.title })));
-  const sideLabel = (k: Side) =>
-    groups
-      .filter((g) => g.side === k && g.rows.length)
-      .map((g) => g.title)
-      .join("・");
+  // 側の見出しは、その側に残った点（同じ相手を1つにしたあと）の見出しだけ。点のない側に見出しを出さない
+  const sideLabel = (k: Side) => [...new Set(allOf(k).map((r) => r.group))].join("・");
   // 置き場所：上と下は横に並べ、右と左は縦に並べる（多いときは2段）
   const place = (k: Side, rows: (MapRow & { group: string })[]) =>
     rows.map((r, i) => {
@@ -54,16 +51,37 @@ export function RelMap({
         return { r, x, y: n > 3 && i % 2 ? y + (k === "before" ? 34 : -34) : y };
       }
       const x = k === "change" ? W - 56 : 56;
-      const y = n === 1 ? cy : cy - 50 + (i * 100) / (n - 1);
+      const y = n === 1 ? cy : cy - 50 + (i * 124) / (n - 1); // 5つで間 31（点の高さ 30 より広く）。上の段の点にかからないよう下へ広げる
       return { r, x, y };
     });
   const sides: Side[] = ["before", "change", "contrast", "after"];
+  // 同じ相手の点は1つ（画面の原則 8。渡辺さん 2026-11-09）：同じ組に関係が2本（特別な場合と移る、移ると比べる など）あれば、
+  // 姿を変える → 比べる → 前 → 後 の順で先の側に1つだけ置き、ほかの関係は札に並べる（下の一覧には全部の行が残る）
+  const PRI: Side[] = ["change", "contrast", "before", "after"];
+  const kept = new Map<string, { r: MapRow & { group: string; tags: string[] }; k: Side }>();
+  for (const k of PRI)
+    for (const r of rowsOf(k)) {
+      const e = kept.get(r.other);
+      if (e) e.r.tags.push(r.tag ?? r.group);
+      else kept.set(r.other, { r: { ...r, tags: r.tag ? [r.tag] : [] }, k });
+    }
+  const allOf = (k: Side) => [...kept.values()].filter((e) => e.k === k).map((e) => e.r);
+  // 量で畳む上限（画面の原則 15）：縦に並ぶ右と左は5つ、横に並ぶ上と下は6つまで。残りは数だけを側の見出しに添える（全部は下の一覧にある）
+  const CAP: Record<Side, number> = { before: 6, contrast: 6, change: 5, after: 5 };
+  const keptOf = (k: Side) => allOf(k).slice(0, CAP[k]);
+  const restOf = (k: Side) => Math.max(0, allOf(k).length - CAP[k]);
   // 名前の長い点が端からはみ出さないよう、箱の幅の分だけ内側に寄せる
   const wOf = (r: MapRow) => Math.max(54, [...r.other].slice(0, 9).length * 12.5 + 20);
   const nodes = sides.flatMap((k) =>
-    place(k, rowsOf(k)).map((p) => ({ ...p, k, x: Math.min(W - wOf(p.r) / 2 - 4, Math.max(wOf(p.r) / 2 + 4, p.x)) })),
+    place(k, keptOf(k)).map((p) => ({
+      ...p,
+      r: p.r as MapRow & { group: string; tags: string[] },
+      k,
+      x: Math.min(W - wOf(p.r) / 2 - 4, Math.max(wOf(p.r) / 2 + 4, p.x)),
+    })),
   );
   const dim = (id: string) => !!sel && sel !== id;
+  const oneChange = keptOf("change").length === 1;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className={st.relMap} role="group" aria-label="関係図" data-testid="rel-map">
       <defs>
@@ -83,7 +101,7 @@ export function RelMap({
         ))}
       </defs>
       {sides
-        .filter((k) => rowsOf(k).length)
+        .filter((k) => allOf(k).length)
         .map((k) => {
           const p =
             k === "before"
@@ -94,8 +112,16 @@ export function RelMap({
                   ? { x: W - 4, y: cy - 66, a: "end" }
                   : { x: 4, y: cy - 66, a: "start" };
           return (
-            <text key={k} x={p.x} y={p.y} textAnchor={p.a as "middle"} className={st.relMapSide}>
+            <text
+              key={k}
+              x={p.x}
+              y={p.y}
+              textAnchor={p.a as "middle"}
+              className={st.relMapSide}
+              data-testid={`rel-side-${k}`}
+            >
               {sideLabel(k)}
+              {restOf(k) ? `（ほかに ${restOf(k)}。下の一覧）` : ""}
             </text>
           );
         })}
@@ -121,6 +147,7 @@ export function RelMap({
         }
         const on = sel === r.id;
         const dash = k === "contrast" ? "2 4" : r.tag === "近似" || r.tag === "極限" ? "5 4" : undefined;
+        const label = r.tags.join("・");
         return (
           <g key={`e${r.id}`} opacity={dim(r.id) ? 0.25 : 1}>
             <line
@@ -133,15 +160,17 @@ export function RelMap({
               strokeDasharray={dash}
               markerEnd={k === "contrast" ? undefined : `url(#m-${k})`}
             />
-            {r.tag && k === "change" && (
+            {label && k === "change" && (
+              // 札は線の真ん中ではなく相手の点の手前に置く（右の点が多いと、真ん中は中心の近くに集まって重なる）。
+              // 右の点が1つなら、点は中心と同じ高さで手前が中心の箱にかかるので、点の上に置く
               <text
-                x={(x1 + x2) / 2}
-                y={(y1 + y2) / 2 - 5}
-                textAnchor="middle"
+                x={oneChange ? x : x - wOf(r) / 2 - 4}
+                y={oneChange ? y - 22 : y + 4}
+                textAnchor={oneChange ? "middle" : "end"}
                 className={st.relMapTag}
                 style={{ fill: COLOR[k] }}
               >
-                {r.tag}
+                {label}
               </text>
             )}
           </g>
@@ -158,7 +187,7 @@ export function RelMap({
             role="button"
             tabIndex={0}
             aria-pressed={on}
-            aria-label={`${r.other}（${r.group}${r.tag ? `・${r.tag}` : ""}）`}
+            aria-label={`${r.other}（${r.group}${r.tags.length ? `・${r.tags.join("・")}` : ""}）`}
             onClick={() => onSel(r.id)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {

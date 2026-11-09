@@ -163,12 +163,15 @@ function groupsOf(net: Network, id: string): Group[] {
   const { relations, derivations } = around(net, id);
   // 見出しの呼び名と向き（stats2-course issue 249 ④）：A のページは「定義に使う概念」、使われる側の B のページは「これを定義に使う概念」
   const g: Record<string, Group> = {
+    // 一種の親（⑤ の一種。今の画面では種類）：親の定義が子の定義に入るので、定義に使う概念と同じ上の側（渡辺さん 2026-11-09）
+    kindof: { key: "kindof", side: "before", title: "何の一種か", rows: [] },
     def: { key: "def", side: "before", title: "定義に使う概念", rows: [] },
     know: { key: "know", side: "before", title: "前提知識", rows: [] },
     before: { key: "before", side: "before", title: "前提", rows: [] },
     change: { key: "change", side: "change", title: "変換", rows: [] },
     contrast: { key: "contrast", side: "contrast", title: "対比", rows: [] },
     used: { key: "used", side: "after", title: "これを定義に使う概念", rows: [] },
+    kinds: { key: "kinds", side: "after", title: "この一種", rows: [] },
     after: { key: "after", side: "after", title: "応用", rows: [] },
   };
   for (const r of relations) {
@@ -177,7 +180,7 @@ function groupsOf(net: Network, id: string): Group[] {
       ? MODES[r.mode]!.split("（")[0]
       : r.type === "前提" && r.premise !== "learning"
         ? undefined
-        : kindName(r.type, r.premise); // 札は短く（極限・近似・厳密）
+        : (r.kind_v2 ?? kindName(r.type, r.premise)); // 札は短く（極限・近似・厳密）。⑤ の行は ⑤ の名前（特別な場合・従う）
     const row = {
       id: r.id,
       other: name(net, other),
@@ -187,20 +190,24 @@ function groupsOf(net: Network, id: string): Group[] {
     }; // 前提は gist がないので、どこで使うかの説明（description）
     const into = r.to === id;
     const k =
-      r.type === "変換"
-        ? "change"
-        : r.type === "対比"
-          ? "contrast"
-          : r.type === "材料"
-            ? into
-              ? "def"
-              : "used"
-            : into && r.type === "前提" && r.premise === "learning"
-              ? "know"
-              : into
-                ? "before"
-                : "after";
-    if (k === "def" || k === "used" || k === "know") row.tag = undefined; // 見出しが種類を言っている
+      r.type === "種類"
+        ? into
+          ? "kinds"
+          : "kindof"
+        : r.type === "変換"
+          ? "change"
+          : r.type === "対比"
+            ? "contrast"
+            : r.type === "材料"
+              ? into
+                ? "def"
+                : "used"
+              : into && r.type === "前提" && r.premise === "learning"
+                ? "know"
+                : into
+                  ? "before"
+                  : "after";
+    if (k === "def" || k === "used" || k === "know" || k === "kindof" || k === "kinds") row.tag = undefined; // 見出しが種類を言っている
     if (row.tag === g[k]!.title) row.tag = undefined; // 見出しと同じ札は省く（「対比」の下の全行に「対比」と出さない。UI レビュー「重複と量」）
     g[k]!.rows.push(row);
   }
