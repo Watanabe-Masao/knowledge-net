@@ -3082,7 +3082,8 @@
   ],
   "v2_ready": [
    "確率分布",
-   "確率"
+   "確率",
+   "標本分布・極限"
   ]
  },
  "concepts": [
@@ -3448,7 +3449,10 @@
    "en": "statistic",
    "short": "標本のデータから計算して求める値（標本平均・標本分散など）",
    "category": "データと変数",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-statistic.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-statistic.svg",
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-sample-space",
@@ -4052,7 +4056,10 @@
    "en": "unbiased variance",
    "short": "偏差の2乗の和を n−1 で割った分散で、その期待値が母分散に一致する",
    "category": "要約（代表値・ばらつき）",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-unbvar.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-unbvar.svg",
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-sd",
@@ -9084,7 +9091,17 @@
    "en": "sampling distribution",
    "short": "同じ大きさの標本を何度も取ったときに、統計量がとる値の分布",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sampdist.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sampdist.svg",
+   "basis": {
+    "text": "母集団から大きさ n の標本を取ることをくり返すとき、標本から計算する統計量を確率変数とみたときの確率分布",
+    "terms": [
+     "stats2:TERM-statistic",
+     "stats2:TERM-dist"
+    ]
+   },
+   "forms": [
+    "distribution"
+   ]
   },
   {
    "id": "stats2:TERM-se",
@@ -9101,7 +9118,18 @@
    "en": "standard error",
    "short": "推定量の標本分布の標準偏差で、推定値がくり返しでどれだけばらつくかの大きさ",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-se.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-se.svg",
+   "basis": {
+    "text": "推定量 θ̂ の標本分布の標準偏差 √V(θ̂)（例：独立に同じ分布に従う標本で、標本平均の標準誤差は σ/√n）",
+    "terms": [
+     "stats2:TERM-estimator",
+     "stats2:TERM-sampdist",
+     "stats2:TERM-sd"
+    ]
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-lln",
@@ -9115,7 +9143,19 @@
    "en": "law of large numbers",
    "short": "標本の大きさを大きくすると、標本平均が母平均に近づくという法則",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-lln.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-lln.svg",
+   "basis": {
+    "text": "X₁, …, Xₙ が独立に同じ分布に従い、平均が μ、分散 σ² が有限のとき、どの ε＞0 でも n→∞ で P(|X̄−μ|≧ε)→0（標本平均 X̄ は μ に確率収束する。④-20b）",
+    "terms": [
+     "stats2:TERM-sample-mean"
+    ]
+   },
+   "forms": [
+    "proposition"
+   ],
+   "claims": [
+    "stats2:CLM-20b"
+   ]
   },
   {
    "id": "stats2:TERM-clt",
@@ -9130,6 +9170,13 @@
    "short": "独立に同じ分布から取った標本平均の分布は、n が大きいと正規分布に近づくという定理",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-clt.svg",
+   "basis": {
+    "text": "X₁, …, Xₙ が独立に同じ分布に従い、平均が μ、分散 σ² が 0＜σ²＜∞ のとき、n→∞ で √n(X̄−μ)/σ の分布は N(0, 1) に近づく（④-6b）",
+    "terms": [
+     "stats2:TERM-sample-mean",
+     "stats2:TERM-std-normal"
+    ]
+   },
    "forms": [
     "proposition"
    ],
@@ -9149,7 +9196,16 @@
    "en": "continuity correction",
    "short": "離散分布を連続分布で近似するとき、区間の端を0.5ずらして近似をよくする工夫",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-cc.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-cc.svg",
+   "basis": {
+    "text": "整数値をとる確率変数 X の確率を、確率密度で表される分布に従う Y の確率で近似するとき、P(X≦k) を P(Y≦k＋0.5)、P(X≧k) を P(Y≧k−0.5) で近似する（境目を 0.5 ずらす）操作",
+    "terms": [
+     "stats2:TERM-pdf"
+    ]
+   },
+   "forms": [
+    "operation"
+   ]
   },
   {
    "id": "stats2:TERM-t",
@@ -9166,6 +9222,12 @@
    "short": "母分散を不偏分散で置き換えて標準化した標本平均が従う分布で、自由度が大きいと標準正規分布に近づく",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-t.svg",
+   "basis": {
+    "text": "Z が N(0, 1) に従い、V が χ²(k) に従い、Z と V が独立なとき、T＝Z/√(V/k) の分布を自由度 k の t 分布 t(k) とする（k は1以上の整数）",
+    "terms": [
+     "stats2:TERM-chi2"
+    ]
+   },
    "forms": [
     "distribution"
    ]
@@ -9185,7 +9247,17 @@
    "en": "chi-squared distribution",
    "short": "独立な標準正規分布の確率変数を2乗して足した値が従う分布",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-chi2.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-chi2.svg",
+   "basis": {
+    "text": "Z₁, …, Z_k が独立に N(0, 1) に従うとき、Z₁²＋…＋Z_k² の分布を自由度 k のカイ二乗分布 χ²(k) とする（k は1以上の整数。独立は定義の要件）",
+    "terms": [
+     "stats2:TERM-std-normal",
+     "stats2:TERM-df"
+    ]
+   },
+   "forms": [
+    "distribution"
+   ]
   },
   {
    "id": "stats2:TERM-f",
@@ -9202,7 +9274,16 @@
    "en": "F distribution",
    "short": "独立な2つのカイ二乗分布の確率変数を、それぞれ自由度で割った比が従う分布",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-f.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-f.svg",
+   "basis": {
+    "text": "U が χ²(m)、V が χ²(n) に従い、U と V が独立なとき、(U/m)/(V/n) の分布を自由度 (m, n) の F 分布 F(m, n) とする（m・n は1以上の整数）",
+    "terms": [
+     "stats2:TERM-chi2"
+    ]
+   },
+   "forms": [
+    "distribution"
+   ]
   },
   {
    "id": "stats2:TERM-df",
@@ -9220,7 +9301,14 @@
    "en": "degrees of freedom",
    "short": "統計量を計算するときに自由に動ける値の個数で、t・カイ二乗・F 分布の形を決める",
    "category": "標本分布・極限",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-df.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-df.svg",
+   "basis": {
+    "text": "n 個の値に k 個の互いに独立な1次の制約（例：偏差の和が0）があるとき、自由に動ける値の個数 n−k。t・カイ二乗・F 分布では、族を区別する正の整数の母数を同じ名前で呼ぶ",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-estimator",
@@ -9234,7 +9322,10 @@
    "en": "estimator",
    "short": "母数を推定するために使う統計量（標本から値が決まる式）",
    "category": "推定",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-estimator.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-estimator.svg",
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-point-est",
@@ -10208,6 +10299,12 @@
    "short": "標本のデータの値を足し、データの個数で割った値",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-mean.svg",
+   "basis": {
+    "text": "標本 X₁, …, Xₙ（n は1以上）から作る統計量 X̄＝(X₁＋…＋Xₙ)/n（観測したあとの値も同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-statistic"
+    ]
+   },
    "forms": [
     "rv"
    ]
@@ -10226,6 +10323,12 @@
    "short": "標本の中で、ある性質をもつものの割合",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sample-prop.svg",
+   "basis": {
+    "text": "各個体が性質をもてば1、もたなければ0とした標本 X₁, …, Xₙ の標本平均 p̂＝(X₁＋…＋Xₙ)/n（性質をもつ個数÷n）",
+    "terms": [
+     "stats2:TERM-sample-mean"
+    ]
+   },
    "forms": [
     "rv"
    ]
@@ -11989,92 +12092,53 @@
    "premise": "mathematical"
   },
   {
-   "id": "stats2:REL-sample-samplemean",
-   "version": 1,
-   "from": "stats2:TERM-sample",
-   "to": "stats2:TERM-sample-mean",
-   "legacy_type": "前提",
-   "description": "標本平均は標本のデータの平均。",
-   "units": [
-    "stats2:U18"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-statistic-sampdist",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-statistic",
    "to": "stats2:TERM-sampdist",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "標本分布は、標本を取り直したときに統計量がとる値の分布。",
    "units": [
     "stats2:U17",
     "stats2:U18"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-dist-sampdist",
-   "version": 1,
-   "from": "stats2:TERM-dist",
-   "to": "stats2:TERM-sampdist",
-   "legacy_type": "前提",
-   "description": "標本分布も確率分布の1つ。統計量を確率変数として見る。",
+   "version": 2,
+   "from": "stats2:TERM-sampdist",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "標本分布は、統計量（標本から計算する確率変数）の確率分布。確率分布の1つ。",
    "units": [
     "stats2:U17",
     "stats2:U18"
-   ],
-   "premise": "learning"
+   ]
   },
   {
    "id": "stats2:REL-sampdist-se",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-sampdist",
    "to": "stats2:TERM-se",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "標準誤差は、推定量の標本分布の標準偏差。",
    "units": [
     "stats2:U18",
     "stats2:U20"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-sd-se",
-   "version": 1,
-   "from": "stats2:TERM-sd",
-   "to": "stats2:TERM-se",
-   "legacy_type": "前提",
-   "description": "標準誤差は標準偏差の一種（標本分布の標準偏差）。平均の標準誤差は σ÷√n。",
+   "version": 2,
+   "from": "stats2:TERM-se",
+   "to": "stats2:TERM-sd",
+   "type": "一種",
+   "description": "標準誤差は、推定量の標本分布の標準偏差。標準偏差の1つ。平均の標準誤差は σ÷√n。",
    "units": [
     "stats2:U18",
     "stats2:U20"
    ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-samplemean-lln",
-   "version": 1,
-   "from": "stats2:TERM-sample-mean",
-   "to": "stats2:TERM-lln",
-   "legacy_type": "前提",
-   "description": "大数の法則は、標本平均が母平均に近づくという主張。",
-   "units": [
-    "stats2:U19"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-samplemean-clt",
-   "version": 1,
-   "from": "stats2:TERM-sample-mean",
-   "to": "stats2:TERM-clt",
-   "legacy_type": "前提",
-   "description": "中心極限定理は、標本平均の分布の形についての主張。",
-   "units": [
-    "stats2:U19"
-   ],
-   "premise": "mathematical"
+   "to_form": "number"
   },
   {
    "id": "stats2:REL-lln-clt",
@@ -12129,75 +12193,47 @@
   },
   {
    "id": "stats2:REL-normal-chi2",
-   "version": 1,
-   "from": "stats2:TERM-normal",
+   "version": 2,
+   "from": "stats2:TERM-std-normal",
    "to": "stats2:TERM-chi2",
-   "legacy_type": "前提",
-   "description": "カイ二乗分布は、標準正規分布の確率変数の2乗の和の分布。",
+   "type": "定める",
+   "description": "カイ二乗分布は、独立に標準正規分布に従う k 個の確率変数の2乗の和の分布。",
    "units": [
     "stats2:U20"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-df-chi2",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-df",
    "to": "stats2:TERM-chi2",
-   "legacy_type": "前提",
+   "type": "定める",
    "description": "カイ二乗分布の形は自由度で決まる。",
    "units": [
     "stats2:U20"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-chi2-t",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-chi2",
    "to": "stats2:TERM-t",
-   "legacy_type": "前提",
-   "description": "t 分布は、標準正規分布の確率変数を、カイ二乗分布の確率変数を自由度で割った値の平方根で割った分布。",
+   "type": "定める",
+   "description": "t 分布は、互いに独立な標準正規分布の確率変数 Z とカイ二乗分布の確率変数 V について、Z を「V を自由度で割った値の平方根」で割った分布。",
    "units": [
     "stats2:U20"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-chi2-f",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-chi2",
    "to": "stats2:TERM-f",
-   "legacy_type": "前提",
-   "description": "F 分布は、2つのカイ二乗分布の確率変数をそれぞれ自由度で割った比の分布。",
+   "type": "定める",
+   "description": "F 分布は、互いに独立な2つのカイ二乗分布の確率変数を、それぞれ自由度で割った比の分布。",
    "units": [
     "stats2:U20"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-df-t",
-   "version": 1,
-   "from": "stats2:TERM-df",
-   "to": "stats2:TERM-t",
-   "legacy_type": "前提",
-   "description": "t 分布の形は自由度で決まる。",
-   "units": [
-    "stats2:U20"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-df-f",
-   "version": 1,
-   "from": "stats2:TERM-df",
-   "to": "stats2:TERM-f",
-   "legacy_type": "前提",
-   "description": "F 分布の形は2つの自由度で決まる。",
-   "units": [
-    "stats2:U20"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-t-normal",
@@ -12419,19 +12455,6 @@
    "description": "母分散が分からないときの平均の信頼区間は、t 分布の値で作る。",
    "units": [
     "stats2:U22"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-ratio-sampleprop",
-   "version": 1,
-   "from": "stats2:TERM-ratio",
-   "to": "stats2:TERM-sample-prop",
-   "legacy_type": "前提",
-   "description": "標本比率は、標本の中での割合。",
-   "units": [
-    "stats2:U22",
-    "stats2:U26"
    ],
    "premise": "mathematical"
   },
@@ -13631,19 +13654,6 @@
    "premise": "mathematical"
   },
   {
-   "id": "stats2:REL-samplingerror-se-contrast",
-   "version": 1,
-   "from": "stats2:TERM-sampling-error",
-   "to": "stats2:TERM-se",
-   "legacy_type": "対比",
-   "description": "標本誤差は、標本を選ぶことで結果が真の値からずれる現象そのもの。標準誤差は、そのずれがくり返しでどれくらいの大きさになるかを測る数（推定量の標準偏差）。",
-   "units": [
-    "stats2:U18",
-    "stats2:U31"
-   ],
-   "gist": "標本誤差は「一部だけ見たせいで起きるずれ」、標準誤差は「そのずれのふつうの大きさ」。標準誤差で標本誤差の大きさを見積もる。"
-  },
-  {
    "id": "stats2:REL-sampling-nonsampling-contrast",
    "version": 1,
    "from": "stats2:TERM-sampling-error",
@@ -13940,6 +13950,137 @@
     "stats2:U12"
    ],
    "to_form": "number"
+  },
+  {
+   "id": "stats2:REL-samplemean-normal",
+   "version": 1,
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-normal",
+   "type": "従う",
+   "description": "正規母集団 N(μ, σ²) から独立に取った大きさ n の標本の標本平均 X̄ は、N(μ, σ²/n) に従う。",
+   "units": [
+    "stats2:U18"
+   ],
+   "claim": "stats2:CLM-6a"
+  },
+  {
+   "id": "stats2:REL-unbvar-chi2",
+   "version": 1,
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-chi2",
+   "type": "従う",
+   "description": "正規母集団から独立に取った大きさ n（n≧2）の標本の不偏分散 s² について、(n−1)s²/σ² は自由度 n−1 のカイ二乗分布に従う。",
+   "units": [
+    "stats2:U20"
+   ],
+   "claim": "stats2:CLM-10"
+  },
+  {
+   "id": "stats2:REL-t-f",
+   "version": 1,
+   "from": "stats2:TERM-t",
+   "to": "stats2:TERM-f",
+   "type": "移る",
+   "description": "T が自由度 ν の t 分布に従うとき、T² は自由度 (1, ν) の F 分布に従う。",
+   "units": [
+    "stats2:U20"
+   ],
+   "mode": "exact",
+   "gist": "t 分布に従う量を2乗すると、F 分布（分子の自由度1）に従う。だから、F 統計量が t 統計量の2乗になる場面（2群の一元配置分散分析とプールした t 検定など）では、両側の t 検定と F 検定は同じ判定になる。",
+   "claim": "stats2:CLM-9",
+   "operation": "t(ν) に従う確率変数を2乗する"
+  },
+  {
+   "id": "stats2:REL-lln-clt-contrast",
+   "version": 1,
+   "from": "stats2:TERM-lln",
+   "to": "stats2:TERM-clt",
+   "type": "比べる",
+   "description": "大数の法則は標本平均が平均に近づくこと、中心極限定理はそのずれの分布の形が正規分布に近づくことを言う。",
+   "units": [
+    "stats2:U19"
+   ],
+   "axis": "標本平均の何が、n を大きくするとどうなるか",
+   "gist": "n を大きくすると、標本平均は平均に近づき（大数の法則）、近づくときのずれ方は釣鐘の形になる（中心極限定理）。",
+   "same": "どちらも、独立に同じ分布に従う標本の標本平均 X̄ について、n を大きくしたときのふるまいを言う定理",
+   "differ": "大数の法則は、X̄ そのものが平均 μ に近づく（ずれは0に縮む）と言う。中心極限定理は、ずれを √n 倍に拡大して σ で割った √n(X̄−μ)/σ の分布が、（分散が有限で正なら）元の分布によらず標準正規分布に近づくと言う"
+  },
+  {
+   "id": "stats2:REL-sampmean-statistic",
+   "version": 1,
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-statistic",
+   "type": "一種",
+   "description": "標本平均は、標本から計算する統計量の1つ。",
+   "units": [
+    "stats2:U18"
+   ]
+  },
+  {
+   "id": "stats2:REL-sampleprop-samplemean",
+   "version": 1,
+   "from": "stats2:TERM-sample-prop",
+   "to": "stats2:TERM-sample-mean",
+   "type": "一種",
+   "description": "標本比率は、性質をもつ個体を1、もたない個体を0とした標本の標本平均。",
+   "units": [
+    "stats2:U22"
+   ]
+  },
+  {
+   "id": "stats2:REL-estimator-se",
+   "version": 1,
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-se",
+   "type": "定める",
+   "description": "標準誤差は、推定量の標本分布の標準偏差。推定量が定義に直接出る。",
+   "units": [
+    "stats2:U18"
+   ]
+  },
+  {
+   "id": "stats2:REL-pdf-cc",
+   "version": 1,
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-cc",
+   "type": "定める",
+   "description": "連続修正は、整数値の確率を確率密度で表される分布の確率で近似するとき、境目を 0.5 ずらす操作。確率密度関数が定義に直接出る。",
+   "units": [
+    "stats2:U16"
+   ]
+  },
+  {
+   "id": "stats2:REL-chi2-dist",
+   "version": 1,
+   "from": "stats2:TERM-chi2",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率変数の作り方（正規分布に従う確率変数の関数）で区別される族の1つ。",
+   "units": [
+    "stats2:U20"
+   ]
+  },
+  {
+   "id": "stats2:REL-t-dist",
+   "version": 1,
+   "from": "stats2:TERM-t",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率変数の作り方（正規分布に従う確率変数の関数）で区別される族の1つ。",
+   "units": [
+    "stats2:U20"
+   ]
+  },
+  {
+   "id": "stats2:REL-f-dist",
+   "version": 1,
+   "from": "stats2:TERM-f",
+   "to": "stats2:TERM-dist",
+   "type": "一種",
+   "description": "確率分布のうち、確率変数の作り方（正規分布に従う確率変数の関数）で区別される族の1つ。",
+   "units": [
+    "stats2:U20"
+   ]
   }
  ],
  "derivations": [
@@ -15566,9 +15707,10 @@
        "id": "stats2:binom-C-01",
        "title": "理論分布と実験結果は一致する？",
        "finds": "理論確率と実測割合",
-       "concept": "stats2:REL-samplingerror-se-contrast",
+       "concept": "stats2:TERM-binom",
        "related": [
-        "stats2:TERM-binom"
+        "stats2:TERM-se",
+        "stats2:TERM-sampling-error"
        ],
        "predict": "同じ条件の実験をくり返すと、実測の割合が理論と一致するか",
        "operate": "同じ条件の実験の回数",
@@ -18710,6 +18852,69 @@
    ]
   },
   {
+   "id": "stats2:CLM-6a",
+   "label": "④-6a",
+   "kind": "従う",
+   "statement": {
+    "text": "X₁, …, Xₙ が独立に N(μ, σ²)（σ＞0）に従うとき、標本平均 X̄ は N(μ, σ²/n) に従う"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "L",
+      "date": "2026-11-09",
+      "version": "02c937b"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-sample-mean"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-sample-mean"
+    ],
+    "predicates": [
+     "stats2:TERM-normal"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "X₁, …, Xₙ が独立に同じ N(μ, σ²)（σ＞0）に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep",
+      "stats2:TERM-normal"
+     ],
+     "outside": "N(μ, σ²/n) に従うとは保証できない（正規でない母集団でも分散が有限なら、n が大きいとき標準化したものが N(0, 1) に近づく。CLM-6b）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "独立な正規分布の和は正規分布（再生性）"
+     },
+     "external": true
+    }
+   ]
+  },
+  {
    "id": "stats2:CLM-6b",
    "label": "④-6b",
    "kind": "極限",
@@ -18817,6 +19022,118 @@
    ]
   },
   {
+   "id": "stats2:CLM-9",
+   "label": "④-9",
+   "kind": "従う",
+   "statement": {
+    "text": "T が t(ν) に従うとき、T² は F(1, ν) に従う"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "L",
+      "date": "2026-11-09",
+      "version": "02c937b"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-t"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-f"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "T＝Z/√(V/ν) と書くと T²＝(Z²/1)/(V/ν)。Z² は χ²(1) に従い、V と独立なので、F 分布の定義から"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-10",
+   "label": "④-10",
+   "kind": "従う",
+   "statement": {
+    "text": "n≧2 で X₁, …, Xₙ が独立に N(μ, σ²)（σ＞0）に従うとき、(n−1)s²/σ² は χ²(n−1) に従う（s² は不偏分散）"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "L",
+      "date": "2026-11-09",
+      "version": "02c937b"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-unbvar"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-unbvar"
+    ],
+    "predicates": [
+     "stats2:TERM-chi2"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "n≧2",
+     "kind": "仮定",
+     "outside": "不偏分散が定まらない",
+     "target": "claim"
+    },
+    {
+     "text": "X₁, …, Xₙ が独立に同じ N(μ, σ²)（σ＞0）に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep",
+      "stats2:TERM-normal"
+     ],
+     "outside": "(n−1)s²/σ² がカイ二乗分布に従うとは保証できない（正規母集団でないと、一般には形が変わる）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "Helmert の直交変換で Σ(Xᵢ−X̄)²/σ² を n−1 個の独立な N(0, 1) の2乗の和に書く（Cochran の定理）"
+     },
+     "external": true
+    }
+   ]
+  },
+  {
    "id": "stats2:CLM-13",
    "label": "④-13",
    "kind": "ならば",
@@ -18866,6 +19183,66 @@
     {
      "source": {
       "title": "独立なら E(XY)＝E(X)E(Y)"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-20b",
+   "label": "④-20b",
+   "kind": "推定量の性質",
+   "statement": {
+    "text": "X₁, …, Xₙ が独立に同じ分布に従い、平均が μ、分散 σ² が有限のとき、どの ε＞0 についても n→∞ で P(|X̄−μ|≧ε)→0（標本平均 X̄ は μ に確率収束する。一致）"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "L",
+      "date": "2026-11-09",
+      "version": "02c937b"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-sample-mean"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-sample-mean"
+    ],
+    "predicates": [
+     "stats2:TERM-consistency"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "X₁, …, Xₙ が独立に同じ分布に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep"
+     ],
+     "outside": "標本平均が μ に近づくとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "分散 σ² が有限",
+     "kind": "仮定",
+     "outside": "この根拠（チェビシェフの不等式）による保証は使えない（平均が有限なら成り立つことが知られている：ヒンチンの大数の法則。教材の範囲外・未照合）",
+     "terms": [
+      "stats2:TERM-var"
+     ],
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "V(X̄)＝σ²/n とチェビシェフの不等式 P(|X̄−μ|≧ε)≦σ²/(nε²)→0"
      }
     }
    ]
@@ -19075,6 +19452,53 @@
      "source": {
       "title": "前半はポアソン過程の定義（独立増分と件数の分布）から。後半は P(T＞t)＝P([0, t] の件数が0)＝e^(−λt)"
      }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-27",
+   "label": "④-27",
+   "kind": "重なり",
+   "statement": {
+    "text": "自由度2のカイ二乗分布の密度は (1/2)e^(−x/2)（x＞0）で、平均2の指数分布の密度と等しい"
+   },
+   "teaching": {
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     },
+     {
+      "method": "独立な確かめ",
+      "by": "L",
+      "date": "2026-11-09",
+      "version": "02c937b"
+     }
+    ],
+    "external": "未照合"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-chi2"
+    ]
+   },
+   "conclusion": {
+    "predicates": [
+     "stats2:TERM-expo"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "χ²(k) の密度の一般式に k＝2 を代入"
+     },
+     "external": true
     }
    ]
   },
