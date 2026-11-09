@@ -11,7 +11,7 @@ describe("周辺図（neighborhood）", () => {
   const pos = neighborhood(net, binom);
   it("中心は選んだ概念、まわりは直接つながる概念と導出だけ", () => {
     expect(pos.get(binom)).toEqual({ x: 0, y: 0 });
-    for (const n of ["indep", "poisson", "normal", "geom", "hyper"]) expect(pos.has(`stats2:TERM-${n}`)).toBe(true);
+    for (const n of ["indep", "poisson", "std-normal", "geom", "hyper"]) expect(pos.has(`stats2:TERM-${n}`)).toBe(true);
     expect(pos.has("stats2:DER-binom-moments")).toBe(true);
     expect(pos.has("stats2:TERM-std")).toBe(false); // 2つ先は出さない
   });

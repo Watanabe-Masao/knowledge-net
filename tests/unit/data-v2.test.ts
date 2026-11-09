@@ -7,7 +7,7 @@
 // 検出の確かめ：toScreen を「何もしない」に替えると、legacy_type・v2 の種類の読み方・条件の行の3つのテストが落ちることを手元で確かめた。
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { kindOf, merge } from "../../src/data";
+import { KINDS, SCREEN_KIND_OF_V2, kindOf, merge } from "../../src/data";
 import { sampleV1 } from "../support/sample";
 
 const j = (p: string) => JSON.parse(readFileSync(p, "utf8"));
@@ -29,12 +29,22 @@ describe("型 v2 の読み込み", () => {
     const { net } = merge([{ id: "t", data: v2() }]);
     for (const r of net.relations) expect(kindOf(r.type)?.reading, r.type).toBeTruthy();
   });
+  it("⑤ の種類は、今の画面の種類に読み替え、元を kind_v2 に残す（M6 まで。stats2-course #289）", () => {
+    // 想定する故障：関係図・凡例が知らない種類（定める・一種など）を受け取り、線や受け継ぎが消える。元の種類を落として M6 で描き直せない。
+    // 検出の確かめ：読み替えを外すと、1つ目の比べで落ちる
+    const { net } = merge([{ id: "t", data: v2() }]);
+    for (const r of net.relations.filter((x) => x.kind_v2)) {
+      expect(r.type).toBe(SCREEN_KIND_OF_V2[r.kind_v2!]);
+      expect(KINDS[r.type], r.type).toBeTruthy();
+    }
+    expect(net.relations.filter((x) => x.kind_v2).length).toBeGreaterThan(5);
+  });
   it("条件の行は、文の一覧と区分に写す（概念と関係の両方）", () => {
     const { net } = merge([{ id: "t", data: v2() }]);
     const binom = net.concepts.get("t:TERM-binom")!;
     expect(binom.conditions?.math).toEqual(["n は1以上の整数・0≦p≦1"]);
     expect(binom.conditions_detail?.[0]).toMatchObject({ kind: "要件", scope: "math" });
-    const tr = net.relations.find((x) => x.type === "移る")!;
+    const tr = net.relations.find((x) => x.kind_v2 === "移る")!;
     expect(tr.conditions).toEqual(["np≧5 かつ n(1−p)≧5"]);
     expect(tr.conditions_detail?.[0]).toMatchObject({ kind: "目安", target: "二項分布の正規近似" });
   });

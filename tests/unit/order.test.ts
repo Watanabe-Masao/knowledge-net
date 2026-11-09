@@ -4,6 +4,7 @@
 // 見つけ方：教材の見本の全部の分類で、分類の中の前提をさかのぼる関係（trace）がすべて前→後になっているか、語の集まりが同じか。
 //   検定では、第1種の過誤 → 第2種の過誤 → 検出力 の順と、先頭が仮説検定の連なりより後ろの語（対応のある t 検定）でないこと。
 // 既存との違い：経路（trace）のテストは1つの概念の前提だけを見る。分類の中の並べ方は見ていない
+// 検出の確かめ（2026-11-09）：種類の向きを from → to のままにすると、確率分布で輪になって落ちる（確率分布 → 確率密度関数 → 正規分布 → 確率分布）
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { KINDS, learningOrder, merge } from "../../src/data";
@@ -20,8 +21,11 @@ describe("分類の中の学ぶ順", () => {
       expect([...order].sort(), cat).toEqual([...ids].sort());
       const at = new Map(order.map((id, i) => [id, i]));
       for (const r of net.relations)
-        if (KINDS[r.type]?.trace && at.has(r.from) && at.has(r.to))
-          expect(at.get(r.from)!, `${cat}：${r.from} → ${r.to}`).toBeLessThan(at.get(r.to)!);
+        if (KINDS[r.type]?.trace && at.has(r.from) && at.has(r.to)) {
+          // 種類（⑤ の一種）は親（to）が先（stats2-course #289）
+          const [pre, post] = r.type === "種類" ? [r.to, r.from] : [r.from, r.to];
+          expect(at.get(pre)!, `${cat}：${pre} → ${post}`).toBeLessThan(at.get(post)!);
+        }
     }
   });
   it("検定：対比でしかつながらない第2種の過誤は第1種の過誤の後、検出力の前", () => {

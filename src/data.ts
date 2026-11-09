@@ -119,6 +119,7 @@ export type Relation = {
   to: string;
   type: string;
   /** v2：移していない行の v1 の種類（画面は type に写して読む） */ legacy_type?: string;
+  /** v2：⑤ の種類（画面は SCREEN_KIND_OF_V2 で今の種類に読み替え、元をここに残す。M6 まで） */ kind_v2?: string;
   /** v2 の種類ごとの項目（stats2-course docs/schema-v2-design.md の 3.1） */
   fix?: string;
   fix_text?: string;
@@ -292,6 +293,24 @@ const condDetail = (c: V2Cond): ConditionDetail => ({
   ...(c.approx ? { target: c.approx } : {}),
 });
 /** v2 のデータを、画面が読む形（v1 と同じ形）に写す。移していない関係は legacy_type を type に、条件の行は文と区分に分ける */
+/**
+ * ⑤ の種類を、今の画面（地図・関係図・凡例）の v1 の種類で出す読み替え（渡辺さん 2026-11-09。stats2-course の issue 289）。
+ * 関係図を ⑤ の種類で描き直すのは M6（stats2-course の issue 270）。それまでの仮の形で、意味は製本 ⑤ のまま（元の種類は kind_v2 に残す）。
+ * 見直す条件：画面が ⑤ の種類を描けるようになったら外す（docs/decisions.md）。
+ */
+export const SCREEN_KIND_OF_V2: Record<string, string> = {
+  定める: "材料",
+  一種: "種類",
+  特別な場合: "一般化",
+  移る: "変換",
+  従う: "変換",
+  同値: "変換",
+  推定する: "応用",
+  根拠: "応用",
+  導ける: "導出",
+  比べる: "対比",
+};
+
 export function toScreen(d: CourseData): CourseData {
   if (d.version !== 2) return d;
   const relations = d.relations.map((r) => {
@@ -299,7 +318,8 @@ export function toScreen(d: CourseData): CourseData {
     const objs = rows.filter((x): x is V2Cond => typeof x === "object");
     return {
       ...r,
-      type: r.legacy_type ?? r.type,
+      type: r.legacy_type ?? SCREEN_KIND_OF_V2[r.type] ?? r.type,
+      ...(r.legacy_type ? {} : { kind_v2: r.type }),
       conditions: rows.map((x) => (typeof x === "string" ? x : x.text)),
       ...(objs.length ? { conditions_detail: objs.map(condDetail) } : {}),
     };
@@ -423,10 +443,23 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
 export type Step = { from: string; to: string; via: string }; // via：関係の種類か、導出の id
 
 /** id を理解するのにたどる前提を、近い順に返す（relation-types.yaml の trace が true の関係と、導出の前提）。 */
+/**
+ * 前提をさかのぼる向き（先に学ぶ側 → 後の側）。ほとんどの種類は from → to。
+ * 種類（⑤ の一種）だけは「from は to の一種」なので、親（to）の定義が子（from）の定義に入る：親が先（stats2-course の issue 289。
+ * 公開データに種類の行が入って初めて分かった。v1 の種類の行はそれまで0だった）
+ */
+function prereq(r: { type: string; from: string; to: string }): [string, string] {
+  return r.type === "種類" ? [r.to, r.from] : [r.from, r.to];
+}
+
 export function trace(net: Network, id: string): { order: string[]; steps: Step[] } {
   const back = new Map<string, Step[]>();
   const add = (s: Step) => back.set(s.to, [...(back.get(s.to) ?? []), s]);
-  for (const r of net.relations) if (kindOf(r.type)?.trace) add({ from: r.from, to: r.to, via: r.type });
+  for (const r of net.relations)
+    if (kindOf(r.type)?.trace) {
+      const [pre, post] = prereq(r);
+      add({ from: pre, to: post, via: r.type });
+    }
   for (const d of net.derivations) for (const p of d.premises) add({ from: p, to: d.conclusion, via: d.id });
   const order: string[] = [];
   const steps: Step[] = [];
@@ -675,8 +708,9 @@ export function learningOrder(net: Network, ids: string[]): string[] {
   const indeg = new Map(ids.map((id) => [id, 0]));
   for (const r of net.relations) {
     if (!kindOf(r.type)?.trace || !pos.has(r.from) || !pos.has(r.to) || r.from === r.to) continue;
-    next.get(r.from)!.push(r.to);
-    indeg.set(r.to, indeg.get(r.to)! + 1);
+    const [pre, post] = prereq(r);
+    next.get(pre)!.push(post);
+    indeg.set(post, indeg.get(post)! + 1);
   }
   const out: string[] = [];
   const ready = ids.filter((id) => indeg.get(id) === 0);
