@@ -91,5 +91,5 @@ test("意味のまとまりがあれば、まとまりごとに区切り、ま�
   await expect(list.locator("h3")).toHaveText(["くり返して数える", "確率分布のしくみ", "そのほか"]);
   await expect(list.getByTestId("cat-section-stats2:GRP-count").locator("[data-testid^=cat-item-]")).toHaveCount(2);
   await expect(list.getByTestId("cat-section-stats2:GRP-count")).toContainText("n 回くり返して");
-  await expect(list.locator("[data-testid^=cat-item-]")).toHaveCount(13);
+  await expect(list.locator("[data-testid^=cat-item-]")).toHaveCount(15); // 標準正規分布・無相関を足した（stats2-course #289）
 });

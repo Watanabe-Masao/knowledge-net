@@ -98,7 +98,7 @@ test("概念の成立条件は要件・仮定・手掛かりに分かれ、外�
 
 // 確かめる対象：関係の成立条件も同じ部品で出し、目安に対象と出典が付くこと（同じものは同じ見た目。画面の原則 4）。
 // 想定する故障：関係のページだけ区分を読まず、目安が文字の一覧に埋もれる・出典が落ちる。
-// 見つけ方：二項分布 → 正規分布 を開き、目安の見出しと対象・出典の文を読む。既存との違い：上は概念の側。ここは関係の側と目安の欄
+// 見つけ方：二項分布 → 標準正規分布 を開き、目安の見出しと対象・出典の文を読む。既存との違い：上は概念の側。ここは関係の側と目安の欄
 test("関係の成立条件も同じ区分で出し、目安に対象と出典が付く", async ({ page }) => {
   const errs = noErrors(page);
   await withDetail(page);
@@ -107,7 +107,7 @@ test("関係の成立条件も同じ区分で出し、目安に対象と出典�
   await openTab(page, "関係");
   await page
     .getByTestId("edge-list")
-    .getByRole("button", { name: /二項分布 を変換すると 正規分布/ })
+    .getByRole("button", { name: /二項分布 を変換すると 標準正規分布/ })
     .click();
   const conds = page.getByTestId("edge-panel").getByTestId("rel-conds");
   await expect(conds).toContainText("成立条件");

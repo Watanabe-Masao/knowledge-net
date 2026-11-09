@@ -356,7 +356,7 @@ test("全体に切り替えても選んだ概念を引き継ぎ、「戻る」�
   await page.mouse.click(p.x, p.y);
   await expect(page.getByTestId("detail").getByRole("heading", { name: "ポアソン分布", exact: true })).toBeVisible();
   await settle(page);
-  expect(await page.evaluate(() => (window as any).kn.getElementById("stats2:TERM-expo").nonempty())).toBe(true);
+  expect(await page.evaluate(() => (window as any).kn.getElementById("stats2:TERM-fact").nonempty())).toBe(true); // ポアソン分布のまわり（指数分布との線は主張にした。stats2-course #289）
   await page.goBack();
   await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
 });
@@ -421,12 +421,13 @@ test("概念の図：詳細に出て、押すと図を別の画面で大きく�
 test("図／解説／触る は切り替えて1つだけ出す。最初は図で、解説・触るは押したときだけ。一覧のカードは閉じておく", async ({
   page,
 }) => {
-  await page.goto(`./?${SRC}&c=stats2:TERM-poisson`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-geom`);
   await settle(page);
   await tab(page, /関係/);
+  // ポアソン分布 → 指数分布 は主張にした（stats2-course #289）ので、図2枚・解説・操作を持ち、開いたときの図（chart）のない線で開く
   await page
     .getByTestId("edge-list")
-    .getByRole("button", { name: /指数分布/ })
+    .getByRole("button", { name: /二項分布 と 幾何分布 を比べる/ })
     .first()
     .click();
   const panel = page.getByTestId("edge-panel");
@@ -445,7 +446,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図で
   await expect(page.locator("iframe")).toHaveCount(0);
   await page.getByTestId("media-back").click();
   await sw.getByRole("radio", { name: /操作/ }).click();
-  await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pois");
+  await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "geom");
   await page.getByTestId("media-back").click();
   await sw.getByRole("radio", { name: /解説/ }).click();
   await page.getByTestId("tour-prev").click(); // 1段目の「やめる」で閉じる
@@ -457,7 +458,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図で
   await tab(page, /関係/);
   await page
     .getByTestId("edge-list")
-    .getByRole("button", { name: /二項分布 を変換すると 正規分布/ })
+    .getByRole("button", { name: /二項分布 を変換すると 標準正規分布/ })
     .click();
   await expect(page.getByTestId("explore")).toHaveCount(0);
   await page
@@ -1135,7 +1136,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     });
   });
   await page.goto("./?src=sample/stats2.json");
-  await expect(page.getByText(/（定義だけ 110）/)).toBeVisible();
+  await expect(page.getByText(/（定義だけ 111）/)).toBeVisible(); // ベルヌーイ分布に定義、標準正規分布・無相関を骨格で足した（stats2-course #289）
   const lib = page.getByTestId("library");
   await expect(lib.locator("[data-testid^=lib-]")).toHaveCount(12); // 12の分類のタイル
   // 柱は教材の course.pillars から（上から 記述 → 確率 → 推測）
