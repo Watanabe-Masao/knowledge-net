@@ -12,7 +12,7 @@ import st from "./Detail.module.css";
 /** KaTeX で許すのは部品の印（\\htmlData）だけ。\\href などで javascript: のリンクを作らせない（stats2-course issue 206） */
 export const KATEX_TRUST = (c: { command: string }) => c.command === "\\htmlData";
 
-export type MapRow = { id: string; other: string; tag?: string; der?: boolean };
+export type MapRow = { id: string; other: string; tag?: string; kind?: string; der?: boolean };
 type Side = "before" | "change" | "contrast" | "after";
 const COLOR: Record<Side, string> = {
   before: "var(--k-pre)",
@@ -62,7 +62,7 @@ export function RelMap({
   for (const k of PRI)
     for (const r of rowsOf(k)) {
       const e = kept.get(r.other);
-      if (e) e.r.tags.push(r.tag ?? r.group);
+      if (e) e.r.tags.push(r.tag ?? r.kind ?? r.group);
       else kept.set(r.other, { r: { ...r, tags: r.tag ? [r.tag] : [] }, k });
     }
   const allOf = (k: Side) => [...kept.values()].filter((e) => e.k === k).map((e) => e.r);

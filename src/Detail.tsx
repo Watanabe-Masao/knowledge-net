@@ -157,7 +157,8 @@ export type Group = {
   /** つながりの地図（RelMap）のどの側に置くか。見出しは細かく分け、地図の側は4つのまま（地図の描き直しは issue 249 のあと） */
   side: "before" | "change" | "contrast" | "after";
   title: string;
-  rows: { id: string; other: string; tag?: string; text: string; der?: boolean; label: string }[];
+  /** kind：種類の短い名前（地図で同じ相手の点に札を並べるときに使う。見出しが種類を言う行でも残す） */
+  rows: { id: string; other: string; tag?: string; kind?: string; text: string; der?: boolean; label: string }[];
 };
 function groupsOf(net: Network, id: string): Group[] {
   const { relations, derivations } = around(net, id);
@@ -165,6 +166,8 @@ function groupsOf(net: Network, id: string): Group[] {
   const g: Record<string, Group> = {
     // 一種の親（⑤ の一種。今の画面では種類）：親の定義が子の定義に入るので、定義に使う概念と同じ上の側（渡辺さん 2026-11-09）
     kindof: { key: "kindof", side: "before", title: "何の一種か", rows: [] },
+    // 特別な場合（⑤。今の画面では一般化）も一種と同じ考え方：一般の側が上、特別な場合が下（渡辺さん 2026-11-09 のスクリーンショットから。応用に落ちていた）
+    specof: { key: "specof", side: "before", title: "何の特別な場合か", rows: [] },
     def: { key: "def", side: "before", title: "定義に使う概念", rows: [] },
     know: { key: "know", side: "before", title: "前提知識", rows: [] },
     before: { key: "before", side: "before", title: "前提", rows: [] },
@@ -172,6 +175,7 @@ function groupsOf(net: Network, id: string): Group[] {
     contrast: { key: "contrast", side: "contrast", title: "対比", rows: [] },
     used: { key: "used", side: "after", title: "これを定義に使う概念", rows: [] },
     kinds: { key: "kinds", side: "after", title: "この一種", rows: [] },
+    specs: { key: "specs", side: "after", title: "この特別な場合", rows: [] },
     after: { key: "after", side: "after", title: "応用", rows: [] },
   };
   for (const r of relations) {
@@ -185,6 +189,7 @@ function groupsOf(net: Network, id: string): Group[] {
       id: r.id,
       other: name(net, other),
       tag,
+      kind: r.kind_v2 ?? kindName(r.type, r.premise),
       text: r.gist ?? r.description ?? relationParts(net, r).text,
       label: relationParts(net, r).text,
     }; // 前提は gist がないので、どこで使うかの説明（description）
@@ -194,20 +199,24 @@ function groupsOf(net: Network, id: string): Group[] {
         ? into
           ? "kinds"
           : "kindof"
-        : r.type === "変換"
-          ? "change"
-          : r.type === "対比"
-            ? "contrast"
-            : r.type === "材料"
-              ? into
-                ? "def"
-                : "used"
-              : into && r.type === "前提" && r.premise === "learning"
-                ? "know"
-                : into
-                  ? "before"
-                  : "after";
-    if (k === "def" || k === "used" || k === "know" || k === "kindof" || k === "kinds") row.tag = undefined; // 見出しが種類を言っている
+        : r.type === "一般化"
+          ? into
+            ? "specs"
+            : "specof"
+          : r.type === "変換"
+            ? "change"
+            : r.type === "対比"
+              ? "contrast"
+              : r.type === "材料"
+                ? into
+                  ? "def"
+                  : "used"
+                : into && r.type === "前提" && r.premise === "learning"
+                  ? "know"
+                  : into
+                    ? "before"
+                    : "after";
+    if (["def", "used", "know", "kindof", "kinds", "specof", "specs"].includes(k)) row.tag = undefined; // 見出しが種類を言っている
     if (row.tag === g[k]!.title) row.tag = undefined; // 見出しと同じ札は省く（「対比」の下の全行に「対比」と出さない。UI レビュー「重複と量」）
     g[k]!.rows.push(row);
   }
