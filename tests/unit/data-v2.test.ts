@@ -67,6 +67,16 @@ describe("型 v2 の読み込み", () => {
     expect([...net.missing].filter((x) => x.includes("CLM-"))).toEqual([]);
     expect(net.learning).toHaveLength(1);
   });
+  it("ベイズ更新の要件は関係へ複製せず参照する定理の定義から取得できる（#162）", () => {
+    const { net, errors } = merge([{ id: "stats2", data: j("public/sample/stats2.json") }]);
+    expect(errors).toEqual([]);
+    const relation = net.relations.find((r) => r.id === "stats2:REL-prior-posterior")!;
+    expect(relation.conditions?.length ?? 0).toBe(0);
+    expect(relation.theorem).toBe("stats2:TERM-bayes");
+    const basis = net.concepts.get(relation.theorem!)?.basis?.text;
+    expect(basis).toContain("P(D)＞0");
+    expect(basis).toContain("P(H)＞0");
+  });
   it("v1 と v2 の教材を一緒に読める", () => {
     const { net, errors } = merge([
       { id: "stats2", data: v1() },
