@@ -1136,7 +1136,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     });
   });
   await page.goto("./?src=sample/stats2.json");
-  await expect(page.getByText(/（定義だけ 113）/)).toBeVisible(); // ベルヌーイ分布に定義、標準正規分布・無相関を骨格で足した（stats2-course #289）。データの分散・データの標準偏差を骨格で足した（#310）
+  await expect(page.getByText(/（定義だけ 114）/)).toBeVisible(); // ベルヌーイ分布に定義、標準正規分布・無相関を骨格で足した（stats2-course #289）。データの分散・データの標準偏差を骨格で足した（#310）。データの共分散を骨格で足した（#317）
   const lib = page.getByTestId("library");
   await expect(lib.locator("[data-testid^=lib-]")).toHaveCount(12); // 12の分類のタイル
   // 柱は教材の course.pillars から（上から 記述 → 確率 → 推測）
@@ -1210,7 +1210,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
         .filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
     }, selBox.y + selBox.height);
   await expect.poll(hidden, { timeout: 10000 }).toBe(0); // 文字の読み込み・枠の大きさが決まってから収め直すのを待つ
-  // 全部の語：語を分類の島に入れた地図。語は133すべて（標準正規分布・無相関を足した：stats2-course の issue 289。データの分散・データの標準偏差を足した：issue 310）
+  // 全部の語：語を分類の島に入れた地図。語は134すべて（標準正規分布・無相関を足した：stats2-course の issue 289。データの分散・データの標準偏差を足した：issue 310。データの共分散を足した：issue 317）
   await sel.selectOption("*");
   await expect
     .poll(() =>
@@ -1222,7 +1222,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
             .filter((n: any) => n.id().startsWith("stats2:TERM-")).length,
       ),
     )
-    .toBe(133);
+    .toBe(134);
   expect(await page.evaluate(() => (window as any).kn.nodes('[kind = "isle"]').length)).toBe(12);
   // 一覧に戻る
   await sel.selectOption("");
