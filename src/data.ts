@@ -92,6 +92,8 @@ export type Concept = {
   conditions_detail?: ConditionDetail[];
   /** 基準にする定義の式の id（型の改訂38） */
   basis_formula?: string;
+  /** v2 原本の基準の定義。定理の要件を関係から参照表示するためにも使う。 */
+  basis?: { text: string; terms?: string[] };
   example?: string;
   counterexample?: string;
   misconceptions?: { misconception: string; correction: string; labs?: LabRef[] }[];
