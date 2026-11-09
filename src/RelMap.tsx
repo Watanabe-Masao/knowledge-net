@@ -41,6 +41,15 @@ export function RelMap({
     groups.filter((g) => g.side === k).flatMap((g) => g.rows.map((r) => ({ ...r, group: g.title })));
   // 側の見出しは、その側に残った点（同じ相手を1つにしたあと）の見出しだけ。点のない側に見出しを出さない
   const sideLabel = (k: Side) => [...new Set(allOf(k).map((r) => r.group))].join("・");
+  // 側の見出しは地図の上で1行に収める（左右の側は幅の半分まで）。長いときは最初の見出し＋「など」、隠した数は「＋N」。
+  // 全部の見出しは下の一覧にある（画面の原則 6・15。確率分布のページで見出しが地図をまたいで線に重なっていた。渡辺さん 2026-11-09）
+  const shortSide = (k: Side) => {
+    const all = sideLabel(k),
+      first = all.split("・")[0]!,
+      max = k === "before" || k === "contrast" ? 26 : 13;
+    const head = all.length <= max ? all : `${first}など`;
+    return restOf(k) ? `${head} ＋${restOf(k)}` : head;
+  };
   // 置き場所：上と下は横に並べ、右と左は縦に並べる（多いときは2段）
   const place = (k: Side, rows: (MapRow & { group: string })[]) =>
     rows.map((r, i) => {
@@ -120,8 +129,7 @@ export function RelMap({
               className={st.relMapSide}
               data-testid={`rel-side-${k}`}
             >
-              {sideLabel(k)}
-              {restOf(k) ? `（ほかに ${restOf(k)}。下の一覧）` : ""}
+              {shortSide(k)}
             </text>
           );
         })}

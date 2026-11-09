@@ -59,6 +59,10 @@ test("同じ相手の点は1つで、ほかの関係は札に並ぶ。一覧に�
 test("1つの側に点が多いときは上限で畳み、隠した数を見出しに出す（画面の原則 15）", async ({ page }) => {
   const d = await open(page, "TERM-dist");
   const left = d.getByTestId("rel-map").locator('[data-testid^="rel-node-"]');
-  await expect(d.getByTestId("rel-side-after")).toContainText(/ほかに \d+/);
+  await expect(d.getByTestId("rel-side-after")).toContainText(/＋\d+/);
+  // 見出しは地図の左半分に収まる（地図をまたいで線に重ならない）
+  const side = (await d.getByTestId("rel-side-after").boundingBox())!,
+    map = (await d.getByTestId("rel-map").boundingBox())!;
+  expect(side.x + side.width).toBeLessThan(map.x + map.width / 2);
   expect(await left.count()).toBeLessThanOrEqual(5 + 6); // 左は5つまで（上の定義に使う概念を足しても上限の和）
 });
