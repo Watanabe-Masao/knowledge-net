@@ -27,6 +27,16 @@ test("一種の親は「何の一種か」、親のページでは「この一�
   await expect(p.getByTestId("rel-group-kinds")).toContainText("二項分布");
 });
 
+// 特別な場合（今の画面では一般化）も同じ考え方（渡辺さん 2026-11-09 のスクリーンショット：幾何分布のページで負の二項分布が応用に出ていた）。
+// 検出の確かめ：一般化の振り分けを外すと落ちることを手元で確かめた（2026-11-09）
+test("特別な場合は「何の特別な場合か」、一般の側のページでは「この特別な場合」", async ({ page }) => {
+  const d = await open(page, "TERM-geom");
+  await expect(d.getByTestId("rel-group-specof")).toContainText("負の二項分布");
+  await expect(d.getByTestId("rel-group-after")).toHaveCount(0);
+  const b = await open(page, "TERM-binom");
+  await expect(b.getByTestId("rel-group-specs")).toContainText("ベルヌーイ分布");
+});
+
 test("同じ相手の点は1つで、ほかの関係は札に並ぶ。一覧には全部の行が残る", async ({ page }) => {
   const d = await open(page, "TERM-binom");
   const labels = await d
