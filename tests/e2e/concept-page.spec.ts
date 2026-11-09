@@ -345,7 +345,7 @@ test("帯の札は、狭い幅でも記号と値が1行に並ぶ", async ({ page
 
 // 確かめる対象：つながりの地図（#188 07c）。想定する故障：つながりの種類と置き場所が食い違う（変換が上に・対比が右に出る）・
 // 選んでも問いと段が出ない・ほかの点が薄くならない（どれを選んだか分からない）・解説の「やめる」で閉じない。
-// 見つけ方：点の位置を中心と比べる（前提は上・変換は右・対比は下）。超幾何との対比を選ぶと問い「戻さずに取ると、何が変わる？」と解説の1段目、
+// 見つけ方：点の位置を中心と比べる（前提は上・変換は右・対比は下）。幾何分布との対比を選ぶと問い「何を数えているかが、どう違う？」と解説の1段目、
 // ほかの点が薄く、やめるで閉じる。既存の「つながりのまとまり」のテストは一覧の分け方だけを見る
 test("つながりの地図：置き場所で種類が分かり、点を選ぶと問いと段がその場に出る", async ({ page }) => {
   const errs = noErrors(page);
@@ -362,10 +362,11 @@ test("つながりの地図：置き場所で種類が分かり、点を選ぶ�
     mid = { x: mb.x + mb.width / 2, y: mb.y + mb.height / 2 };
   expect((await center("REL-comb-binom")).y).toBeLessThan(mid.y - 40); // 前提は上
   expect((await center("REL-binom-normal")).x).toBeGreaterThan(mid.x + 60); // 変換は右
-  expect((await center("REL-binom-hyper-contrast")).y).toBeGreaterThan(mid.y + 40); // 対比は下
-  await map.getByTestId("rel-node-stats2:REL-binom-hyper-contrast").click();
+  // 対比は下（超幾何分布との対比は、同じ相手の移るの点の札になる：同じ相手の点は1つ。docs/decisions.md）
+  expect((await center("REL-binom-geom-contrast")).y).toBeGreaterThan(mid.y + 40);
+  await map.getByTestId("rel-node-stats2:REL-binom-geom-contrast").click();
   const dig = d.getByTestId("rel-dig");
-  await expect(dig.getByTestId("rel-question")).toHaveText("戻さずに取ると、何が変わる？");
+  await expect(dig.getByTestId("rel-question")).toHaveText("何を数えているかが、どう違う？");
   await expect(dig.getByTestId("tour")).toContainText("1／4");
   expect(Number(await map.getByTestId("rel-node-stats2:REL-binom-normal").getAttribute("opacity"))).toBeLessThan(1);
   await dig.getByTestId("tour-prev").click(); // 1段目の「やめる」で閉じる
