@@ -53,8 +53,22 @@ describe("型 v2", () => {
     ["知らない姿", (d) => (d.concepts[0].forms = ["箱"])],
     // 改訂2（stats2-course #86）：基準の定義から外す理由は ⑤ の「構成要素にしないもの」だけ。一種の親は関係から決まるので書けない
     ["外す理由が ⑤ の一覧の外", (d) => (((d.concepts[1].basis as Row).excludes as Row[])[0].kind = "一種の親")],
+    // 改訂3（stats2-course #289）：まとまりの矢印は関係か主張の少なくとも1つを指す
+    [
+      "まとまりの矢印が何も指さない",
+      (d) => delete (d as unknown as { course: { group_relations: Row[] } }).course.group_relations[0].claims,
+    ],
     ["外す理由の文がない", (d) => delete ((d.concepts[1].basis as Row).excludes as Row[])[0].text],
   ];
+  it("移るの通す操作と、条件の行の主語は、概念の id でも文でも書ける（改訂3。oneOf の重なりで id が止まっていた）", () => {
+    const d = fixture();
+    rel(d, "移る").operation = "t:TERM-std";
+    ((rel(d, "移る").conditions as Row[])[0] as Row).subject = "t:TERM-binom";
+    expect(validate(d) ? [] : validate.errors).toEqual([]);
+    rel(d, "移る").operation = "標準化する";
+    expect(ok(d)).toBe(true);
+  });
+
   it.each(breaks)("1つずつ止まる：%s", (_name, mutate) => {
     const d = fixture();
     expect(ok(d)).toBe(true);

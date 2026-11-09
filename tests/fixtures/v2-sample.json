@@ -8,6 +8,29 @@
     "units": [],
     "v2_ready": [
       "確率分布"
+    ],
+    "groups": [
+      {
+        "id": "t:GRP-a",
+        "category": "確率分布",
+        "name": "数える"
+      },
+      {
+        "id": "t:GRP-b",
+        "category": "確率分布",
+        "name": "連続"
+      }
+    ],
+    "group_relations": [
+      {
+        "from": "t:GRP-a",
+        "to": "t:GRP-b",
+        "label": "問いを入れ替える",
+        "claims": [
+          "t:CLM-13"
+        ],
+        "note": "線にしない主張だけを指す矢印（テストの見本）"
+      }
     ]
   },
   "concepts": [
@@ -388,7 +411,8 @@
         "conclusion": true,
         "proof": "扱う"
       },
-      "version": 1
+      "version": 1,
+      "gist": "独立なら共分散は0（テストの見本）"
     },
     {
       "id": "t:CLM-6",

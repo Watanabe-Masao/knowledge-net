@@ -1029,10 +1029,11 @@ export default function RelationMap({
                     setGnote(a);
                   }}
                 >
-                  {a.anchor === "end" ? (
-                    // 離れたまとまりへの矢印は、種類の印だけ（言葉は押したときに出す。渡辺さん 2026-11-08 の見本で b）
+                  {a.anchor === "end" && net.relations.some((r) => r.id === a.relations[0]) ? (
+                    // 離れたまとまりへの矢印は、種類の印だけ（言葉は押したときに出す。渡辺さん 2026-11-08 の見本で b）。
+                    // 主張だけを指す矢印（線にしない主張。stats2-course #289）は種類がないので、印を作らず言葉で出す（画面の原則 8）
                     <span aria-label={a.label} style={{ display: "contents" }}>
-                      <Badge k={net.relations.find((r) => r.id === a.relations[0])?.type ?? "変換"} size={22} />
+                      <Badge k={net.relations.find((r) => r.id === a.relations[0])!.type} size={22} />
                     </span>
                   ) : (
                     a.label
