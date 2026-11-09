@@ -418,6 +418,9 @@ export function RelationOpen({
 }) {
   const p = relationParts(net, r);
   const rows = (STAGE_LABEL[r.type] ?? []).filter(([k]) => r.stages?.[k as keyof NonNullable<Relation["stages"]>]);
+  // 変換が通す定理の基準の定義を参照。条件の正本を関係へ複製しない。
+  const theorem = r.theorem ? net.concepts.get(r.theorem) : undefined;
+  const theoremBasis = theorem?.basis?.text;
   return (
     <article className={s.open} data-testid={`rel-${r.id}`}>
       <div className={s.head}>
@@ -446,7 +449,13 @@ export function RelationOpen({
         </section>
       )}
       {r.chart && <RelChart r={r} />}
-      {r.conditions?.length ? (
+      {theoremBasis && (
+        <section className={s.block} data-testid="rel-theorem-basis">
+          <span className={s.lab}>参照する定理の定義・要件（{theorem!.name}）</span>
+          <p className={s.desc0}>{theoremBasis}</p>
+        </section>
+      )}
+      {(r.conditions?.length || r.conditions_detail?.length) ? (
         <section className={s.block} data-testid="rel-conds">
           <span className={s.lab}>成立条件{r.mode ? `（${short(MODES[r.mode])}）` : ""}</span>
           <Conditions
