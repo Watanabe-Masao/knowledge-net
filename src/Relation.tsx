@@ -455,7 +455,7 @@ export function RelationOpen({
           <p className={s.desc0}>{theoremBasis}</p>
         </section>
       )}
-      {(r.conditions?.length || r.conditions_detail?.length) ? (
+      {r.conditions?.length || r.conditions_detail?.length ? (
         <section className={s.block} data-testid="rel-conds">
           <span className={s.lab}>成立条件{r.mode ? `（${short(MODES[r.mode])}）` : ""}</span>
           <Conditions
