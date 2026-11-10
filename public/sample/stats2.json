@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 2,
- "schema_revision": 3,
+ "schema_revision": 4,
  "experiment_revision": 3,
  "course": {
   "id": "stats2",
@@ -11367,18 +11367,6 @@
    "to_form": "operation"
   },
   {
-   "id": "stats2:REL-fact-comb",
-   "version": 2,
-   "from": "stats2:TERM-fact",
-   "to": "stats2:TERM-comb",
-   "legacy_type": "前提",
-   "description": "組合せの数は、階乗を学んでから学ぶ（ₙCₖ＝n!/(k!(n−k)!) で計算する。組合せの基準の定義は選び方の数で、この式は導く等式）。",
-   "units": [
-    "stats2:U09"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-comb-binom",
    "version": 3,
    "from": "stats2:TERM-comb",
@@ -11393,26 +11381,6 @@
     "formula": "F-binom-pmf",
     "parts": [
      0
-    ]
-   }
-  },
-  {
-   "id": "stats2:REL-indep-binom",
-   "version": 2,
-   "from": "stats2:TERM-indep",
-   "to": "stats2:TERM-binom",
-   "legacy_type": "前提",
-   "description": "各回が独立なので、1通りの確率が掛け算 pᵏ(1−p)ⁿ⁻ᵏ で求まる。独立は、二項分布が成り立つ条件。",
-   "units": [
-    "stats2:U14"
-   ],
-   "premise": "learning",
-   "question": "なぜ並び1つの確率を掛け算で出せるのか？",
-   "focus": {
-    "formula": "F-binom-pmf",
-    "parts": [
-     1,
-     2
     ]
    }
   },
@@ -12195,18 +12163,6 @@
    ]
   },
   {
-   "id": "stats2:REL-indep-geom",
-   "version": 2,
-   "from": "stats2:TERM-indep",
-   "to": "stats2:TERM-geom",
-   "legacy_type": "前提",
-   "description": "各回が独立なので、失敗が続いてから成功する確率が掛け算 (1−p)^(k−1)p で求まる。独立は、幾何分布が成り立つ条件。",
-   "units": [
-    "stats2:U15"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-binom-geom-contrast",
    "version": 2,
    "from": "stats2:TERM-binom",
@@ -12787,18 +12743,6 @@
    ]
   },
   {
-   "id": "stats2:REL-exclusive-addition",
-   "version": 1,
-   "from": "stats2:TERM-exclusive",
-   "to": "stats2:TERM-addition",
-   "legacy_type": "前提",
-   "description": "排反なら重なりが0なので、加法定理は単に足すだけになる。まず排反の場合で足し算を理解する。",
-   "units": [
-    "stats2:U10"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-prob-cond",
    "version": 2,
    "from": "stats2:TERM-prob",
@@ -12809,18 +12753,6 @@
     "stats2:U11"
    ],
    "from_form": "function"
-  },
-  {
-   "id": "stats2:REL-cond-indep",
-   "version": 1,
-   "from": "stats2:TERM-cond",
-   "to": "stats2:TERM-indep",
-   "legacy_type": "前提",
-   "description": "独立は「A が起きたと知っても B の確率が変わらない」こと。条件付き確率で読むと意味が分かる。",
-   "units": [
-    "stats2:U11"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-exclusive-indep-contrast",
@@ -12850,30 +12782,6 @@
    ],
    "gist": "起こり方を重ならない場合に分け、「その場合になる確率×その場合で起こる確率」を全部足すと、全体の確率になる。各項が乗法定理の形。",
    "claim": "stats2:CLM-34"
-  },
-  {
-   "id": "stats2:REL-total-bayes",
-   "version": 2,
-   "from": "stats2:TERM-total-prob",
-   "to": "stats2:TERM-bayes",
-   "legacy_type": "前提",
-   "description": "ベイズの定理の分母（結果が起こる全体の確率）は、全確率の公式で求める。学ぶ順の前提知識（M6 で ⑥ に照らす。#295）。",
-   "units": [
-    "stats2:U12"
-   ],
-   "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-cond-bayes",
-   "version": 2,
-   "from": "stats2:TERM-cond",
-   "to": "stats2:TERM-bayes",
-   "legacy_type": "前提",
-   "description": "ベイズの定理は、条件付き確率 P(結果|原因) から P(原因|結果) を求める式。学ぶ順の前提知識（M6 で ⑥ に照らす。#295）。",
-   "units": [
-    "stats2:U12"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-cond-likelihood",
@@ -12914,18 +12822,6 @@
    ]
   },
   {
-   "id": "stats2:REL-sample-random",
-   "version": 1,
-   "from": "stats2:TERM-sample",
-   "to": "stats2:TERM-random-sampling",
-   "legacy_type": "前提",
-   "description": "無作為抽出は、標本の選び方の1つ。標本とは何かを知ってから、選び方の違いを学ぶ。",
-   "units": [
-    "stats2:U17"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-frame-random",
    "version": 2,
    "from": "stats2:TERM-frame",
@@ -12936,19 +12832,6 @@
     "stats2:U17",
     "stats2:U31"
    ]
-  },
-  {
-   "id": "stats2:REL-frame-bias",
-   "version": 1,
-   "from": "stats2:TERM-frame",
-   "to": "stats2:TERM-bias",
-   "legacy_type": "前提",
-   "description": "抽出枠が母集団とずれていると、無作為に選んでも結果が偏りうる。偏りが生まれる場所の1つ。",
-   "units": [
-    "stats2:U17",
-    "stats2:U31"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-sample-statistic",
@@ -13010,44 +12893,6 @@
     "stats2:U20"
    ],
    "to_form": "number"
-  },
-  {
-   "id": "stats2:REL-lln-clt",
-   "version": 1,
-   "from": "stats2:TERM-lln",
-   "to": "stats2:TERM-clt",
-   "legacy_type": "前提",
-   "description": "大数の法則（平均が母平均に近づく）を知ってから、近づくときのばらつきの形（正規分布）を学ぶ。",
-   "units": [
-    "stats2:U19"
-   ],
-   "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-binom-cc",
-   "version": 1,
-   "from": "stats2:TERM-binom",
-   "to": "stats2:TERM-cc",
-   "legacy_type": "前提",
-   "description": "連続修正は、二項分布を正規分布で近似するときに使う。離散の棒を連続の幅に置き換える考え。",
-   "units": [
-    "stats2:U19"
-   ],
-   "premise": "learning",
-   "question": "整数の棒を曲線で近似するとき、なぜ境目を 0.5 ずらす？"
-  },
-  {
-   "id": "stats2:REL-unbvar-df",
-   "version": 1,
-   "from": "stats2:TERM-unbvar",
-   "to": "stats2:TERM-df",
-   "legacy_type": "前提",
-   "description": "不偏分散で n−1 で割るのは、平均を使った分だけ自由に動ける値が1つ減るから。自由度の考えの入口。",
-   "units": [
-    "stats2:U18",
-    "stats2:U20"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-normal-chi2",
@@ -13167,19 +13012,6 @@
    ]
   },
   {
-   "id": "stats2:REL-lln-consistency",
-   "version": 1,
-   "from": "stats2:TERM-lln",
-   "to": "stats2:TERM-consistency",
-   "legacy_type": "前提",
-   "description": "標本平均の一致性は大数の法則そのもの。一致性は、大数の法則を推定量一般に広げた考え。",
-   "units": [
-    "stats2:U19",
-    "stats2:U21"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-point-interval-contrast",
    "version": 2,
    "from": "stats2:TERM-point-est",
@@ -13207,19 +13039,6 @@
    ]
   },
   {
-   "id": "stats2:REL-clt-ci",
-   "version": 1,
-   "from": "stats2:TERM-clt",
-   "to": "stats2:TERM-ci",
-   "legacy_type": "前提",
-   "description": "母集団の分布が正規分布でなくても平均の信頼区間で正規分布を使えるのは、中心極限定理があるから。",
-   "units": [
-    "stats2:U19",
-    "stats2:U22"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-pairedt-welch-contrast",
    "version": 2,
    "from": "stats2:TERM-paired-t",
@@ -13234,18 +13053,6 @@
    "gist": "同じ人の前と後なら、差を1人ずつ取って比べる（対応あり）。別の人たちの2群なら、群ごとのばらつきの違いも込みで比べる（ウェルチ）。データの取り方で方法が決まる。",
    "same": "どちらも「2つの母平均が等しい」という帰無仮説を、平均の差を標準誤差で割った t の形の統計量で調べる仮説検定",
    "differ": "対応のある t 検定は、同じ対象の対の差 Dᵢ を1つの標本として扱い（対に共通する個体の効果が差で打ち消される）、t(n−1) で棄却域を決める。ウェルチの t 検定は、独立な2群を母分散が等しいと仮定せずに比べ、自由度を近似で決めた t 分布で棄却域を決める"
-  },
-  {
-   "id": "stats2:REL-sampdist-test",
-   "version": 1,
-   "from": "stats2:TERM-sampdist",
-   "to": "stats2:TERM-test",
-   "legacy_type": "前提",
-   "description": "検定は、統計量の標本分布を使って「このデータは仮説のもとで起こりにくいか」を測る。",
-   "units": [
-    "stats2:U24"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-h0-h1",
@@ -13387,18 +13194,6 @@
    ]
   },
   {
-   "id": "stats2:REL-h0-pool",
-   "version": 1,
-   "from": "stats2:TERM-h0",
-   "to": "stats2:TERM-pool",
-   "legacy_type": "前提",
-   "description": "2群を合わせてよいのは、帰無仮説（割合が等しい）のもとで計算するから。",
-   "units": [
-    "stats2:U26"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-crosstab-indeptest",
    "version": 2,
    "from": "stats2:TERM-crosstab",
@@ -13530,19 +13325,6 @@
    "gist": "「何の種類か」を表すのが質的、「どれだけか」を表すのが量的。数字で書いてあっても、背番号のように分類なら質的。",
    "same": "どちらも個体の1つ1つに値を1つ対応させる変数で、調べた個体の値を並べるとデータの列になる",
    "differ": "質的変数は名義尺度か順序尺度で、値は分類を表し、数字で書いても値どうしの足し算・引き算に意味がない。度数・割合で要約し、順序尺度なら大小の順で中央値まで言える。量的変数は間隔尺度か比例尺度で、値は数量を表し、差に意味がある（比例尺度なら比も）ので、平均・分散で要約できる"
-  },
-  {
-   "id": "stats2:REL-freqtable-mode",
-   "version": 1,
-   "from": "stats2:TERM-freqtable",
-   "to": "stats2:TERM-mode",
-   "legacy_type": "前提",
-   "description": "度数分布では、度数が最大の階級の値（階級値）を最頻値とする。",
-   "units": [
-    "stats2:U04",
-    "stats2:U06"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-median-mean-contrast",
@@ -13685,18 +13467,6 @@
    ]
   },
   {
-   "id": "stats2:REL-std-outlier",
-   "version": 1,
-   "from": "stats2:TERM-std",
-   "to": "stats2:TERM-outlier",
-   "legacy_type": "前提",
-   "description": "標準化した値（z）の大きさで、外れ値かどうかの目安を立てることもある。",
-   "units": [
-    "stats2:U08"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-sd-skew",
    "version": 2,
    "from": "stats2:TERM-data-sd",
@@ -13746,30 +13516,6 @@
    ]
   },
   {
-   "id": "stats2:REL-corr-acf",
-   "version": 2,
-   "from": "stats2:TERM-corr",
-   "to": "stats2:TERM-acf",
-   "legacy_type": "前提",
-   "description": "自己相関は、相関係数を学んでから学ぶ（どちらも偏差の積の和を、ばらつきで割って −1〜1 にそろえる形を読む）。",
-   "units": [
-    "stats2:U05T"
-   ],
-   "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-rv-bernoulli",
-   "version": 2,
-   "from": "stats2:TERM-rv",
-   "to": "stats2:TERM-bernoulli",
-   "legacy_type": "前提",
-   "description": "ベルヌーイ分布は、0か1をとる確率変数の分布。確率変数として値の出方を見ると読みやすい。",
-   "units": [
-    "stats2:U14"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-bernoulli-binom",
    "version": 2,
    "from": "stats2:TERM-bernoulli",
@@ -13792,18 +13538,6 @@
    ]
   },
   {
-   "id": "stats2:REL-scatter-corr",
-   "version": 1,
-   "from": "stats2:TERM-scatter",
-   "to": "stats2:TERM-corr",
-   "legacy_type": "前提",
-   "description": "相関係数は、散布図の点が直線のまわりにどれだけ集まっているかを1つの数にしたもの。まず散布図で見る。",
-   "units": [
-    "stats2:U28"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-corr-partialcorr",
    "version": 2,
    "from": "stats2:TERM-corr",
@@ -13824,18 +13558,6 @@
    "units": [
     "stats2:U28"
    ]
-  },
-  {
-   "id": "stats2:REL-scatter-slr",
-   "version": 1,
-   "from": "stats2:TERM-scatter",
-   "to": "stats2:TERM-slr",
-   "legacy_type": "前提",
-   "description": "単回帰は、散布図の点にいちばん合う直線を引くこと。",
-   "units": [
-    "stats2:U29"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-resid-ols",
@@ -13887,18 +13609,6 @@
    ]
   },
   {
-   "id": "stats2:REL-slr-extrap",
-   "version": 1,
-   "from": "stats2:TERM-slr",
-   "to": "stats2:TERM-extrap",
-   "legacy_type": "前提",
-   "description": "外挿は、回帰式をデータの範囲の外に使うこと。回帰式を知ってから、その使ってよい範囲を学ぶ。",
-   "units": [
-    "stats2:U29"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-slr-mreg",
    "version": 2,
    "from": "stats2:TERM-slr",
@@ -13947,18 +13657,6 @@
    ]
   },
   {
-   "id": "stats2:REL-mreg-adjr2",
-   "version": 1,
-   "from": "stats2:TERM-mreg",
-   "to": "stats2:TERM-adjr2",
-   "legacy_type": "前提",
-   "description": "説明変数の数が違う重回帰の式どうしを比べるときに使う。",
-   "units": [
-    "stats2:U30"
-   ],
-   "premise": "learning"
-  },
-  {
    "id": "stats2:REL-mreg-multicol",
    "version": 2,
    "from": "stats2:TERM-mreg",
@@ -13968,18 +13666,6 @@
    "units": [
     "stats2:U30"
    ]
-  },
-  {
-   "id": "stats2:REL-corr-multicol",
-   "version": 1,
-   "from": "stats2:TERM-corr",
-   "to": "stats2:TERM-multicol",
-   "legacy_type": "前提",
-   "description": "説明変数どうしの相関係数が大きいと、多重共線性を疑う。",
-   "units": [
-    "stats2:U30"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-df-ms",
@@ -14014,18 +13700,6 @@
    "units": [
     "stats2:U32"
    ]
-  },
-  {
-   "id": "stats2:REL-anova-multcomp",
-   "version": 1,
-   "from": "stats2:TERM-anova",
-   "to": "stats2:TERM-multcomp",
-   "legacy_type": "前提",
-   "description": "分散分析で「どこかに差がある」と分かったあと、どの群の間かを調べるのが多重比較。",
-   "units": [
-    "stats2:U32"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-random-strat",
@@ -14127,31 +13801,6 @@
    "gist": "無作為抽出は「調べる人を選ぶくじ」、無作為化は「調べる人を組に分けるくじ」。くじを使う場所が違う。",
    "same": "どちらも、人の判断や対象の性質でなく、前もって決めた確率に従うくじ（乱数）でデータの取り方を決める手続き",
    "differ": "無作為抽出は、枠の中の誰を調べるか（標本）をくじで選び、各要素の選ばれる確率が決まるので、標本から母集団の値を推定するときの誤差を確率で扱える。無作為化は、調べる対象の誰にどの処理をするか（群）をくじで割り当て、完全無作為化なら各対象が処理群に入る確率がどれも等しく、割り当ての前に決まっている共変量の群の平均の差の期待値が0になる（④-29）"
-  },
-  {
-   "id": "stats2:REL-confound-randomize",
-   "version": 1,
-   "from": "stats2:TERM-confound",
-   "to": "stats2:TERM-randomize",
-   "legacy_type": "前提",
-   "description": "無作為化は、交絡しうる要因が群の間で平均として（期待値で）そろうように行う（1回の割り当てでは偶然に偏りうる）。交絡を知ってから、その断ち方を学ぶ。",
-   "units": [
-    "stats2:U32"
-   ],
-   "premise": "learning"
-  },
-  {
-   "id": "stats2:REL-confound-spurious",
-   "version": 1,
-   "from": "stats2:TERM-confound",
-   "to": "stats2:TERM-spurious",
-   "legacy_type": "前提",
-   "description": "擬相関の多くは、交絡する第3の要因から生まれる。",
-   "units": [
-    "stats2:U28",
-    "stats2:U32"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-prob-dist",
@@ -14827,19 +14476,6 @@
    "units": [
     "stats2:U07"
    ]
-  },
-  {
-   "id": "stats2:REL-sigma-mean",
-   "version": 2,
-   "from": "stats2:TERM-sigma",
-   "to": "stats2:TERM-mean",
-   "legacy_type": "前提",
-   "description": "平均の式は総和記号で（1/n）Σ xᵢ と書く。総和記号は記法なので定義の構成要素にはせず、式を読むための前提知識とする（#310）。",
-   "units": [
-    "stats2:U02",
-    "stats2:U06"
-   ],
-   "premise": "learning"
   },
   {
    "id": "stats2:REL-mean-cv",
@@ -18760,7 +18396,7 @@
      "stats2:TERM-expect"
     ],
     "relations": [
-     "stats2:REL-indep-binom",
+     "stats2:LRN-indep-binom",
      "stats2:REL-comb-binom",
      "stats2:DER-binom-moments",
      "stats2:REL-binom-sampleprop"
@@ -21677,6 +21313,1570 @@
      }
     }
    ]
+  }
+ ],
+ "learning": [
+  {
+   "id": "stats2:LRN-remove-t-normal",
+   "op": "remove",
+   "from": "stats2:TERM-t",
+   "to": "stats2:TERM-std-normal",
+   "reason": "標準正規分布は t 分布の定義に使う（カイ二乗分布を経て t 分布を定める）ので先に学ぶ。t 分布が標準正規分布に近づくことは、t 分布を学んだあとに読む。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-remove-unbvar-chi2",
+   "op": "remove",
+   "from": "stats2:TERM-chi2",
+   "to": "stats2:TERM-unbvar",
+   "reason": "不偏分散は標本平均から定める統計量で、カイ二乗分布を知らなくても読める。(n−1)s²/σ² がカイ二乗分布に従うことは、カイ二乗分布を学んだあとに読む。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-remove-hist-pdf",
+   "op": "remove",
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-hist",
+   "reason": "ヒストグラムはデータの図として先に学び、面積で確率を読む見方を確率密度関数の土台にする（足す LRN-hist-pdf）。ヒストグラムが確率密度関数を推定することは、確率密度関数を学んだあとに読む。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-remove-perm-fact",
+   "op": "remove",
+   "from": "stats2:TERM-perm",
+   "to": "stats2:TERM-fact",
+   "reason": "階乗は順列の数を書く式に使うので先に学ぶ（足す LRN-fact-perm）。k＝n の順列の数が n! になることは、順列を学んだあとに読む。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-hist-pdf",
+   "op": "add",
+   "from": "stats2:TERM-hist",
+   "to": "stats2:TERM-pdf",
+   "reason": "面積で確率を読む見方の土台（ヒストグラムの柱の面積が割合になることを、確率密度関数の曲線の下の面積が確率になることへ広げる）。",
+   "version": 1,
+   "units": [
+    "stats2:U16"
+   ]
+  },
+  {
+   "id": "stats2:LRN-fact-perm",
+   "op": "add",
+   "from": "stats2:TERM-fact",
+   "to": "stats2:TERM-perm",
+   "reason": "U09 は階乗から入り、順列の数を ₙPₖ＝n!/(n−k)! と階乗で書く（順列の基準の定義は並べ方の数で、階乗の式は計算の形）。",
+   "version": 1,
+   "units": [
+    "stats2:U09"
+   ]
+  },
+  {
+   "id": "stats2:LRN-indep-binom",
+   "op": "add",
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-binom",
+   "reason": "各回が独立なので、1通りの確率が掛け算 pᵏ(1−p)ⁿ⁻ᵏ で求まる。独立は、二項分布が成り立つ条件。",
+   "version": 1,
+   "units": [
+    "stats2:U14"
+   ],
+   "question": "なぜ並び1つの確率を掛け算で出せるのか？",
+   "focus": {
+    "formula": "F-binom-pmf",
+    "parts": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "id": "stats2:LRN-indep-geom",
+   "op": "add",
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-geom",
+   "reason": "各回が独立なので、失敗が続いてから成功する確率が掛け算 (1−p)^(k−1)p で求まる。独立は、幾何分布が成り立つ条件。",
+   "version": 1,
+   "units": [
+    "stats2:U15"
+   ]
+  },
+  {
+   "id": "stats2:LRN-exclusive-addition",
+   "op": "add",
+   "from": "stats2:TERM-exclusive",
+   "to": "stats2:TERM-addition",
+   "reason": "排反なら重なりが0なので、加法定理は単に足すだけになる。まず排反の場合で足し算を理解する。",
+   "version": 1,
+   "units": [
+    "stats2:U10"
+   ]
+  },
+  {
+   "id": "stats2:LRN-cond-indep",
+   "op": "add",
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-indep",
+   "reason": "独立は「A が起きたと知っても B の確率が変わらない」こと。条件付き確率で読むと意味が分かる。",
+   "version": 1,
+   "units": [
+    "stats2:U11"
+   ]
+  },
+  {
+   "id": "stats2:LRN-total-bayes",
+   "op": "add",
+   "from": "stats2:TERM-total-prob",
+   "to": "stats2:TERM-bayes",
+   "reason": "ベイズの定理の分母（結果が起こる全体の確率）は、全確率の公式で求める。学ぶ順の前提知識（M6 で ⑥ に照らす。#295）。",
+   "version": 1,
+   "units": [
+    "stats2:U12"
+   ]
+  },
+  {
+   "id": "stats2:LRN-cond-bayes",
+   "op": "add",
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-bayes",
+   "reason": "ベイズの定理は、条件付き確率 P(結果|原因) から P(原因|結果) を求める式。学ぶ順の前提知識（M6 で ⑥ に照らす。#295）。",
+   "version": 1,
+   "units": [
+    "stats2:U12"
+   ]
+  },
+  {
+   "id": "stats2:LRN-sample-random",
+   "op": "add",
+   "from": "stats2:TERM-sample",
+   "to": "stats2:TERM-random-sampling",
+   "reason": "無作為抽出は、標本の選び方の1つ。標本とは何かを知ってから、選び方の違いを学ぶ。",
+   "version": 1,
+   "units": [
+    "stats2:U17"
+   ]
+  },
+  {
+   "id": "stats2:LRN-frame-bias",
+   "op": "add",
+   "from": "stats2:TERM-frame",
+   "to": "stats2:TERM-bias",
+   "reason": "抽出枠が母集団とずれていると、無作為に選んでも結果が偏りうる。偏りが生まれる場所の1つ。",
+   "version": 1,
+   "units": [
+    "stats2:U17",
+    "stats2:U31"
+   ]
+  },
+  {
+   "id": "stats2:LRN-lln-clt",
+   "op": "add",
+   "from": "stats2:TERM-lln",
+   "to": "stats2:TERM-clt",
+   "reason": "大数の法則（平均が母平均に近づく）を知ってから、近づくときのばらつきの形（正規分布）を学ぶ。",
+   "version": 1,
+   "units": [
+    "stats2:U19"
+   ]
+  },
+  {
+   "id": "stats2:LRN-binom-cc",
+   "op": "add",
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-cc",
+   "reason": "連続修正は、二項分布を正規分布で近似するときに使う。離散の棒を連続の幅に置き換える考え。",
+   "version": 1,
+   "units": [
+    "stats2:U19"
+   ],
+   "question": "整数の棒を曲線で近似するとき、なぜ境目を 0.5 ずらす？"
+  },
+  {
+   "id": "stats2:LRN-unbvar-df",
+   "op": "add",
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-df",
+   "reason": "不偏分散で n−1 で割るのは、平均を使った分だけ自由に動ける値が1つ減るから。自由度の考えの入口。",
+   "version": 1,
+   "units": [
+    "stats2:U18",
+    "stats2:U20"
+   ]
+  },
+  {
+   "id": "stats2:LRN-lln-consistency",
+   "op": "add",
+   "from": "stats2:TERM-lln",
+   "to": "stats2:TERM-consistency",
+   "reason": "標本平均の一致性は大数の法則そのもの。一致性は、大数の法則を推定量一般に広げた考え。",
+   "version": 1,
+   "units": [
+    "stats2:U19",
+    "stats2:U21"
+   ]
+  },
+  {
+   "id": "stats2:LRN-clt-ci",
+   "op": "add",
+   "from": "stats2:TERM-clt",
+   "to": "stats2:TERM-ci",
+   "reason": "母集団の分布が正規分布でなくても平均の信頼区間で正規分布を使えるのは、中心極限定理があるから。",
+   "version": 1,
+   "units": [
+    "stats2:U19",
+    "stats2:U22"
+   ]
+  },
+  {
+   "id": "stats2:LRN-sampdist-test",
+   "op": "add",
+   "from": "stats2:TERM-sampdist",
+   "to": "stats2:TERM-test",
+   "reason": "検定は、統計量の標本分布を使って「このデータは仮説のもとで起こりにくいか」を測る。",
+   "version": 1,
+   "units": [
+    "stats2:U24"
+   ]
+  },
+  {
+   "id": "stats2:LRN-h0-pool",
+   "op": "add",
+   "from": "stats2:TERM-h0",
+   "to": "stats2:TERM-pool",
+   "reason": "2群を合わせてよいのは、帰無仮説（割合が等しい）のもとで計算するから。",
+   "version": 1,
+   "units": [
+    "stats2:U26"
+   ]
+  },
+  {
+   "id": "stats2:LRN-freqtable-mode",
+   "op": "add",
+   "from": "stats2:TERM-freqtable",
+   "to": "stats2:TERM-mode",
+   "reason": "度数分布では、度数が最大の階級の値（階級値）を最頻値とする。",
+   "version": 1,
+   "units": [
+    "stats2:U04",
+    "stats2:U06"
+   ]
+  },
+  {
+   "id": "stats2:LRN-std-outlier",
+   "op": "add",
+   "from": "stats2:TERM-std",
+   "to": "stats2:TERM-outlier",
+   "reason": "標準化した値（z）の大きさで、外れ値かどうかの目安を立てることもある。",
+   "version": 1,
+   "units": [
+    "stats2:U08"
+   ]
+  },
+  {
+   "id": "stats2:LRN-corr-acf",
+   "op": "add",
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-acf",
+   "reason": "自己相関は、相関係数を学んでから学ぶ（どちらも偏差の積の和を、ばらつきで割って −1〜1 にそろえる形を読む）。",
+   "version": 1,
+   "units": [
+    "stats2:U05T"
+   ]
+  },
+  {
+   "id": "stats2:LRN-rv-bernoulli",
+   "op": "add",
+   "from": "stats2:TERM-rv",
+   "to": "stats2:TERM-bernoulli",
+   "reason": "ベルヌーイ分布は、0か1をとる確率変数の分布。確率変数として値の出方を見ると読みやすい。",
+   "version": 1,
+   "units": [
+    "stats2:U14"
+   ]
+  },
+  {
+   "id": "stats2:LRN-scatter-corr",
+   "op": "add",
+   "from": "stats2:TERM-scatter",
+   "to": "stats2:TERM-corr",
+   "reason": "相関係数は、散布図の点が直線のまわりにどれだけ集まっているかを1つの数にしたもの。まず散布図で見る。",
+   "version": 1,
+   "units": [
+    "stats2:U28"
+   ]
+  },
+  {
+   "id": "stats2:LRN-scatter-slr",
+   "op": "add",
+   "from": "stats2:TERM-scatter",
+   "to": "stats2:TERM-slr",
+   "reason": "単回帰は、散布図の点にいちばん合う直線を引くこと。",
+   "version": 1,
+   "units": [
+    "stats2:U29"
+   ]
+  },
+  {
+   "id": "stats2:LRN-slr-extrap",
+   "op": "add",
+   "from": "stats2:TERM-slr",
+   "to": "stats2:TERM-extrap",
+   "reason": "外挿は、回帰式をデータの範囲の外に使うこと。回帰式を知ってから、その使ってよい範囲を学ぶ。",
+   "version": 1,
+   "units": [
+    "stats2:U29"
+   ]
+  },
+  {
+   "id": "stats2:LRN-mreg-adjr2",
+   "op": "add",
+   "from": "stats2:TERM-mreg",
+   "to": "stats2:TERM-adjr2",
+   "reason": "説明変数の数が違う重回帰の式どうしを比べるときに使う。",
+   "version": 1,
+   "units": [
+    "stats2:U30"
+   ]
+  },
+  {
+   "id": "stats2:LRN-corr-multicol",
+   "op": "add",
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-multicol",
+   "reason": "説明変数どうしの相関係数が大きいと、多重共線性を疑う。",
+   "version": 1,
+   "units": [
+    "stats2:U30"
+   ]
+  },
+  {
+   "id": "stats2:LRN-anova-multcomp",
+   "op": "add",
+   "from": "stats2:TERM-anova",
+   "to": "stats2:TERM-multcomp",
+   "reason": "分散分析で「どこかに差がある」と分かったあと、どの群の間かを調べるのが多重比較。",
+   "version": 1,
+   "units": [
+    "stats2:U32"
+   ]
+  },
+  {
+   "id": "stats2:LRN-confound-randomize",
+   "op": "add",
+   "from": "stats2:TERM-confound",
+   "to": "stats2:TERM-randomize",
+   "reason": "無作為化は、交絡しうる要因が群の間で平均として（期待値で）そろうように行う（1回の割り当てでは偶然に偏りうる）。交絡を知ってから、その断ち方を学ぶ。",
+   "version": 1,
+   "units": [
+    "stats2:U32"
+   ]
+  },
+  {
+   "id": "stats2:LRN-confound-spurious",
+   "op": "add",
+   "from": "stats2:TERM-confound",
+   "to": "stats2:TERM-spurious",
+   "reason": "擬相関の多くは、交絡する第3の要因から生まれる。",
+   "version": 1,
+   "units": [
+    "stats2:U28",
+    "stats2:U32"
+   ]
+  },
+  {
+   "id": "stats2:LRN-sigma-mean",
+   "op": "add",
+   "from": "stats2:TERM-sigma",
+   "to": "stats2:TERM-mean",
+   "reason": "平均の式は総和記号で（1/n）Σ xᵢ と書く。総和記号は記法なので定義の構成要素にはせず、式を読むための前提知識とする（#310）。",
+   "version": 1,
+   "units": [
+    "stats2:U02",
+    "stats2:U06"
+   ]
+  }
+ ],
+ "learning_order": [
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-var",
+   "source": "candidate",
+   "via": "stats2:REL-expect-var"
+  },
+  {
+   "from": "stats2:TERM-comb",
+   "to": "stats2:TERM-binom",
+   "source": "candidate",
+   "via": "stats2:REL-comb-binom"
+  },
+  {
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-poisson",
+   "source": "candidate",
+   "via": "stats2:REL-binom-poisson"
+  },
+  {
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-std-normal",
+   "source": "candidate",
+   "via": "stats2:REL-binom-normal"
+  },
+  {
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-sample-prop",
+   "source": "candidate",
+   "via": "stats2:REL-binom-sampleprop"
+  },
+  {
+   "from": "stats2:TERM-normal",
+   "to": "stats2:TERM-std-normal",
+   "source": "candidate",
+   "via": "stats2:REL-std-normal"
+  },
+  {
+   "from": "stats2:TERM-std",
+   "to": "stats2:TERM-std-normal",
+   "source": "candidate",
+   "via": "stats2:REL-std-normal"
+  },
+  {
+   "from": "stats2:TERM-std-normal",
+   "to": "stats2:TERM-sample-mean",
+   "source": "candidate",
+   "via": "stats2:REL-clt-normal"
+  },
+  {
+   "from": "stats2:TERM-rv",
+   "to": "stats2:TERM-dist",
+   "source": "candidate",
+   "via": "stats2:REL-rv-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-expect",
+   "source": "candidate",
+   "via": "stats2:REL-dist-expect"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-sd",
+   "source": "candidate",
+   "via": "stats2:REL-var-sd"
+  },
+  {
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-uncorr",
+   "source": "candidate",
+   "via": "stats2:REL-indep-cov"
+  },
+  {
+   "from": "stats2:TERM-hyper",
+   "to": "stats2:TERM-binom",
+   "source": "candidate",
+   "via": "stats2:REL-hyper-binom"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-pdf",
+   "source": "candidate",
+   "via": "stats2:REL-dist-pdf"
+  },
+  {
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-normal",
+   "source": "candidate",
+   "via": "stats2:REL-pdf-normal"
+  },
+  {
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-uniform",
+   "source": "candidate",
+   "via": "stats2:REL-pdf-uniform"
+  },
+  {
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-expo",
+   "source": "candidate",
+   "via": "stats2:REL-pdf-expo"
+  },
+  {
+   "from": "stats2:TERM-sd",
+   "to": "stats2:TERM-std",
+   "source": "candidate",
+   "via": "stats2:REL-sd-std"
+  },
+  {
+   "from": "stats2:TERM-sample-space",
+   "to": "stats2:TERM-event",
+   "source": "candidate",
+   "via": "stats2:REL-ss-event"
+  },
+  {
+   "from": "stats2:TERM-event",
+   "to": "stats2:TERM-complement",
+   "source": "candidate",
+   "via": "stats2:REL-event-complement"
+  },
+  {
+   "from": "stats2:TERM-event",
+   "to": "stats2:TERM-exclusive",
+   "source": "candidate",
+   "via": "stats2:REL-event-exclusive"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-cond",
+   "source": "candidate",
+   "via": "stats2:REL-prob-cond"
+  },
+  {
+   "from": "stats2:TERM-multiplication",
+   "to": "stats2:TERM-total-prob",
+   "source": "candidate",
+   "via": "stats2:REL-multiplication-total"
+  },
+  {
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-likelihood",
+   "source": "candidate",
+   "via": "stats2:REL-cond-likelihood"
+  },
+  {
+   "from": "stats2:TERM-prior",
+   "to": "stats2:TERM-posterior",
+   "source": "candidate",
+   "via": "stats2:REL-prior-posterior"
+  },
+  {
+   "from": "stats2:TERM-population",
+   "to": "stats2:TERM-sample",
+   "source": "candidate",
+   "via": "stats2:REL-population-sample"
+  },
+  {
+   "from": "stats2:TERM-frame",
+   "to": "stats2:TERM-random-sampling",
+   "source": "candidate",
+   "via": "stats2:REL-frame-random"
+  },
+  {
+   "from": "stats2:TERM-sample",
+   "to": "stats2:TERM-statistic",
+   "source": "candidate",
+   "via": "stats2:REL-sample-statistic"
+  },
+  {
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-sampdist",
+   "source": "candidate",
+   "via": "stats2:REL-statistic-sampdist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-sampdist",
+   "source": "candidate",
+   "via": "stats2:REL-dist-sampdist"
+  },
+  {
+   "from": "stats2:TERM-sampdist",
+   "to": "stats2:TERM-se",
+   "source": "candidate",
+   "via": "stats2:REL-sampdist-se"
+  },
+  {
+   "from": "stats2:TERM-sd",
+   "to": "stats2:TERM-se",
+   "source": "candidate",
+   "via": "stats2:REL-sd-se"
+  },
+  {
+   "from": "stats2:TERM-std-normal",
+   "to": "stats2:TERM-chi2",
+   "source": "candidate",
+   "via": "stats2:REL-normal-chi2"
+  },
+  {
+   "from": "stats2:TERM-df",
+   "to": "stats2:TERM-chi2",
+   "source": "candidate",
+   "via": "stats2:REL-df-chi2"
+  },
+  {
+   "from": "stats2:TERM-chi2",
+   "to": "stats2:TERM-t",
+   "source": "candidate",
+   "via": "stats2:REL-chi2-t"
+  },
+  {
+   "from": "stats2:TERM-chi2",
+   "to": "stats2:TERM-f",
+   "source": "candidate",
+   "via": "stats2:REL-chi2-f"
+  },
+  {
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-estimator",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-statistic"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-point-est",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-pointest"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-unbiased",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-unbiased"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-consistency",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-consistency"
+  },
+  {
+   "from": "stats2:TERM-unbiased",
+   "to": "stats2:TERM-efficiency",
+   "source": "candidate",
+   "via": "stats2:REL-unbiased-efficiency"
+  },
+  {
+   "from": "stats2:TERM-ci",
+   "to": "stats2:TERM-conf-level",
+   "source": "candidate",
+   "via": "stats2:REL-conflevel-ci"
+  },
+  {
+   "from": "stats2:TERM-h0",
+   "to": "stats2:TERM-h1",
+   "source": "candidate",
+   "via": "stats2:REL-h0-h1"
+  },
+  {
+   "from": "stats2:TERM-h0",
+   "to": "stats2:TERM-test-stat",
+   "source": "candidate",
+   "via": "stats2:REL-h0-teststat"
+  },
+  {
+   "from": "stats2:TERM-test-stat",
+   "to": "stats2:TERM-pvalue",
+   "source": "candidate",
+   "via": "stats2:REL-teststat-pvalue"
+  },
+  {
+   "from": "stats2:TERM-test-stat",
+   "to": "stats2:TERM-reject",
+   "source": "candidate",
+   "via": "stats2:REL-teststat-reject"
+  },
+  {
+   "from": "stats2:TERM-type1",
+   "to": "stats2:TERM-alpha",
+   "source": "candidate",
+   "via": "stats2:REL-type1-alpha"
+  },
+  {
+   "from": "stats2:TERM-type2",
+   "to": "stats2:TERM-power",
+   "source": "candidate",
+   "via": "stats2:REL-type2-power"
+  },
+  {
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-paired-t",
+   "source": "candidate",
+   "via": "stats2:REL-test-pairedt"
+  },
+  {
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-welch",
+   "source": "candidate",
+   "via": "stats2:REL-test-welch"
+  },
+  {
+   "from": "stats2:TERM-sample-prop",
+   "to": "stats2:TERM-pool",
+   "source": "candidate",
+   "via": "stats2:REL-sampleprop-pool"
+  },
+  {
+   "from": "stats2:TERM-crosstab",
+   "to": "stats2:TERM-indep-test",
+   "source": "candidate",
+   "via": "stats2:REL-crosstab-indeptest"
+  },
+  {
+   "from": "stats2:TERM-h0",
+   "to": "stats2:TERM-expected",
+   "source": "candidate",
+   "via": "stats2:REL-h0-expected"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-expected",
+   "source": "candidate",
+   "via": "stats2:REL-expect-expected"
+  },
+  {
+   "from": "stats2:TERM-expected",
+   "to": "stats2:TERM-gof",
+   "source": "candidate",
+   "via": "stats2:REL-expected-gof"
+  },
+  {
+   "from": "stats2:TERM-expected",
+   "to": "stats2:TERM-indep-test",
+   "source": "candidate",
+   "via": "stats2:REL-expected-indeptest"
+  },
+  {
+   "from": "stats2:TERM-ratio",
+   "to": "stats2:TERM-point",
+   "source": "candidate",
+   "via": "stats2:REL-ratio-point"
+  },
+  {
+   "from": "stats2:TERM-population",
+   "to": "stats2:TERM-parameter",
+   "source": "candidate",
+   "via": "stats2:REL-population-parameter"
+  },
+  {
+   "from": "stats2:TERM-parameter",
+   "to": "stats2:TERM-estimator",
+   "source": "candidate",
+   "via": "stats2:REL-parameter-estimator"
+  },
+  {
+   "from": "stats2:TERM-scale",
+   "to": "stats2:TERM-qual",
+   "source": "candidate",
+   "via": "stats2:REL-scale-qual"
+  },
+  {
+   "from": "stats2:TERM-scale",
+   "to": "stats2:TERM-quant",
+   "source": "candidate",
+   "via": "stats2:REL-scale-quant"
+  },
+  {
+   "from": "stats2:TERM-mean",
+   "to": "stats2:TERM-dev",
+   "source": "candidate",
+   "via": "stats2:REL-mean-dev"
+  },
+  {
+   "from": "stats2:TERM-dev",
+   "to": "stats2:TERM-data-var",
+   "source": "candidate",
+   "via": "stats2:REL-dev-var"
+  },
+  {
+   "from": "stats2:TERM-quartile",
+   "to": "stats2:TERM-iqr",
+   "source": "candidate",
+   "via": "stats2:REL-quartile-iqr"
+  },
+  {
+   "from": "stats2:TERM-quartile",
+   "to": "stats2:TERM-boxplot",
+   "source": "candidate",
+   "via": "stats2:REL-quartile-boxplot"
+  },
+  {
+   "from": "stats2:TERM-iqr",
+   "to": "stats2:TERM-outlier",
+   "source": "candidate",
+   "via": "stats2:REL-iqr-outlier"
+  },
+  {
+   "from": "stats2:TERM-freqtable",
+   "to": "stats2:TERM-hist",
+   "source": "candidate",
+   "via": "stats2:REL-freqtable-hist"
+  },
+  {
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-cv",
+   "source": "candidate",
+   "via": "stats2:REL-sd-cv"
+  },
+  {
+   "from": "stats2:TERM-data-sd",
+   "to": "stats2:TERM-skew",
+   "source": "candidate",
+   "via": "stats2:REL-sd-skew"
+  },
+  {
+   "from": "stats2:TERM-data-sd",
+   "to": "stats2:TERM-kurt",
+   "source": "candidate",
+   "via": "stats2:REL-sd-kurt"
+  },
+  {
+   "from": "stats2:TERM-mean",
+   "to": "stats2:TERM-ma",
+   "source": "candidate",
+   "via": "stats2:REL-mean-ma"
+  },
+  {
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-partial-corr",
+   "source": "candidate",
+   "via": "stats2:REL-corr-partialcorr"
+  },
+  {
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-spurious",
+   "source": "candidate",
+   "via": "stats2:REL-corr-spurious"
+  },
+  {
+   "from": "stats2:TERM-resid",
+   "to": "stats2:TERM-ols",
+   "source": "candidate",
+   "via": "stats2:REL-resid-ols"
+  },
+  {
+   "from": "stats2:TERM-ols",
+   "to": "stats2:TERM-regcoef",
+   "source": "candidate",
+   "via": "stats2:REL-ols-regcoef"
+  },
+  {
+   "from": "stats2:TERM-resid",
+   "to": "stats2:TERM-r2",
+   "source": "candidate",
+   "via": "stats2:REL-resid-r2"
+  },
+  {
+   "from": "stats2:TERM-qual",
+   "to": "stats2:TERM-dummy",
+   "source": "candidate",
+   "via": "stats2:REL-qual-dummy"
+  },
+  {
+   "from": "stats2:TERM-r2",
+   "to": "stats2:TERM-adjr2",
+   "source": "candidate",
+   "via": "stats2:REL-r2-adjr2"
+  },
+  {
+   "from": "stats2:TERM-df",
+   "to": "stats2:TERM-adjr2",
+   "source": "candidate",
+   "via": "stats2:REL-df-adjr2"
+  },
+  {
+   "from": "stats2:TERM-mreg",
+   "to": "stats2:TERM-multicol",
+   "source": "candidate",
+   "via": "stats2:REL-mreg-multicol"
+  },
+  {
+   "from": "stats2:TERM-df",
+   "to": "stats2:TERM-ms",
+   "source": "candidate",
+   "via": "stats2:REL-df-ms"
+  },
+  {
+   "from": "stats2:TERM-ms",
+   "to": "stats2:TERM-anova",
+   "source": "candidate",
+   "via": "stats2:REL-ms-anova"
+  },
+  {
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-anova",
+   "source": "candidate",
+   "via": "stats2:REL-test-anova"
+  },
+  {
+   "from": "stats2:TERM-random-sampling",
+   "to": "stats2:TERM-strat-sampling",
+   "source": "candidate",
+   "via": "stats2:REL-random-strat"
+  },
+  {
+   "from": "stats2:TERM-random-sampling",
+   "to": "stats2:TERM-cluster-sampling",
+   "source": "candidate",
+   "via": "stats2:REL-random-cluster"
+  },
+  {
+   "from": "stats2:TERM-random-sampling",
+   "to": "stats2:TERM-systematic-sampling",
+   "source": "candidate",
+   "via": "stats2:REL-random-systematic"
+  },
+  {
+   "from": "stats2:TERM-random-sampling",
+   "to": "stats2:TERM-multistage-sampling",
+   "source": "candidate",
+   "via": "stats2:REL-random-multistage"
+  },
+  {
+   "from": "stats2:TERM-frame",
+   "to": "stats2:TERM-nonsampling-error",
+   "source": "candidate",
+   "via": "stats2:REL-frame-nonsampling"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-dist",
+   "source": "candidate",
+   "via": "stats2:REL-prob-dist"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-cov",
+   "source": "candidate",
+   "via": "stats2:REL-expect-cov"
+  },
+  {
+   "from": "stats2:TERM-comb",
+   "to": "stats2:TERM-hyper",
+   "source": "candidate",
+   "via": "stats2:REL-comb-hyper"
+  },
+  {
+   "from": "stats2:TERM-comb",
+   "to": "stats2:TERM-negbinom",
+   "source": "candidate",
+   "via": "stats2:REL-comb-negbinom"
+  },
+  {
+   "from": "stats2:TERM-fact",
+   "to": "stats2:TERM-poisson",
+   "source": "candidate",
+   "via": "stats2:REL-fact-poisson"
+  },
+  {
+   "from": "stats2:TERM-sample-space",
+   "to": "stats2:TERM-rv",
+   "source": "candidate",
+   "via": "stats2:REL-sample-space-rv"
+  },
+  {
+   "from": "stats2:TERM-bernoulli",
+   "to": "stats2:TERM-binom",
+   "source": "candidate",
+   "via": "stats2:REL-bernoulli-binom-sum"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-binom",
+   "source": "candidate",
+   "via": "stats2:REL-binom-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-poisson",
+   "source": "candidate",
+   "via": "stats2:REL-poisson-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-negbinom",
+   "source": "candidate",
+   "via": "stats2:REL-negbinom-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-hyper",
+   "source": "candidate",
+   "via": "stats2:REL-hyper-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-normal",
+   "source": "candidate",
+   "via": "stats2:REL-normal-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-expo",
+   "source": "candidate",
+   "via": "stats2:REL-expo-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-uniform",
+   "source": "candidate",
+   "via": "stats2:REL-uniform-dist"
+  },
+  {
+   "from": "stats2:TERM-exclusive",
+   "to": "stats2:TERM-prob",
+   "source": "candidate",
+   "via": "stats2:REL-exclusive-prob"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-indep",
+   "source": "candidate",
+   "via": "stats2:REL-prob-indep"
+  },
+  {
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-posterior",
+   "source": "candidate",
+   "via": "stats2:REL-posterior-cond"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-prior",
+   "source": "candidate",
+   "via": "stats2:REL-prior-prob"
+  },
+  {
+   "from": "stats2:TERM-normal",
+   "to": "stats2:TERM-sample-mean",
+   "source": "candidate",
+   "via": "stats2:REL-samplemean-normal"
+  },
+  {
+   "from": "stats2:TERM-t",
+   "to": "stats2:TERM-f",
+   "source": "candidate",
+   "via": "stats2:REL-t-f"
+  },
+  {
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-sample-mean",
+   "source": "candidate",
+   "via": "stats2:REL-sampmean-statistic"
+  },
+  {
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-sample-prop",
+   "source": "candidate",
+   "via": "stats2:REL-sampleprop-samplemean"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-se",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-se"
+  },
+  {
+   "from": "stats2:TERM-pdf",
+   "to": "stats2:TERM-cc",
+   "source": "candidate",
+   "via": "stats2:REL-pdf-cc"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-chi2",
+   "source": "candidate",
+   "via": "stats2:REL-chi2-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-t",
+   "source": "candidate",
+   "via": "stats2:REL-t-dist"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-f",
+   "source": "candidate",
+   "via": "stats2:REL-f-dist"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-unbiased",
+   "source": "candidate",
+   "via": "stats2:REL-expect-unbiased"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-consistency",
+   "source": "candidate",
+   "via": "stats2:REL-prob-consistency"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-efficiency",
+   "source": "candidate",
+   "via": "stats2:REL-var-efficiency"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-mse",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-mse"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-mse",
+   "source": "candidate",
+   "via": "stats2:REL-expect-mse"
+  },
+  {
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-ci",
+   "source": "candidate",
+   "via": "stats2:REL-statistic-ci"
+  },
+  {
+   "from": "stats2:TERM-parameter",
+   "to": "stats2:TERM-ci",
+   "source": "candidate",
+   "via": "stats2:REL-param-ci"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-conf-level",
+   "source": "candidate",
+   "via": "stats2:REL-prob-conflevel"
+  },
+  {
+   "from": "stats2:TERM-conf-level",
+   "to": "stats2:TERM-interval-est",
+   "source": "candidate",
+   "via": "stats2:REL-conflevel-intervalest"
+  },
+  {
+   "from": "stats2:TERM-reject",
+   "to": "stats2:TERM-type1",
+   "source": "candidate",
+   "via": "stats2:REL-reject-type1"
+  },
+  {
+   "from": "stats2:TERM-reject",
+   "to": "stats2:TERM-type2",
+   "source": "candidate",
+   "via": "stats2:REL-reject-type2"
+  },
+  {
+   "from": "stats2:TERM-alpha",
+   "to": "stats2:TERM-test",
+   "source": "candidate",
+   "via": "stats2:REL-alpha-test"
+  },
+  {
+   "from": "stats2:TERM-h1",
+   "to": "stats2:TERM-test",
+   "source": "candidate",
+   "via": "stats2:REL-h1-test"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-h0",
+   "source": "candidate",
+   "via": "stats2:REL-dist-h0"
+  },
+  {
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-multcomp",
+   "source": "candidate",
+   "via": "stats2:REL-test-multcomp"
+  },
+  {
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-indep-test",
+   "source": "candidate",
+   "via": "stats2:REL-indep-indeptest"
+  },
+  {
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-paired-t",
+   "source": "candidate",
+   "via": "stats2:REL-unbvar-pairedt"
+  },
+  {
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-welch",
+   "source": "candidate",
+   "via": "stats2:REL-unbvar-welch"
+  },
+  {
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-test-stat",
+   "source": "candidate",
+   "via": "stats2:REL-teststat-statistic"
+  },
+  {
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-sides",
+   "source": "candidate",
+   "via": "stats2:REL-sides-test"
+  },
+  {
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-gof",
+   "source": "candidate",
+   "via": "stats2:REL-gof-test"
+  },
+  {
+   "from": "stats2:TERM-test",
+   "to": "stats2:TERM-indep-test",
+   "source": "candidate",
+   "via": "stats2:REL-indeptest-test"
+  },
+  {
+   "from": "stats2:TERM-median",
+   "to": "stats2:TERM-quartile",
+   "source": "candidate",
+   "via": "stats2:REL-median-quartile"
+  },
+  {
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-unbvar",
+   "source": "candidate",
+   "via": "stats2:REL-samplemean-unbvar"
+  },
+  {
+   "from": "stats2:TERM-statistic",
+   "to": "stats2:TERM-unbvar",
+   "source": "candidate",
+   "via": "stats2:REL-unbvar-statistic"
+  },
+  {
+   "from": "stats2:TERM-data-var",
+   "to": "stats2:TERM-data-sd",
+   "source": "candidate",
+   "via": "stats2:REL-datavar-datasd"
+  },
+  {
+   "from": "stats2:TERM-mean",
+   "to": "stats2:TERM-cv",
+   "source": "candidate",
+   "via": "stats2:REL-mean-cv"
+  },
+  {
+   "from": "stats2:TERM-data-cov",
+   "to": "stats2:TERM-corr",
+   "source": "candidate",
+   "via": "stats2:REL-datacov-corr"
+  },
+  {
+   "from": "stats2:TERM-data-sd",
+   "to": "stats2:TERM-corr",
+   "source": "candidate",
+   "via": "stats2:REL-datasd-corr"
+  },
+  {
+   "from": "stats2:TERM-dev",
+   "to": "stats2:TERM-data-cov",
+   "source": "candidate",
+   "via": "stats2:REL-dev-datacov"
+  },
+  {
+   "from": "stats2:TERM-dev",
+   "to": "stats2:TERM-r2",
+   "source": "candidate",
+   "via": "stats2:REL-dev-r2"
+  },
+  {
+   "from": "stats2:TERM-ols",
+   "to": "stats2:TERM-slr",
+   "source": "candidate",
+   "via": "stats2:REL-ols-slr"
+  },
+  {
+   "from": "stats2:TERM-ols",
+   "to": "stats2:TERM-mreg",
+   "source": "candidate",
+   "via": "stats2:REL-ols-mreg"
+  },
+  {
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-r2",
+   "source": "candidate",
+   "via": "stats2:REL-corr-r2"
+  },
+  {
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-regcoef",
+   "source": "candidate",
+   "via": "stats2:REL-corr-regcoef"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-bias",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-bias"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-bias",
+   "source": "candidate",
+   "via": "stats2:REL-expect-bias"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-sampling-error",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-samplingerror"
+  },
+  {
+   "from": "stats2:TERM-estimator",
+   "to": "stats2:TERM-nonsampling-error",
+   "source": "candidate",
+   "via": "stats2:REL-estimator-nonsampling"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-random-sampling",
+   "source": "candidate",
+   "via": "stats2:REL-prob-random"
+  },
+  {
+   "from": "stats2:TERM-prob",
+   "to": "stats2:TERM-randomize",
+   "source": "candidate",
+   "via": "stats2:REL-prob-randomize"
+  },
+  {
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-confound",
+   "source": "candidate",
+   "via": "stats2:REL-indep-confound"
+  },
+  {
+   "from": "stats2:TERM-frame",
+   "to": "stats2:TERM-sampling-error",
+   "source": "candidate",
+   "via": "stats2:REL-frame-samplingerror"
+  },
+  {
+   "from": "stats2:TERM-rv",
+   "to": "stats2:TERM-statistic",
+   "source": "candidate",
+   "via": "stats2:REL-statistic-rv"
+  },
+  {
+   "from": "stats2:TERM-data-var",
+   "to": "stats2:TERM-acf",
+   "source": "candidate",
+   "via": "stats2:REL-datavar-acf"
+  },
+  {
+   "from": "stats2:TERM-perm",
+   "to": "stats2:TERM-comb",
+   "source": "candidate",
+   "via": "stats2:REL-perm-to-comb"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:DER-binom-moments",
+   "source": "candidate",
+   "via": "stats2:DER-binom-moments"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:DER-binom-moments",
+   "source": "candidate",
+   "via": "stats2:DER-binom-moments"
+  },
+  {
+   "from": "stats2:TERM-indep",
+   "to": "stats2:DER-binom-moments",
+   "source": "candidate",
+   "via": "stats2:DER-binom-moments"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:DER-var-linear",
+   "source": "candidate",
+   "via": "stats2:DER-var-linear"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:DER-std-moments",
+   "source": "candidate",
+   "via": "stats2:DER-std-moments"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:DER-std-moments",
+   "source": "candidate",
+   "via": "stats2:DER-std-moments"
+  },
+  {
+   "from": "stats2:TERM-hist",
+   "to": "stats2:TERM-pdf",
+   "source": "add",
+   "via": "stats2:LRN-hist-pdf"
+  },
+  {
+   "from": "stats2:TERM-fact",
+   "to": "stats2:TERM-perm",
+   "source": "add",
+   "via": "stats2:LRN-fact-perm"
+  },
+  {
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-binom",
+   "source": "add",
+   "via": "stats2:LRN-indep-binom"
+  },
+  {
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-geom",
+   "source": "add",
+   "via": "stats2:LRN-indep-geom"
+  },
+  {
+   "from": "stats2:TERM-exclusive",
+   "to": "stats2:TERM-addition",
+   "source": "add",
+   "via": "stats2:LRN-exclusive-addition"
+  },
+  {
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-indep",
+   "source": "add",
+   "via": "stats2:LRN-cond-indep"
+  },
+  {
+   "from": "stats2:TERM-total-prob",
+   "to": "stats2:TERM-bayes",
+   "source": "add",
+   "via": "stats2:LRN-total-bayes"
+  },
+  {
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-bayes",
+   "source": "add",
+   "via": "stats2:LRN-cond-bayes"
+  },
+  {
+   "from": "stats2:TERM-sample",
+   "to": "stats2:TERM-random-sampling",
+   "source": "add",
+   "via": "stats2:LRN-sample-random"
+  },
+  {
+   "from": "stats2:TERM-frame",
+   "to": "stats2:TERM-bias",
+   "source": "add",
+   "via": "stats2:LRN-frame-bias"
+  },
+  {
+   "from": "stats2:TERM-lln",
+   "to": "stats2:TERM-clt",
+   "source": "add",
+   "via": "stats2:LRN-lln-clt"
+  },
+  {
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-cc",
+   "source": "add",
+   "via": "stats2:LRN-binom-cc"
+  },
+  {
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-df",
+   "source": "add",
+   "via": "stats2:LRN-unbvar-df"
+  },
+  {
+   "from": "stats2:TERM-lln",
+   "to": "stats2:TERM-consistency",
+   "source": "add",
+   "via": "stats2:LRN-lln-consistency"
+  },
+  {
+   "from": "stats2:TERM-clt",
+   "to": "stats2:TERM-ci",
+   "source": "add",
+   "via": "stats2:LRN-clt-ci"
+  },
+  {
+   "from": "stats2:TERM-sampdist",
+   "to": "stats2:TERM-test",
+   "source": "add",
+   "via": "stats2:LRN-sampdist-test"
+  },
+  {
+   "from": "stats2:TERM-h0",
+   "to": "stats2:TERM-pool",
+   "source": "add",
+   "via": "stats2:LRN-h0-pool"
+  },
+  {
+   "from": "stats2:TERM-freqtable",
+   "to": "stats2:TERM-mode",
+   "source": "add",
+   "via": "stats2:LRN-freqtable-mode"
+  },
+  {
+   "from": "stats2:TERM-std",
+   "to": "stats2:TERM-outlier",
+   "source": "add",
+   "via": "stats2:LRN-std-outlier"
+  },
+  {
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-acf",
+   "source": "add",
+   "via": "stats2:LRN-corr-acf"
+  },
+  {
+   "from": "stats2:TERM-rv",
+   "to": "stats2:TERM-bernoulli",
+   "source": "add",
+   "via": "stats2:LRN-rv-bernoulli"
+  },
+  {
+   "from": "stats2:TERM-scatter",
+   "to": "stats2:TERM-corr",
+   "source": "add",
+   "via": "stats2:LRN-scatter-corr"
+  },
+  {
+   "from": "stats2:TERM-scatter",
+   "to": "stats2:TERM-slr",
+   "source": "add",
+   "via": "stats2:LRN-scatter-slr"
+  },
+  {
+   "from": "stats2:TERM-slr",
+   "to": "stats2:TERM-extrap",
+   "source": "add",
+   "via": "stats2:LRN-slr-extrap"
+  },
+  {
+   "from": "stats2:TERM-mreg",
+   "to": "stats2:TERM-adjr2",
+   "source": "add",
+   "via": "stats2:LRN-mreg-adjr2"
+  },
+  {
+   "from": "stats2:TERM-corr",
+   "to": "stats2:TERM-multicol",
+   "source": "add",
+   "via": "stats2:LRN-corr-multicol"
+  },
+  {
+   "from": "stats2:TERM-anova",
+   "to": "stats2:TERM-multcomp",
+   "source": "add",
+   "via": "stats2:LRN-anova-multcomp"
+  },
+  {
+   "from": "stats2:TERM-confound",
+   "to": "stats2:TERM-randomize",
+   "source": "add",
+   "via": "stats2:LRN-confound-randomize"
+  },
+  {
+   "from": "stats2:TERM-confound",
+   "to": "stats2:TERM-spurious",
+   "source": "add",
+   "via": "stats2:LRN-confound-spurious"
+  },
+  {
+   "from": "stats2:TERM-sigma",
+   "to": "stats2:TERM-mean",
+   "source": "add",
+   "via": "stats2:LRN-sigma-mean"
   }
  ]
 }
