@@ -306,7 +306,8 @@
   bottom: 8px;
   z-index: 5;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 2px;
   padding: 4px;
   border-radius: 28px;

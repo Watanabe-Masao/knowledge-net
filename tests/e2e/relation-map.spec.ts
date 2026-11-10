@@ -648,6 +648,29 @@ test("たどった道：← で1つ前へ、長押しで新しい順のメニュ
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
 });
 
+// 確かめる対象：下の札（凡例）が地図の枠の中に全部入ること（画面の原則 6・7。凡例を消さない）。
+// 想定する故障：⑤ の種類が増えて札が1段に並びきらず、右の札が枠の外に切れる（渡辺さん 2026-11-11 の iPhone のスクリーンショット：比べるが切れた）。
+// 見つけ方：390px と埋め込み（360×320）で、どの札の外枠も地図の外枠の中にあり、押す所が 44px 以上。
+// 既存との違い：「横にはみ出さない」のテストはページの横のはみ出しだけを見る（地図は中身を切るので、札の切れは見えなかった）
+// 検出の確かめ（2026-11-11）：札を全部の種類にし、折り返しを外すと、390px で落ちる
+for (const [w, h] of [
+  [390, 844],
+  [360, 320],
+] as const)
+  test(`下の札：${w}×${h} で全部の札が地図の枠の中にあり、押す所は 44px 以上`, async ({ page }) => {
+    const m = await open(page, w, h);
+    const box = (await m.boundingBox())!;
+    const chips = m.getByTestId("rm-legend").getByRole("button");
+    const n = await chips.count();
+    expect(n).toBeGreaterThan(0);
+    for (let i = 0; i < n; i++) {
+      const b = (await chips.nth(i).boundingBox())!;
+      expect(b.x, `札 ${i} の左`).toBeGreaterThanOrEqual(box.x - 0.5);
+      expect(b.x + b.width, `札 ${i} の右`).toBeLessThanOrEqual(box.x + box.width + 0.5);
+      expect(b.height).toBeGreaterThanOrEqual(44);
+    }
+  });
+
 // 確かめる対象：下の札で線の種類を絞る（凡例を兼ねる。渡辺さん 2026-11-07）。
 // 想定する故障：札を押しても線が絞れない・ほかの種類の線が残る。語を選ぶと絞り込みが消える・絞り込み中だと分からない。
 // 見つけ方：「対比」の札を押すと押した状態になり、描かれる線が全部対比を含む線だけになる。二項分布を選ぶと札は隠れるが、
