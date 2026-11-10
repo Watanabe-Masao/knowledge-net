@@ -28,7 +28,7 @@ KSLP 企画・基本設計書 Ver.1.0（2026-10-28）の第1〜2段階（知識�
 
 ## 型 v1（2026-10-29 決定、#41）
 
-型のファイル：`docs/knowledge-net/schema/kn-schema-v1.json`（JSON Schema 2020-12）、関係の種類：`relation-types.yaml`。書き出し例：stats2-course の `out/site/net/stats2.json`。
+型のファイル：`docs/knowledge-net/schema/kn-schema-v2.json`（JSON Schema 2020-12。v1 は M7 で外した）、関係の種類：`relation-types.yaml`。書き出し例：stats2-course の `out/site/net/stats2.json`。
 
 | 種類 | 項目 |
 | --- | --- |

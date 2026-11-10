@@ -1,22 +1,26 @@
 // データの検査とネットワークの計算。間違いを入れたら止まることも確かめる。
 import { describe, expect, it } from "vitest";
-import { KINDS, compare, merge, schemaErrors, trace, around } from "../../src/data";
-import { sampleV1 } from "../support/sample";
+import { KINDS_V2 as KINDS, compare, merge, schemaErrors, trace, around } from "../../src/data";
+import { sampleV2 } from "../support/sample";
 
-const sample = sampleV1; // 見本の版によらず v1 の形で（このファイルは v1 の型と v1 の形を見る。#282）
+const sample = sampleV2; // 公開中の見本（v2。M7 で v1 の見本を外した。stats2-course #267）
 
-describe("型（schema/kn-schema-v1.json）", () => {
+describe("型（schema/kn-schema-v2.json）", () => {
   it("教材の見本は型に合う", () => {
     expect(schemaErrors(sample())).toEqual([]);
   });
-  it("知らない関係の種類・変換の mode 抜け・前提の premise 抜けを止める", () => {
+  it("知らない関係の種類・v1 の種類・移るの mode 抜け・型 v1 の教材を止める（M7。stats2-course #267）", () => {
+    // 検出の確かめ（2026-11-10）：型 v2 の relations の type の enum に「前提」を足すと、2つ目の確かめで落ちる
     const d = sample();
     d.relations[0].type = "似ている";
-    const conv = d.relations.find((r: { type: string }) => r.type === "変換");
-    delete conv.mode;
-    const pre = d.relations.find((r: { type: string }) => r.type === "前提");
-    delete pre.premise;
-    expect(schemaErrors(d).length).toBeGreaterThanOrEqual(3);
+    expect(schemaErrors(d).length).toBeGreaterThan(0);
+    const d2 = sample();
+    d2.relations[0].type = "前提"; // v1 の種類は型から外した
+    expect(schemaErrors(d2).length).toBeGreaterThan(0);
+    const d3 = sample();
+    delete d3.relations.find((r: { type: string }) => r.type === "移る").mode;
+    expect(schemaErrors(d3).length).toBeGreaterThan(0);
+    expect(schemaErrors({ ...sample(), version: 1 })).not.toEqual([]); // 型 v1 の教材は読まない
   });
   it("説明のある概念に定義がなければ止める・教材名のない id を止める", () => {
     const d = sample();
@@ -44,15 +48,15 @@ describe("型（schema/kn-schema-v1.json）", () => {
     normal.counterexample_labs = [{ id: "cont" }];
     expect(schemaErrors(d).length).toBeGreaterThan(0);
   });
-  it("関係の種類は10で、どれにも読み方とたどるかどうかがある", () => {
+  it("関係の種類は ⑤ の10で、どれにも読み方とたどるかどうかがある", () => {
     expect(Object.keys(KINDS)).toHaveLength(10);
-    expect(KINDS["変換"].trace).toBe(false);
+    expect(KINDS["移る"].trace).toBe(false);
     expect(
       Object.entries(KINDS)
         .filter(([, k]) => k.trace)
         .map(([t]) => t)
         .sort(),
-    ).toEqual(["一般化", "前提", "導出", "特殊化", "統合", "種類", "材料"].sort());
+    ).toEqual(["一種", "定める", "導ける", "特別な場合"].sort());
     for (const k of Object.values(KINDS)) {
       expect(k.reading).toMatch(/□/);
       expect(typeof k.trace).toBe("boolean");
@@ -62,38 +66,34 @@ describe("型（schema/kn-schema-v1.json）", () => {
 
 describe("ネットワーク", () => {
   const { net, errors } = merge([{ id: "stats2", data: sample() }]);
-  // 確かめる対象：型の改訂36（種類・材料・対比の axis。stats2-course #232）を画面が読めること。
-  // 想定する故障：画面の型が新しい種類を知らず、教材のデータが丸ごと読めなくなる（merge が型の不一致で教材を飛ばす）。
-  //   axis が対比以外にも書けてしまう。材料が「前提をさかのぼる」でたどられない。
-  // 見つけ方：見本の前提（確率変数 → 確率分布）を材料に、種類の関係を1本足し、対比に axis を書いて merge する。
-  //   型の誤りが0・関係が全部入る・確率分布のさかのぼりに確率変数が出る。axis を前提に書くと型が止める。
-  // 既存との違い：上のテストは種類の数と読み方だけ。ここは新しい種類のデータを実際に読み込む。
-  // 検出の確かめ（2026-11-06）：型の enum に材料を足さないと、merge が教材を飛ばして落ちることを見た
-  it("改訂36：種類・材料・axis・移した分類のある教材を読み込み、材料もさかのぼる", () => {
+  // 確かめる対象：⑤ の種類（一種・定める・比べるの axis）と移した分類のある教材を画面が読み、定めるもさかのぼること。
+  // 想定する故障：画面の型が ⑤ の種類を知らず、教材のデータが丸ごと読めなくなる（merge が型の不一致で教材を飛ばす）。
+  //   axis が比べる以外にも書けてしまう。
+  // 見つけ方：見本に一種の関係を1本足し、比べるに axis を書いて merge する。型の誤りが0・関係が全部入る・確率分布のさかのぼりに確率変数が出る。
+  //   axis を定めるに書くと型が止める。
+  // 既存との違い：上のテストは種類の数と読み方だけ。ここは ⑤ の種類のデータを実際に読み込む
+  it("⑤ の種類（一種・定める・axis）と移した分類のある教材を読み込み、定めるもさかのぼる", () => {
     const d = sample();
-    const rv = d.relations.find((r: { id: string }) => r.id === "stats2:REL-rv-dist");
-    rv.type = "材料";
-    delete rv.premise;
     d.relations.push({
       id: "stats2:REL-test-kind",
       from: "stats2:TERM-bernoulli",
       to: "stats2:TERM-binom",
-      type: "種類",
+      type: "一種",
       description: "見本だけの関係",
       units: [],
       version: 1,
     });
-    const con = d.relations.find((r: { type: string }) => r.type === "対比");
+    const con = d.relations.find((r: { type: string }) => r.type === "比べる");
     con.axis = "取り出し方";
     d.course.relation_map_ready = ["確率分布"];
     expect(schemaErrors(d)).toEqual([]);
     const { net, errors } = merge([{ id: "stats2", data: d }]);
     expect(errors).toEqual([]);
-    expect(net.relations).toHaveLength(d.relations.length);
+    expect(net.relations.filter((r) => r.id.startsWith("stats2:REL-"))).toHaveLength(d.relations.length);
     expect(trace(net, "stats2:TERM-dist").order).toContain("stats2:TERM-rv");
     expect([...net.mapReady]).toEqual(["確率分布"]);
-    const pre = d.relations.find((r: { type: string }) => r.type === "前提");
-    pre.axis = "取り出し方";
+    const def = d.relations.find((r: { type: string }) => r.type === "定める");
+    def.axis = "取り出し方";
     expect(schemaErrors(d).length).toBeGreaterThan(0);
   });
   it("1つにまとまる", () => {
@@ -109,24 +109,19 @@ describe("ネットワーク", () => {
     expect(r.errors[0]).toMatch(/^bad：/);
     expect(r.net.courses.map((c) => c.id)).toEqual(["stats2"]);
   });
-  it("前提をさかのぼる：標準化には期待値と分散が要り、対比・応用はたどらない", () => {
+  it("前提をさかのぼる（教材の学ぶ順）：標準化には期待値と分散が要り、比べるの相手はたどらない", () => {
+    // 見本は教材の仕上がりの学ぶ順（learning_order）を持つので、経路はその組だけでたどる（M6。stats2-course #266）
     const t = trace(net, "stats2:TERM-std");
     expect(t.order).toContain("stats2:TERM-expect");
     expect(t.order).toContain("stats2:TERM-var");
     expect(t.order).toContain("stats2:TERM-rv"); // 期待値の前提の前提
-    const n = trace(net, "stats2:TERM-normal");
-    expect(n.order).not.toContain("stats2:TERM-std"); // 標準化→正規分布は「応用」なのでたどらない
-    expect(trace(net, "stats2:TERM-normal").order).not.toContain("stats2:TERM-binom"); // 変換（近似）はたどらない：正規分布に二項分布は要らない
-    expect(trace(net, "stats2:TERM-poisson").order).not.toContain("stats2:TERM-binom"); // 変換（極限）もたどらない。学ぶ順に要るなら「前提」で書く
-  });
-  it("導出の前提もたどる", () => {
-    expect(trace(net, "stats2:TERM-binom").steps.some((s) => s.via.includes("DER-binom-moments"))).toBe(true);
+    expect(trace(net, "stats2:TERM-binom").order).not.toContain("stats2:TERM-geom"); // 比べるは学ぶ順の候補にしない（⑥ の 3）
   });
   it("つながりと比較", () => {
     expect(around(net, "stats2:TERM-binom").relations.length).toBeGreaterThan(2);
     const c = compare(net, ["stats2:TERM-binom", "stats2:TERM-poisson"]);
     expect(c.rows[0].label).toBe("定義");
-    expect(c.between.some((r) => r.type === "対比")).toBe(true);
+    expect(c.between.some((r) => r.type === "比べる")).toBe(true);
     expect(compare(net, ["stats2:TERM-binom", "stats2:TERM-std"]).common).toContain("stats2:TERM-expect");
   });
   it("どこにもない概念を指す関係は missing（未接続として出す。落とさない）", () => {
@@ -155,7 +150,7 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(schemaErrors(e).length).toBeGreaterThan(0);
   });
   it("実験室の値の表（改訂10）：見本は合い、値の表の形に二項分布の項目・二項分布に値の表の項目を混ぜると止める", () => {
-    const w0 = sampleV1;
+    const w0 = sampleV2;
     const d = w0();
     expect(schemaErrors(d)).toEqual([]);
     const t = d.experiments.find((x: { model: string }) => x.model === "table");
@@ -172,7 +167,7 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(schemaErrors(f).length).toBeGreaterThan(0);
   });
   it("骨格（改訂11）：定義1文と分類があれば合い、どちらかがないと止める", () => {
-    const d = sampleV1();
+    const d = sampleV2();
     const c = d.concepts.find((x: { status: string }) => x.status === "skeleton");
     expect(schemaErrors(d)).toEqual([]);
     delete c.category;
@@ -182,9 +177,9 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(schemaErrors(d).length).toBeGreaterThan(0);
   });
   it("画面より新しい改訂のデータは知らせる（表示はする）", async () => {
-    const { REVISION } = await import("../../src/data");
+    const { REVISION_V2 } = await import("../../src/data");
     const d = sample();
-    d.schema_revision = REVISION + 1;
+    d.schema_revision = REVISION_V2 + 1;
     const r = merge([{ id: "stats2", data: d }]);
     expect(r.errors[0]).toMatch(/改訂/);
     expect(r.net.concepts.size).toBeGreaterThan(0);
@@ -212,7 +207,7 @@ describe("数理ラボの参照と型の改訂", () => {
 // 見つけ方：見本の全体・概念・式の木に知らない項目を足しても概念の数が変わらず、警告が1つ出る。型の違うデータは今までどおり外れる。
 // 既存との違い：既存の「型」のテストは書き出す側の厳しい型（schemaErrors）だけを見ていた
 describe("型の改訂より新しいデータも、知っている項目だけで読む", () => {
-  const w0 = sampleV1;
+  const w0 = sampleV2;
   it("知らない項目があっても教材を外さず、式の木も消さない", () => {
     const base = merge([{ id: "stats2", data: w0() }]);
     expect(base.errors).toEqual([]);

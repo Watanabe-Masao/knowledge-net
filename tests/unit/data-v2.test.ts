@@ -1,30 +1,23 @@
 // 型 v2 のデータを画面の形に写して読む（stats2-course #263 M3-b）。
-// 確かめる対象：merge が v2 の教材を版で見分けて検査し、画面の形（v1 と同じ形の Relation・Concept）に写すこと。
-// 想定する故障：v2 の教材を v1 の型で検査して外す。legacy_type を type に写さず、移していない関係が種類なしになる。⑤ の種類を描けない（M7 から読み替えない）。
+// 確かめる対象：merge が v2 の教材を検査し、画面の形に写すこと（v1 の教材は M7 から読まない）。
+// 想定する故障：v2 の教材を外す。⑤ の種類を描けない（M7 から読み替えない）。v1 の教材を黙って読む。
 //   v2 の条件の行（object）を文の一覧に写さず、画面が [object Object] を出す。主張の id を「未接続」に数える。
-// 見つけ方：手で書いた v2 の見本と v1 の公開データの見本を、別々にも一緒にも merge し、写した形を見る。
-// 既存との違い：schema-v2.test.ts は型だけ、data.test.ts は v1 だけを見る。ここは v2 の読み込みと写し。
-// 検出の確かめ：toScreen を「何もしない」に替えると、legacy_type・v2 の種類の読み方・条件の行の3つのテストが落ちることを手元で確かめた。
+// 見つけ方：手で書いた v2 の見本を merge し、写した形を見る。版を 1 にした写しは外れて知らせる。
+// 既存との違い：schema-v2.test.ts は型だけ、data.test.ts は公開データの見本の計算。ここは手で書いた見本の読み込みと写し。
+// 検出の確かめ：toScreen を「何もしない」に替えると、条件の行・学ぶ順の足すのテストが落ちることを手元で確かめた。
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { LEARNING_KIND, SCREEN_KIND_OF_V2, kindOf, merge } from "../../src/data";
 import { GLYPH_D, KIND_VAR } from "../../src/kinds";
-import { sampleV1 } from "../support/sample";
 
 const j = (p: string) => JSON.parse(readFileSync(p, "utf8"));
 const v2 = () => j("tests/fixtures/v2-sample.json");
-const v1 = sampleV1; // 見本の版によらず v1 の形で（v1 と v2 を一緒に読む確かめ。#282）
 
 describe("型 v2 の読み込み", () => {
   it("v2 の見本は v2 の型で検査され、外されない", () => {
     const { net, errors } = merge([{ id: "t", data: v2() }]);
     expect(errors).toEqual([]);
     expect(net.courses.map((c) => c.id)).toEqual(["t"]);
-  });
-  it("移していない関係は legacy_type を種類として読む", () => {
-    const { net } = merge([{ id: "t", data: v2() }]);
-    const r = net.relations.find((x) => x.id === "t:REL-9")!;
-    expect([r.type, r.premise]).toEqual(["前提", "learning"]);
   });
   it("v2 の種類は KINDS から読み方を引ける", () => {
     const { net } = merge([{ id: "t", data: v2() }]);
@@ -114,12 +107,12 @@ describe("型 v2 の読み込み", () => {
     expect(basis).toContain("P(D)＞0");
     expect(basis).toContain("P(H)＞0");
   });
-  it("v1 と v2 の教材を一緒に読める", () => {
+  it("型 v1 の教材は読まず、知らせる（M7。stats2-course #267）", () => {
     const { net, errors } = merge([
-      { id: "stats2", data: v1() },
+      { id: "old", data: { ...v2(), version: 1 } },
       { id: "t", data: v2() },
     ]);
-    expect(errors).toEqual([]);
-    expect(net.courses.map((c) => c.id)).toEqual(["stats2", "t"]);
+    expect(errors[0]).toMatch(/^old：データの型が合わない/);
+    expect(net.courses.map((c) => c.id)).toEqual(["t"]);
   });
 });

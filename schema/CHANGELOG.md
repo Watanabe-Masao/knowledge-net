@@ -54,6 +54,7 @@
 | 1 | 2026-11-05 | 芯の改訂30までの実験室の定義をそのまま移した（stats2-course #211） |
 | 2 | 2026-11-05 | `$defs.walkTexts`：解き方の公式の文（記号の意味・呼び名・選び肢の形・行の題と文と別の言い方）。engine は文の型の id・穴の値・別の言い方だけを返す（stats2-course #211） |
 | 3 | 2026-11-05 | `$defs.applyTexts`：応用の解き方の段の文（語の名前の穴の言葉・段の題と文と別の言い方）（stats2-course #211） |
+| 4 | 2026-11-10 | 芯の共通の部品（gid・gids・text・texts・valueTable）を kn-schema-v1.json から kn-schema-v2.json の同じ部品へ指し替えた（v1 の型を外すため。stats2-course #267 M7-3）。中身は変わらない |
 
 ## v2（schema/kn-schema-v2.json）
 
@@ -66,3 +67,4 @@
 | 3 | 2026-11-09 | 主張（`claims`）に `labs`・`figures`・`gist` を足した。まとまりの間の関係（`course.group_relations`）は `relations` か `claims` の少なくとも1つで書けるようにした（stats2-course #289。⑤ で線にしない主張（ポアソン分布と指数分布：④-25）に、解説付きのラボ・図・まとまりの矢印を置くため。渡辺さん 2026-11-09）。任意の項目。あわせて、関係の `operation` と条件の行の `subject`（概念の id か文）を oneOf から anyOf にした（概念の id は文の形にも合うので、oneOf では id を書くと止まっていた。改訂1からの誤り） |
 
 | 4 | 2026-11-10 | 書き出しに任意の `learning_order`（仕上がりの学ぶ順：from・to・source〔candidate：関係から求めた候補／add：学ぶ順の足す〕・via〔どこから来たか：関係・導出・学ぶ順の id〕。to は概念か定理の点〔導出〕）を足した（stats2-course #266 M6。渡辺さん 2026-11-10：候補＋足す−外すは教材の build が求め、画面は読むだけ）。外した候補は書かない。学ぶ順の足すに任意の `units`（根拠の単元。⑥ の 5 の 4）・`question`・`focus`（前提 learning の関係が持っていたものを移す）。任意の項目 |
+| 5 | 2026-11-10 | v1 を読む期間を終えた（stats2-course #267 M7-3）：関係の `legacy_type`（v1 の種類）と、それに掛かる v1 の決まり（allOf の10組。中に JSON Schema の type を legacy_type に置き換えてしまった誤りがあった）を外し、関係に `type`（⑤ の種類）を必須にし、v1 の決まりにあった「axis は比べるだけ」を ⑤ の種類で書き直した。kn-schema-v1.json と relation-types.yaml の v1 の種類・premises を外した。概念の条件の v1 の形（math・data）は、まだ教材が書き出しているので残す（stats2-course #291 で外す） |

@@ -1,10 +1,10 @@
 // 型 v2（schema/kn-schema-v2.json。stats2-course #263 M3）の検査。
 // 確かめる対象：製本の決まりのうち、型で機械に止められる部分（設計書 docs/schema-v2-design.md の 1・3.1・4・6）。
 // 想定する故障：v2 の型が、種類ごとの必須（主張・固定の仕方・軸と同じ所・違う所・性質）や、掛かる先ごとの区分、
-//   移していない行（legacy_type）と v2 の種類の取り違えを通してしまう。または v1 の公開データを v2 に写した形を拒む（M4 で読めない）。
+//   v1 の種類（M7 で外した）を通してしまう。または教材の公開データを拒む。
 // 見つけ方：手で書いた v2 の見本（tests/fixtures/v2-sample.json）が通ること、1つずつ誤りを入れた写しがそれぞれ止まること、
-//   v1 の公開データの見本を legacy_type で写した形が通ること。
-// 既存との違い：data.test.ts は v1 の型だけを見る。ここは v2 の型だけを見る（画面の読み込みは別のテスト）。
+//   教材の公開データの見本が通ること。
+// 既存との違い：data.test.ts は見本の読み込みとネットワークの計算。ここは型の決まりを1つずつ（画面の読み込みは別のテスト）。
 // 検出の確かめ：下の「1つずつ止まる」の各行は、誤りを入れない写しでは通ることを先に確かめてから、誤りを入れて止まることを見る。
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -14,7 +14,6 @@ import { sampleV2 } from "../support/sample";
 const j = (p: string) => JSON.parse(readFileSync(p, "utf8"));
 const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strict: false });
 ajv.addSchema(j("schema/kn-experiment-v1.json"));
-ajv.addSchema(j("schema/kn-schema-v1.json"));
 const validate = ajv.compile(j("schema/kn-schema-v2.json"));
 const ok = (d: unknown) => validate(d) === true;
 const fixture = () => j("tests/fixtures/v2-sample.json");
@@ -26,7 +25,7 @@ describe("型 v2", () => {
     expect(validate(fixture()) ? [] : validate.errors).toEqual([]);
   });
 
-  it("教材の公開データの見本を v2 の形にしたもの（教材が v2 で公開していればそのまま、v1 なら関係を legacy_type に写す）は型に合う", () => {
+  it("教材の公開データの見本は型に合う", () => {
     const d = sampleV2();
     expect(validate(d) ? [] : validate.errors?.slice(0, 5)).toEqual([]);
   });
@@ -42,8 +41,10 @@ describe("型 v2", () => {
     ["推定するに性質の主張がない", (d) => delete rel(d, "推定する").properties],
     ["比べるに違う所がない", (d) => delete rel(d, "比べる").differ],
     ["v2 の種類に premise がある", (d) => (rel(d, "導ける").premise = "learning")],
-    ["type と legacy_type の両方がある", (d) => (rel(d, "定める").legacy_type = "材料")],
-    ["type も legacy_type もない", (d) => delete rel(d, "定める").type],
+    ["v1 の種類を legacy_type で書く（M7 で外した）", (d) => (rel(d, "定める").legacy_type = "材料")],
+    ["type がない", (d) => delete rel(d, "定める").type],
+    ["v1 の種類（前提）", (d) => (rel(d, "定める").type = "前提")],
+    ["比べる以外に axis", (d) => (rel(d, "定める").axis = "x")],
     ["知らない種類", (d) => (rel(d, "定める").type = "前提")],
     ["主張の id が CLM-番号でない", (d) => (d.claims[0].id = "t:CLAIM-13")],
     ["主張の仮定の行に要件", (d) => ((d.claims[0].conditions as Row[])[0].kind = "要件")],

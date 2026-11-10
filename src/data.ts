@@ -1,8 +1,7 @@
-// 教材が書き出したデータ（kn-schema v1・v2）を読み、検査して、1つのネットワークにまとめる。
-// 型は schema/kn-schema-v1.json と schema/kn-schema-v2.json（製本への移行の期間は両方。stats2-course #263）。Ajv でそのまま検査する。下の TypeScript の型はそれを写したもの。
-// v2 のデータは、読んだあとで画面の形（v1 と同じ形の Relation・Concept）に写す（toScreen）。移していない関係は legacy_type を type として読む。
+// 教材が書き出したデータ（kn-schema v2）を読み、検査して、1つのネットワークにまとめる。
+// 型は schema/kn-schema-v2.json（v1 は M7 で外した。stats2-course #267）。Ajv でそのまま検査する。下の TypeScript の型はそれを写したもの。
+// 読んだあとで画面の形に写す（toScreen：条件の行を文の一覧と区分に分ける・学ぶ順の足すを前提知識の行にする）。
 import Ajv2020 from "ajv/dist/2020";
-import schema from "../schema/kn-schema-v1.json";
 import screenKinds from "./screen-kinds.json";
 import schemaV2 from "../schema/kn-schema-v2.json";
 import experimentSchema from "../schema/kn-experiment-v1.json";
@@ -121,7 +120,6 @@ export type Relation = {
   from: string;
   to: string;
   type: string;
-  /** v2：移していない行の v1 の種類（画面は type に写して読む） */ legacy_type?: string;
   /** v2 の種類ごとの項目（stats2-course docs/schema-v2-design.md の 3.1） */
   fix?: string;
   fix_text?: string;
@@ -142,7 +140,6 @@ export type Relation = {
   conditions?: string[];
   conditions_detail?: ConditionDetail[];
   mode?: "exact" | "approximation" | "limit";
-  premise?: "learning" | "mathematical";
   derivation?: string;
   units: string[];
   labs?: LabRef[];
@@ -245,12 +242,10 @@ export type CourseData = {
   apply_texts?: ApplyTexts;
 };
 export type Kind = { definition: string; reading: string; trace: boolean; required: string[] };
-export const KINDS = kinds.types as unknown as Record<string, Kind>;
 /** 型 v2 の種類（relation-types.yaml の types_v2。stats2-course #263）。線の見方の一覧は、移行の期間は v1 の種類のまま */
 export const KINDS_V2 = ((kinds as { types_v2?: object }).types_v2 ?? {}) as unknown as Record<string, Kind>;
 /** 種類の定義を v1・v2 のどちらからでも引く */
-export const kindOf = (t: string): Kind | undefined =>
-  t === LEARNING_KIND ? LEARNING_KIND_DEF : (KINDS_V2[t] ?? KINDS[t]);
+export const kindOf = (t: string): Kind | undefined => (t === LEARNING_KIND ? LEARNING_KIND_DEF : KINDS_V2[t]);
 /** 学ぶ順の足すの読み方（前提知識。たどる） */
 const LEARNING_KIND_DEF: Kind = {
   definition: "B を学ぶのに、A を先に知っておきたい（製本 ⑥）",
@@ -259,19 +254,15 @@ const LEARNING_KIND_DEF: Kind = {
   required: [],
 };
 export const MODES = kinds.modes as Record<string, string>;
-export const PREMISES = kinds.premises as Record<string, string>;
 
-/** この画面が知っている型の改訂番号（schema/kn-schema-v1.json の x-revision）。 */
-export const REVISION = (schema as { "x-revision"?: number })["x-revision"] ?? 1;
 /** この画面が知っている型 v2 の改訂番号（schema/kn-schema-v2.json の x-revision） */
 export const REVISION_V2 = (schemaV2 as { "x-revision"?: number })["x-revision"] ?? 1;
 /** この画面が知っている実験室の拡張の改訂番号（schema/kn-experiment-v1.json の x-revision。stats2-course issue 211） */
 export const EXPERIMENT_REVISION = (experimentSchema as { "x-revision"?: number })["x-revision"] ?? 1;
 
-// 型は芯（kn-schema-v1.json）と実験室の拡張（kn-experiment-v1.json）の2つ。芯の experiments が拡張を指し、拡張は芯の共通の部品を指す
+// 型は芯（kn-schema-v2.json）と実験室の拡張（kn-experiment-v1.json）の2つ。芯の experiments が拡張を指し、拡張は芯の共通の部品を指す
 const ajv = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false });
 ajv.addSchema(experimentSchema);
-const validateCourse = ajv.compile(schema);
 const validateCourseV2 = ajv.compile(schemaV2);
 /** 読むときの型（stats2-course issue 207）：知らない項目を拒む指定（additionalProperties: false）だけを外した写し。
  *  教材が画面より先に新しい改訂（任意の項目の追加）で公開しても、教材ごと外さずに、知っている項目だけで表示する。
@@ -288,12 +279,12 @@ export const relaxSchema = (x: unknown): unknown =>
 const readAjv = new Ajv2020({ allErrors: true, validateFormats: false, strictSchema: false }).addSchema(
   relaxSchema(experimentSchema) as object,
 );
-const validateRead = readAjv.compile(relaxSchema(schema) as object);
 const validateReadV2 = readAjv.compile(relaxSchema(schemaV2) as object);
 
 /** 型に合わなければ、どこが合わないかの一覧を返す（空なら合っている）。 */
 export function schemaErrors(data: unknown): string[] {
-  const v = isV2(data) ? validateCourseV2 : validateCourse;
+  if (!isV2(data)) return ["(全体) version は 2（型 v1 の教材は M7 で読まなくなった）"];
+  const v = validateCourseV2;
   if (v(data)) return [];
   return (v.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
 }
@@ -324,7 +315,7 @@ export const SCREEN_KIND_OF_V2: Record<string, string> = screenKinds.v2_to_scree
 /** 学ぶ順の足す（前提知識）を、関係と同じ部品で描くときの種類の名前（⑤ の種類ではない。stats2-course の issue 266・267） */
 export const LEARNING_KIND = "前提知識";
 
-/** v2 のデータを、画面が読む形に写す。種類は ⑤ のまま（移していない行は legacy_type を種類に）。条件の行は文と区分に分ける */
+/** v2 のデータを、画面が読む形に写す。種類は ⑤ のまま。条件の行は文と区分に分ける */
 export function toScreen(d: CourseData): CourseData {
   if (d.version !== 2) return d;
   const relations = d.relations.map((r) => {
@@ -332,7 +323,7 @@ export function toScreen(d: CourseData): CourseData {
     const objs = rows.filter((x): x is V2Cond => typeof x === "object");
     return {
       ...r,
-      type: r.legacy_type ?? SCREEN_KIND_OF_V2[r.type] ?? r.type,
+      type: SCREEN_KIND_OF_V2[r.type] ?? r.type,
       conditions: rows.map((x) => (typeof x === "string" ? x : x.text)),
       ...(objs.length ? { conditions_detail: objs.map(condDetail) } : {}),
     };
@@ -432,20 +423,22 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
   };
   const errors: string[] = [];
   for (const { id, data } of list) {
-    const read = isV2(data) ? validateReadV2 : validateRead;
-    if (!read(data)) {
-      const errs = (read.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim());
+    const read = validateReadV2;
+    if (!isV2(data) || !read(data)) {
+      const errs = isV2(data)
+        ? (read.errors ?? []).map((e) => `${e.instancePath || "(全体)"} ${e.message ?? ""}`.trim())
+        : ["(全体) version は 2（型 v1 の教材は読まない）"];
       errors.push(`${id}：データの型が合わない（${errs.slice(0, 3).join("／")}${errs.length > 3 ? "…" : ""}）`);
       continue;
     }
     const d = toScreen(data as CourseData);
     if (
-      (d.schema_revision ?? 1) > (d.version === 2 ? REVISION_V2 : REVISION) ||
+      (d.schema_revision ?? 1) > REVISION_V2 ||
       (d.experiment_revision ?? 1) > EXPERIMENT_REVISION ||
       schemaErrors(data).length
     )
       errors.push(
-        `${id}：データの型の改訂（芯 ${d.schema_revision ?? 1}・実験室 ${d.experiment_revision ?? 1}）がこの画面（芯 ${d.version === 2 ? `v2 の ${REVISION_V2}` : REVISION}・実験室 ${EXPERIMENT_REVISION}）より新しいか、画面が知らない項目がある。知っている項目だけで表示する（画面の更新を待つ）`,
+        `${id}：データの型の改訂（芯 ${d.schema_revision ?? 1}・実験室 ${d.experiment_revision ?? 1}）がこの画面（芯 v2 の ${REVISION_V2}・実験室 ${EXPERIMENT_REVISION}）より新しいか、画面が知らない項目がある。知っている項目だけで表示する（画面の更新を待つ）`,
       );
     net.courses.push({ id: d.course.id, title: d.course.title });
     for (const u of d.course.units) net.units.set(u.id, u);
