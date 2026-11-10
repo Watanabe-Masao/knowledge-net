@@ -3091,7 +3091,8 @@
    "調査・実験",
    "データと変数",
    "図表",
-   "時系列"
+   "時系列",
+   "数学の道具"
   ]
  },
  "concepts": [
@@ -3107,7 +3108,14 @@
    "en": "permutation",
    "short": "異なるものから順番を区別して並べる並べ方と、その数",
    "category": "数学の道具",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-perm.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-perm.svg",
+   "basis": {
+    "text": "異なる n 個のものから k 個（n・k は 0≦k≦n の整数。定義の要件）を取り出し、順番を区別して1列に並べる並べ方の数 ₙPₖ（何も取り出さない k＝0 は1通り）",
+    "terms": []
+   },
+   "forms": [
+    "number"
+   ]
   },
   {
    "id": "stats2:TERM-comb",
@@ -3279,6 +3287,10 @@
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ],
+   "basis": {
+    "text": "異なる n 個のものから、順番を区別せずに k 個（n・k は 0≦k≦n の整数。定義の要件）を選ぶ選び方の数 ₙCₖ（何も選ばない k＝0 は1通り）",
+    "terms": []
+   },
    "forms": [
     "number"
    ]
@@ -3295,7 +3307,14 @@
    "en": "summation",
    "short": "添え字を1つずつ変えながら、項をすべて足し合わせることを表す記号",
    "category": "数学の道具",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sigma.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-sigma.svg",
+   "basis": {
+    "text": "添え字（i など）を下端から上端まで1つずつ変えながら、各項をすべて足し合わせること。Σ はその書き方で、Σ_{i=1}^{n} aᵢ＝a₁＋a₂＋…＋aₙ（添え字は整数で、下端から上端までの有限の範囲を動く。これは定義の要件。上端が下端より小さいときは、足す項がないので和は0（空の和））",
+    "terms": []
+   },
+   "forms": [
+    "operation"
+   ]
   },
   {
    "id": "stats2:TERM-fact",
@@ -3389,6 +3408,7 @@
      "correction": "0! は 1。何も並べない並べ方は1通りで、ₙCₙ＝n!÷(n!×0!)＝1 とも合う"
     }
    ],
+   "basis_formula": "F-fact-def",
    "sources": [
     {
      "title": "公式2級範囲表",
@@ -3396,6 +3416,9 @@
      "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
     }
    ],
+   "basis": {
+    "formula": "F-fact-def"
+   },
    "forms": [
     "number"
    ]
@@ -11345,15 +11368,15 @@
   },
   {
    "id": "stats2:REL-fact-comb",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-fact",
    "to": "stats2:TERM-comb",
    "legacy_type": "前提",
-   "description": "組合せの数は、全部の並べ方 n! を、選んだ中と残した中の並べ方 k!・(n−k)! で割って求める。",
+   "description": "組合せの数は、階乗を学んでから学ぶ（ₙCₖ＝n!/(k!(n−k)!) で計算する。組合せの基準の定義は選び方の数で、この式は導く等式）。",
    "units": [
     "stats2:U09"
    ],
-   "premise": "mathematical"
+   "premise": "learning"
   },
   {
    "id": "stats2:REL-comb-binom",
@@ -12715,28 +12738,19 @@
    ]
   },
   {
-   "id": "stats2:REL-fact-perm",
-   "version": 1,
-   "from": "stats2:TERM-fact",
-   "to": "stats2:TERM-perm",
-   "legacy_type": "前提",
-   "description": "n 個から k 個を並べる順列の数は、階乗で n!÷(n−k)! と書ける。",
-   "units": [
-    "stats2:U09"
-   ],
-   "premise": "mathematical"
-  },
-  {
    "id": "stats2:REL-perm-comb-contrast",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-perm",
    "to": "stats2:TERM-comb",
-   "legacy_type": "対比",
-   "description": "どちらも n 個から k 個を取り出す数。順列は並べる順番を区別し、組合せは区別しない。組合せの数は、順列の数を k 個の並べ替え k! で割ったもの。",
+   "type": "比べる",
+   "description": "どちらも n 個から k 個を取り出す数。役や順位がある場面なら順列、選ぶだけの場面なら組合せで数える（数どうしのつながりは 順列 → 組合せ の移る）。",
    "units": [
     "stats2:U09"
    ],
-   "gist": "順番が意味を持つ（1位・2位）なら順列、持たない（選ぶだけ）なら組合せ。同じ k 個の選び方が、順列では k! 通りに数えられる。"
+   "axis": "場面に役・順位があるか（順番を区別して数えるか）",
+   "gist": "順番が意味を持つ（1位・2位）なら順列、持たない（選ぶだけ）なら組合せ。場面に役や順位があるかで決める。",
+   "same": "どちらも、異なる n 個から k 個（0≦k≦n の整数）を取り出すときの場合の数で、同じ「何通りあるか」の問いに答える",
+   "differ": "順列は、役や順位がある場面（1位・2位、委員長・副委員長）で使い、同じ k 個でも並びが違えば別に数える。組合せは、選ぶだけの場面（委員を3人選ぶ、カードを2枚引く）で使い、同じ k 個の組を1通りと数える。どちらで数えるかは、場面に役・順位があるかで決める"
   },
   {
    "id": "stats2:REL-ss-event",
@@ -15112,6 +15126,37 @@
    "units": [
     "stats2:U05T"
    ]
+  },
+  {
+   "id": "stats2:REL-perm-to-comb",
+   "version": 1,
+   "from": "stats2:TERM-perm",
+   "to": "stats2:TERM-comb",
+   "type": "移る",
+   "description": "組合せの数は、順列の数を、選んだ k 個の中の並べ替えの数 k! で割ったもの（ₙCₖ＝ₙPₖ/k!）。",
+   "units": [
+    "stats2:U09"
+   ],
+   "mode": "exact",
+   "gist": "順列は並べ方まで数え、組合せは選ぶだけ。同じ k 個の組が順列では k! 通りに数えられるので、k! で割ると組合せになる。",
+   "claim": "stats2:CLM-38",
+   "operation": "選んだ k 個の中の並べ替えの数 k! で割る（同じ k 個の組が順列では k! 通りに数えられるので）",
+   "reversible": true
+  },
+  {
+   "id": "stats2:REL-perm-to-fact",
+   "version": 1,
+   "from": "stats2:TERM-perm",
+   "to": "stats2:TERM-fact",
+   "type": "移る",
+   "description": "順列で n 個を全部並べる（k＝n）と、並べ方の数は階乗に等しい（ₙPₙ＝n!）。",
+   "units": [
+    "stats2:U09"
+   ],
+   "mode": "exact",
+   "gist": "n 個を全部1列に並べる並べ方は、先頭が n 通り、次が n−1 通り……と掛けていくので n!。全部を並べる順列が階乗。",
+   "claim": "stats2:CLM-39",
+   "operation": "取り出す個数 k を全体の個数 n と等しくする（k＝n）"
   }
  ],
  "derivations": [
@@ -21540,6 +21585,95 @@
     {
      "source": {
       "title": "最小二乗の解 b＝S_xy/S_xx（正規方程式）と r の定義 S_xy/√(S_xx·S_yy) から b＝r·√(S_yy/S_xx)。s_y/s_x＝√(S_yy/S_xx)（割る数が比で消える）"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-38",
+   "label": "④-38",
+   "kind": "等しい",
+   "statement": {
+    "text": "0≦k≦n の整数 n・k について、異なる n 個から k 個を選ぶ組合せの数 ₙCₖ は、順列の数 ₙPₖ を k! で割ったものに等しい（ₙPₖ＝k!·ₙCₖ）"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "扱う"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "V",
+      "date": "2026-11-10",
+      "version": "b54797b"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-perm"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-comb"
+    ],
+    "predicates": [
+     "stats2:TERM-perm",
+     "stats2:TERM-fact"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "k 個を並べた1つの並びからは、並べた k 個の組がちょうど1つ決まる。逆に1つの組からは、その k 個の並べ替えの k! 通りの並びが出る。並びは組ごとに重なりなく分かれるので ₙPₖ＝k!·ₙCₖ（k＝0 では 0!＝1 で両辺が1）"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-39",
+   "label": "④-39",
+   "kind": "等しい",
+   "statement": {
+    "text": "0 以上の整数 n について、異なる n 個を全部1列に並べる並べ方の数 ₙPₙ は、n の階乗 n! に等しい"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "扱う"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "V",
+      "date": "2026-11-10",
+      "version": "4660318"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-perm"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-perm"
+    ],
+    "predicates": [
+     "stats2:TERM-fact"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "先頭に置くものは n 通り、その各々で2番目は残りの n−1 通り……と、最後は1通り。積の法則で並べ方は n(n−1)…1＝n!（n＝0 では何も並べない並べ方が1通りで、空の積 0!＝1 と一致）"
      }
     }
    ]
