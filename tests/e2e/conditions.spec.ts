@@ -107,7 +107,7 @@ test("関係の成立条件も同じ区分で出し、目安に対象と出典�
   await openTab(page, "関係");
   await page
     .getByTestId("edge-list")
-    .getByRole("button", { name: /二項分布 を変換すると 標準正規分布/ })
+    .getByRole("button", { name: /二項分布 を移すと 標準正規分布/ })
     .click();
   const conds = page.getByTestId("edge-panel").getByTestId("rel-conds");
   await expect(conds).toContainText("成立条件");

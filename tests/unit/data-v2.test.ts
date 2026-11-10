@@ -1,13 +1,14 @@
 // 型 v2 のデータを画面の形に写して読む（stats2-course #263 M3-b）。
 // 確かめる対象：merge が v2 の教材を版で見分けて検査し、画面の形（v1 と同じ形の Relation・Concept）に写すこと。
-// 想定する故障：v2 の教材を v1 の型で検査して外す。legacy_type を type に写さず、移していない関係が種類なしになる。
+// 想定する故障：v2 の教材を v1 の型で検査して外す。legacy_type を type に写さず、移していない関係が種類なしになる。⑤ の種類を描けない（M7 から読み替えない）。
 //   v2 の条件の行（object）を文の一覧に写さず、画面が [object Object] を出す。主張の id を「未接続」に数える。
 // 見つけ方：手で書いた v2 の見本と v1 の公開データの見本を、別々にも一緒にも merge し、写した形を見る。
 // 既存との違い：schema-v2.test.ts は型だけ、data.test.ts は v1 だけを見る。ここは v2 の読み込みと写し。
 // 検出の確かめ：toScreen を「何もしない」に替えると、legacy_type・v2 の種類の読み方・条件の行の3つのテストが落ちることを手元で確かめた。
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { KINDS, SCREEN_KIND_OF_V2, kindOf, merge } from "../../src/data";
+import { LEARNING_KIND, SCREEN_KIND_OF_V2, kindOf, merge } from "../../src/data";
+import { GLYPH_D, KIND_VAR } from "../../src/kinds";
 import { sampleV1 } from "../support/sample";
 
 const j = (p: string) => JSON.parse(readFileSync(p, "utf8"));
@@ -29,15 +30,17 @@ describe("型 v2 の読み込み", () => {
     const { net } = merge([{ id: "t", data: v2() }]);
     for (const r of net.relations) expect(kindOf(r.type)?.reading, r.type).toBeTruthy();
   });
-  it("⑤ の種類は、今の画面の種類に読み替え、元を kind_v2 に残す（M6 まで。stats2-course #289）", () => {
-    // 想定する故障：関係図・凡例が知らない種類（定める・一種など）を受け取り、線や受け継ぎが消える。元の種類を落として M6 で描き直せない。
-    // 検出の確かめ：読み替えを外すと、1つ目の比べで落ちる
+  it("⑤ の種類のまま読み、どの種類にも読み方・色・印がある（M7。stats2-course #267）", () => {
+    // 想定する故障：画面が知らない種類（従う・推定するなど）を受け取り、読み方・色・印のどれかが空になる（印と色だけで意味を伝えない：画面の原則 7・8）。
+    // 検出の確かめ（2026-11-10）：kinds.tsx の GLYPH_D から「従う」を外すと落ちる
     const { net } = merge([{ id: "t", data: v2() }]);
-    for (const r of net.relations.filter((x) => x.kind_v2)) {
-      expect(r.type).toBe(SCREEN_KIND_OF_V2[r.kind_v2!]);
-      expect(KINDS[r.type], r.type).toBeTruthy();
+    const types = j("schema/kn-schema-v2.json").properties.relations.items.properties.type.enum as string[];
+    for (const t of [...types, LEARNING_KIND]) {
+      expect(kindOf(t)?.reading, t).toBeTruthy();
+      expect(KIND_VAR[t], t).toBeTruthy();
+      expect(GLYPH_D[t], t).toBeTruthy();
     }
-    expect(net.relations.filter((x) => x.kind_v2).length).toBeGreaterThan(5);
+    expect(net.relations.filter((r) => types.includes(r.type)).length).toBeGreaterThan(5);
   });
   it("描ける種類の表（src/screen-kinds.json）は、型 v2 の ⑤ の種類をちょうど全部持つ（stats2-course #293）", () => {
     // 確かめる対象：教材の公開の前の確かめ（stats2-course の build/screen_check.py）が読む表と、型の ⑤ の種類が合っていること。
@@ -52,7 +55,7 @@ describe("型 v2 の読み込み", () => {
     const binom = net.concepts.get("t:TERM-binom")!;
     expect(binom.conditions?.math).toEqual(["n は1以上の整数・0≦p≦1"]);
     expect(binom.conditions_detail?.[0]).toMatchObject({ kind: "要件", scope: "math" });
-    const tr = net.relations.find((x) => x.kind_v2 === "移る")!;
+    const tr = net.relations.find((x) => x.type === "移る")!;
     expect(tr.conditions).toEqual(["np≧5 かつ n(1−p)≧5"]);
     expect(tr.conditions_detail?.[0]).toMatchObject({ kind: "目安", target: "二項分布の正規近似" });
   });
@@ -81,8 +84,7 @@ describe("型 v2 の読み込み", () => {
     expect(rows).toEqual([
       expect.objectContaining({
         id: "t:LRN-1",
-        type: "前提",
-        premise: "learning",
+        type: LEARNING_KIND,
         from: "t:TERM-indep",
         to: "t:TERM-binom",
         description: "並び1つの確率を掛け算で出せる理由",

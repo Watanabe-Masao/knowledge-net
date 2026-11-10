@@ -5,9 +5,9 @@
 //   - 受け継ぎで、子が自分でも持つ材料を2回出す。
 //   - まとまりの語の数・並びが崩れる。横のつながりに学ぶ順（前提）が混ざる。
 // 見つけ方：見本（教材が確率分布を関係図に移して公開したデータの写し）で、手で数えた答えと照らす。
-//   たたむ：階乗はポアソン分布（待つ）だけ、期待値は共分散（しくみ）だけ → それぞれのまとまりにたたむ。
-//   確率・組合せは2つ以上のまとまりで使う → 共通の基礎の語。
-//   受け継ぎ：ベルヌーイ分布 → 二項分布 の種類を仮に足すと、親の材料（確率・組合せ）のうち、自分にない組合せだけが出る。
+//   たたむ：階乗はポアソン分布（待つ）だけ、確率・期待値・標本空間は「分布のしくみ」の語だけ → それぞれのまとまりにたたむ。
+//   組合せは2つ以上のまとまりで使う → 共通の基礎の語。（2026-11-10、M7 で見本を v1 の固定から公開中の v2 に替え、数え直した）
+//   受け継ぎ：二項分布（確率分布の一種）に親の材料（確率変数・確率）が出て、自分でも持つ材料は重ねない。
 // 既存との違い：data.test.ts は型と読み込み。ここは関係図の計算。
 // 検出の確かめ（2026-11-06）：たたむ条件を「1つ以上のまとまり」にすると、組合せがたたまれて落ちることを見た
 import { describe, expect, it } from "vitest";
@@ -24,11 +24,11 @@ import {
   crossings,
   roundedPath,
 } from "../../src/relationMap";
-import { sampleV1 } from "../support/sample";
+import { sampleV2 } from "../support/sample";
 
 const T = (x: string) => `stats2:TERM-${x}`;
 const net = (edit?: (d: { relations: unknown[] }) => void) => {
-  const d = sampleV1(); // 関係を v1 の種類の名前で書き換えるので、見本の版によらず v1 の形で（#282）
+  const d = sampleV2(); // 公開中の見本（⑤ の種類。M7 で v1 の見本から替えた。stats2-course #267）
   edit?.(d);
   const r = merge([{ id: "stats2", data: d }]);
   expect(r.errors).toEqual([]);
@@ -36,50 +36,53 @@ const net = (edit?: (d: { relations: unknown[] }) => void) => {
 };
 
 describe("まとまりの関係図", () => {
-  it("確率分布：4つのまとまりに13語、たたむ語と共通の基礎の語を分ける", () => {
+  it("確率分布：4つのまとまりに15語、たたむ語と共通の基礎の語を分ける", () => {
     const m = categoryMap(net(), "確率分布");
     expect(m.groups.map((g) => [g.name, g.terms.length])).toEqual([
-      ["分布のしくみ", 4],
+      ["分布のしくみ", 5],
       ["くり返して数える", 3],
       ["待つ・まれに起こる", 3],
-      ["連続の分布", 3],
+      ["連続の分布", 4],
     ]);
     expect(m.rest).toEqual([]);
     const folded = Object.fromEntries(m.groups.map((g) => [g.name, g.folded]));
     expect(folded["待つ・まれに起こる"]).toEqual([T("fact")]);
-    expect(folded["分布のしくみ"]).toEqual([T("expect")]);
+    // 確率・期待値・標本空間は、確率変数・共分散など「分布のしくみ」の語だけの材料（⑤ で二項分布の材料は組合せだけになった。M5）
+    expect(new Set(folded["分布のしくみ"])).toEqual(new Set([T("prob"), T("expect"), T("sample-space")]));
     expect(folded["くり返して数える"]).toEqual([]);
-    expect(new Set(m.shared)).toEqual(new Set([T("prob"), T("comb")]));
+    expect(m.shared).toEqual([T("comb")]); // 組合せは二項分布・超幾何分布・負の二項分布（2つのまとまり）で使う
   });
 
   it("語のつながり：材料・これを材料にする語・横のつながり（学ぶ順は出さない）", () => {
     const n = net();
     const b = termLinks(n, T("binom"));
-    expect(new Set(b.materials)).toEqual(new Set([T("comb"), T("prob")]));
-    expect(b.lateral.map((x) => x.rel.type)).not.toContain("前提");
+    expect(b.materials).toEqual([T("comb")]);
+    expect(b.lateral.map((x) => x.rel.type)).not.toContain("前提知識");
     expect(b.lateral.map((x) => x.other)).toEqual(expect.arrayContaining([T("poisson"), T("geom"), T("hyper")]));
     // 確率密度関数は確率分布を定義に使う（stats2-course #245 で向きを直した）。連続の分布は確率密度関数を定義に使う
     expect(termLinks(n, T("pdf")).usedBy).toEqual(expect.arrayContaining([T("normal"), T("uniform"), T("expo")]));
     expect(termLinks(n, T("pdf")).materials).toContain(T("dist"));
   });
 
-  it("受け継ぎ：種類の親の材料は、自分にないものだけを出す", () => {
+  it("受け継ぎ：一種の親の材料は、自分にないものだけを出す", () => {
+    // 二項分布は確率分布の一種（⑤）。確率分布の材料（確率変数・確率）を受け継ぎとして出す
+    const b = termLinks(net(), T("binom"));
+    expect(b.parent).toBe(T("dist"));
+    expect(new Set(b.inherited)).toEqual(new Set([T("rv"), T("prob")]));
+    expect(termLinks(net(), T("dist")).children).toContain(T("binom"));
+    // 自分でも確率を材料に持つと、確率は受け継ぎに重ねない（見本だけの関係を足す）
     const n = net((d) =>
       d.relations.push({
-        id: "stats2:REL-test-kind",
-        from: T("bernoulli"),
+        id: "stats2:REL-test-def",
+        from: T("prob"),
         to: T("binom"),
-        type: "種類",
+        type: "定める",
         description: "見本だけの関係",
         units: [],
         version: 1,
       }),
     );
-    const l = termLinks(n, T("bernoulli"));
-    expect(l.parent).toBe(T("binom"));
-    expect(l.materials).toEqual([T("prob")]);
-    expect(l.inherited).toEqual([T("comb")]); // 確率は自分にもあるので重ねない
-    expect(termLinks(n, T("binom")).children).toEqual([T("bernoulli")]);
+    expect(termLinks(n, T("binom")).inherited).toEqual([T("rv")]);
   });
 
   // 確かめる対象：分類のキャンバスの並びと線（layoutCategory）。線が語の縁から縁へ、直線と直角だけで引かれること。
@@ -91,7 +94,7 @@ describe("まとまりの関係図", () => {
   // 検出の確かめ（2026-11-06）：となりの語を結ぶ線の終わりを 6px 右へずらすと、縁の確かめで落ちることを見た
   it("キャンバス：線は語の縁から縁へ、縦と横だけ。同じ2語は1本、前提・材料は線にしない", () => {
     const L = layoutCategory(net(), "確率分布");
-    expect(L.groups.map((g) => g.terms.length)).toEqual([4, 3, 3, 3]);
+    expect(L.groups.map((g) => g.terms.length)).toEqual([5, 3, 3, 4]);
     const box = new Map(L.terms.map((t) => [t.id, t]));
     const onBorder = (p: { x: number; y: number }, id: string) => {
       const b = box.get(id)!;
@@ -101,7 +104,7 @@ describe("まとまりの関係図", () => {
     };
     for (const e of L.edges) {
       expect(
-        e.types.some((k) => k === "前提" || k === "材料"),
+        e.types.some((k) => k === "前提知識" || k === "定める"),
         e.id,
       ).toBe(false);
       const a = e.pts[0]!,
@@ -118,7 +121,7 @@ describe("まとまりの関係図", () => {
     expect(new Set(L.edges.map((e) => e.id)).size).toBe(L.edges.length);
     const bp = L.edges.filter((e) => [e.from, e.to].sort().join() === [T("binom"), T("poisson")].sort().join());
     expect(bp).toHaveLength(1);
-    expect(bp[0]).toMatchObject({ type: "変換", types: ["変換", "対比"] });
+    expect(bp[0]).toMatchObject({ type: "移る", types: ["移る", "比べる"] });
     for (const a of L.terms)
       for (const b of L.terms)
         if (a !== b)
@@ -192,9 +195,8 @@ describe("まとまりの関係図", () => {
     // 「↓ 名前」の札で示す（#239 の入れる順 4）。それまでは、この語の組が増えないことを見張る（増えたら並びか寄り方の誤り）
     expect(tight.filter((x) => x.endsWith("390x600")).map((x) => x.split("@")[0])).toEqual([
       T("binom"),
-      T("poisson"),
-      T("normal"),
-    ]);
+      T("std-normal"),
+    ]); // 2026-11-10、見本を公開中の v2 に替えて数え直した（v1 の固定の見本では 二項・ポアソン・正規）
     expect(tight.length).toBeLessThanOrEqual(L.terms.length);
   });
 

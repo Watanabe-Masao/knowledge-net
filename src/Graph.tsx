@@ -11,21 +11,11 @@ import { loadTermSvgs, termIconUri } from "./termIcons";
 import s from "./Graph.module.css";
 import { Icon, labCountOf } from "./Shell";
 
+import { KIND_VAR } from "./kinds";
+
 cytoscape.use(dagre);
 
-export const TYPE_COLOR: Record<string, string> = {
-  前提: "--k-pre",
-  導出: "--k-der",
-  一般化: "--k-gen",
-  特殊化: "--k-gen",
-  変換: "--k-conv",
-  対比: "--k-con",
-  統合: "--k-int",
-  応用: "--k-app",
-  // 改訂36（関係図の決まり。stats2-course #232）：種類は構造の線と同じ青、材料は前提と同じ灰。地図の置き換え（#235）までの仮の色
-  種類: "--k-gen",
-  材料: "--k-pre",
-};
+export const TYPE_COLOR: Record<string, string> = KIND_VAR; // 種類の色は kinds.tsx の1か所（画面の原則 4）
 
 type Props = {
   net: Network;
@@ -539,10 +529,13 @@ export default function Graph({
           selector: `edge[type = "${t}"]`,
           style: { "line-color": css(v), "target-arrow-color": css(v) },
         })),
-        { selector: 'edge[type = "対比"]', style: { "target-arrow-shape": "none", "line-style": "dashed" } },
+        {
+          selector: 'edge[type = "比べる"], edge[type = "同値"]',
+          style: { "target-arrow-shape": "none", "line-style": "dashed" },
+        },
         // 構造の線（導出・一般化・特殊化・統合）は同じ青。形で見分ける：一般化・特殊化は二重線、統合は点線（tokens の改訂3）
-        { selector: 'edge[type = "一般化"], edge[type = "特殊化"]', style: { "line-style": "double", width: 3.5 } },
-        { selector: 'edge[type = "統合"], edge[type = "応用"]', style: { "line-style": "dotted" } },
+        { selector: 'edge[type = "特別な場合"], edge[type = "一種"]', style: { "line-style": "double", width: 3.5 } },
+        { selector: 'edge[type = "従う"], edge[type = "推定する"]', style: { "line-style": "dotted" } },
         { selector: 'edge[mode = "approximation"]', style: { "line-style": "dashed" } },
         { selector: 'edge[mode = "limit"]', style: { "line-style": "dotted" } },
         { selector: ".dim", style: { opacity: 0.18 } },

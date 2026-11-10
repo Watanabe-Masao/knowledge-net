@@ -67,7 +67,7 @@ test("対比：二項分布は上限で切れ、ポアソン分布は先まで�
 // 見つけ方：曲線のいちばん高い点の横の位置が 9 回の棒の中心にあり、その高さが 9 回の棒の高さに近い
 // （正規の密度 1/(√6.3·√(2π))＝0.1589、二項の P(9)＝0.1573。比は約 1.01。σ² で割ると 0.063 になり大きく外れる）。
 test("変換（近似）：元の形・変える操作・行き着く形と、棒に重ねた正規分布の曲線", async ({ page }) => {
-  const panel = await open(page, /二項分布 を変換すると 標準正規分布/);
+  const panel = await open(page, /二項分布 を移すと 標準正規分布/);
   await expect(panel.getByTestId("rel-stages").locator("dt")).toHaveText(["元の形", "変える操作", "行き着く形"]);
   await expect(panel.getByTestId("rel-conds")).toContainText("近似");
   const chart = panel.getByTestId("rel-chart");
@@ -113,7 +113,7 @@ test("前提：なぜ前に要るか の1段だけ（段・図なし）", async 
 test("通す定理：関係のページに定理の基準の定義を出し、関係の成立条件には写さない", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [c, name, theorem, text] of [
-    ["TERM-prior", /を変換すると 事後確率/, "ベイズの定理", "P(D)＞0"],
+    ["TERM-prior", /を移すと 事後確率/, "ベイズの定理", "P(D)＞0"],
     ["TERM-sample-mean", /標準正規分布/, "中心極限定理", "N(0, 1)"],
   ] as const) {
     await page.goto(`./?src=sample/stats2.json&c=stats2%3A${c}`);

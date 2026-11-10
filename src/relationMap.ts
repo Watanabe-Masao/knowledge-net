@@ -3,8 +3,8 @@
 // データに所有・木を書かず、ここで作る（定義書 7「画面が作るもの」）。
 import { type Network, type Relation, learningOrder } from "./data";
 
-/** 横の線で見せる関係（学ぶ順＝前提は関係図に出さない。種類・材料は線でなく語の中に出す） */
-export const LATERAL = ["対比", "変換", "一般化", "特殊化", "導出", "統合", "応用"] as const;
+/** 横の線で見せる関係（⑤ の種類。学ぶ順＝前提知識は関係図に出さない。一種・定めるは線でなく語の中に出す。stats2-course #267） */
+export const LATERAL = ["比べる", "移る", "同値", "従う", "推定する", "特別な場合", "導ける", "根拠"] as const;
 
 export type MapGroup = {
   id: string;
@@ -25,7 +25,7 @@ export type CategoryMap = {
   shared: string[];
 };
 
-const isMaterial = (r: Relation) => r.type === "材料";
+const isMaterial = (r: Relation) => r.type === "定める";
 
 /** 分類の関係図：まとまりごとの語と、たたむ語・共通の基礎の語 */
 export function categoryMap(net: Network, category: string): CategoryMap {
@@ -84,7 +84,7 @@ export type TermLinks = {
 export function termLinks(net: Network, id: string): TermLinks {
   const rels = net.relations;
   const materials = rels.filter((r) => isMaterial(r) && r.to === id).map((r) => r.from);
-  const parent = rels.find((r) => r.type === "種類" && r.from === id)?.to;
+  const parent = rels.find((r) => r.type === "一種" && r.from === id)?.to;
   const inherited = parent
     ? rels.filter((r) => isMaterial(r) && r.to === parent && !materials.includes(r.from)).map((r) => r.from)
     : [];
@@ -93,7 +93,7 @@ export function termLinks(net: Network, id: string): TermLinks {
     inherited,
     usedBy: rels.filter((r) => isMaterial(r) && r.from === id).map((r) => r.to),
     parent,
-    children: rels.filter((r) => r.type === "種類" && r.to === id).map((r) => r.from),
+    children: rels.filter((r) => r.type === "一種" && r.to === id).map((r) => r.from),
     lateral: rels
       .filter((r) => (LATERAL as readonly string[]).includes(r.type) && (r.from === id || r.to === id))
       .map((r) => ({ other: r.from === id ? r.to : r.from, rel: r })),
@@ -110,19 +110,20 @@ export function nameOf(net: Network, id: string): string {
 // 自動で並べる道具（ELK）は使わない：場所が開き方や選び方で動かず、線が段を飛ばさない並べ方を、ここで決める。
 
 /** 線の色と形を決める種類の順（2つの語の間に種類が重なったら、先のものを主にする） */
-export const PRI = ["一般化", "特殊化", "導出", "統合", "変換", "応用", "対比"] as const;
-/** 線の上の印（色だけに頼らない） */
+export const PRI = ["特別な場合", "導ける", "根拠", "移る", "同値", "従う", "推定する", "比べる"] as const;
+/** 線の上の印（色だけに頼らない）。数学の記号に寄せる（渡辺さん 2026-11-10。kinds.tsx の GLYPH_D と同じ記号） */
 export const GLYPH: Record<string, string> = {
-  変換: "⇄",
-  一般化: "↗",
-  特殊化: "↘",
-  導出: "⇒",
-  統合: "⊕",
-  応用: "↦",
-  対比: "≠",
+  特別な場合: "｜",
+  導ける: "⇒",
+  根拠: "∵",
+  移る: "↦",
+  同値: "⇔",
+  従う: "～",
+  推定する: "^",
+  比べる: "≠",
 };
-/** 向きのある関係（矢印を付ける）。対比だけが向きを持たない */
-export const DIRECTED = new Set<string>(PRI.filter((k) => k !== "対比"));
+/** 向きのある関係（矢印を付ける）。比べる・同値は向きを持たない */
+export const DIRECTED = new Set<string>(PRI.filter((k) => k !== "比べる" && k !== "同値"));
 const rank = (k: string) => {
   const i = (PRI as readonly string[]).indexOf(k);
   return i < 0 ? PRI.length : i;
@@ -222,7 +223,7 @@ export function layoutCategory(net: Network, category: string, opt: { lane?: num
   const decl = cm.groups.map((g) => ({ id: g.id, name: g.name, terms: g.terms, folded: g.folded }));
   if (cm.rest.length) decl.push({ id: `rest:${category}`, name: "まとまりの外", terms: cm.rest, folded: [] });
   const FW = pad * 2 + cols * tw + (cols - 1) * gx;
-  const mats = (id: string) => net.relations.filter((r) => r.type === "材料" && r.to === id).map((r) => r.from);
+  const mats = (id: string) => net.relations.filter((r) => r.type === "定める" && r.to === id).map((r) => r.from);
   const groups: GroupBox[] = [];
   const terms: TermBox[] = [];
   let y = M;

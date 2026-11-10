@@ -122,7 +122,6 @@ export type Relation = {
   to: string;
   type: string;
   /** v2：移していない行の v1 の種類（画面は type に写して読む） */ legacy_type?: string;
-  /** v2：⑤ の種類（画面は SCREEN_KIND_OF_V2 で今の種類に読み替え、元をここに残す。M6 まで） */ kind_v2?: string;
   /** v2 の種類ごとの項目（stats2-course docs/schema-v2-design.md の 3.1） */
   fix?: string;
   fix_text?: string;
@@ -250,7 +249,15 @@ export const KINDS = kinds.types as unknown as Record<string, Kind>;
 /** 型 v2 の種類（relation-types.yaml の types_v2。stats2-course #263）。線の見方の一覧は、移行の期間は v1 の種類のまま */
 export const KINDS_V2 = ((kinds as { types_v2?: object }).types_v2 ?? {}) as unknown as Record<string, Kind>;
 /** 種類の定義を v1・v2 のどちらからでも引く */
-export const kindOf = (t: string): Kind | undefined => KINDS[t] ?? KINDS_V2[t];
+export const kindOf = (t: string): Kind | undefined =>
+  t === LEARNING_KIND ? LEARNING_KIND_DEF : (KINDS_V2[t] ?? KINDS[t]);
+/** 学ぶ順の足すの読み方（前提知識。たどる） */
+const LEARNING_KIND_DEF: Kind = {
+  definition: "B を学ぶのに、A を先に知っておきたい（製本 ⑥）",
+  reading: "□ は ■ の前提知識",
+  trace: true,
+  required: [],
+};
 export const MODES = kinds.modes as Record<string, string>;
 export const PREMISES = kinds.premises as Record<string, string>;
 
@@ -308,14 +315,16 @@ const condDetail = (c: V2Cond): ConditionDetail => ({
   ...(c.terms ? { terms: c.terms } : {}),
   ...(c.approx ? { target: c.approx } : {}),
 });
-/** v2 のデータを、画面が読む形（v1 と同じ形）に写す。移していない関係は legacy_type を type に、条件の行は文と区分に分ける */
 /**
- * ⑤ の種類を、今の画面（地図・関係図・凡例）の v1 の種類で出す読み替え（渡辺さん 2026-11-09。stats2-course の issue 289）。
- * 関係図を ⑤ の種類で描き直すのは M6（stats2-course の issue 270）。それまでの仮の形で、意味は製本 ⑤ のまま（元の種類は kind_v2 に残す）。
- * 見直す条件：画面が ⑤ の種類を描けるようになったら外す（docs/decisions.md）。
+ * ⑤ の種類を、画面が描く種類の名前に写す表（src/screen-kinds.json。教材の公開の前の確かめ〔stats2-course の build/screen_check.py〕が読む）。
+ * M7（stats2-course の issue 267）から、画面は ⑤ の種類のまま描くので、写し先は同じ名前（渡辺さん 2026-11-10：印と色の案）。
  */
 export const SCREEN_KIND_OF_V2: Record<string, string> = screenKinds.v2_to_screen;
 
+/** 学ぶ順の足す（前提知識）を、関係と同じ部品で描くときの種類の名前（⑤ の種類ではない。stats2-course の issue 266・267） */
+export const LEARNING_KIND = "前提知識";
+
+/** v2 のデータを、画面が読む形に写す。種類は ⑤ のまま（移していない行は legacy_type を種類に）。条件の行は文と区分に分ける */
 export function toScreen(d: CourseData): CourseData {
   if (d.version !== 2) return d;
   const relations = d.relations.map((r) => {
@@ -324,7 +333,6 @@ export function toScreen(d: CourseData): CourseData {
     return {
       ...r,
       type: r.legacy_type ?? SCREEN_KIND_OF_V2[r.type] ?? r.type,
-      ...(r.legacy_type ? {} : { kind_v2: r.type }),
       conditions: rows.map((x) => (typeof x === "string" ? x : x.text)),
       ...(objs.length ? { conditions_detail: objs.map(condDetail) } : {}),
     };
@@ -348,8 +356,7 @@ export function toScreen(d: CourseData): CourseData {
       version: x.version,
       from: x.from,
       to: x.to,
-      type: "前提",
-      premise: "learning" as const,
+      type: LEARNING_KIND,
       description: x.reason,
       units: x.units ?? [],
       ...(x.question ? { question: x.question } : {}),
@@ -474,7 +481,7 @@ export type Step = { from: string; to: string; via: string }; // via：関係の
  * 公開データに種類の行が入って初めて分かった。v1 の種類の行はそれまで0だった）
  */
 function prereq(r: { type: string; from: string; to: string }): [string, string] {
-  return r.type === "種類" ? [r.to, r.from] : [r.from, r.to];
+  return r.type === "一種" ? [r.to, r.from] : [r.from, r.to];
 }
 
 export function trace(net: Network, id: string): { order: string[]; steps: Step[] } {
