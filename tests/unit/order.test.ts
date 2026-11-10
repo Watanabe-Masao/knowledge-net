@@ -36,3 +36,28 @@ describe("分類の中の学ぶ順", () => {
     expect(at("test")).toBeLessThan(at("paired-t"));
   });
 });
+
+// 確かめる対象：教材が仕上がりの学ぶ順（learning_order。型 v2 の改訂4）を書き出したとき、画面はそれだけで並べること（stats2-course #266）。
+// 想定する故障：画面が関係から候補を求め直す（⑥ の 3 の表を画面に写す）・外した候補の向きで並べる・足した組を見落とす。
+// 見つけ方：関係では 順列 → 階乗（移る：from が先）の向きになる組を、仕上がりの学ぶ順では逆（階乗 → 順列）にして書き出し、その向きで並ぶか。
+// 既存との違い：上のテストは learning_order のない見本で、関係のたどり方の並べ方を見る
+// 検出の確かめ（2026-11-10）：learningOrder の先頭の「learning_order があればそれで並べる」行を外すと落ちる
+describe("仕上がりの学ぶ順（learning_order）", () => {
+  it("関係と逆の組を書き出せば、その向きで並ぶ", () => {
+    const data = JSON.parse(readFileSync("public/sample/stats2.json", "utf8"));
+    data.learning_order = [
+      { from: "stats2:TERM-fact", to: "stats2:TERM-perm", source: "add", via: "stats2:LRN-test" },
+      // 定理の点（導出）へ向かう候補は、概念の並びに効かない（⑥ の 3。型で読めることも確かめる）
+      {
+        from: "stats2:TERM-expect",
+        to: "stats2:DER-binom-moments",
+        source: "candidate",
+        via: "stats2:DER-binom-moments",
+      },
+    ];
+    const { net: n, errors } = merge([{ id: "stats2", data }]);
+    expect(errors).toEqual([]);
+    const order = learningOrder(n, ["stats2:TERM-fact", "stats2:TERM-perm", "stats2:TERM-comb"]);
+    expect(order.indexOf("stats2:TERM-fact")).toBeLessThan(order.indexOf("stats2:TERM-perm"));
+  });
+});

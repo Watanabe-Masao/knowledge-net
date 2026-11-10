@@ -61,6 +61,36 @@ describe("型 v2 の読み込み", () => {
     expect(errors).toEqual([]);
     expect(net.groupRelations[0]).toMatchObject({ relations: [], claims: ["t:CLM-13"] });
   });
+  // 確かめる対象：学ぶ順の足す（op: add）を前提知識の行（前提・premise learning・説明は理由）として読むこと（stats2-course #266 M6）。
+  // 想定する故障：M6 で前提 learning を関係から学ぶ順へ移すと、概念のページの「前提知識」と関係図から消える。外す（remove）を前提知識に出す。
+  // 検出の確かめ（2026-11-10）：toScreen の足すの写しを外すと落ちる
+  it("学ぶ順の足すは前提知識の行として読み、外すは出さない（M6。stats2-course #266）", () => {
+    const d = v2();
+    d.learning[0] = { ...d.learning[0], units: ["t:U01"], question: "なぜ掛け算？" };
+    d.learning.push({
+      id: "t:LRN-2",
+      op: "remove",
+      from: "t:TERM-bern",
+      to: "t:TERM-binom",
+      reason: "外す",
+      version: 1,
+    });
+    const { net, errors } = merge([{ id: "t", data: d }]);
+    expect(errors).toEqual([]);
+    const rows = net.relations.filter((r) => r.id.startsWith("t:LRN-"));
+    expect(rows).toEqual([
+      expect.objectContaining({
+        id: "t:LRN-1",
+        type: "前提",
+        premise: "learning",
+        from: "t:TERM-indep",
+        to: "t:TERM-binom",
+        description: "並び1つの確率を掛け算で出せる理由",
+        units: ["t:U01"],
+        question: "なぜ掛け算？",
+      }),
+    ]);
+  });
   it("主張を持ち、主張の id を未接続に数えない", () => {
     const { net } = merge([{ id: "t", data: v2() }]);
     expect(net.claims.get("t:CLM-13")?.label).toBe("④-13");

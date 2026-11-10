@@ -206,12 +206,25 @@ export type Claim = {
   version: number;
 };
 /** v2 の学ぶ順の足す・外す */
-export type Learning = { id: string; op: "add" | "remove"; from: string; to: string; reason: string; version: number };
+export type Learning = {
+  id: string;
+  op: "add" | "remove";
+  from: string;
+  to: string;
+  reason: string;
+  version: number;
+  units?: string[];
+  question?: string;
+  focus?: Relation["focus"];
+};
+/** 仕上がりの学ぶ順の1組（型 v2 の改訂4。教材の build が候補＋足す−外すを求めて書く。stats2-course の issue 266） */
+export type LearningEdge = { from: string; to: string; source: "candidate" | "add"; via: string };
 export type CourseData = {
   schema: "kn-schema";
   version: 1 | 2;
   claims?: Claim[];
   learning?: Learning[];
+  learning_order?: LearningEdge[];
   schema_revision?: number;
   experiment_revision?: number;
   course: {
@@ -326,7 +339,23 @@ export function toScreen(d: CourseData): CourseData {
       ...(rows.length ? { conditions_detail: rows.map((x) => ({ ...condDetail(x), scope: "math" as const })) } : {}),
     } as Concept;
   });
-  return { ...d, relations, concepts };
+  // 学ぶ順の足す（op: add）は、前提知識の行として関係と同じ部品で描く（画面の原則 4。M6 の前は前提 learning の関係だった。stats2-course の issue 266）
+  const known = new Set(relations.map((r) => r.id));
+  const adds = (d.learning ?? [])
+    .filter((x) => x.op === "add" && !known.has(x.id))
+    .map((x) => ({
+      id: x.id,
+      version: x.version,
+      from: x.from,
+      to: x.to,
+      type: "前提",
+      premise: "learning" as const,
+      description: x.reason,
+      units: x.units ?? [],
+      ...(x.question ? { question: x.question } : {}),
+      ...(x.focus ? { focus: x.focus } : {}),
+    }));
+  return { ...d, relations: [...relations, ...adds], concepts };
 }
 
 /** まとまりの間の1本の矢印（全体の見え方。言葉は動詞で、開いた直後に組・操作・条件の文） */
@@ -358,6 +387,8 @@ export type Network = {
   /** v2 の主張（id → 主張）と学ぶ順の足す・外す（stats2-course #263。見せ方は M3 のあと） */
   claims: Map<string, Claim>;
   learning: Learning[];
+  /** 仕上がりの学ぶ順（教材が書き出したもの。空なら関係の前提のたどり方で並べる） */
+  learningOrder: LearningEdge[];
   /** 実験室（id → 定義）。概念・線から「実験室で試す」で開く */
   experiments: Map<string, ExperimentData>;
   /** 解き方の公式の文（教材 id → walk_texts。実験室は自分の教材の文を使う。stats2-course issue 211） */
@@ -384,6 +415,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     derivations: [],
     claims: new Map(),
     learning: [],
+    learningOrder: [],
     experiments: new Map(),
     walkTexts: new Map(),
     applyTexts: new Map(),
@@ -415,6 +447,7 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
     net.derivations.push(...d.derivations);
     for (const c of d.claims ?? []) net.claims.set(c.id, c);
     net.learning.push(...(d.learning ?? []));
+    net.learningOrder.push(...(d.learning_order ?? []));
     for (const x of d.experiments ?? []) net.experiments.set(x.id, x);
     for (const p of d.course.pillars ?? []) if (!net.pillars.some((q) => q.id === p.id)) net.pillars.push(p);
     for (const g of d.course.groups ?? []) if (!net.groups.some((q) => q.id === g.id)) net.groups.push(g);
@@ -689,6 +722,7 @@ export function iconAllowed(url: string | undefined, roots: string[]): url is st
  *  対比など前提でない関係しか持たない語（例：第2種の過誤は第1種の過誤と対比）は、相手より前に来ないよう相手の数＋1として扱う。
  *  まとまり（M2）と学ぶ順を教材が書くまでのつなぎ。循環があれば、残りを教材の並びで後ろに足す */
 export function learningOrder(net: Network, ids: string[]): string[] {
+  if (net.learningOrder.length) return orderByEdges(net.learningOrder, ids);
   const pos = new Map(ids.map((id, i) => [id, i]));
   const weight = new Map(ids.map((id) => [id, trace(net, id).order.length]));
   for (const r of net.relations) {
@@ -703,6 +737,46 @@ export function learningOrder(net: Network, ids: string[]): string[] {
     const [pre, post] = prereq(r);
     next.get(pre)!.push(post);
     indeg.set(post, indeg.get(post)! + 1);
+  }
+  const out: string[] = [];
+  const ready = ids.filter((id) => indeg.get(id) === 0);
+  while (ready.length) {
+    ready.sort((x, y) => weight.get(x)! - weight.get(y)! || pos.get(x)! - pos.get(y)!);
+    const id = ready.shift()!;
+    out.push(id);
+    for (const b of next.get(id)!) {
+      indeg.set(b, indeg.get(b)! - 1);
+      if (indeg.get(b) === 0) ready.push(b);
+    }
+  }
+  return out.length === ids.length ? out : [...out, ...ids.filter((id) => !out.includes(id))];
+}
+
+/** 教材が書き出した仕上がりの学ぶ順（from が先）で並べる（stats2-course の issue 266）。並べ方は learningOrder と同じ：
+ *  組を守り、そのうえで前に学ぶものの数（分類の外も含めて、組をさかのぼって着く語の数）が少ない語から。同じなら教材の並び。
+ *  輪は教材の build が止めるので起きないはずだが、起きたら残りを教材の並びで後ろに足す */
+function orderByEdges(edges: LearningEdge[], ids: string[]): string[] {
+  const pos = new Map(ids.map((id, i) => [id, i]));
+  const before = new Map<string, string[]>();
+  for (const e of edges) before.set(e.to, [...(before.get(e.to) ?? []), e.from]);
+  const ancestors = (id: string) => {
+    const seen = new Set<string>();
+    const stack = [...(before.get(id) ?? [])];
+    while (stack.length) {
+      const x = stack.pop()!;
+      if (seen.has(x) || x === id) continue;
+      seen.add(x);
+      stack.push(...(before.get(x) ?? []));
+    }
+    return seen.size;
+  };
+  const weight = new Map(ids.map((id) => [id, ancestors(id)]));
+  const next = new Map<string, string[]>(ids.map((id) => [id, []]));
+  const indeg = new Map(ids.map((id) => [id, 0]));
+  for (const e of edges) {
+    if (!pos.has(e.from) || !pos.has(e.to) || e.from === e.to) continue;
+    next.get(e.from)!.push(e.to);
+    indeg.set(e.to, indeg.get(e.to)! + 1);
   }
   const out: string[] = [];
   const ready = ids.filter((id) => indeg.get(id) === 0);
