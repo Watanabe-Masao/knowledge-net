@@ -700,6 +700,12 @@ export default function RelationMap({
   const near = new Map(Ls.map((e) => [e.id, types.size ? e.types.find((k) => types.has(k))! : e.type]));
   const onEdge = (from: string, to: string) => !!pick && (from === pick || to === pick);
   const shown = L.edges.filter((e) => shows(e.types));
+  // 下の札は、この分類の線にある種類だけ（⑤ の種類が増えて、全部を並べると 390px の幅からはみ出した。渡辺さん 2026-11-11 のスクリーンショット）。
+  // それでも1段に入らないときは2段に折り返す（画面の原則 7・15。決定は docs/decisions.md「関係の種類の印」）
+  const legendKinds = useMemo(() => {
+    const present = new Set(L.edges.flatMap((e) => e.types));
+    return LEGEND.filter(([k]) => present.has(k));
+  }, [L]);
   // 全体の見え方（設計書 3）：名前が読めないほど引いたら、語を薄くし、まとまりの名前・1文・数を大きく、まとまりの間は動詞付きの1本の矢印
   const far = !!v && v.k < FAR_K;
   const garrows = useMemo(() => groupArrows(net, L), [net, L]);
@@ -1473,7 +1479,7 @@ export default function RelationMap({
           </svg>
         </button>
       </div>
-      {/* 下の札：凡例を兼ねた絞り込み（押すとその種類の線だけ。いくつでも。もう一度押すと戻る）。1段に収める */}
+      {/* 下の札：凡例を兼ねた絞り込み（押すとその種類の線だけ。いくつでも。もう一度押すと戻る）。この分類の線にある種類だけ。入らなければ2段 */}
       {!selected ? (
         <div
           className={s.legend}
@@ -1483,7 +1489,7 @@ export default function RelationMap({
           aria-label="線の種類で絞る（いくつでも）"
           data-testid="rm-legend"
         >
-          {LEGEND.map(([k]) => (
+          {legendKinds.map(([k]) => (
             <button
               key={k}
               type="button"
@@ -1527,8 +1533,11 @@ export default function RelationMap({
 /** 下の札の種類と線の形の見本（比べるは破線） */
 const LEGEND: [string, string | undefined][] = [
   ["移る", undefined],
+  ["同値", undefined],
   ["従う", undefined],
+  ["推定する", undefined],
   ["特別な場合", undefined],
   ["導ける", undefined],
+  ["根拠", undefined],
   ["比べる", "4 3"],
 ];
