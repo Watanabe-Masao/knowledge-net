@@ -6,9 +6,9 @@
 
 ## 守ること
 
-0. **意味の判断は製本**。関係・成立条件・学ぶ順・問いなどの意味の判断の正本は、stats2-course の製本（docs/rules/。2026-11-08）。ここの型（relation-types.yaml の定義・例）は型 v1 の書き方で、製本と違う所は製本に従う（違いと移す順は stats2-course の docs/rules/migration.md・#259）。
+0. **意味の判断は製本**。関係・成立条件・学ぶ順・問いなどの意味の判断の正本は、stats2-course の製本（docs/rules/。2026-11-08）。ここの型（relation-types.yaml の定義・例）は ⑤ の種類の書き方で、製本と違う所は製本に従う（移行の記録は stats2-course の docs/rules/migration.md。M7 で v1 の種類を外した。#259・#267）。
 1. **型は1か所**。`schema/kn-schema-v2.json`（芯：概念・関係・主張・導出・学ぶ順・単元。v1 は M7 で外した。stats2-course #263・#267）・`schema/kn-experiment-v1.json`（実験室の拡張。芯とは別の改訂番号。stats2-course #211）・`schema/relation-types.yaml` が元。画面は Ajv でこの JSON Schema をそのまま使う（型を書き写さない）。教材の側（stats2-course の docs/knowledge-net/schema/）は写しで、元とずれたら教材側のテストで止める。
-2. **型を変えるときは版を考える**。任意の項目を足すのは v1 のまま、改訂番号（型の `x-revision`）を1つ上げて `schema/CHANGELOG.md` に書く。必須の項目・項目の意味を変えるなら v2 にし、教材側を先に対応させる。 画面は、知らない項目を拒む指定（additionalProperties: false）だけを外した型で読み、知らない項目は無視して表示する（教材が画面より先に新しい改訂で公開しても、教材ごと外さない。stats2-course #207）。書き出す側（教材の build）は元の厳しい型で検査する。項目の形を置き換えるとき（例：改訂24の walk）は v2 にするか、古い形も読める期間を置く
+2. **型を変えるときは版を考える**。任意の項目を足すのは今の版（v2）のまま、改訂番号（型の `x-revision`）を1つ上げて `schema/CHANGELOG.md` に書く。必須の項目・項目の意味を変えるなら次の版（v3）にし、教材側を先に対応させる（v1 → v2 は、v1 と並べて読む期間を置いて移した。stats2-course #259）。 画面は、知らない項目を拒む指定（additionalProperties: false）だけを外した型で読み、知らない項目は無視して表示する（教材が画面より先に新しい改訂で公開しても、教材ごと外さない。stats2-course #207）。書き出す側（教材の build）は元の厳しい型で検査する。項目の形を置き換えるとき（例：改訂24の walk）は v2 にするか、古い形も読める期間を置く
 3. **ラボはリンクと定義を分ける**。概念・関係が持つのはラボへの参照（`labs`）だけ。値・学習目標はラボの側（stats2-course の tools/）。画面は参照の `play` から math-lab の部品（解説・操作）で描き、`play` のない古い形だけ iframe で開く（src/Relation.tsx。stats2-course #192）。
 4. **画面は教材の原本を読まない**。各教材が公開した JSON（`public/courses.json` の一覧）だけを読む。
 5. **教材をまたぐ ID** は `教材名:教材の中のID`。どこにもない概念を指す関係は「未接続」として出す（落とさない）。
