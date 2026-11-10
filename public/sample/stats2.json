@@ -21403,10 +21403,10 @@
   {
    "id": "stats2:LRN-exclusive-addition",
    "op": "add",
-   "from": "stats2:TERM-exclusive",
+   "from": "stats2:TERM-prob",
    "to": "stats2:TERM-addition",
-   "reason": "排反なら重なりが0なので、加法定理は単に足すだけになる。まず排反の場合で足し算を理解する。",
-   "version": 1,
+   "reason": "加法定理は確率の和についての主張（排反でない2つの事象の和の確率）なので、確率（排反な事象の和を定める公理）を先に学ぶ（基準の定義が使う。#345 で 排反 → 加法定理 から替えた：排反は確率の公理を通ってたどれば着く）。",
+   "version": 2,
    "units": [
     "stats2:U10"
    ]
@@ -21427,19 +21427,8 @@
    "op": "add",
    "from": "stats2:TERM-total-prob",
    "to": "stats2:TERM-bayes",
-   "reason": "ベイズの定理の分母（結果が起こる全体の確率）は、全確率の公式で求める。学ぶ順の前提知識（M6 で ⑥ に照らす。#295）。",
-   "version": 1,
-   "units": [
-    "stats2:U12"
-   ]
-  },
-  {
-   "id": "stats2:LRN-cond-bayes",
-   "op": "add",
-   "from": "stats2:TERM-cond",
-   "to": "stats2:TERM-bayes",
-   "reason": "ベイズの定理は、条件付き確率 P(結果|原因) から P(原因|結果) を求める式。学ぶ順の前提知識（M6 で ⑥ に照らす。#295）。",
-   "version": 1,
+   "reason": "ベイズの定理の分母 P(D) を求めるのに、全確率の公式を先に使えるようにしておく。",
+   "version": 2,
    "units": [
     "stats2:U12"
    ]
@@ -21449,22 +21438,10 @@
    "op": "add",
    "from": "stats2:TERM-sample",
    "to": "stats2:TERM-random-sampling",
-   "reason": "無作為抽出は、標本の選び方の1つ。標本とは何かを知ってから、選び方の違いを学ぶ。",
-   "version": 1,
+   "reason": "無作為抽出は標本の取り方なので、標本とは何かを先に知っておく。",
+   "version": 2,
    "units": [
     "stats2:U17"
-   ]
-  },
-  {
-   "id": "stats2:LRN-frame-bias",
-   "op": "add",
-   "from": "stats2:TERM-frame",
-   "to": "stats2:TERM-bias",
-   "reason": "抽出枠が母集団とずれていると、無作為に選んでも結果が偏りうる。偏りが生まれる場所の1つ。",
-   "version": 1,
-   "units": [
-    "stats2:U17",
-    "stats2:U31"
    ]
   },
   {
@@ -21507,8 +21484,8 @@
    "op": "add",
    "from": "stats2:TERM-lln",
    "to": "stats2:TERM-consistency",
-   "reason": "標本平均の一致性は大数の法則そのもの。一致性は、大数の法則を推定量一般に広げた考え。",
-   "version": 1,
+   "reason": "一致性（推定量が母数に近づく）は、標本平均が母平均に近づく大数の法則を1つの例として先に知っていると読める。",
+   "version": 2,
    "units": [
     "stats2:U19",
     "stats2:U21"
@@ -21519,8 +21496,8 @@
    "op": "add",
    "from": "stats2:TERM-clt",
    "to": "stats2:TERM-ci",
-   "reason": "母集団の分布が正規分布でなくても平均の信頼区間で正規分布を使えるのは、中心極限定理があるから。",
-   "version": 1,
+   "reason": "母集団が正規分布でなくても平均の信頼区間で正規分布を使う理由を読むのに、中心極限定理を先に知っておく。",
+   "version": 2,
    "units": [
     "stats2:U19",
     "stats2:U22"
@@ -21531,8 +21508,8 @@
    "op": "add",
    "from": "stats2:TERM-sampdist",
    "to": "stats2:TERM-test",
-   "reason": "検定は、統計量の標本分布を使って「このデータは仮説のもとで起こりにくいか」を測る。",
-   "version": 1,
+   "reason": "検定で「仮説のもとで起こりにくいか」を測るには、統計量が標本ごとにばらつく分布（標本分布）を先に知っておく。",
+   "version": 2,
    "units": [
     "stats2:U24"
    ]
@@ -21542,8 +21519,8 @@
    "op": "add",
    "from": "stats2:TERM-h0",
    "to": "stats2:TERM-pool",
-   "reason": "2群を合わせてよいのは、帰無仮説（割合が等しい）のもとで計算するから。",
-   "version": 1,
+   "reason": "プールした比率は、帰無仮説（2群の割合が等しい）のもとで2群を合わせて使う値なので、帰無仮説を先に知っておく。",
+   "version": 2,
    "units": [
     "stats2:U26"
    ]
@@ -21553,22 +21530,11 @@
    "op": "add",
    "from": "stats2:TERM-freqtable",
    "to": "stats2:TERM-mode",
-   "reason": "度数分布では、度数が最大の階級の値（階級値）を最頻値とする。",
-   "version": 1,
+   "reason": "この教材では度数分布表から最頻値（度数が最大の階級の階級値）を求めるので、度数分布表を先に学ぶ。",
+   "version": 2,
    "units": [
     "stats2:U04",
     "stats2:U06"
-   ]
-  },
-  {
-   "id": "stats2:LRN-std-outlier",
-   "op": "add",
-   "from": "stats2:TERM-std",
-   "to": "stats2:TERM-outlier",
-   "reason": "標準化した値（z）の大きさで、外れ値かどうかの目安を立てることもある。",
-   "version": 1,
-   "units": [
-    "stats2:U08"
    ]
   },
   {
@@ -21580,17 +21546,6 @@
    "version": 1,
    "units": [
     "stats2:U05T"
-   ]
-  },
-  {
-   "id": "stats2:LRN-rv-bernoulli",
-   "op": "add",
-   "from": "stats2:TERM-rv",
-   "to": "stats2:TERM-bernoulli",
-   "reason": "ベルヌーイ分布は、0か1をとる確率変数の分布。確率変数として値の出方を見ると読みやすい。",
-   "version": 1,
-   "units": [
-    "stats2:U14"
    ]
   },
   {
@@ -21631,8 +21586,8 @@
    "op": "add",
    "from": "stats2:TERM-mreg",
    "to": "stats2:TERM-adjr2",
-   "reason": "説明変数の数が違う重回帰の式どうしを比べるときに使う。",
-   "version": 1,
+   "reason": "自由度調整済み決定係数は、説明変数の数が違う重回帰の式を比べるために学ぶので、重回帰分析を先に知っておく。",
+   "version": 2,
    "units": [
     "stats2:U30"
    ]
@@ -21642,8 +21597,8 @@
    "op": "add",
    "from": "stats2:TERM-corr",
    "to": "stats2:TERM-multicol",
-   "reason": "説明変数どうしの相関係数が大きいと、多重共線性を疑う。",
-   "version": 1,
+   "reason": "多重共線性（説明変数どうしの強い1次の関係）の強さは相関係数で読むので、相関係数を先に学ぶ。",
+   "version": 2,
    "units": [
     "stats2:U30"
    ]
@@ -21675,8 +21630,8 @@
    "op": "add",
    "from": "stats2:TERM-confound",
    "to": "stats2:TERM-spurious",
-   "reason": "擬相関の多くは、交絡する第3の要因から生まれる。",
-   "version": 1,
+   "reason": "擬相関は、両方に関係する第3の変数で生まれる見かけの相関として学ぶので、その第3の変数の考え（交絡）を先に知っておく。",
+   "version": 2,
    "units": [
     "stats2:U28",
     "stats2:U32"
@@ -21693,6 +21648,166 @@
     "stats2:U02",
     "stats2:U06"
    ]
+  },
+  {
+   "id": "stats2:LRN-var-cov",
+   "op": "add",
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-cov",
+   "reason": "教材は分散を先に学び、2つの変数へ広げて共分散を読む（共分散の式と条件が分散を使う）。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-geom-negbinom",
+   "op": "add",
+   "from": "stats2:TERM-geom",
+   "to": "stats2:TERM-negbinom",
+   "reason": "負の二項分布は、幾何分布（1回目の成功まで）を r 回目の成功まで広げた分布として学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-median-quantile",
+   "op": "add",
+   "from": "stats2:TERM-median",
+   "to": "stats2:TERM-quantile",
+   "reason": "分位点は、中央値（真ん中で2つに分ける値）を任意の割合へ広げた値として学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-slr-mreg",
+   "op": "add",
+   "from": "stats2:TERM-slr",
+   "to": "stats2:TERM-mreg",
+   "reason": "重回帰分析は、単回帰の説明変数を増やした形として学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-datavar-datacov",
+   "op": "add",
+   "from": "stats2:TERM-data-var",
+   "to": "stats2:TERM-data-cov",
+   "reason": "データの共分散は、データの分散を2つの変数へ広げたものとして学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-var-binom",
+   "op": "add",
+   "from": "stats2:TERM-sd",
+   "to": "stats2:TERM-binom",
+   "reason": "二項分布の説明と式が期待値 np・分散 np(1−p)・標準偏差（例題の √0.75）を使うので、期待値・分散・標準偏差を先に学ぶ。",
+   "version": 2
+  },
+  {
+   "id": "stats2:LRN-var-geom",
+   "op": "add",
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-geom",
+   "reason": "幾何分布の説明と式が期待値・分散を使うので、期待値と分散（確率分布から定める）を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-binom-hyper",
+   "op": "add",
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-hyper",
+   "reason": "超幾何分布の説明が、二項分布（戻して取り出す・各回が独立）と比べて「戻さない」取り出しを説明するので、二項分布を先に学ぶ（⑥ の 5 の 4）。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-var-uniform",
+   "op": "add",
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-uniform",
+   "reason": "一様分布の説明が期待値・分散（例：期待値5分・分散 100/12）を使うので、期待値と分散を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-dist-bernoulli",
+   "op": "add",
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-bernoulli",
+   "reason": "ベルヌーイ分布は確率変数の分布の1つとして学ぶので、確率分布を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-samplemean-lln",
+   "op": "add",
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-lln",
+   "reason": "大数の法則は標本平均が母平均に近づくという主張なので、標本平均を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-cond-multiplication",
+   "op": "add",
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-multiplication",
+   "reason": "乗法定理 P(A∩B)＝P(A)P(B|A) は条件付き確率を使うので、条件付き確率を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-remove-hyper-binom",
+   "op": "remove",
+   "from": "stats2:TERM-hyper",
+   "to": "stats2:TERM-binom",
+   "reason": "二項分布を先に学び、超幾何分布はそれと比べて学ぶ（足す LRN-binom-hyper）。超幾何分布が二項分布に近づくことは、両方を学んだあとに読む。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-indep-lln",
+   "op": "add",
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-lln",
+   "reason": "大数の法則は「独立に同じ分布に従う」標本についての主張なので、独立を先に学ぶ（基準の定義が使う）。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-poisson-expo",
+   "op": "add",
+   "from": "stats2:TERM-poisson",
+   "to": "stats2:TERM-expo",
+   "reason": "指数分布の説明が「ポアソン分布で数える出来事の間隔」を使うので、ポアソン分布を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-binom-normal",
+   "op": "add",
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-normal",
+   "reason": "正規分布の例が「B(100, 0.5) は平均50・標準偏差5 の正規分布で近似できる」を使うので、二項分布を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-complement-poisson",
+   "op": "add",
+   "from": "stats2:TERM-complement",
+   "to": "stats2:TERM-poisson",
+   "reason": "ポアソン分布の例題が「1−(…)」で余事象の確率を使うので、余事象を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-stdnormal-clt",
+   "op": "add",
+   "from": "stats2:TERM-std-normal",
+   "to": "stats2:TERM-clt",
+   "reason": "中心極限定理は標準化した標本平均の分布が標準正規分布に近づくという主張なので、標準正規分布を先に学ぶ。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-remove-samplemean-normal",
+   "op": "remove",
+   "from": "stats2:TERM-normal",
+   "to": "stats2:TERM-sample-mean",
+   "reason": "標本平均は分布なしに標本から定まる統計量で、正規分布を知らなくても読める。正規母集団の標本平均が正規分布に従うことは、正規分布を学んだあとに読む。",
+   "version": 1
+  },
+  {
+   "id": "stats2:LRN-remove-clt-normal",
+   "op": "remove",
+   "from": "stats2:TERM-std-normal",
+   "to": "stats2:TERM-sample-mean",
+   "reason": "標本平均は分布なしに標本から定まる統計量で、標準正規分布を知らなくても読める。標準化した標本平均が標準正規分布に近づくこと（中心極限定理）は、両方を学んだあとに読む（足す LRN-stdnormal-clt）。",
+   "version": 1
   }
  ],
  "learning_order": [
@@ -21739,12 +21854,6 @@
    "via": "stats2:REL-std-normal"
   },
   {
-   "from": "stats2:TERM-std-normal",
-   "to": "stats2:TERM-sample-mean",
-   "source": "candidate",
-   "via": "stats2:REL-clt-normal"
-  },
-  {
    "from": "stats2:TERM-rv",
    "to": "stats2:TERM-dist",
    "source": "candidate",
@@ -21767,12 +21876,6 @@
    "to": "stats2:TERM-uncorr",
    "source": "candidate",
    "via": "stats2:REL-indep-cov"
-  },
-  {
-   "from": "stats2:TERM-hyper",
-   "to": "stats2:TERM-binom",
-   "source": "candidate",
-   "via": "stats2:REL-hyper-binom"
   },
   {
    "from": "stats2:TERM-dist",
@@ -22333,12 +22436,6 @@
    "via": "stats2:REL-prior-prob"
   },
   {
-   "from": "stats2:TERM-normal",
-   "to": "stats2:TERM-sample-mean",
-   "source": "candidate",
-   "via": "stats2:REL-samplemean-normal"
-  },
-  {
    "from": "stats2:TERM-t",
    "to": "stats2:TERM-f",
    "source": "candidate",
@@ -22723,7 +22820,7 @@
    "via": "stats2:LRN-indep-geom"
   },
   {
-   "from": "stats2:TERM-exclusive",
+   "from": "stats2:TERM-prob",
    "to": "stats2:TERM-addition",
    "source": "add",
    "via": "stats2:LRN-exclusive-addition"
@@ -22741,22 +22838,10 @@
    "via": "stats2:LRN-total-bayes"
   },
   {
-   "from": "stats2:TERM-cond",
-   "to": "stats2:TERM-bayes",
-   "source": "add",
-   "via": "stats2:LRN-cond-bayes"
-  },
-  {
    "from": "stats2:TERM-sample",
    "to": "stats2:TERM-random-sampling",
    "source": "add",
    "via": "stats2:LRN-sample-random"
-  },
-  {
-   "from": "stats2:TERM-frame",
-   "to": "stats2:TERM-bias",
-   "source": "add",
-   "via": "stats2:LRN-frame-bias"
   },
   {
    "from": "stats2:TERM-lln",
@@ -22807,22 +22892,10 @@
    "via": "stats2:LRN-freqtable-mode"
   },
   {
-   "from": "stats2:TERM-std",
-   "to": "stats2:TERM-outlier",
-   "source": "add",
-   "via": "stats2:LRN-std-outlier"
-  },
-  {
    "from": "stats2:TERM-corr",
    "to": "stats2:TERM-acf",
    "source": "add",
    "via": "stats2:LRN-corr-acf"
-  },
-  {
-   "from": "stats2:TERM-rv",
-   "to": "stats2:TERM-bernoulli",
-   "source": "add",
-   "via": "stats2:LRN-rv-bernoulli"
   },
   {
    "from": "stats2:TERM-scatter",
@@ -22877,6 +22950,108 @@
    "to": "stats2:TERM-mean",
    "source": "add",
    "via": "stats2:LRN-sigma-mean"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-cov",
+   "source": "add",
+   "via": "stats2:LRN-var-cov"
+  },
+  {
+   "from": "stats2:TERM-geom",
+   "to": "stats2:TERM-negbinom",
+   "source": "add",
+   "via": "stats2:LRN-geom-negbinom"
+  },
+  {
+   "from": "stats2:TERM-median",
+   "to": "stats2:TERM-quantile",
+   "source": "add",
+   "via": "stats2:LRN-median-quantile"
+  },
+  {
+   "from": "stats2:TERM-slr",
+   "to": "stats2:TERM-mreg",
+   "source": "add",
+   "via": "stats2:LRN-slr-mreg"
+  },
+  {
+   "from": "stats2:TERM-data-var",
+   "to": "stats2:TERM-data-cov",
+   "source": "add",
+   "via": "stats2:LRN-datavar-datacov"
+  },
+  {
+   "from": "stats2:TERM-sd",
+   "to": "stats2:TERM-binom",
+   "source": "add",
+   "via": "stats2:LRN-var-binom"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-geom",
+   "source": "add",
+   "via": "stats2:LRN-var-geom"
+  },
+  {
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-hyper",
+   "source": "add",
+   "via": "stats2:LRN-binom-hyper"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-uniform",
+   "source": "add",
+   "via": "stats2:LRN-var-uniform"
+  },
+  {
+   "from": "stats2:TERM-dist",
+   "to": "stats2:TERM-bernoulli",
+   "source": "add",
+   "via": "stats2:LRN-dist-bernoulli"
+  },
+  {
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-lln",
+   "source": "add",
+   "via": "stats2:LRN-samplemean-lln"
+  },
+  {
+   "from": "stats2:TERM-cond",
+   "to": "stats2:TERM-multiplication",
+   "source": "add",
+   "via": "stats2:LRN-cond-multiplication"
+  },
+  {
+   "from": "stats2:TERM-indep",
+   "to": "stats2:TERM-lln",
+   "source": "add",
+   "via": "stats2:LRN-indep-lln"
+  },
+  {
+   "from": "stats2:TERM-poisson",
+   "to": "stats2:TERM-expo",
+   "source": "add",
+   "via": "stats2:LRN-poisson-expo"
+  },
+  {
+   "from": "stats2:TERM-binom",
+   "to": "stats2:TERM-normal",
+   "source": "add",
+   "via": "stats2:LRN-binom-normal"
+  },
+  {
+   "from": "stats2:TERM-complement",
+   "to": "stats2:TERM-poisson",
+   "source": "add",
+   "via": "stats2:LRN-complement-poisson"
+  },
+  {
+   "from": "stats2:TERM-std-normal",
+   "to": "stats2:TERM-clt",
+   "source": "add",
+   "via": "stats2:LRN-stdnormal-clt"
   }
  ]
 }
