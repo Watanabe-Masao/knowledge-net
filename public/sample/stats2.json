@@ -1,8 +1,8 @@
 {
  "schema": "kn-schema",
  "version": 2,
- "schema_revision": 4,
- "experiment_revision": 3,
+ "schema_revision": 5,
+ "experiment_revision": 4,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
