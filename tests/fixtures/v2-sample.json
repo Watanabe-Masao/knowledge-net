@@ -353,16 +353,6 @@
       "axis": "とる値",
       "same": "どちらも分布",
       "differ": "離散と連続"
-    },
-    {
-      "id": "t:REL-9",
-      "from": "t:TERM-prob",
-      "to": "t:TERM-binom",
-      "legacy_type": "前提",
-      "premise": "learning",
-      "description": "d",
-      "units": [],
-      "version": 1
     }
   ],
   "claims": [

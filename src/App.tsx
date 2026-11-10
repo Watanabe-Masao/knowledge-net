@@ -15,7 +15,7 @@ import PathList from "./PathList";
 import Search from "./Search";
 import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
 import st from "./App.module.css";
-import { KINDS, MODES, experimentsFor, learnOrder, load, neighborhood, pairOpen, trace, type Network } from "./data";
+import { KINDS_V2, MODES, experimentsFor, learnOrder, load, neighborhood, pairOpen, trace, type Network } from "./data";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
@@ -666,7 +666,7 @@ export default function App() {
             矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。チェックを外すと、その種類の線を非表示にする。
           </Muted>
           <ul className={st.kinds}>
-            {Object.entries(KINDS).map(([t, k]) => (
+            {Object.entries(KINDS_V2).map(([t, k]) => (
               <li key={t}>
                 <label>
                   <input

@@ -6,9 +6,5 @@ const types = parse(readFileSync("schema/relation-types.yaml", "utf8"));
 mkdirSync("src/generated", { recursive: true });
 writeFileSync("src/generated/relation-types.json", JSON.stringify(types, null, 1) + "\n");
 console.log(
-  "src/generated/ に relation-types.json（" +
-    Object.keys(types.types).length +
-    " 種類・v2 " +
-    Object.keys(types.types_v2 ?? {}).length +
-    " 種類）を作った",
+  "src/generated/ に relation-types.json（" + Object.keys(types.types_v2 ?? {}).length + " 種類。⑤）を作った",
 );
