@@ -3089,7 +3089,8 @@
    "要約（代表値・ばらつき）",
    "相関・回帰",
    "調査・実験",
-   "データと変数"
+   "データと変数",
+   "図表"
   ]
  },
  "concepts": [
@@ -3738,7 +3739,14 @@
    "en": "frequency table",
    "short": "データを階級に分け、各階級に入るデータの個数（度数）を並べた表",
    "category": "図表",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-freqtable.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-freqtable.svg",
+   "basis": {
+    "text": "量的なデータ x₁, …, xₙ（n≧1。値が数であることは定義の要件）について、互いに重ならず、すべての値を含む区間（階級）c₁, …, c_k を小さい順に決め、各階級 c_j に入る値の個数（度数）f_j を階級の順に並べた表（f₁＋…＋f_k＝n。相対度数 f_j/n・累積度数を添えることが多い）",
+    "terms": []
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-hist",
@@ -3752,7 +3760,16 @@
    "en": "histogram",
    "short": "度数分布表の各階級の度数を、隙間のない柱の面積で表した図",
    "category": "図表",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-hist.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-hist.svg",
+   "basis": {
+    "text": "度数分布表（階級 c_j は有界で幅 w_j は 0＜w_j＜∞、隣り合う階級の境目が一致する。度数 f_j、総数 n）について、各階級の上に、面積がその階級の相対度数 f_j/n に等しい柱（高さ f_j/(n·w_j)）を隙間なく並べた図。x が c_j に入るとき h(x)＝f_j/(n·w_j)、どの階級にも入らないとき h(x)＝0 とする階段の関数として読め、すべての値が階級に入るとき柱の面積の合計は1になる（階級の幅がそろうとき、縦軸に度数をとって描くのは、縦の目盛りだけが違う同じ図）",
+    "terms": [
+     "stats2:TERM-freqtable"
+    ]
+   },
+   "forms": [
+    "random_set"
+   ]
   },
   {
    "id": "stats2:TERM-boxplot",
@@ -3766,7 +3783,16 @@
    "en": "box plot",
    "short": "最小値・第1四分位数・中央値・第3四分位数・最大値で、分布の位置と広がりを表した図",
    "category": "図表",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-boxplot.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-boxplot.svg",
+   "basis": {
+    "text": "量的なデータ（n≧2）の最小値・第1四分位数 Q₁・第2四分位数 Q₂（中央値）・第3四分位数 Q₃・最大値の5つの数を、1本の数直線の上に、Q₁ から Q₃ までの箱、箱の中の Q₂ の線、箱の両端から最小値と最大値までのひげで表した図（柵 Q₁−1.5(Q₃−Q₁)・Q₃＋1.5(Q₃−Q₁) の外の値を外れ値として点で分け、ひげを柵の内側のいちばん外の値までにした図も、同じ名前で呼ぶ）",
+    "terms": [
+     "stats2:TERM-quartile"
+    ]
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-quartile",
@@ -8989,7 +9015,7 @@
      "全体の面積が1"
     ],
     "data": [
-     "ヒストグラムを「相対度数÷階級の幅」で描くと、密度の推定になる"
+     "ヒストグラムを「相対度数÷階級の幅」で描くと、各階級での密度の平均の推定になる（f そのものに近づくには、f が連続な点で、幅→0 と n×幅→∞ を両方満たすように進める。④-30 の範囲外）"
     ]
    },
    "example": "0〜10分に一様に来るバスで、3〜5分の間に来る確率は 2÷10＝0.2。",
@@ -9014,7 +9040,7 @@
      "outside": "確率密度関数として扱えない"
     },
     {
-     "text": "ヒストグラムを「相対度数÷階級の幅」で描くと、密度の推定になる",
+     "text": "ヒストグラムを「相対度数÷階級の幅」で描くと、各階級での密度の平均の推定になる（f そのものに近づくには、f が連続な点で、幅→0 と n×幅→∞ を両方満たすように進める。④-30 の範囲外）",
      "scope": "data"
     }
    ],
@@ -10168,8 +10194,12 @@
    "short": "2つの質的変数の組合せごとに度数を数えて並べた表",
    "category": "図表",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-crosstab.svg",
+   "basis": {
+    "text": "値が分類（カテゴリ）である2つの変数 A・B（値がカテゴリであることは定義の要件。量的変数は階級に分ければ使える）について、A のカテゴリ a₁, …, a_r と B のカテゴリ b₁, …, b_c の組 (a_i, b_j) ごとに、その組の値をもつ個体の個数（度数）O_ij を数え、r 行 c 列に並べた表（行・列の合計と総数 n を添える。O_ij の総和は n）",
+    "terms": []
+   },
    "forms": [
-    "random_set"
+    "rv"
    ]
   },
   {
@@ -10184,7 +10214,14 @@
    "en": "scatter plot",
    "short": "2つの量的変数の値の組を、横軸と縦軸の座標の点で表した図",
    "category": "図表",
-   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-scatter.svg"
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-scatter.svg",
+   "basis": {
+    "text": "対になったデータ (x₁, y₁), …, (xₙ, yₙ)（同じ個体の2つの量的変数の値の組。x・y の値が数であることは定義の要件）を、横軸に x、縦軸に y をとった座標平面の n 個の点 (xᵢ, yᵢ) で表した図",
+    "terms": []
+   },
+   "forms": [
+    "rv"
+   ]
   },
   {
    "id": "stats2:TERM-partial-corr",
@@ -13556,27 +13593,14 @@
   },
   {
    "id": "stats2:REL-quartile-boxplot",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-quartile",
    "to": "stats2:TERM-boxplot",
-   "legacy_type": "前提",
-   "description": "箱ひげ図の箱は、第1四分位数から第3四分位数まで。",
+   "type": "定める",
+   "description": "箱ひげ図は、最小値・四分位数 Q₁・Q₂・Q₃・最大値の5つの数を箱とひげで表した図。四分位数が定義に直接出る。",
    "units": [
     "stats2:U05"
-   ],
-   "premise": "mathematical"
-  },
-  {
-   "id": "stats2:REL-median-boxplot",
-   "version": 1,
-   "from": "stats2:TERM-median",
-   "to": "stats2:TERM-boxplot",
-   "legacy_type": "前提",
-   "description": "箱ひげ図の箱の中の線は中央値。",
-   "units": [
-    "stats2:U05"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-iqr-outlier",
@@ -13607,15 +13631,14 @@
   },
   {
    "id": "stats2:REL-freqtable-hist",
-   "version": 1,
+   "version": 2,
    "from": "stats2:TERM-freqtable",
    "to": "stats2:TERM-hist",
-   "legacy_type": "前提",
-   "description": "ヒストグラムは度数分布表を図にしたもの。",
+   "type": "定める",
+   "description": "ヒストグラムは、度数分布表の各階級の上に、面積が相対度数に等しい柱を並べた図。度数分布表が定義に直接出る。",
    "units": [
     "stats2:U05"
-   ],
-   "premise": "mathematical"
+   ]
   },
   {
    "id": "stats2:REL-sd-cv",
@@ -13735,18 +13758,6 @@
      "caption": "二項分布 B(4, 0.25)。購入率25%の売場に4人。ちょうど1人がいちばん起きやすく、▲の平均 np＝1人。"
     }
    ]
-  },
-  {
-   "id": "stats2:REL-quant-scatter",
-   "version": 1,
-   "from": "stats2:TERM-quant",
-   "to": "stats2:TERM-scatter",
-   "legacy_type": "前提",
-   "description": "散布図は2つの量的変数の組を点で表す。",
-   "units": [
-    "stats2:U28"
-   ],
-   "premise": "mathematical"
   },
   {
    "id": "stats2:REL-scatter-corr",
@@ -15056,6 +15067,21 @@
    "units": [
     "stats2:U03",
     "stats2:U18"
+   ]
+  },
+  {
+   "id": "stats2:REL-hist-pdf",
+   "version": 1,
+   "from": "stats2:TERM-hist",
+   "to": "stats2:TERM-pdf",
+   "type": "推定する",
+   "description": "ヒストグラム（相対度数÷階級の幅）で、母集団の分布の確率密度関数を推し量る。言えるのは f そのものではなく、決めた階級ごとの f の平均について：柱の高さはその不偏推定量で、相対度数は n を大きくすると各階級の確率に近づく（④-30）。",
+   "units": [
+    "stats2:U05",
+    "stats2:U13"
+   ],
+   "properties": [
+    "stats2:CLM-30"
    ]
   }
  ],
@@ -21060,6 +21086,48 @@
     {
      "source": {
       "title": "完全無作為化では、各個体が処置群に入る確率がどれも n₁/(n₁＋n₀) で等しく、群の大きさが固定なので、各群の平均の期待値がどちらも Z の全体の平均に等しい。「交絡の原因にならない」はこの結果の解釈で、⑧ が扱う"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-30",
+   "label": "④-30",
+   "kind": "推定量の性質",
+   "statement": {
+    "text": "X₁, …, Xₙ が独立に同じ分布に従い、階級をデータを見る前に決めたとき、各階級の相対度数は、その階級に入る確率の不偏推定量で、n→∞ でその確率に確率収束する。分布に密度 f があるとき、相対度数÷階級の幅は、その階級での f の平均（区間での f の積分÷幅）の不偏推定量になる"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "C",
+      "date": "2026-11-08",
+      "version": "dc2b65a"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-hist"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-hist",
+     "stats2:TERM-freqtable"
+    ],
+    "predicates": [
+     "stats2:TERM-unbiased",
+     "stats2:TERM-consistency"
+    ]
+   },
+   "grounds": [
+    {
+     "source": {
+      "title": "階級に入る数は二項分布に従う。その平均と大数の法則（20b）"
      }
     }
    ]
