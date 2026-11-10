@@ -390,7 +390,7 @@ test("前提のつながりを選ぶと、二項分布の式のどの部品で�
   expect(lit).toContain("C");
   expect(lit).not.toContain("p");
   await expect(f).toContainText("並び方の数");
-  await d.getByTestId("rel-node-stats2:REL-indep-binom").click();
+  await d.getByTestId("rel-node-stats2:LRN-indep-binom").click();
   await expect(d.getByTestId("rel-focus").locator('[data-on="1"]')).toHaveCount(2);
 });
 

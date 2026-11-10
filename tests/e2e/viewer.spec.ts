@@ -262,7 +262,7 @@ test("🕸 リンク（c 付き）で開くと、その概念の周辺図から�
   // 線が実際に描かれている（Cytoscape 3.34 で、位置を指定して並べると線が描かれないことがあった）
   const drawn = await page.evaluate(() => {
     const cy = (window as any).kn;
-    const m = cy.getElementById("stats2:REL-indep-binom").renderedMidpoint();
+    const m = cy.getElementById("stats2:LRN-indep-binom").renderedMidpoint();
     const dpr = window.devicePixelRatio || 1;
     return [...cy.container().querySelectorAll("canvas")].some((cv: any) => {
       const d = cv.getContext("2d").getImageData(Math.round(m.x * dpr) - 2, Math.round(m.y * dpr) - 2, 5, 5).data;
@@ -283,7 +283,7 @@ test("線を押すと下から説明が開き、閉じても選んだ概念は�
   const p = await page.evaluate(() => {
     // 線の上で、どの点（の枠）にも重ならない所を押す（129語の公開データでは、線の真ん中に別の点が来ることがある）
     const cy = (window as any).kn;
-    const e = cy.getElementById("stats2:REL-indep-binom");
+    const e = cy.getElementById("stats2:LRN-indep-binom");
     const r = cy.container().getBoundingClientRect();
     const s = e.renderedSourceEndpoint(),
       g = e.renderedTargetEndpoint();
@@ -391,8 +391,8 @@ test("周辺図では中心につながらない線を薄くし、説明を開�
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   const faint = await page.evaluate(() => (window as any).kn.edges(".faint").map((e: any) => e.id()));
-  expect(faint).toContain("stats2:REL-indep-geom");
-  expect(faint).not.toContain("stats2:REL-indep-binom");
+  expect(faint).toContain("stats2:LRN-indep-geom");
+  expect(faint).not.toContain("stats2:LRN-indep-binom");
   await tab(page, /関係/);
   await page
     .getByTestId("edge-list")
