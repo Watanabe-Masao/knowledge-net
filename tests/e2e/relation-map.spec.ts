@@ -145,7 +145,7 @@ test("移した分類（確率分布）の地図は関係図で、語を選ん�
   await expect(page.getByTestId("detail")).toBeVisible();
   await expect(page.getByTestId("graph")).toHaveCount(0);
   const text = await m.getByTestId("rm-canvas").innerText();
-  for (const ng of ["比べる", "変換すると", "一般化すると", "材料"])
+  for (const ng of ["比べる", "を移すと", "の特別な場合", "定義に使われる"])
     expect(text, `地図に文章「${ng}」`).not.toContain(ng);
 
   await page.goto(URL + encodeURIComponent("検定"));
@@ -656,15 +656,15 @@ test("たどった道：← で1つ前へ、長押しで新しい順のメニュ
 test("下の札：押すとその種類の線だけ。語を選んでも続き、印から外せる", async ({ page }) => {
   const m = await open(page);
   const all = await m.locator("[data-testid=rm-lines] path[data-type]").count();
-  await m.getByTestId("rm-kind-対比").click();
-  await expect(m.getByTestId("rm-kind-対比")).toHaveAttribute("aria-pressed", "true");
+  await m.getByTestId("rm-kind-比べる").click();
+  await expect(m.getByTestId("rm-kind-比べる")).toHaveAttribute("aria-pressed", "true");
   const kinds = await m
     .locator("[data-testid=rm-lines] path[data-type]")
     .evaluateAll((ps) => ps.map((p) => p.getAttribute("data-type")));
   expect(kinds.length).toBeGreaterThan(0);
   expect(kinds.length).toBeLessThan(all);
   // 線は主の種類で描くので、対比を含む線（主が変換で対比も持つ線を含む）だけが残る。対比でも変換でもない種類は残らない
-  expect(kinds.filter((k) => k !== "対比" && k !== "変換")).toEqual([]);
+  expect(kinds.filter((k) => k !== "比べる" && k !== "移る")).toEqual([]);
   await m.getByTestId(`rm-term-${T("binom")}`).click();
   await still(page);
   await expect(m.getByTestId("rm-filter-on")).toBeVisible();

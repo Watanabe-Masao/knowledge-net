@@ -140,7 +140,7 @@ test("つながりから別の概念へ移る・教材へのリンク", async ({
   await tab(page, /関係/);
   await d
     .getByTestId("rel-stats2:REL-binom-poisson")
-    .getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ })
+    .getByRole("button", { name: /二項分布 を移すと ポアソン分布/ })
     .click();
   await page.getByTestId("edge-panel").getByRole("button", { name: "ポアソン分布 へ" }).click();
   await expect(d.getByRole("heading", { name: "ポアソン分布", exact: true })).toBeVisible();
@@ -198,7 +198,7 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   await tab(page, /関係/);
   await page
     .getByTestId("edge-list")
-    .getByRole("button", { name: /二項分布 を変換すると ポアソン分布/ })
+    .getByRole("button", { name: /二項分布 を移すと ポアソン分布/ })
     .click();
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
   // 解説・触るは押したときだけ開く（前に選んだ形を覚えていても自動では開かない。渡辺さん 2026-11-07）
@@ -324,7 +324,7 @@ test("つながり一覧からも同じ説明を開ける", async ({ page }) => 
   await tab(page, /関係/);
   await page
     .getByTestId("edge-list")
-    .getByRole("button", { name: /超幾何分布 を変換すると 二項分布/ })
+    .getByRole("button", { name: /超幾何分布 を移すと 二項分布/ })
     .click();
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toContainText("集団 N を大きく");
@@ -458,7 +458,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図で
   await tab(page, /関係/);
   await page
     .getByTestId("edge-list")
-    .getByRole("button", { name: /二項分布 を変換すると 標準正規分布/ })
+    .getByRole("button", { name: /二項分布 を移すと 標準正規分布/ })
     .click();
   await expect(page.getByTestId("explore")).toHaveCount(0);
   await page
@@ -490,8 +490,8 @@ test("つながりは「つまり」を説明より先に出す（対比・変�
     .toBeGreaterThanOrEqual(0);
   await expect(panel.getByTestId(/^media-panel-/).getByRole("radio")).toHaveText(["解説", "操作"]); // 図はその場で描くので、画像の図は出さない
   await expect(panel.getByTestId("rel-chart")).toBeVisible();
-  await expect(panel.getByText("変換", { exact: true })).toHaveCount(0);
-  await expect(panel.getByText("対比", { exact: false }).first()).toBeVisible(); // 種類は札で出す（括弧を重ねない）
+  await expect(panel.getByText("移る", { exact: true })).toHaveCount(0);
+  await expect(panel.getByText("比べる", { exact: false }).first()).toBeVisible(); // 種類は札で出す（括弧を重ねない）
 });
 
 // 手触り（#42）：選んだ印が選んだ項目に重なる・押すと沈む・動きを減らす設定では止まる
