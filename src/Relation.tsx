@@ -21,7 +21,7 @@ import s from "./Relation.module.css";
 import { Icon } from "./Shell";
 import { KIND_VAR, KindMark, kindName, readingOf } from "./kinds";
 import Conditions from "./Conditions";
-import { kindOf, MODES, PREMISES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
+import { kindOf, MODES, type ChartDist, type FigRef, type LabRef, type Network, type Relation } from "./data";
 
 const short = (t?: string) => (t ? t.split("（")[0] : "");
 
@@ -32,14 +32,10 @@ export function nameOf(net: Network, id: string): string {
 /** 関係の文（括弧なし）と札。例：「二項分布 を変換すると ポアソン分布」＋[変換][極限]。 */
 export function relationParts(net: Network, r: Relation) {
   const k = kindOf(r.type);
-  const text = readingOf(r.type, r.premise, k?.reading)
-    .replace("□", nameOf(net, r.from))
-    .replace("■", nameOf(net, r.to));
-  // 前提知識は呼び名に言い分けが入っているので、札の文を重ねない
-  const pm = r.premise === "mathematical" ? r.premise : undefined;
-  const tag = r.mode ? short(MODES[r.mode]) : pm ? short(PREMISES[pm]) : r.axis ? r.axis : "";
-  const tagTitle = r.mode ? MODES[r.mode] : pm ? PREMISES[pm] : r.axis ? `比べる軸：${r.axis}` : "";
-  return { text, kind: kindName(r.type, r.premise), tag, tagTitle };
+  const text = readingOf(r.type, k?.reading).replace("□", nameOf(net, r.from)).replace("■", nameOf(net, r.to));
+  const tag = r.mode ? short(MODES[r.mode]) : r.axis ? r.axis : "";
+  const tagTitle = r.mode ? MODES[r.mode] : r.axis ? `比べる軸：${r.axis}` : "";
+  return { text, kind: kindName(r.type), tag, tagTitle };
 }
 
 export function Badges({ net, r }: { net: Network; r: Relation }) {
@@ -295,22 +291,27 @@ export default function RelationCard({ net, r, onTitle, context, open = false, a
 // 段と図がない関係（前提・応用など）は、関係の説明を「なぜ前に要るか」などの1段で出す。文・図・条件は教材の関係の1か所から。
 
 const STAGE_LABEL: Record<string, [string, string][]> = {
-  対比: [
+  比べる: [
     ["same", "同じ所"],
     ["differ", "違う所"],
     ["so", "だから"],
   ],
-  変換: [
+  移る: [
     ["origin", "元の形"],
     ["operation", "変える操作"],
     ["result", "行き着く形"],
   ],
 };
 const ALONE_LABEL: Record<string, string> = {
-  前提: "なぜ前に要るか",
-  応用: "どう使うか",
-  材料: "定義のどこに入るか",
-  種類: "なぜその一種か",
+  前提知識: "なぜ前に要るか",
+  定める: "定義のどこに入るか",
+  一種: "なぜその一種か",
+  特別な場合: "どこを固定した場合か",
+  従う: "何が何に従うか",
+  推定する: "何を推定するか",
+  導ける: "どう導けるか",
+  根拠: "何の根拠か",
+  同値: "なぜ同値か",
 };
 
 /** 図に出す分布の確率（k＝0 から）。数は engine から */

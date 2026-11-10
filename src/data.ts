@@ -252,7 +252,12 @@ export const KINDS_V2 = ((kinds as { types_v2?: object }).types_v2 ?? {}) as unk
 export const kindOf = (t: string): Kind | undefined =>
   t === LEARNING_KIND ? LEARNING_KIND_DEF : (KINDS_V2[t] ?? KINDS[t]);
 /** 学ぶ順の足すの読み方（前提知識。たどる） */
-const LEARNING_KIND_DEF: Kind = { definition: "B を学ぶのに、A を先に知っておきたい（製本 ⑥）", reading: "□ は ■ の前提知識", trace: true, required: [] };
+const LEARNING_KIND_DEF: Kind = {
+  definition: "B を学ぶのに、A を先に知っておきたい（製本 ⑥）",
+  reading: "□ は ■ の前提知識",
+  trace: true,
+  required: [],
+};
 export const MODES = kinds.modes as Record<string, string>;
 export const PREMISES = kinds.premises as Record<string, string>;
 
@@ -476,7 +481,7 @@ export type Step = { from: string; to: string; via: string }; // via：関係の
  * 公開データに種類の行が入って初めて分かった。v1 の種類の行はそれまで0だった）
  */
 function prereq(r: { type: string; from: string; to: string }): [string, string] {
-  return r.type === "種類" || r.type === "一種" ? [r.to, r.from] : [r.from, r.to];
+  return r.type === "一種" ? [r.to, r.from] : [r.from, r.to];
 }
 
 export function trace(net: Network, id: string): { order: string[]; steps: Step[] } {

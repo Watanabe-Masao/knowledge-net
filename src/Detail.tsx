@@ -22,16 +22,7 @@ import katex from "katex";
 import st from "./Detail.module.css";
 import { kindName, readingOf } from "./kinds";
 import Conditions, { conditionCount } from "./Conditions";
-import {
-  kindOf,
-  MODES,
-  PREMISES,
-  around,
-  type Concept,
-  type Formula as NetFormula,
-  type Network,
-  type Relation,
-} from "./data";
+import { kindOf, MODES, around, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
 
 /** 画面の型（key が任意）から部品の型へ（key のない記号は木から指せないので落とす） */
 const keyed = (f: NetFormula) => ({ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) });
@@ -43,8 +34,8 @@ export function name(net: Network, id: string): string {
 /** 関係を「□は■の前提」のような文にする。 */
 export function sentence(net: Network, r: Relation): string {
   const k = kindOf(r.type);
-  const s = readingOf(r.type, r.premise, k?.reading).replace("□", name(net, r.from)).replace("■", name(net, r.to));
-  const tag = r.mode ? `（${MODES[r.mode]}）` : r.premise === "mathematical" ? `（${PREMISES[r.premise]}）` : "";
+  const s = readingOf(r.type, k?.reading).replace("□", name(net, r.from)).replace("■", name(net, r.to));
+  const tag = r.mode ? `（${MODES[r.mode]}）` : "";
   return s + tag;
 }
 
@@ -166,69 +157,65 @@ function groupsOf(net: Network, id: string): Group[] {
   const g: Record<string, Group> = {
     // 一種の親（⑤ の一種。今の画面では種類）：親の定義が子の定義に入るので、定義に使う概念と同じ上の側（渡辺さん 2026-11-09）
     kindof: { key: "kindof", side: "before", title: "何の一種か", rows: [] },
-    // 特別な場合（⑤。今の画面では一般化）も一種と同じ考え方：一般の側が上、特別な場合が下（渡辺さん 2026-11-09 のスクリーンショットから。応用に落ちていた）
+    // 特別な場合（⑤）も一種と同じ考え方：一般の側が上、特別な場合が下（渡辺さん 2026-11-09 のスクリーンショットから。応用に落ちていた）
     specof: { key: "specof", side: "before", title: "何の特別な場合か", rows: [] },
     def: { key: "def", side: "before", title: "定義に使う概念", rows: [] },
     know: { key: "know", side: "before", title: "前提知識", rows: [] },
-    before: { key: "before", side: "before", title: "前提", rows: [] },
-    change: { key: "change", side: "change", title: "変換", rows: [] },
-    contrast: { key: "contrast", side: "contrast", title: "対比", rows: [] },
+    from: { key: "from", side: "before", title: "何から導けるか", rows: [] },
+    basis: { key: "basis", side: "before", title: "何が根拠か", rows: [] },
+    before: { key: "before", side: "before", title: "これを導く定理の点", rows: [] },
+    follows: { key: "follows", side: "change", title: "何に従うか", rows: [] },
+    estimates: { key: "estimates", side: "change", title: "何を推定するか", rows: [] },
+    change: { key: "change", side: "change", title: "移る", rows: [] },
+    equiv: { key: "equiv", side: "change", title: "同値", rows: [] },
+    contrast: { key: "contrast", side: "contrast", title: "比べる", rows: [] },
     used: { key: "used", side: "after", title: "これを定義に使う概念", rows: [] },
     // 前提知識の逆の側（このページの概念を前提知識にする概念）。応用に落ちていた（stats2-course の issue 266：学ぶ順の足すが増えて見えた）
     knownby: { key: "knownby", side: "after", title: "これを前提知識にする概念", rows: [] },
     kinds: { key: "kinds", side: "after", title: "この一種", rows: [] },
     specs: { key: "specs", side: "after", title: "この特別な場合", rows: [] },
-    after: { key: "after", side: "after", title: "応用", rows: [] },
+    followedby: { key: "followedby", side: "after", title: "これに従うもの", rows: [] },
+    estimatedby: { key: "estimatedby", side: "after", title: "これを推定するもの", rows: [] },
+    derives: { key: "derives", side: "after", title: "これから導けるもの", rows: [] },
+    grounds: { key: "grounds", side: "after", title: "これを根拠にするもの", rows: [] },
+    after: { key: "after", side: "after", title: "これを使う定理の点", rows: [] },
+  };
+  // ⑤ の種類（と学ぶ順の足す）ごとに、このページの概念が to の側か from の側かで見出しを決める（stats2-course #267 M7-1）
+  const PLACE: Record<string, [into: string, out: string]> = {
+    一種: ["kinds", "kindof"],
+    特別な場合: ["specs", "specof"],
+    定める: ["def", "used"],
+    前提知識: ["know", "knownby"],
+    移る: ["change", "change"],
+    同値: ["equiv", "equiv"],
+    従う: ["followedby", "follows"],
+    推定する: ["estimatedby", "estimates"],
+    導ける: ["from", "derives"],
+    根拠: ["basis", "grounds"],
+    比べる: ["contrast", "contrast"],
   };
   for (const r of relations) {
     const other = r.from === id ? r.to : r.from;
-    const tag = r.mode
-      ? MODES[r.mode]!.split("（")[0]
-      : r.type === "前提" && r.premise !== "learning"
-        ? undefined
-        : (r.kind_v2 ?? kindName(r.type, r.premise)); // 札は短く（極限・近似・厳密）。⑤ の行は ⑤ の名前（特別な場合・従う）
+    // 札は移るの厳密・近似・極限だけ（短く）。種類は見出しが言っている
+    const tag: string | undefined = r.mode ? MODES[r.mode]!.split("（")[0] : undefined;
     const row = {
       id: r.id,
       other: name(net, other),
       tag,
-      kind: r.kind_v2 ?? kindName(r.type, r.premise),
+      kind: kindName(r.type),
       text: r.gist ?? r.description ?? relationParts(net, r).text,
       label: relationParts(net, r).text,
-    }; // 前提は gist がないので、どこで使うかの説明（description）
+    }; // 前提知識は gist がないので、どこで使うかの説明（description）
     const into = r.to === id;
-    const k =
-      r.type === "種類"
-        ? into
-          ? "kinds"
-          : "kindof"
-        : r.type === "一般化"
-          ? into
-            ? "specs"
-            : "specof"
-          : r.type === "変換"
-            ? "change"
-            : r.type === "対比"
-              ? "contrast"
-              : r.type === "材料"
-                ? into
-                  ? "def"
-                  : "used"
-                : r.type === "前提" && r.premise === "learning"
-                  ? into
-                    ? "know"
-                    : "knownby"
-                  : into
-                    ? "before"
-                    : "after";
-    if (["def", "used", "know", "knownby", "kindof", "kinds", "specof", "specs"].includes(k)) row.tag = undefined; // 見出しが種類を言っている
-    if (row.tag === g[k]!.title) row.tag = undefined; // 見出しと同じ札は省く（「対比」の下の全行に「対比」と出さない。UI レビュー「重複と量」）
+    const place = PLACE[r.type];
+    const k = place ? (into ? place[0] : place[1]) : into ? "before" : "after";
     g[k]!.rows.push(row);
   }
   for (const d of derivations)
     (d.conclusion === id ? g.before : g.after)!.rows.push({
       id: d.id,
       other: d.conclusion === id ? d.premises.map((p) => name(net, p)).join("・") : name(net, d.conclusion),
-      tag: "導出",
+      tag: "定理の点",
       text: d.statement,
       der: true,
       label: d.statement,

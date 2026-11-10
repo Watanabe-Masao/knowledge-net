@@ -31,7 +31,7 @@ import { GLYPH_D, KIND_VAR, KindMark, kcol, kindName } from "./kinds";
 import s from "./RelationMap.module.css";
 
 /** 点線は対比と、近似・極限の変換（「近い」と「等しい」を混ぜない） */
-const DASH: Record<string, string | undefined> = { 対比: "6 4", approximation: "6 4", limit: "2 4" };
+const DASH: Record<string, string | undefined> = { 比べる: "6 4", approximation: "6 4", limit: "2 4" };
 
 /** ダブルタップを待つ間。ほかの動きの長さ（tokens の --dur、0.2 秒）にそろえる（渡辺さん 2026-11-07）。
  *  待っている間も、押した瞬間からカードは沈み、選んだ見た目へ移る（遅れて出たように見せない） */
@@ -1524,10 +1524,11 @@ export default function RelationMap({
   );
 }
 
-/** 下の札の種類と線の形の見本（対比は破線） */
+/** 下の札の種類と線の形の見本（比べるは破線） */
 const LEGEND: [string, string | undefined][] = [
-  ["変換", undefined],
-  ["一般化", undefined],
-  ["導出", undefined],
-  ["対比", "4 3"],
+  ["移る", undefined],
+  ["従う", undefined],
+  ["特別な場合", undefined],
+  ["導ける", undefined],
+  ["比べる", "4 3"],
 ];

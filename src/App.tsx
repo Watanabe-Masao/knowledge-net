@@ -687,7 +687,7 @@ export default function App() {
             ))}
           </ul>
           <Muted>
-            変換の線：実線＝{MODES.exact}、破線＝{MODES.approximation}、点線＝{MODES.limit}
+            移るの線：実線＝{MODES.exact}、破線＝{MODES.approximation}、点線＝{MODES.limit}
             。点線の枠＝定義だけの概念（説明はこれから）。
           </Muted>
         </Sheet>
