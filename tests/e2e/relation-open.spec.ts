@@ -98,7 +98,7 @@ test("変換（近似）：元の形・変える操作・行き着く形と、�
 // 確かめる対象：段のない種類（前提）は、説明を「なぜ前に要るか」の1段で出し、図も段も出さないこと。
 // 想定する故障：前提にも空の段・図の枠が出る（種類ごとの並びが崩れる）。
 test("前提：なぜ前に要るか の1段だけ（段・図なし）", async ({ page }) => {
-  const panel = await open(page, /独立/); // 組合せは二項分布の定義に使う概念（材料）になったので、前提の見本は独立
+  const panel = await open(page, /^独立 は/); // 学ぶ順の足す（二項分布 → 超幾何分布）の理由にも「独立」が出るので、行の頭で選ぶ。組合せは二項分布の定義に使う概念（材料）になったので、前提の見本は独立
   await expect(panel.getByText("なぜ前に要るか")).toBeVisible();
   await expect(panel.getByTestId("rel-stages")).toHaveCount(0);
   await expect(panel.getByTestId("rel-chart")).toHaveCount(0);

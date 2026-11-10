@@ -22,7 +22,7 @@ test("一種の親は「何の一種か」、親のページでは「この一�
   const d = await open(page, "TERM-binom");
   await expect(d.getByTestId("rel-group-kindof")).toContainText("確率分布");
   await expect(d.getByTestId("rel-group-kindof").locator("h3")).toHaveText("何の一種か");
-  await expect(d.getByTestId("rel-group-after")).not.toContainText("確率分布");
+  await expect(d.getByTestId("rel-group-after").filter({ hasText: "確率分布" })).toHaveCount(0); // 応用の段がないときも通る
   const p = await open(page, "TERM-dist");
   await expect(p.getByTestId("rel-group-kinds")).toContainText("二項分布");
 });
@@ -33,6 +33,9 @@ test("特別な場合は「何の特別な場合か」、一般の側のペー�
   const d = await open(page, "TERM-geom");
   await expect(d.getByTestId("rel-group-specof")).toContainText("負の二項分布");
   await expect(d.getByTestId("rel-group-after")).toHaveCount(0);
+  // 前提知識の逆の側（幾何分布 → 負の二項分布 の学ぶ順の足す）は「これを前提知識にする概念」で、応用に落とさない（stats2-course の issue 266。
+  // 検出の確かめ（2026-11-10）：Detail の knownby の振り分けを外すと、上の応用の数で落ちる）
+  await expect(d.getByTestId("rel-group-knownby")).toContainText("負の二項分布");
   const b = await open(page, "TERM-binom");
   await expect(b.getByTestId("rel-group-specs")).toContainText("ベルヌーイ分布");
 });

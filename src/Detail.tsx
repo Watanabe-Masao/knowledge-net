@@ -174,6 +174,8 @@ function groupsOf(net: Network, id: string): Group[] {
     change: { key: "change", side: "change", title: "変換", rows: [] },
     contrast: { key: "contrast", side: "contrast", title: "対比", rows: [] },
     used: { key: "used", side: "after", title: "これを定義に使う概念", rows: [] },
+    // 前提知識の逆の側（このページの概念を前提知識にする概念）。応用に落ちていた（stats2-course の issue 266：学ぶ順の足すが増えて見えた）
+    knownby: { key: "knownby", side: "after", title: "これを前提知識にする概念", rows: [] },
     kinds: { key: "kinds", side: "after", title: "この一種", rows: [] },
     specs: { key: "specs", side: "after", title: "この特別な場合", rows: [] },
     after: { key: "after", side: "after", title: "応用", rows: [] },
@@ -211,12 +213,14 @@ function groupsOf(net: Network, id: string): Group[] {
                 ? into
                   ? "def"
                   : "used"
-                : into && r.type === "前提" && r.premise === "learning"
-                  ? "know"
+                : r.type === "前提" && r.premise === "learning"
+                  ? into
+                    ? "know"
+                    : "knownby"
                   : into
                     ? "before"
                     : "after";
-    if (["def", "used", "know", "kindof", "kinds", "specof", "specs"].includes(k)) row.tag = undefined; // 見出しが種類を言っている
+    if (["def", "used", "know", "knownby", "kindof", "kinds", "specof", "specs"].includes(k)) row.tag = undefined; // 見出しが種類を言っている
     if (row.tag === g[k]!.title) row.tag = undefined; // 見出しと同じ札は省く（「対比」の下の全行に「対比」と出さない。UI レビュー「重複と量」）
     g[k]!.rows.push(row);
   }
