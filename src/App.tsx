@@ -271,8 +271,7 @@ export default function App() {
   const path = useMemo(() => {
     if (!tr || !sel || !net) return undefined;
     const only = new Set<string>([sel, ...tr.order]);
-    for (const st of tr.steps)
-      if (!net.relations.some((x) => x.from === st.from && x.to === st.to && x.type === st.via)) only.add(st.via); // 導出の点
+    for (const st of tr.steps) if (net.derivations.some((d) => d.id === st.via)) only.add(st.via); // 導出の点
     const seq = learnOrder(tr);
     const numbers = new Map(seq.map((id, i) => [id, i + 1] as const));
     return { only, numbers, seq };

@@ -465,9 +465,9 @@ export function merge(list: { id: string; data: unknown }[]): { net: Network; er
   return { net, errors };
 }
 
-export type Step = { from: string; to: string; via: string }; // via：関係の種類か、導出の id
+export type Step = { from: string; to: string; via: string }; // via：関係の種類か導出の id（学ぶ順を書き出した教材では、来た関係・学ぶ順・導出の id）
 
-/** id を理解するのにたどる前提を、近い順に返す（relation-types.yaml の trace が true の関係と、導出の前提）。 */
+/** id を理解するのにたどる前提を、近い順に返す（教材の仕上がりの学ぶ順。ないときは relation-types.yaml の trace が true の関係と、導出の前提）。 */
 /**
  * 前提をさかのぼる向き（先に学ぶ側 → 後の側）。ほとんどの種類は from → to。
  * 種類（⑤ の一種）だけは「from は to の一種」なので、親（to）の定義が子（from）の定義に入る：親が先（stats2-course の issue 289。
@@ -480,12 +480,18 @@ function prereq(r: { type: string; from: string; to: string }): [string, string]
 export function trace(net: Network, id: string): { order: string[]; steps: Step[] } {
   const back = new Map<string, Step[]>();
   const add = (s: Step) => back.set(s.to, [...(back.get(s.to) ?? []), s]);
-  for (const r of net.relations)
-    if (kindOf(r.type)?.trace) {
-      const [pre, post] = prereq(r);
-      add({ from: pre, to: post, via: r.type });
-    }
-  for (const d of net.derivations) for (const p of d.premises) add({ from: p, to: d.conclusion, via: d.id });
+  if (net.learningOrder.length) {
+    // 教材が仕上がりの学ぶ順を書き出したら、それだけをさかのぼる（via は来た関係・学ぶ順の id。stats2-course の issue 266 M6-3）。
+    // 定理の点（導出）への組は前提 → 点で、点から先へはつながないので、概念の経路には出ない
+    for (const e of net.learningOrder) add({ from: e.from, to: e.to, via: e.via });
+  } else {
+    for (const r of net.relations)
+      if (kindOf(r.type)?.trace) {
+        const [pre, post] = prereq(r);
+        add({ from: pre, to: post, via: r.type });
+      }
+    for (const d of net.derivations) for (const p of d.premises) add({ from: p, to: d.conclusion, via: d.id });
+  }
   const order: string[] = [];
   const steps: Step[] = [];
   const seen = new Set([id]);
