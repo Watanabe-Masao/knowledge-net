@@ -8,7 +8,7 @@
 // （2026-11-10）見本が learning_order を持つようになり、組の向きは教材の build が決める。orderByEdges で from と to を入れ替えると落ちる
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { learningOrder, merge } from "../../src/data";
+import { learningOrder, merge, trace } from "../../src/data";
 
 const net = merge([{ id: "stats2", data: JSON.parse(readFileSync("public/sample/stats2.json", "utf8")) }]).net;
 const cats = [...new Set([...net.concepts.values()].map((c) => c.category).filter((x): x is string => !!x))];
@@ -59,5 +59,25 @@ describe("仕上がりの学ぶ順（learning_order）", () => {
     expect(errors).toEqual([]);
     const order = learningOrder(n, ["stats2:TERM-fact", "stats2:TERM-perm", "stats2:TERM-comb"]);
     expect(order.indexOf("stats2:TERM-fact")).toBeLessThan(order.indexOf("stats2:TERM-perm"));
+  });
+});
+
+// 確かめる対象：1つの概念の「前提をさかのぼる」経路（trace）が、教材の仕上がりの学ぶ順（learning_order）だけでたどること（stats2-course の issue 266 M6-3）。
+// 想定する故障：関係の種類のたどり方のまま（⑥ の 3 の候補・足すと食い違う）。学ぶ順で外した組をたどる。来た所（via）が関係の種類のままで、どの組から来たか分からない。
+// 見つけ方：見本で、学ぶ順の足すでしか着かない組（階乗 → 順列。関係は 順列 → 階乗 の移るで、種類のたどり方ではたどらない）と、
+//   外した組（t 分布 → 標準正規分布）を見る。
+// 既存との違い：data.test.ts の trace は v1 の見本（learning_order なし）で、関係の種類のたどり方を見る
+// 検出の確かめ（2026-11-10）：trace の learning_order の分岐を外すと落ちる
+describe("前提をさかのぼる経路（learning_order）", () => {
+  it("足した組をたどり、外した組はたどらず、来た所は組の id", () => {
+    const perm = trace(net, "stats2:TERM-perm");
+    expect(perm.order).toContain("stats2:TERM-fact");
+    expect(perm.steps).toContainEqual({
+      from: "stats2:TERM-fact",
+      to: "stats2:TERM-perm",
+      via: "stats2:LRN-fact-perm",
+    });
+    expect(trace(net, "stats2:TERM-pdf").order).toContain("stats2:TERM-hist");
+    expect(trace(net, "stats2:TERM-std-normal").order).not.toContain("stats2:TERM-t");
   });
 });
