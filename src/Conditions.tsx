@@ -145,7 +145,7 @@ export default function Conditions({
   );
 }
 
-function Terms({ net, ids, onTerm }: { net: Network; ids?: string[]; onTerm?: (id: string) => void }) {
+export function Terms({ net, ids, onTerm }: { net: Network; ids?: string[]; onTerm?: (id: string) => void }) {
   const known = (ids ?? []).filter((id) => net.concepts.has(id));
   if (!known.length) return null;
   const nm = (id: string) => net.concepts.get(id)!.name;

@@ -1,0 +1,44 @@
+/* 概念のページの主張（stats2-course issue 188・291）。成立条件と同じ中立の色（画面の原則 18）。種類と番号は文字で添える（原則 7） */
+.wrap {
+  display: grid;
+  gap: 14px;
+}
+.group {
+  margin: 0 0 6px;
+  font-size: var(--fs-head);
+}
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.item {
+  padding: 10px 12px;
+  border-radius: var(--r-m);
+  background: var(--surface-2);
+  display: grid;
+  gap: 6px;
+}
+.head {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  font-size: var(--fs-small);
+  color: var(--ink-3);
+}
+.label {
+  color: var(--ink-2);
+}
+.kind {
+  color: var(--ink-3);
+}
+.text {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+.conds {
+  padding-top: 2px;
+}
