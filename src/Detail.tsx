@@ -22,7 +22,17 @@ import katex from "katex";
 import st from "./Detail.module.css";
 import { kindName, readingOf } from "./kinds";
 import Conditions, { conditionCount } from "./Conditions";
-import { kindOf, MODES, around, type Concept, type Formula as NetFormula, type Network, type Relation } from "./data";
+import Claims from "./Claims";
+import {
+  kindOf,
+  MODES,
+  around,
+  claimsOf,
+  type Concept,
+  type Formula as NetFormula,
+  type Network,
+  type Relation,
+} from "./data";
 
 /** 画面の型（key が任意）から部品の型へ（key のない記号は木から指せないので落とす） */
 const keyed = (f: NetFormula) => ({ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) });
@@ -321,6 +331,7 @@ export default function Detail({
     return { m, pmf, mean, hi };
   }, [c.chart]);
   const mainF = c.workspace ? c.formulas?.[c.workspace.formula] : c.formulas?.[0];
+  const cl = useMemo(() => claimsOf(net, c.id), [net, c.id]);
   const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
   // 作業台に出している式（主役・期待値・変換）は、下の一覧に重ねて出さない（同じものを2か所に置かない。#156）
   const used = new Set(
@@ -511,6 +522,18 @@ export default function Detail({
                 onTerm={onSelect}
                 plainClass={st.conds}
               />
+            </More>
+          )}
+          {(cl.about.length > 0 || cl.uses.length > 0) && (
+            <More
+              title={
+                <>
+                  主張 <span className={st.n}>{cl.about.length + cl.uses.length}</span>
+                </>
+              }
+              onOpen={reading}
+            >
+              <Claims net={net} self={c.id} about={cl.about} uses={cl.uses} onTerm={onSelect} />
             </More>
           )}
           {c.example || c.counterexample || c.misconceptions?.length ? (

@@ -93,6 +93,8 @@ export type Concept = {
   basis_formula?: string;
   /** v2 原本の基準の定義。定理の要件を関係から参照表示するためにも使う。 */
   basis?: { text: string; terms?: string[] };
+  /** 姿が命題の概念（定理）が持つ主張の id（型 v2。stats2-course #287） */
+  claims?: string[];
   example?: string;
   counterexample?: string;
   misconceptions?: { misconception: string; correction: string; labs?: LabRef[] }[];
@@ -188,7 +190,7 @@ export type Unit = {
 export type ExperimentData = import("@math-lab/ui").ExperimentDef;
 export type WalkTexts = import("@math-lab/ui").WalkTexts;
 export type ApplyTexts = import("@math-lab/ui").ApplyTexts;
-/** v2 の主張（stats2-course #263。画面は今は持つだけで、見せ方は M3 のあと） */
+/** v2 の主張（stats2-course #263）。概念のページに、その概念が出る主張を条件と一緒に出す（stats2-course の issue 188・291） */
 export type Claim = {
   id: string;
   label?: string;
@@ -196,6 +198,9 @@ export type Claim = {
   statement: { text: string; tree?: FormulaNode };
   premises?: { subjects?: string[]; predicates?: string[] };
   conclusion?: { subjects?: string[]; predicates?: string[] };
+  /** 条件の行（型の condition）。画面の形（conditions_detail）には toScreen が写す */
+  conditions?: unknown[];
+  conditions_detail?: ConditionDetail[];
   gist?: string;
   labs?: LabRef[];
   figures?: string[];
@@ -353,7 +358,32 @@ export function toScreen(d: CourseData): CourseData {
       ...(x.question ? { question: x.question } : {}),
       ...(x.focus ? { focus: x.focus } : {}),
     }));
-  return { ...d, relations: [...relations, ...adds], concepts };
+  const claims = d.claims?.map((c) => {
+    const rows = (c.conditions ?? []).filter((x): x is V2Cond => typeof x === "object" && x !== null);
+    return rows.length
+      ? { ...c, conditions_detail: rows.map((x) => ({ ...condDetail(x), scope: "math" as const })) }
+      : c;
+  });
+  return { ...d, relations: [...relations, ...adds], concepts, ...(claims ? { claims } : {}) };
+}
+
+/**
+ * 概念のページに出す主張（stats2-course の issue 188・291）。
+ * about：その概念について言う主張（結論にその概念が出る・その概念が主張を持つ。例：独立なベルヌーイの和は二項分布に従う）
+ * uses：その概念から言える主張（前提にその概念が出る。例：二項分布の正規近似）。両方に出る主張は about だけに置く
+ */
+export function claimsOf(net: Network, conceptId: string): { about: Claim[]; uses: Claim[] } {
+  const own = new Set(net.concepts.get(conceptId)?.claims ?? []);
+  const has = (side?: { subjects?: string[]; predicates?: string[] }) =>
+    !!side && [...(side.subjects ?? []), ...(side.predicates ?? [])].includes(conceptId);
+  const about: Claim[] = [],
+    uses: Claim[] = [];
+  for (const c of net.claims.values()) {
+    if (own.has(c.id) || has(c.conclusion)) about.push(c);
+    else if (has(c.premises)) uses.push(c);
+  }
+  const byLabel = (a: Claim, b: Claim) => (a.label ?? a.id).localeCompare(b.label ?? b.id, "ja", { numeric: true });
+  return { about: about.sort(byLabel), uses: uses.sort(byLabel) };
 }
 
 /** まとまりの間の1本の矢印（全体の見え方。言葉は動詞で、開いた直後に組・操作・条件の文） */

@@ -56,6 +56,7 @@ export default function Conditions({
   data,
   onTerm,
   plainClass,
+  testId = "conditions",
 }: {
   net: Network;
   detail?: ConditionDetail[];
@@ -65,6 +66,8 @@ export default function Conditions({
   onTerm?: (id: string) => void;
   /** 区分のないときの一覧の見た目（今の画面のまま） */
   plainClass?: string;
+  /** 主張の中の条件は "claim-conditions"（概念の成立条件と区別する） */
+  testId?: string;
 }) {
   if (!detail?.length)
     return (
@@ -88,7 +91,7 @@ export default function Conditions({
       </>
     );
   return (
-    <div className={s.wrap} data-testid="conditions">
+    <div className={s.wrap} data-testid={testId}>
       {ORDER.map((k) => {
         const rows = detail.filter((d) => kindOf(d) === k);
         if (!rows.length) return null;
@@ -145,7 +148,7 @@ export default function Conditions({
   );
 }
 
-function Terms({ net, ids, onTerm }: { net: Network; ids?: string[]; onTerm?: (id: string) => void }) {
+export function Terms({ net, ids, onTerm }: { net: Network; ids?: string[]; onTerm?: (id: string) => void }) {
   const known = (ids ?? []).filter((id) => net.concepts.has(id));
   if (!known.length) return null;
   const nm = (id: string) => net.concepts.get(id)!.name;
