@@ -33,9 +33,9 @@ test("概念のページに、主張を「この概念について」と「こ�
   const about = d.getByTestId("claims-about");
   const uses = d.getByTestId("claims-uses");
   await expect(about.locator("h4").first()).toHaveText("この概念について言えること");
-  await expect(about.locator("[data-testid^=claim-]")).toHaveCount(3);
-  await expect(about.locator("[data-testid^=claim-] p:first-child")).toContainText(["④-1", "④-4", "④-31"]);
-  await expect(uses.locator("[data-testid^=claim-] p:first-child")).toContainText(["④-3", "④-5a"]);
+  await expect(about.locator("li[data-testid^=claim-]")).toHaveCount(3);
+  await expect(about.locator("li[data-testid^=claim-] > p:first-child")).toContainText(["④-1", "④-4", "④-31"]);
+  await expect(uses.locator("li[data-testid^=claim-] > p:first-child")).toContainText(["④-3", "④-5a"]);
   const c5a = uses.getByTestId("claim-stats2:CLM-5a");
   await expect(c5a).toContainText("p は n によらず固定する");
   await expect(c5a.getByTestId("cond-仮定")).toHaveCount(1);

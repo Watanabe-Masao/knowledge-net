@@ -24,7 +24,7 @@ function Item({ c, net, self, onTerm }: { c: Claim; net: Network; self: string; 
       <p className={s.text}>{c.statement.text}</p>
       {c.conditions_detail?.length ? (
         <div className={s.conds}>
-          <Conditions net={net} detail={c.conditions_detail} math={[]} onTerm={onTerm} />
+          <Conditions net={net} detail={c.conditions_detail} math={[]} onTerm={onTerm} testId="claim-conditions" />
         </div>
       ) : null}
       <Terms net={net} ids={ends(c, self)} onTerm={onTerm} />
