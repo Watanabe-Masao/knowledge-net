@@ -308,7 +308,7 @@ function MultiBars({
 }
 
 /** 実験室の枠：上（戻る・題・ⓘ・段の列・今回の問い）、中（1つの段の中身）、下（押す所） */
-/** 考察の段の終わりに置く「この結果を言う概念」（実験の結果 → 概念・式。stats2-course #188 の 05）。
+/** 考察の段の終わりに置く「この結果を言う概念」（実験の結果 → 概念・式。stats2-course の issue 188 の 05）。
  *  実験室（Experiment）が問いの主概念・関連概念から作って渡す。問いの形ごとのファイルは触らない（どの形でも同じ所に出る：画面の原則 4） */
 export const FoundContext = createContext<ReactNode>(null);
 
