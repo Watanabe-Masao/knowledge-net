@@ -2,7 +2,7 @@
  "schema": "kn-schema",
  "version": 2,
  "schema_revision": 5,
- "experiment_revision": 4,
+ "experiment_revision": 5,
  "course": {
   "id": "stats2",
   "title": "統計検定2級",
@@ -17441,7 +17441,8 @@
         "stats2:TERM-binom"
        ],
        "predict": "期待値が同じ2つの分布の形の違い",
-       "operate": "n と p（n×p を同じに保つ）"
+       "operate": "n と p（n×p を同じに保つ）",
+       "retired": true
       },
       {
        "id": "stats2:binom-D-04",
@@ -18574,6 +18575,99 @@
     "確率の重い値ほど期待値を自分の方へ引き寄せる（てんびんの支点）",
     "期待値は表の中の値として出るとは限らない（さいころの 3.5）",
     "まれでも大きい値は期待値を大きく動かす。平均がなかなか落ち着かないこともある"
+   ],
+   "catalog": [
+    {
+     "id": "A",
+     "title": "期待値の位置",
+     "items": [
+      {
+       "id": "stats2:expect-A-01",
+       "title": "確率の重い値を増やすと、平均はどこへ動く？",
+       "finds": "確率の重さと期待値の位置",
+       "concept": "stats2:TERM-expect",
+       "predict": "表を変えたとき、何度も引いた平均がどこへ行くか（向きと値）",
+       "operate": "値ごとの確率（テーマの表を変える）",
+       "judge": "確率の重い値ほど期待値（重心）を自分の方へ引き寄せることを、値×確率の和で、別の表でも説明できる",
+       "open": "shift"
+      },
+      {
+       "id": "stats2:expect-A-02",
+       "title": "期待値は、実際に出る値？",
+       "finds": "期待値と実際に出る値の違い",
+       "concept": "stats2:TERM-expect"
+      },
+      {
+       "id": "stats2:expect-A-03",
+       "title": "まれでも大きい当たりが1本あると？",
+       "finds": "まれで大きい値と期待値・中央値",
+       "concept": "stats2:TERM-expect",
+       "related": [
+        "stats2:TERM-median"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "B",
+     "title": "理論と実験",
+     "items": [
+      {
+       "id": "stats2:expect-B-01",
+       "title": "何度も引くと、平均は期待値に近づく？",
+       "finds": "引く回数と平均のずれ",
+       "concept": "stats2:TERM-lln",
+       "related": [
+        "stats2:TERM-expect"
+       ]
+      },
+      {
+       "id": "stats2:expect-B-02",
+       "title": "期待値がいくらでも大きくなるくじ",
+       "finds": "和が有限でないときの平均",
+       "concept": "stats2:TERM-expect"
+      }
+     ]
+    },
+    {
+     "id": "C",
+     "title": "変換と線形性",
+     "items": [
+      {
+       "id": "stats2:expect-C-01",
+       "title": "全部の値を a 倍して b 足すと、期待値は？",
+       "finds": "E(aX＋b)＝aE(X)＋b",
+       "concept": "stats2:TERM-expect"
+      }
+     ]
+    },
+    {
+     "id": "D",
+     "title": "期待値と散らばり",
+     "items": [
+      {
+       "id": "stats2:expect-D-01",
+       "title": "期待値が同じくじは、同じくじ？",
+       "finds": "期待値だけでは決まらない散らばり",
+       "concept": "stats2:TERM-var",
+       "related": [
+        "stats2:TERM-expect"
+       ]
+      }
+     ]
+    },
+    {
+     "id": "E",
+     "title": "応用",
+     "items": [
+      {
+       "id": "stats2:expect-E-01",
+       "title": "くじの値段は、いくらまでなら得？",
+       "finds": "期待値で決める（と、決められないこと）",
+       "concept": "stats2:TERM-expect"
+      }
+     ]
+    }
    ],
    "links": {
     "concepts": [
