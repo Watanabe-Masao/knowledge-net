@@ -109,24 +109,71 @@ export type BinomDef = {
    *  （shift＝最初の問い・questions の id・break:反例の id・compare）。open のない問いは「作成中」として並べるだけ。
    *  retired は使わない印（重複などで外した問い。id は残し、入口には並べない）。concept は主（概念か関係 REL-…）、related（関連概念）は問いの側で持ち、サイトが概念で問いを絞るのに使う。predict・operate・judge は問いごとの予測・操作・理解判定。
    *  開く先（実験の仕組み）は共有してよいが、open は問いごとに1つ（同じ画面を開くだけで別の問いにしない） */
-  catalog?: {
+  catalog?: Catalog;
+};
+/** テーマ体系（型の部品 catalog。二項分布と値の表の実験室で同じ形。kn-experiment の改訂5） */
+export type Catalog = {
+  id: string;
+  title: string;
+  items: {
     id: string;
     title: string;
-    items: {
-      id: string;
-      title: string;
-      finds?: string;
-      predict?: string;
-      operate?: string;
-      judge?: string;
-      open?: string;
-      concept?: string;
-      related?: string[];
-      retired?: boolean;
-      apply?: ApplySpec;
-    }[];
+    finds?: string;
+    predict?: string;
+    operate?: string;
+    judge?: string;
+    open?: string;
+    concept?: string;
+    related?: string[];
+    retired?: boolean;
+    apply?: ApplySpec;
   }[];
-};
+}[];
+type CatalogItem = Catalog[number]["items"][number];
+
+/** 考察の段の終わりの「この結果を言う概念」（実験の結果 → 概念・式。stats2-course の issue 188 の 05）。主概念が先頭 */
+function foundOf(item: CatalogItem | undefined, props: Props): ReactNode {
+  const ids = item
+    ? [item.concept, ...(item.related ?? [])].filter((x, i, a): x is string => !!x && a.indexOf(x) === i)
+    : [];
+  if (!ids.length || !props.onConcept) return null;
+  const name = (id: string) => props.conceptName?.(id) ?? id;
+  return (
+    <section className={s.found} data-testid="exp-found">
+      <p className={s.foundHead}>この結果を言う概念（定義・式・主張を開く）</p>
+      <div className={s.chips}>
+        {ids.map((id, i) => (
+          <button
+            key={id}
+            type="button"
+            className={`${s.chip}${i === 0 ? ` ${s.on}` : ""}`}
+            data-testid={`exp-found-${id}`}
+            onClick={() => props.onConcept!(id)}
+          >
+            {name(id)}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** テーマ体系を入口の一覧（まとまりと問い）に写す。open のない問いは「まだ」、retired は並べない */
+function menuGroups(catalog: Catalog, formOf: (open: string) => MenuItem["form"]): MenuGroup[] {
+  const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1"); // stats2:binom-A-01 → A-01（まとまりの中の番号）
+  return catalog.map((g) => ({
+    id: g.id,
+    title: g.title,
+    items: g.items
+      .filter((it) => !it.retired)
+      .map(
+        (it): MenuItem =>
+          it.open
+            ? { id: it.open, key: short(it.id), form: formOf(it.open), title: it.title }
+            : { id: it.id, key: short(it.id), form: "shift", title: it.title, draft: true },
+      ),
+  }));
+}
 
 type WsSpec = { formula: WorkspaceData; mean?: FormulaData; vary: string[]; over: string };
 
@@ -165,7 +212,7 @@ export function Experiment(props: Props) {
     <WalkTextsContext.Provider value={props.walkTexts}>
       <ApplyTextsContext.Provider value={props.applyTexts}>
         {props.def.model === "table" ? (
-          <TableLab {...props} def={props.def} />
+          <TableEntry {...props} def={props.def} />
         ) : (
           <BinomEntry {...props} def={props.def} />
         )}
@@ -259,30 +306,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
         </button>
       ),
   };
-  // 考察の段の終わりに「この結果を言う概念」：問いの主概念と関連概念を押すと、その概念のページ（定義・式・主張）を開く
-  // （実験の結果 → 概念・式。stats2-course #188 の 05。概念 → 問い の逆向き）。テーマ体系から開いた問いだけ（主と関連が分かるもの）
-  const foundIds = item
-    ? [item.concept, ...(item.related ?? [])].filter((x, i, a): x is string => !!x && a.indexOf(x) === i)
-    : [];
-  const found =
-    foundIds.length && props.onConcept ? (
-      <section className={s.found} data-testid="exp-found">
-        <p className={s.foundHead}>この結果を言う概念（定義・式・主張を開く）</p>
-        <div className={s.chips}>
-          {foundIds.map((id, i) => (
-            <button
-              key={id}
-              type="button"
-              className={`${s.chip}${i === 0 ? ` ${s.on}` : ""}`}
-              data-testid={`exp-found-${id}`}
-              onClick={() => props.onConcept!(id)}
-            >
-              {name(id)}
-            </button>
-          ))}
-        </div>
-      </section>
-    ) : null;
+  const found = foundOf(item, props);
   const wrap = (x: ReactNode) => <FoundContext.Provider value={found}>{x}</FoundContext.Provider>;
   if (pick === null) {
     if (def.catalog?.length) {
@@ -292,19 +316,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
           : open.startsWith("break:")
             ? "break"
             : (def.questions?.find((q) => q.id === open)?.form ?? "shift");
-      const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1"); // stats2:binom-A-01 → A-01（まとまりの中の番号）
-      const groups: MenuGroup[] = def.catalog.map((g) => ({
-        id: g.id,
-        title: g.title,
-        items: g.items
-          .filter((it) => !it.retired)
-          .map(
-            (it): MenuItem =>
-              it.open
-                ? { id: it.open, key: short(it.id), form: formOf(it.open), title: it.title }
-                : { id: it.id, key: short(it.id), form: "shift", title: it.title, draft: true },
-          ),
-      }));
+      const groups = menuGroups(def.catalog, formOf);
       // 比べるは A〜F の後ろに、まとまりの1つとして置く（下に別のカードで重ねない。渡辺さん 2026-11-02）
       groups.push({
         id: "compare",
@@ -560,5 +572,31 @@ function BinomCompare({
     >
       {children}
     </LabShell>
+  );
+}
+
+/** 値の表の実験室の入口（期待値。stats2-course #119）：テーマ体系があれば「何を確かめたい？」から問いを選ぶ。
+ *  今開けるのは open: shift（最初の問い＝今の実験室の流れ）だけ。ほかの問いの形は問いごとに足す。テーマ体系がなければ今のまま */
+function TableEntry(props: Props & { def: TableDef }) {
+  const { def } = props;
+  const [pick, setPick] = useState<string | null>(props.open ?? (props.cards || !def.catalog?.length ? "shift" : null));
+  const [grp, setGrp] = useState<string | null>(null);
+  const item = pick ? def.catalog?.flatMap((g) => g.items).find((it) => it.open === pick && !it.retired) : undefined;
+  if (pick === null && def.catalog?.length)
+    return (
+      <QuestionMenu
+        title={def.title}
+        groups={menuGroups(def.catalog, () => "shift")}
+        group={grp ?? undefined}
+        onGroup={setGrp}
+        onPick={setPick}
+        onBack={props.onBack}
+      />
+    );
+  const back = def.catalog?.length && !props.open ? () => setPick(null) : props.onBack;
+  return (
+    <FoundContext.Provider value={foundOf(item, props)}>
+      <TableLab {...props} def={def} onBack={back} />
+    </FoundContext.Provider>
   );
 }

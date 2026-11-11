@@ -383,11 +383,7 @@ export default function App() {
           def={xdef}
           walkTexts={net.walkTexts.get(xdef.id.split(":")[0]!)}
           applyTexts={net.applyTexts.get(xdef.id.split(":")[0]!)}
-          open={
-            xdef.model === "binom" && q
-              ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open
-              : undefined
-          }
+          open={q ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open : undefined}
           cards={cards ?? undefined}
           onCards={(e) => setCards(e || null)}
           reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)}
