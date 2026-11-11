@@ -1,7 +1,16 @@
 // 実験室の共通の部品（#102・#119）：枠（段の列・問い・下の押す所）、分布の図、積み上がりの再生。
 // どのモデル（二項・値の表）の実験室も、これを組み合わせて作る。
 import katex from "katex";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { createRandom, emptySetRecord, runSets, type Mechanism, type SetRecord } from "@math-lab/engine";
 import { haptic, reduced, useTween } from "./motion";
 import { useRunner } from "./runner";
@@ -299,6 +308,10 @@ function MultiBars({
 }
 
 /** 実験室の枠：上（戻る・題・ⓘ・段の列・今回の問い）、中（1つの段の中身）、下（押す所） */
+/** 考察の段の終わりに置く「この結果を言う概念」（実験の結果 → 概念・式。stats2-course #188 の 05）。
+ *  実験室（Experiment）が問いの主概念・関連概念から作って渡す。問いの形ごとのファイルは触らない（どの形でも同じ所に出る：画面の原則 4） */
+export const FoundContext = createContext<ReactNode>(null);
+
 export function LabShell({
   title,
   question,
@@ -328,6 +341,7 @@ export function LabShell({
   /** 段の列を出すか（入口の「何を確かめたい？」では出さない） */ stepper?: boolean;
   qLabel?: string;
 }) {
+  const found = useContext(FoundContext);
   return (
     <div className={s.root} data-testid="experiment">
       <div className={s.top} id="exp-top">
@@ -369,6 +383,7 @@ export function LabShell({
       </div>
       <div className={s.body} key={stage}>
         {body}
+        {stages[stage] === "考察" && found}
       </div>
       {cta ? <div className={s.bar}>{cta}</div> : null}{" "}
       {/* 押す所のない画面（入口・比べる）は下の帯を出さない（空の帯が横にはみ出していた） */}

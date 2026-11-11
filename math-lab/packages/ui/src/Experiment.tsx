@@ -5,7 +5,7 @@
 // - 公開サイトは個人の記録を持たない。記録カードはその端末と URL だけ（外部と学習履歴への接続は今はしない。stats2-course issue 171）
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { modelPmf, type CardMechanism } from "@math-lab/engine";
-import { LabShell, peak, r2, tex } from "./labParts";
+import { FoundContext, LabShell, peak, r2, tex } from "./labParts";
 import { TableLab, type TableDef } from "./ExperimentTable";
 import {
   BreakQ,
@@ -259,6 +259,31 @@ function BinomEntry(props: Props & { def: BinomDef }) {
         </button>
       ),
   };
+  // 考察の段の終わりに「この結果を言う概念」：問いの主概念と関連概念を押すと、その概念のページ（定義・式・主張）を開く
+  // （実験の結果 → 概念・式。stats2-course #188 の 05。概念 → 問い の逆向き）。テーマ体系から開いた問いだけ（主と関連が分かるもの）
+  const foundIds = item
+    ? [item.concept, ...(item.related ?? [])].filter((x, i, a): x is string => !!x && a.indexOf(x) === i)
+    : [];
+  const found =
+    foundIds.length && props.onConcept ? (
+      <section className={s.found} data-testid="exp-found">
+        <p className={s.foundHead}>この結果を言う概念（定義・式・主張を開く）</p>
+        <div className={s.chips}>
+          {foundIds.map((id, i) => (
+            <button
+              key={id}
+              type="button"
+              className={`${s.chip}${i === 0 ? ` ${s.on}` : ""}`}
+              data-testid={`exp-found-${id}`}
+              onClick={() => props.onConcept!(id)}
+            >
+              {name(id)}
+            </button>
+          ))}
+        </div>
+      </section>
+    ) : null;
+  const wrap = (x: ReactNode) => <FoundContext.Provider value={found}>{x}</FoundContext.Provider>;
   if (pick === null) {
     if (def.catalog?.length) {
       const formOf = (open: string): MenuItem["form"] =>
@@ -334,61 +359,61 @@ function BinomEntry(props: Props & { def: BinomDef }) {
       </QuestionMenu>
     );
   }
-  if (pick === "shift") return <ShiftQ {...common}>{infoSheet}</ShiftQ>;
+  if (pick === "shift") return wrap(<ShiftQ {...common}>{infoSheet}</ShiftQ>);
   if (pick === "break" || pick.startsWith("break:"))
-    return (
+    return wrap(
       <BreakQ key={pick} {...common} initial={pick.slice(6) || undefined}>
         {infoSheet}
-      </BreakQ>
+      </BreakQ>,
     );
   if (pick === "compare")
-    return (
+    return wrap(
       <BinomCompare def={def} deck={deck} onBack={menu} onInfo={() => setInfo(true)}>
         {infoSheet}
-      </BinomCompare>
+      </BinomCompare>,
     );
   const q = def.questions?.find((x) => x.id === pick);
   if (!q) return null;
   if (q.form === "spread")
-    return (
+    return wrap(
       <SpreadQ {...common} q={q}>
         {infoSheet}
-      </SpreadQ>
+      </SpreadQ>,
     );
   if (q.form === "conv")
-    return (
+    return wrap(
       <ConvQ {...common} q={q}>
         {infoSheet}
-      </ConvQ>
+      </ConvQ>,
     );
   if (q.form === "paths")
-    return (
+    return wrap(
       <PathsQ {...common} q={q}>
         {infoSheet}
-      </PathsQ>
+      </PathsQ>,
     );
   if (q.form === "repeat")
-    return (
+    return wrap(
       <RepeatQ {...common} q={q}>
         {infoSheet}
-      </RepeatQ>
+      </RepeatQ>,
     );
   if (q.form === "mean")
-    return (
+    return wrap(
       <MeanQ {...common} q={q}>
         {infoSheet}
-      </MeanQ>
+      </MeanQ>,
     );
   if (q.form === "var")
-    return (
+    return wrap(
       <VarQ {...common} q={q}>
         {infoSheet}
-      </VarQ>
+      </VarQ>,
     );
-  return (
+  return wrap(
     <ProbQ {...common} q={q}>
       {infoSheet}
-    </ProbQ>
+    </ProbQ>,
   );
 }
 
