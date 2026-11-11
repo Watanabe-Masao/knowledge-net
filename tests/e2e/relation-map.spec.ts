@@ -423,9 +423,22 @@ test("指：ピンチの後に流れない、地図は指の真下に付く、�
   await m.getByTestId("rm-fit").click({ force: true });
   await page.waitForTimeout(500);
   const y0 = (await canvasAt(page)).y;
+  // 落ちたときの手掛かり（stats2-course #285）：WebKit の CI で、地図が遊びの 8px 分しか動かず同じ値（192.097…）で落ちることがある。
+  // 指を置いた所に何があるか（語のカード・線・何もない所）と、動かした時間を添える（手元に WebKit がなく再現できないため）
+  const hit = await page.evaluate(
+    ([x, y]) => {
+      const el = document.elementFromPoint(x, y);
+      return el?.closest("[data-testid]")?.getAttribute("data-testid") ?? el?.tagName ?? "なし";
+    },
+    [cx, cy + 100] as [number, number],
+  );
   const drag = Array.from({ length: 11 }, (_, i) => ({ 1: [cx, cy + 100 - 20 * i] as [number, number] }));
+  const t0 = Date.now();
   const y1 = await fingers(page, drag, 150);
-  expect(Math.abs(y1 - y0 + 200), "地図が指に付いてこない（離す前）").toBeLessThan(3);
+  expect(
+    Math.abs(y1 - y0 + 200),
+    `地図が指に付いてこない（離す前。指を置いた所：${hit}・動いた ${Math.round(y1 - y0)}px・${Date.now() - t0}ms）`,
+  ).toBeLessThan(3);
 
   await m.getByTestId("rm-fit").click({ force: true });
   await page.waitForTimeout(500);
