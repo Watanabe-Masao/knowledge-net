@@ -575,7 +575,7 @@ function BinomCompare({
   );
 }
 
-/** 値の表の実験室の入口（期待値。stats2-course #119）：テーマ体系があれば「何を確かめたい？」から問いを選ぶ。
+/** 値の表の実験室の入口（期待値。stats2-course の issue 119）：テーマ体系があれば「何を確かめたい？」から問いを選ぶ。
  *  今開けるのは open: shift（最初の問い＝今の実験室の流れ）だけ。ほかの問いの形は問いごとに足す。テーマ体系がなければ今のまま */
 function TableEntry(props: Props & { def: TableDef }) {
   const { def } = props;

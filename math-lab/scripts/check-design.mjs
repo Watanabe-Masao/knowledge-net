@@ -20,10 +20,25 @@ walk("packages/ui/src");
 const bad = [];
 for (const f of files) {
   bad.push(...motionIssues(f, readFileSync(f, "utf8")));
+  // 注釈は確かめない（注釈の issue 番号「#119」「#188」を色の値と読んで止まっていた。2026-11-11 に3回。複数の行にわたる /** … */ も外す）
+  let inBlock = false;
   readFileSync(f, "utf8")
     .split("\n")
     .forEach((line, i) => {
-      const code = line.replace(/\/\/.*$|\/\*.*?\*\//g, "");
+      let code = line;
+      if (inBlock) {
+        const end = code.indexOf("*/");
+        if (end < 0) return;
+        code = code.slice(end + 2);
+        inBlock = false;
+      }
+      code = code.replace(/\/\*.*?\*\//g, "");
+      const open = code.indexOf("/*");
+      if (open >= 0) {
+        code = code.slice(0, open);
+        inBlock = true;
+      }
+      code = code.replace(/\/\/.*$/, "");
       if (/#[0-9a-fA-F]{3,8}\b(?![\w-])/.test(code) && !/data-testid|#\{|href=|url\(#/.test(code))
         bad.push(`${f}:${i + 1} 色の値は tokens.json へ：${line.trim()}`);
       if (/\b(rgba?|hsla?)\(/.test(code)) bad.push(`${f}:${i + 1} 色の値は tokens.json へ：${line.trim()}`);

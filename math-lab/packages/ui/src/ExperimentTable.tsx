@@ -66,7 +66,7 @@ export type TableDef = {
     concept?: string;
   }[];
   points?: string[];
-  /** テーマ体系（kn-experiment の改訂5。stats2-course #119） */
+  /** テーマ体系（kn-experiment の改訂5。stats2-course の issue 119） */
   catalog?: import("./Experiment").Catalog;
 };
 
