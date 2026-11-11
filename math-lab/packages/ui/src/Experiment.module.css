@@ -2216,3 +2216,16 @@
     animation: none;
   }
 }
+/* 考察の段の終わりの「この結果を言う概念」（stats2-course #188 の 05） */
+.found {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+}
+.foundHead {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-2);
+}
