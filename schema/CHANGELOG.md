@@ -55,6 +55,7 @@
 | 2 | 2026-11-05 | `$defs.walkTexts`：解き方の公式の文（記号の意味・呼び名・選び肢の形・行の題と文と別の言い方）。engine は文の型の id・穴の値・別の言い方だけを返す（stats2-course #211） |
 | 3 | 2026-11-05 | `$defs.applyTexts`：応用の解き方の段の文（語の名前の穴の言葉・段の題と文と別の言い方）（stats2-course #211） |
 | 4 | 2026-11-10 | 芯の共通の部品（gid・gids・text・texts・valueTable）を kn-schema-v1.json から kn-schema-v2.json の同じ部品へ指し替えた（v1 の型を外すため。stats2-course #267 M7-3）。中身は変わらない |
+| 5 | 2026-11-11 | `$defs.catalog`（テーマ体系）を二項分布の実験室から部品に移し、値の表の実験室（model: table）にも任意の `catalog` を置けるようにした（stats2-course #119：期待値の問いのテーマ体系）。二項分布の形は変わらない |
 
 ## v2（schema/kn-schema-v2.json）
 

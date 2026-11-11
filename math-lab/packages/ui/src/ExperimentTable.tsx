@@ -66,6 +66,8 @@ export type TableDef = {
     concept?: string;
   }[];
   points?: string[];
+  /** テーマ体系（kn-experiment の改訂5。stats2-course の issue 119） */
+  catalog?: import("./Experiment").Catalog;
 };
 
 const DIRS = ["左へ動く", "動かない", "右へ動く"] as const;
