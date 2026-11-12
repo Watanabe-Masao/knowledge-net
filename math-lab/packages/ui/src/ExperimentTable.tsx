@@ -283,6 +283,78 @@ function TableCompare({
   );
 }
 
+/** 考察：値×確率の和を、今の表（値と重み）で1段ずつ項に開く（engine の expand。stats2-course の issue 365：問いの形ごとに同じ物を書かない） */
+function TableReason({
+  title,
+  reasonFormula,
+  values,
+  weights,
+  note,
+}: {
+  title?: string;
+  reasonFormula?: FormulaData;
+  values: number[];
+  weights: number[];
+  note?: ReactNode;
+}) {
+  const support = useMemo(() => supportOf(tbl(values, weights)), [values, weights]);
+  const steps = useMemo(() => {
+    const t = reasonFormula?.tree;
+    if (!t) return [];
+    const tot = weights.reduce((a, b) => a + b, 0);
+    return expand(t, {
+      domains: { x: support },
+      fns: { p: (x: number) => (values.includes(x) ? weights[values.indexOf(x)]! / tot : 0) },
+    });
+  }, [reasonFormula, values, weights, support]);
+  const [si, setSi] = useState(0);
+  const num = (v: number) => String(Number(v.toPrecision(4)));
+  const lhs = reasonFormula?.tree
+    ? toTex((reasonFormula.tree as { args: FormulaNode[] }).args[0]!, { symbols: reasonFormula.symbols })
+    : "E(X)";
+  const shownStep = Math.min(si, Math.max(0, steps.length - 1));
+  return (
+    <section className={s.card}>
+      <p className={s.h}>
+        {title ?? "式で検証"}
+        <span>{steps.length > 1 ? `${shownStep + 1}／${steps.length}` : ""}</span>
+      </p>
+      {steps.length > 0 && (
+        <div
+          className={s.math}
+          data-testid="exp-expand"
+          dangerouslySetInnerHTML={{
+            __html: tex(`${lhs}=${toTex(steps[shownStep]!, { symbols: reasonFormula?.symbols, num })}`),
+          }}
+        />
+      )}
+      {steps.length > 1 && (
+        <div className={s.two}>
+          <button
+            type="button"
+            className={s.secondary}
+            disabled={shownStep <= 0}
+            onClick={() => setSi(shownStep - 1)}
+            aria-label="前の段"
+          >
+            ‹ 前の段
+          </button>
+          <button
+            type="button"
+            className={s.secondary}
+            disabled={shownStep >= steps.length - 1}
+            onClick={() => setSi(shownStep + 1)}
+            aria-label="次の段"
+          >
+            次の段 ›
+          </button>
+        </div>
+      )}
+      {note}
+    </section>
+  );
+}
+
 /** 実験室の「基本と用語」（値の表）。入口の一覧と問いの中で同じ面を開く（画面の原則 4。二項分布の LabInfo と同じ部品） */
 export function TableInfo({
   def,
@@ -392,28 +464,6 @@ export function TableLab({
     </div>
   );
   const labelOf = (v: number) => labels[support.indexOf(v)] ?? `${v}${unit}`;
-
-  // 理由：E(X)＝Σ x p(x) を今の表で項に開いて計算する（engine の domains・fns）
-  const steps = useMemo(() => {
-    const t = reasonFormula?.tree;
-    if (!t) return [];
-    const tot = theme.compare.reduce((a, b) => a + b, 0);
-    const env = {
-      domains: { x: support },
-      fns: {
-        p: (x: number) => {
-          const i = theme.values.indexOf(x);
-          return i < 0 ? 0 : theme.compare[i]! / tot;
-        },
-      },
-    };
-    return expand(t, env);
-  }, [reasonFormula, theme, support]);
-  const [si, setSi] = useState(0);
-  const num = (v: number) => String(Number(v.toPrecision(4)));
-  const lhs = reasonFormula?.tree
-    ? toTex((reasonFormula.tree as { args: FormulaNode[] }).args[0]!, { symbols: reasonFormula.symbols })
-    : "E(X)";
 
   const themeChips = (
     <div className={s.themes} role="radiogroup" aria-label="テーマ">
@@ -708,46 +758,14 @@ export function TableLab({
       </button>
     );
   } else if (stage === 3) {
-    const shownStep = Math.min(si, Math.max(0, steps.length - 1));
     body = (
       <>
-        <section className={s.card}>
-          <p className={s.h}>
-            {def.reason?.title ?? "式で検証"}
-            <span>{steps.length > 1 ? `${shownStep + 1}／${steps.length}` : ""}</span>
-          </p>
-          {steps.length > 0 && (
-            <div
-              className={s.math}
-              data-testid="exp-expand"
-              dangerouslySetInnerHTML={{
-                __html: tex(`${lhs}=${toTex(steps[shownStep]!, { symbols: reasonFormula?.symbols, num })}`),
-              }}
-            />
-          )}
-          {steps.length > 1 && (
-            <div className={s.two}>
-              <button
-                type="button"
-                className={s.secondary}
-                disabled={shownStep <= 0}
-                onClick={() => setSi(shownStep - 1)}
-                aria-label="前の段"
-              >
-                ‹ 前の段
-              </button>
-              <button
-                type="button"
-                className={s.secondary}
-                disabled={shownStep >= steps.length - 1}
-                onClick={() => setSi(shownStep + 1)}
-                aria-label="次の段"
-              >
-                次の段 ›
-              </button>
-            </div>
-          )}
-        </section>
+        <TableReason
+          title={def.reason?.title}
+          reasonFormula={reasonFormula}
+          values={theme.values}
+          weights={theme.compare}
+        />
         {def.reason?.steps.length ? (
           <section className={s.card}>
             <p className={s.h}>なぜそうなる？</p>
@@ -902,20 +920,6 @@ export function TableSupportQ({
   const isValue = theme.values.some((v) => Math.abs(v - m) < 1e-9);
   const actual = isValue ? 0 : 1;
   const [sheet, setSheet] = useState(false);
-  const steps = useMemo(() => {
-    const t = reasonFormula?.tree;
-    if (!t) return [];
-    const tot = theme.start.reduce((a, b) => a + b, 0);
-    return expand(t, {
-      domains: { x: support },
-      fns: { p: (x: number) => (theme.values.includes(x) ? theme.start[theme.values.indexOf(x)]! / tot : 0) },
-    });
-  }, [reasonFormula, theme, support]);
-  const [si, setSi] = useState(0);
-  const num = (v: number) => String(Number(v.toPrecision(4)));
-  const lhs = reasonFormula?.tree
-    ? toTex((reasonFormula.tree as { args: FormulaNode[] }).args[0]!, { symbols: reasonFormula.symbols })
-    : "E(X)";
 
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
@@ -1112,46 +1116,14 @@ export function TableSupportQ({
       </button>
     );
   } else {
-    const shownStep = Math.min(si, Math.max(0, steps.length - 1));
     body = (
-      <section className={s.card}>
-        <p className={s.h}>
-          {def.reason?.title ?? "式で検証"}
-          <span>{steps.length > 1 ? `${shownStep + 1}／${steps.length}` : ""}</span>
-        </p>
-        {steps.length > 0 && (
-          <div
-            className={s.math}
-            data-testid="exp-expand"
-            dangerouslySetInnerHTML={{
-              __html: tex(`${lhs}=${toTex(steps[shownStep]!, { symbols: reasonFormula?.symbols, num })}`),
-            }}
-          />
-        )}
-        {steps.length > 1 && (
-          <div className={s.two}>
-            <button
-              type="button"
-              className={s.secondary}
-              disabled={shownStep <= 0}
-              onClick={() => setSi(shownStep - 1)}
-              aria-label="前の段"
-            >
-              ‹ 前の段
-            </button>
-            <button
-              type="button"
-              className={s.secondary}
-              disabled={shownStep >= steps.length - 1}
-              onClick={() => setSi(shownStep + 1)}
-              aria-label="次の段"
-            >
-              次の段 ›
-            </button>
-          </div>
-        )}
-        <p className={s.muted}>値×確率をすべて足した数なので、表の値の間（重心）に来ることがある</p>
-      </section>
+      <TableReason
+        title={def.reason?.title}
+        reasonFormula={reasonFormula}
+        values={theme.values}
+        weights={theme.start}
+        note={<p className={s.muted}>値×確率をすべて足した数なので、表の値の間（重心）に来ることがある</p>}
+      />
     );
     cta = (
       <button type="button" className={s.primary} onClick={() => go(0)}>
