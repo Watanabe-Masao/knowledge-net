@@ -283,6 +283,11 @@ export function LearnPage({ net, focus = null }: { net: Network; focus?: Focus |
 type Item = { id: string; title: string; open?: string; concept?: string; related?: string[]; retired?: boolean };
 /** 主が関係（REL-…）なら、その両端の概念として数える（stats2-course issue 169）。概念ならそれ自身 */
 type Ends = (id: string) => string[];
+/** まとまりの範囲（A〜F・A〜E）。実験室ごとに数が違うので、使う問いのあるまとまりから作る（stats2-course #188 の iPhone 確認 2026-11-12：期待値は A〜E なのに A〜F と出ていた） */
+const groupRange = (x: ExperimentData) => {
+  const ids = (x.catalog ?? []).filter((g) => g.items.some((it) => !it.retired)).map((g) => g.id);
+  return ids.length > 1 ? `${ids[0]}〜${ids[ids.length - 1]}` : (ids[0] ?? "");
+};
 const itemsOf = (x: ExperimentData): Item[] => (x.catalog ?? []).flatMap((g) => g.items).filter((it) => !it.retired); // 使わない印の問いは数えない（値の表の実験室もテーマ体系を持てる。改訂5）
 /** 分類ごとの実験の問いの数（ライブラリ・島の地図の「実験 N」）。実験室のタブと同じ数え方（itemsOf：使わない印の問いを除く）。
  *  問いの一覧のない実験室は 1 と数える。どの分類かは実験室のつなぐ概念の1つ目で決める */
@@ -403,7 +408,7 @@ export function LabPage({
           <Muted as="p" data-testid="lab-rule">
             {picked.length
               ? rule
-              : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて A〜F から選ぶ。"}
+              : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて目的のまとまりから選ぶ。"}
           </Muted>
           {sheet ? (
             <Sheet
@@ -540,7 +545,8 @@ export function LabPage({
                   <>
                     <b>{lead(x)}</b>
                     <Muted as="span">
-                      目的から問いを選ぶ（A〜F の問い {itemsOf(x).filter((it) => it.open).length}／{itemsOf(x).length}
+                      目的から問いを選ぶ（{groupRange(x)} の問い {itemsOf(x).filter((it) => it.open).length}／
+                      {itemsOf(x).length}
                       ）・自分で条件を決めて比べる
                     </Muted>
                   </>

@@ -28,9 +28,6 @@
   font-size: var(--fs-small);
   color: var(--ink-3);
 }
-.label {
-  color: var(--ink-2);
-}
 .kind {
   color: var(--ink-3);
 }
