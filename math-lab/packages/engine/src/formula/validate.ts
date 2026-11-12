@@ -5,6 +5,7 @@ const ARITY: Partial<Record<string, number>> = { div: 2, pow: 2, neg: 1, sqrt: 1
 
 export function validateFormula(f: Formula): string[] {
   const keys = new Set(f.symbols.map((s) => s.key));
+  const kinds = new Map(f.symbols.map((s) => [s.key, s.kind]));
   const bad: string[] = [];
   const walk = (n: FormulaNode, bound: Set<string>) => {
     if (isNum(n)) {
@@ -21,6 +22,11 @@ export function validateFormula(f: Formula): string[] {
     if (n.op === "fn" && !(n.name && (keys.has(n.name) || (COMMON_FNS as readonly string[]).includes(n.name))))
       bad.push(`関数 ${n.name ?? "（名前なし）"} が symbols にも共通の関数にもない`);
     if (n.var && !keys.has(n.var)) bad.push(`動かす記号 ${n.var} が symbols にない`);
+    // 動かす記号は kind: index の記号だけ。param（μ）・rv（X）・const を Σ・∫・Π が取り込むと、
+    // 決まった数が和の中で動き、式の意味が変わる（stats2-course #370。F-var-sum のレビューで見つけた）
+    const vk = n.var ? kinds.get(n.var) : undefined;
+    if (n.var && vk && vk !== "index")
+      bad.push(`動かす記号 ${n.var} は kind が ${vk}（動かせるのは index の記号だけ）`);
     const b = n.var ? new Set([...bound, n.var]) : bound;
     n.args.forEach((a) => walk(a, b));
     if (n.lower) walk(n.lower, bound);
