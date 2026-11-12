@@ -43,11 +43,21 @@ describe("スコープ：Σ・∫ の動かす記号は外に漏れず、取り�
     expect(boundSymbols(r.tree)).toEqual(new Set(["x2"]));
     expect(toTex(r.tree, { symbols: r.symbols })).toBe("x\\sum_{x′}x′p(x′)");
   });
-  it("引数に Σ と同じ名前があっても取り込まれない：E(x) → Σ_{x2} …", () => {
-    const target: FormulaNode = { op: "fn", name: "E", args: [{ sym: "x" }] };
-    const r = openSymbol(target, [S("x"), S("E")], "E", eDef);
-    expect(boundSymbols(r.tree).has("x")).toBe(false);
-    expect(freeSymbols(r.tree).has("x")).toBe(false); // E(X) の X は Σ の中で使われていないので、x は消える（E の定義は X を使わない）
+  // 確かめる対象：とりうる値すべての和の形（Σ_x x p(x)・Σ_x (x−μ)²p(x)）は、引数が元の確率変数のときだけ開く。
+  // 想定する故障：E(Y)・V(Z)・E(aX+b) を Σ_x … p(x) で開き、p(x)（X の確率）が残って別の確率変数の式になる（stats2-course #119 で F-var-sum を足して見つけた）。
+  // 見つけ方：引数が別の記号・式のときは開かず理由を返し、同じ X なら開くこと。
+  // 既存との違い：前は E(x) を開いて Σ の付け替えを見ていたが、その開き方自体が誤りだった。付け替えは上の「外の x」で見ている。
+  // 検出の確かめ（2026-11-12）：open.ts の hasSupportSum の止めを外すと、このテストと「対応」のテスト（μ_Z が式の中にない）で落ちることを見た
+  it("とりうる値すべての和の形は、引数を替えて開かない：E(x)・E(aX+b) は理由を返し、E(X) は開く", () => {
+    for (const arg of [
+      { sym: "x" },
+      { op: "add", args: [{ op: "mul", args: [{ sym: "a" }, { sym: "X" }] }, { sym: "b" }] },
+    ] as FormulaNode[]) {
+      const r = openSymbol({ op: "fn", name: "E", args: [arg] }, [S("x"), S("X"), S("E")], "E", eDef);
+      expect(r.count).toBe(0);
+      expect(r.reason).toContain("引数を替えて開けない");
+    }
+    expect(openSymbol({ op: "fn", name: "E", args: [{ sym: "X" }] }, [S("X"), S("E")], "E", eDef).count).toBe(1);
   });
   it("性質：開いても、元の自由な記号は自由なまま（縛られない）", () => {
     const leaf = fc.constantFrom<FormulaNode>(

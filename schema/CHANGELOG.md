@@ -56,6 +56,7 @@
 | 3 | 2026-11-05 | `$defs.applyTexts`：応用の解き方の段の文（語の名前の穴の言葉・段の題と文と別の言い方）（stats2-course #211） |
 | 4 | 2026-11-10 | 芯の共通の部品（gid・gids・text・texts・valueTable）を kn-schema-v1.json から kn-schema-v2.json の同じ部品へ指し替えた（v1 の型を外すため。stats2-course #267 M7-3）。中身は変わらない |
 | 5 | 2026-11-11 | `$defs.catalog`（テーマ体系）を二項分布の実験室から部品に移し、値の表の実験室（model: table）にも任意の `catalog` を置けるようにした（stats2-course #119：期待値の問いのテーマ体系）。二項分布の形は変わらない |
+| 6 | 2026-11-12 | 値の表の実験室に任意の項目を2つ：テーマの `same_mean`（期待値が start と同じ別の表。重みは全部正と、何を変えたかの文）と `spread_reason`（散らばりの考察の式と段。形は `reason` と同じ）。期待値の実験室の D-01（期待値が同じ2つの表。開く先 `same-mean`）のため（stats2-course #119） |
 
 ## v2（schema/kn-schema-v2.json）
 

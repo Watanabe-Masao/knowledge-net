@@ -44,6 +44,8 @@ export type TableTheme = {
   compare: number[];
   /** 何を変えたかの文（「大当たりを 1 本から 3 本に」） */
   change: string;
+  /** 期待値が start と同じ別の表（重みは全部正）と、何を変えたかの文（kn-experiment の改訂6。期待値の実験室 D-01。stats2-course #119） */
+  same_mean?: { weights: number[]; change: string };
 };
 export type TableDef = {
   id: string;
@@ -54,6 +56,8 @@ export type TableDef = {
   model: "table";
   themes: TableTheme[];
   reason?: { title: string; concept?: string; formula?: number; steps: string[] };
+  /** 散らばりの考察（分散を値ごとの項に開く式。改訂6。D-01） */
+  spread_reason?: { title: string; concept?: string; formula?: number; steps: string[] };
   /** 反例を実験する：成り立つ条件（breaks）を崩した表で、平均がどうなるかを見る */
   counterexamples?: {
     id: string;
@@ -303,12 +307,15 @@ function TableReason({
     if (!t) return [];
     const tot = weights.reduce((a, b) => a + b, 0);
     return expand(t, {
+      // μ は今の表の期待値（分散の Σ(x−μ)²p(x) を開くとき。期待値の式には μ がないので使われない）
+      values: { mu: meanOf(values, weights) },
       domains: { x: support },
       fns: { p: (x: number) => (values.includes(x) ? weights[values.indexOf(x)]! / tot : 0) },
     });
   }, [reasonFormula, values, weights, support]);
   const [si, setSi] = useState(0);
-  const num = (v: number) => String(Number(v.toPrecision(4)));
+  // 整数はそのまま（20356 を 20360 と丸めない）、それ以外は4桁
+  const num = (v: number) => (Number.isInteger(v) ? String(v) : String(Number(v.toPrecision(4))));
   const lhs = reasonFormula?.tree
     ? toTex((reasonFormula.tree as { args: FormulaNode[] }).args[0]!, { symbols: reasonFormula.symbols })
     : "E(X)";
@@ -1135,6 +1142,365 @@ export function TableSupportQ({
     <LabShell
       title={def.title}
       question="何度も引いた平均の行き先（期待値）は、1回引いて出る値？"
+      stage={stage}
+      reached={reached}
+      go={go}
+      onBack={onBack}
+      stages={SUPPORT_STAGES}
+      body={body}
+      cta={cta}
+      onInfo={() => setSheet(true)}
+    >
+      {sheet && (
+        <TableInfo
+          def={def}
+          theme={theme}
+          reasonFormula={reasonFormula}
+          definitions={definitions}
+          onConcept={onConcept}
+          conceptName={conceptName}
+          onClose={() => setSheet(false)}
+        />
+      )}
+    </LabShell>
+  );
+}
+
+const MEAN3 = ["A が大きい", "同じ", "B が大きい"] as const;
+const WOBBLE3 = ["A", "同じくらい", "B"] as const;
+const varOf = (values: number[], weights: number[]) => modelMoments(tbl(values, weights)).variance;
+
+/**
+ * 期待値が同じ2つの表を比べる問い（期待値の実験室 D-01。stats2-course の issue 119。kn-experiment の改訂6）。
+ * 予測：何度も引いた平均の行き先はどちらが大きいか・同じ回数ずつ引いたとき平均の線が大きくゆれるのはどちらか →
+ * 実験：2つの表を同じ回数ずつ引く（#121） → 観察：▲（期待値）は同じ所なのに、棒の広がりと平均の線のゆれ方が違う →
+ * 考察：散らばりを (値−期待値)²×確率 の和（分散）で2つの表に開き、いちばん効いている項を出す。
+ * ▲は予測の前に出さない（予測する量だから）。表の期待値が同じことは題でも言わない（予測 1 の答えになるから）
+ */
+export function TableSameMeanQ({
+  def,
+  reasonFormula,
+  spreadFormula,
+  onBack,
+  onConcept,
+  conceptName,
+  definitions,
+}: Props & { def: TableDef }) {
+  const { stage, reached, go } = useStages(0);
+  const themes = def.themes.filter((t) => t.same_mean);
+  const [theme, setTheme] = useState(themes[0] ?? def.themes[0]!);
+  const unit = theme.unit ?? "";
+  const wA = theme.start,
+    wB = theme.same_mean?.weights ?? theme.start;
+  const TA = tbl(theme.values, wA),
+    TB = tbl(theme.values, wB);
+  const support = useMemo(() => supportOf(TA), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const labels = labelsFor(theme, support, unit);
+  const thA = useMemo(() => modelPmf(TA), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const thB = useMemo(() => modelPmf(TB), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const mA = meanOf(theme.values, wA),
+    mB = meanOf(theme.values, wB);
+  const vA = varOf(theme.values, wA),
+    vB = varOf(theme.values, wB);
+  const tol = 1e-9 * Math.max(1, Math.abs(mA));
+  const actMean = Math.abs(mA - mB) <= tol ? 1 : mA > mB ? 0 : 2;
+  const actWob = Math.abs(vA - vB) <= 0.05 * Math.max(vA, vB) ? 1 : vA > vB ? 0 : 2;
+  const [pm, setPm] = useState<number | undefined>(undefined);
+  const [pw, setPw] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    setPm(undefined);
+    setPw(undefined);
+  }, [theme]);
+  const { before: recA, after: recB, run } = usePairRuns(TA, TB);
+  const sumA = summarize(recA),
+    sumB = summarize(recB);
+  const labelOf = (v: number) => labels[support.indexOf(v)] ?? `${v}${unit}`;
+  const [sheet, setSheet] = useState(false);
+  const choice = (
+    names: readonly string[],
+    cur: number | undefined,
+    set: (i: number) => void,
+    aria: string,
+    tid: string,
+  ) => (
+    <div className={s.choice} role="radiogroup" aria-label={aria} data-testid={tid}>
+      {names.map((d, i) => (
+        <button
+          key={d}
+          type="button"
+          role="radio"
+          aria-checked={cur === i}
+          onClick={() => {
+            haptic();
+            set(i);
+          }}
+        >
+          {d}
+        </button>
+      ))}
+    </div>
+  );
+  // 分散のうち、いちばん大きい項（(値−期待値)²×確率）の割合
+  const top = (w: number[], m: number, v: number) => {
+    const tot = w.reduce((a, b) => a + b, 0);
+    const parts = theme.values.map((x, i) => ((x - m) ** 2 * w[i]!) / tot);
+    const i = parts.indexOf(Math.max(...parts));
+    return { label: labelOf(theme.values[i]!), pct: v > 0 ? Math.round((parts[i]! / v) * 100) : 0 };
+  };
+
+  let body: ReactNode, cta: ReactNode;
+  if (stage === 0) {
+    body = (
+      <>
+        <div className={s.themes} role="radiogroup" aria-label="テーマ">
+          {themes.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={t.id === theme.id}
+              onClick={() => {
+                haptic();
+                setTheme(t);
+              }}
+            >
+              <span aria-hidden="true">{t.icon}</span>
+              {t.name}
+            </button>
+          ))}
+        </div>
+        <section className={s.card} data-testid="exp-table-a">
+          <p className={s.h}>
+            A の表<span>値と確率</span>
+          </p>
+          {theme.story && <p className={s.story}>{theme.story}</p>}
+          <Bars theory={thA} labels={labels} at={support} height={130} label="A の表の確率" />
+        </section>
+        <section className={s.card} data-testid="exp-table-b">
+          <p className={s.h}>
+            B の表<span>値と確率</span>
+          </p>
+          <p className={s.story}>{theme.same_mean?.change}</p>
+          <Bars theory={thB} labels={labels} at={support} height={130} label="B の表の確率" />
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>何度も引いた平均の行き先は？</p>
+          {choice(MEAN3, pm, setPm, "平均の行き先の予測", "exp-pred-mean")}
+          <p className={s.h}>
+            同じ回数ずつ引いたとき、平均の線が行き先のまわりで大きくゆれる（なかなか落ち着かない）のは？
+          </p>
+          {choice(WOBBLE3, pw, setPw, "平均のゆれの予測", "exp-pred-wobble")}
+        </section>
+      </>
+    );
+    const ready = pm !== undefined && pw !== undefined;
+    cta = (
+      <button type="button" className={s.primary} disabled={!ready} onClick={() => go(1)}>
+        {ready ? "この予測で引いてみる" : "まず2つとも予測を選ぶ"}
+      </button>
+    );
+  } else if (stage === 1) {
+    const lastA = recA.ks.slice(-8),
+      lastB = recB.ks.slice(-8);
+    body = (
+      <>
+        <section className={s.card}>
+          <p className={s.h}>
+            引いた値
+            <span>
+              {theme.icon} {theme.name}
+            </span>
+          </p>
+          <div className={s.lanes}>
+            {(
+              [
+                ["A", lastA, sumA.mean, s.laneB, "exp-draws-a", "exp-mean-a"],
+                ["B", lastB, sumB.mean, s.laneA, "exp-draws-b", "exp-mean-b"],
+              ] as const
+            ).map(([tag, ls, m, cls, tid, mid]) => (
+              <div key={tag} className={`${s.lane} ${cls}`}>
+                <div className={s.laneHead}>
+                  <b>{tag} の表</b>
+                  {recB.sets ? (
+                    <span>
+                      平均 <em data-testid={mid}>{r2(m)}</em>
+                      {unit}
+                    </span>
+                  ) : (
+                    <span className={s.muted}>まだ</span>
+                  )}
+                </div>
+                <div className={s.draws} data-testid={tid} key={recB.sets}>
+                  {ls.length ? (
+                    ls.map((v, i) => (
+                      <span key={`${recB.sets}-${i}`} className={i === ls.length - 1 ? s.drawNew : s.draw}>
+                        {labelOf(v)}
+                      </span>
+                    ))
+                  ) : (
+                    <span className={s.muted}>—</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          {!recB.sets && <p className={s.muted}>「A と B 1回」を押すと、2つの表から1つずつ引く</p>}
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>
+            出た値の割合<span data-testid="exp-sets">各 {recB.sets} 回</span>
+          </p>
+          <div className={s.legend}>
+            <span>
+              <i className={s.kBarB} />A
+            </span>
+            <span>
+              <i className={s.kBar} />B
+            </span>
+          </div>
+          <Bars freq={sumB.freq} pair={sumA.freq} labels={labels} at={support} label="A と B で引いた値の割合" />
+        </section>
+      </>
+    );
+    cta = (
+      <>
+        <div className={s.two}>
+          <button type="button" className={s.secondary} onClick={() => run(1)} data-testid="exp-run-1">
+            A と B 1回
+          </button>
+          <button type="button" className={s.primary} onClick={() => run(100)} data-testid="exp-run-100">
+            ▶ 各 100回
+          </button>
+        </div>
+        <button
+          type="button"
+          className={s.next}
+          disabled={recB.sets < 20}
+          onClick={() => go(2)}
+          data-testid="exp-to-observe"
+        >
+          {recB.sets < 20 ? `あと ${20 - recB.sets} 回で観察できる` : "観察する →"}
+        </button>
+      </>
+    );
+  } else if (stage === 2) {
+    const okM = pm === actMean,
+      okW = pw === actWob;
+    body = (
+      <>
+        <div className={okM && okW ? s.ok : s.ng} data-testid="exp-verdict">
+          <b>{okM && okW ? "✓ 予測どおり" : okM || okW ? "△ 片方は予測どおり" : "✗ 予測と違った"}</b>
+          <span className={s.shape} data-testid="exp-verdict-mean">
+            {okM ? "✓" : "✗"} 平均の行き先は{MEAN3[actMean]}（期待値 A {r2(mA)}
+            {unit}・B {r2(mB)}
+            {unit}）
+          </span>
+          <span className={s.shape} data-testid="exp-verdict-wobble">
+            {okW ? "✓" : "✗"} 平均の線が大きくゆれるのは{actWob === 1 ? "どちらも同じくらい" : ` ${WOBBLE3[actWob]}`}
+            。行き先は同じでも、値の散らばりが大きい表ほど、平均はなかなか落ち着かない
+          </span>
+        </div>
+        <section className={s.card}>
+          <div className={s.legend}>
+            <span>
+              <i className={s.kBarB} />A で引いた
+            </span>
+            <span>
+              <i className={s.kBar} />B で引いた
+            </span>
+            <span>
+              <i className={s.kGhost} />A の確率
+            </span>
+            <span>
+              <i className={s.kDot} />B の確率
+            </span>
+          </div>
+          <Bars
+            freq={sumB.freq}
+            pair={sumA.freq}
+            theory={thB}
+            ghost={thA}
+            labels={labels}
+            at={support}
+            marker={mB}
+            height={170}
+            label="A と B で引いた割合と表の確率と期待値"
+          />
+        </section>
+        <div className={s.tiles}>
+          <div data-testid="exp-tile-exp">
+            平均（引いた）
+            <b>
+              A {r2(sumA.mean)}・B {r2(sumB.mean)}
+              {unit}
+            </b>
+            <i>各 {recB.sets} 回</i>
+          </div>
+          <div data-testid="exp-tile-theory">
+            期待値（表から）
+            <b>
+              A {r2(mA)}・B {r2(mB)}
+              {unit}
+            </b>
+            <i>▲ は同じ所</i>
+          </div>
+        </div>
+        <Replay rec={recB} theory={thB} before={{ rec: recA, theory: thA }} labels={labels} unit={unit} per="回" />
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(3)}>
+        行き先が同じなのに、なぜゆれ方が違う？
+      </button>
+    );
+  } else {
+    const tA = top(wA, mA, vA),
+      tB = top(wB, mB, vB);
+    body = (
+      <>
+        {(
+          [
+            ["A", wA, vA, tA, "exp-spread-a"],
+            ["B", wB, vB, tB, "exp-spread-b"],
+          ] as const
+        ).map(([tag, w, v, t, tid]) => (
+          <div key={tag} data-testid={tid}>
+            <TableReason
+              title={`${def.spread_reason?.title ?? "散らばり"}：${tag} の表`}
+              reasonFormula={spreadFormula}
+              values={theme.values}
+              weights={w}
+              note={
+                <p className={s.muted}>
+                  分散 {r2(v)}
+                  {unit ? `（${unit}の2乗）` : ""}のうち {t.pct}% は {t.label} の項から
+                </p>
+              }
+            />
+          </div>
+        ))}
+        {def.spread_reason?.steps.length ? (
+          <section className={s.card}>
+            <p className={s.h}>なぜそうなる？</p>
+            <ol className={s.steps}>
+              {def.spread_reason.steps.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ol>
+          </section>
+        ) : null}
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  return (
+    <LabShell
+      title={def.title}
+      question="2つの表、何度も引くと何が違う？"
       stage={stage}
       reached={reached}
       go={go}
