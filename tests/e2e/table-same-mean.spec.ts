@@ -14,10 +14,10 @@ const errorsOf = (page: Page) => {
 
 // 確かめる対象：D-01 の流れ。予測は2つそろうまで進めない・予測の前に▲（期待値）を出さない・照らしは理論（期待値が同じ／分散の大きい方）から決まる・
 //   考察で、分散を値ごとの項に開いた最後の値が表の分散と合う（くじ A は 20356。μ を入れずに開くと値にならず、4桁に丸めると 20360 になる）。
-// 想定する故障：照らしの向きを取り違える（分散の大小の逆）・▲を予測の前に出す（予測する量が見えてしまう）・考察の展開で μ が値にならない・整数を丸める。
+// 想定する故障：照らしの向きを取り違える（分散の大小の逆）・▲を予測の前に出す（予測する量が見えてしまう）・考察の展開で μ が値にならない・整数を丸める・観察の再生が「変更前・変更後」と言う（変えていないのに）。
 // 見つけ方：さいころ（B の方が散らばる）で「同じ・B」と予測して ✓、くじ（A の方が散らばる）の考察で最後の段の数と、いちばん効く項の割合を見る。
 // 既存との違い：table-support.spec.ts は表を変えない A-02、table-catalog.spec.ts は入口。ここは2つの表を比べる問いと分散の考察。
-// 検出の確かめ（2026-11-12）：actWob の向きを逆にすると照らしで、TableReason の values（μ）を外すと 20356 で、整数をそのまま出す直しを戻すと 20356 で落ちることを見た
+// 検出の確かめ（2026-11-12）：actWob の向きを逆にすると照らしで、TableReason の values（μ）を外すと 20356 で、整数をそのまま出す直しを戻すと 20356 で、Replay に names を渡さないと「実験平均 A」で落ちることを見た
 test("D-01：期待値が同じ2つの表。予測2つ → 引く → 照らし → 分散を項に開く", async ({ page }) => {
   const errs = errorsOf(page);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -35,6 +35,10 @@ test("D-01：期待値が同じ2つの表。予測2つ → 引く → 照らし 
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict")).toContainText("✓ 予測どおり");
   await expect(x.getByTestId("exp-verdict-wobble")).toContainText("B");
+  // 観察の再生は A・B で呼ぶ（条件を変えていないので「変更前・変更後」「なぜ平均が変わったか」と言わない）
+  await expect(x.getByTestId("exp-replay-stat")).toContainText("実験平均 A");
+  await expect(x).not.toContainText("変更前");
+  await expect(x).not.toContainText("なぜ平均が変わったか");
   // くじ（A の方が散らばる）で考察まで：最後の段は 20356、いちばん効く項は 1000（91%）
   await x.getByRole("button", { name: "✓ 予測" }).click();
   await x.getByRole("radio", { name: /くじ/ }).click();
