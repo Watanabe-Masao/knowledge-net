@@ -1043,6 +1043,15 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   // 想定する故障：縦の幅が目安で広がり線が平らになる・線が再生した回数より先まで伸びる・縦軸の数が左で欠ける・「必ず近づく」と読ませる
   const rp = x.getByTestId("exp-cx").getByTestId("exp-replay");
   const line = rp.getByTestId("exp-run-line-a");
+  // 再生の線は伸びながら描かれる。伸びきる前に「全部の幅」を測ると、10 回目までの幅との比べが引いた結果しだいで落ちる
+  // （2026-11-11 の main で Received 218。stats2-course #365）。幅が2回続けて同じになるまで待ってから測る
+  await expect
+    .poll(async () => {
+      const a = (await line.boundingBox())!.width;
+      await page.waitForTimeout(250);
+      return Math.abs((await line.boundingBox())!.width - a);
+    })
+    .toBeLessThan(0.5);
   expect((await line.boundingBox())!.height).toBeGreaterThan(20); // 平均が上下に動いて見える
   const full = (await line.boundingBox())!.width;
   await rp.getByRole("radio", { name: "10", exact: true }).click();
