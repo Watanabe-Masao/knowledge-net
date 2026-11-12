@@ -1906,7 +1906,8 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await openQ(x, "C-02");
   // 予測は見えている具体の数で聞く（⑦ の 2。stats2-course #372）：100 セットでの幅 ±9.7 ポイント（P＝62.3%、2SE）を見せ、10000 セットの幅を選ぶ
   await expect(x.getByTestId("exp-conv-given")).toContainText("±9.7 ポイント");
-  await expect(x.getByText("10000 セット重ねると、割合のずれはどのくらいまで？")).toBeVisible();
+  await expect(x.getByTestId("exp-question")).toContainText("10000 セット重ねると、割合のずれはどのくらいまで？");
+  await expect(x.getByText("10000 セット重ねると、割合のずれはどのくらいまで？")).toHaveCount(1); // 問いの文とカードの題を重ねない
   await x.getByRole("radio", { name: "±0.97 ポイント" }).click();
   await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();

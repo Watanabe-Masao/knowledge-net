@@ -48,7 +48,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             {pctSig(P)} に近づくか。近づくなら、どんな速さか。
           </p>
         </Card>
-        <Card title="10000 セット重ねると、割合のずれはどのくらいまで？">
+        <Card title="10000 セットでは？">
           <p className={qs.muted} data-testid="exp-conv-given">
             100 セットでは、割合は理論の {pctSig(P)} から ±{pt(w100)} ポイントくらいまでよくずれる。
           </p>
