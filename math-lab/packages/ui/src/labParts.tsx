@@ -543,6 +543,7 @@ export function Replay({
   labels,
   unit = "",
   per = "セット",
+  names,
 }: {
   rec: SetRecord;
   theory: number[];
@@ -552,7 +553,13 @@ export function Replay({
   unit?: string;
   /** 1回の数え方（二項分布は n 回をまとめた「セット」、値の表は1回ずつの「回」） */
   per?: string;
+  /** 2つの記録の呼び名と、下の割合の見出し（ふだんは 変更前・変更後。条件を変えずに2つの表を比べる問いでは A・B。期待値の実験室 D-01） */
+  names?: { before: string; after: string; why: string };
 }) {
+  const nB = names?.before ?? "変更前",
+    nA = names?.after ?? "変更後",
+    sB = names?.before ?? "前",
+    sA = names?.after ?? "後";
   const N = rec.sets;
   const marks = useMemo(() => [...MARKS.filter((m) => m < N), N], [N]);
   const [t, setT] = useState(marks.length - 1);
@@ -614,7 +621,7 @@ export function Replay({
         ? [
             {
               key: "b",
-              name: "変更前",
+              name: nB,
               th: momentsOf(before.theory, before.rec.support),
               pts: runOf(before.rec),
               line: s.runLineB,
@@ -625,7 +632,7 @@ export function Replay({
         : []),
       {
         key: "a",
-        name: before ? "変更後" : "実験",
+        name: before ? nA : "実験",
         th: momentsOf(theory, rec.support),
         pts: runOf(rec),
         line: s.runLine,
@@ -694,18 +701,18 @@ export function Replay({
         <b>{upto}</b> {per}まで：
         {b ? (
           <>
-            実験平均 前{" "}
+            実験平均 {sB}{" "}
             <b>
               {num3(cb?.m)}
               {unit}
             </b>
-            ・後{" "}
+            ・{sA}{" "}
             <b>
               {num3(ca?.m)}
               {unit}
             </b>
-            ／期待値 前 {num3(b.th.mean)}
-            {unit}・後 {num3(a.th.mean)}
+            ／期待値 {sB} {num3(b.th.mean)}
+            {unit}・{sA} {num3(a.th.mean)}
             {unit}
           </>
         ) : (
@@ -845,13 +852,13 @@ export function Replay({
       )}
       <p className={s.note} data-testid="exp-run-note">
         {b
-          ? `${per}数が少ないうちは、平均が大きくばらつく。くり返したとき、変更前は ${about(b.th.mean)}${unit}、変更後は ${about(a.th.mean)}${unit} の近くに落ち着いていくかを見る。途中では、2本の線が近づいたり交差したりすることもある。`
+          ? `${per}数が少ないうちは、平均が大きくばらつく。くり返したとき、${nB}は ${about(b.th.mean)}${unit}、${nA}は ${about(a.th.mean)}${unit} の近くに落ち着いていくかを見る。途中では、2本の線が近づいたり交差したりすることもある。`
           : `${per}数が少ないうちは、平均が大きくばらつく。くり返したとき、期待値 ${about(a.th.mean)}${unit} の近くに落ち着いていくかを見る。`}
         {wild &&
           "この表はばらつきが非常に大きい（まれな大当たりがある）。しばらく低い平均が続き、当たりが出ると急に跳ねる。その跳ね方そのものが観察どころで、この回数では期待値の近くに落ち着くとは限らない。"}
       </p>
       <p className={s.h}>
-        なぜ平均が変わったか
+        {names?.why ?? "なぜ平均が変わったか"}
         <span>
           値ごとの割合（{upto} {per}まで）
         </span>
@@ -861,19 +868,19 @@ export function Replay({
           <>
             <span>
               <i className={s.kBarB} />
-              変更前の実験の割合
+              {nB}の実験の割合
             </span>
             <span>
               <i className={s.kBar} />
-              変更後の実験の割合
+              {nA}の実験の割合
             </span>
             <span>
               <i className={s.kGhost} />
-              変更前の理論確率
+              {nB}の理論確率
             </span>
             <span>
               <i className={s.kDot} />
-              変更後の理論確率
+              {nA}の理論確率
             </span>
           </>
         ) : (

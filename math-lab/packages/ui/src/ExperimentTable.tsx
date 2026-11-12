@@ -1445,7 +1445,15 @@ export function TableSameMeanQ({
             <i>▲ は同じ所</i>
           </div>
         </div>
-        <Replay rec={recB} theory={thB} before={{ rec: recA, theory: thA }} labels={labels} unit={unit} per="回" />
+        <Replay
+          rec={recB}
+          theory={thB}
+          before={{ rec: recA, theory: thA }}
+          labels={labels}
+          unit={unit}
+          per="回"
+          names={{ before: "A", after: "B", why: "値ごとの割合の違い" }}
+        />
       </>
     );
     cta = (
