@@ -4,6 +4,7 @@ import fc from "fast-check";
 import formulas from "./fixtures/stats2-formulas.json";
 import {
   boundSymbols,
+  validateFormula,
   checkDomain,
   definitionsFor,
   sliderRange,
@@ -33,6 +34,20 @@ const resolve = (s: FormulaSymbol) =>
 // ---- 1. 変数のスコープ ----
 describe("スコープ：Σ・∫ の動かす記号は外に漏れず、取り込まれない", () => {
   const S = (k: string): FormulaSymbol => ({ symbol: k, meaning: k, key: k });
+  // 確かめる対象：Σ・∫・Π の動かす記号は kind: index の記号だけ（stats2-course #370）。
+  // 想定する故障：V(X)＝Σ_x (x−μ)²p(x) の木で var を mu にすると、決まった数 μ が和の中で動き、意味が変わる。前はこれを止めなかった（F-var-sum のレビューで見つけた）。
+  // 見つけ方：教材の F-var-sum の var を mu・X に書き換えると止まり、元の木（var: x）と教材の全部の式は通る（全部の式は formula.test.ts）。
+  // 既存との違い：ほかのスコープのテストは、開いたときの付け替え。ここは書いた木そのものの検査。
+  // 検出の確かめ（2026-11-12）：validate.ts の kind の止めを外すと落ちることを見た
+  it("動かす記号に param・rv を使った木は止まる（index だけ動かせる）", () => {
+    const f = find("TERM-var", 2);
+    expect(JSON.stringify(f.tree)).toContain('"var":"x"'); // F-var-sum（V(X)＝Σ_x (x−μ)²p(x)）
+    expect(validateFormula(f)).toEqual([]);
+    for (const v of ["mu", "X"]) {
+      const t = JSON.parse(JSON.stringify(f.tree).replace('"var":"x"', `"var":"${v}"`));
+      expect(validateFormula({ ...f, tree: t }).join()).toContain(`動かす記号 ${v} は kind が`);
+    }
+  });
   // E(X)＝Σ_x x p(x) を、外に自由な x がある式 x·E(X) の中で開く
   const eDef: Definition = { formula: find("TERM-expect", 0), side: 1 };
   it("外の x と、Σ の x がぶつからない（Σ の x を x2 に付け替える）", () => {
