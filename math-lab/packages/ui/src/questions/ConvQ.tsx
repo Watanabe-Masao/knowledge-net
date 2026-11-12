@@ -132,8 +132,8 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
     body = (
       <>
         <Verdict ok={guess === 1} big="10分の1">
-          ずれの目安（±2×標準誤差）は √(セット数) に反比例する。セットを 100 倍にすると √100＝10 で、10分の1（±{pt(w100)} → ±
-          {pt(w100 / 10)} ポイント）。予測は「{convChoices[guess!]}」（{CONV3[guess!]}）。
+          ずれの目安（±2×標準誤差）は √(セット数) に反比例する。セットを 100 倍にすると √100＝10 で、10分の1（±
+          {pt(w100)} → ±{pt(w100 / 10)} ポイント）。予測は「{convChoices[guess!]}」（{CONV3[guess!]}）。
         </Verdict>
         <Card title="理論と実験" sub="差が目安の中か">
           <CompareTable
