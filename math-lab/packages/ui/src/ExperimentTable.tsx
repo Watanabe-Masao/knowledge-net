@@ -860,3 +860,329 @@ export function TableLab({
 }
 
 export type { FormulaData };
+
+const SUPPORT_STAGES = ["予測", "実験", "観察", "考察"] as const;
+const APPEARS = ["1回で出る", "1回では出ない"] as const;
+
+/**
+ * 表を変えない問い（期待値の実験室 A-02「期待値は、実際に出る値？」。stats2-course の issue 119）。
+ * 予測：何度も引いた平均の行き先（値）と、その値は1回で出るか → 実験：表から引く → 観察：棒は表の値にしか立たないのに、平均は▲へ →
+ * 考察：値×確率の和（今の表で項に開く）。▲（期待値）は予測の前には出さない（予測する量だから）
+ */
+export function TableSupportQ({
+  def,
+  reasonFormula,
+  onBack,
+  onConcept,
+  conceptName,
+  definitions,
+}: Props & { def: TableDef }) {
+  const { stage, reached, go } = useStages(0);
+  const [theme, setTheme] = useState(def.themes.find((t) => t.id === "dice") ?? def.themes[0]!);
+  const unit = theme.unit ?? "";
+  const T = tbl(theme.values, theme.start);
+  const support = useMemo(() => supportOf(T), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const labels = labelsFor(theme, support, unit);
+  const th = useMemo(() => modelPmf(T), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const m = meanOf(theme.values, theme.start);
+  const lo = Math.min(...theme.values),
+    hi = Math.max(...theme.values);
+  const step = Math.max(0.01, Number(((hi - lo) / 100).toPrecision(1)));
+  // 予測のつまみの始まりは表のいちばん小さい値（真ん中から始めると、さいころでは (1＋6)÷2＝3.5 が答えと重なる）
+  const [pv, setPv] = useState(lo);
+  const [appears, setAppears] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    setPv(lo);
+    setAppears(undefined);
+  }, [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { rec, run } = useDraws(theme.values, theme.start);
+  const sum = summarize(rec);
+  const last = rec.ks.slice(-8);
+  const labelOf = (v: number) => labels[support.indexOf(v)] ?? `${v}${unit}`;
+  const isValue = theme.values.some((v) => Math.abs(v - m) < 1e-9);
+  const actual = isValue ? 0 : 1;
+  const [sheet, setSheet] = useState(false);
+  const steps = useMemo(() => {
+    const t = reasonFormula?.tree;
+    if (!t) return [];
+    const tot = theme.start.reduce((a, b) => a + b, 0);
+    return expand(t, {
+      domains: { x: support },
+      fns: { p: (x: number) => (theme.values.includes(x) ? theme.start[theme.values.indexOf(x)]! / tot : 0) },
+    });
+  }, [reasonFormula, theme, support]);
+  const [si, setSi] = useState(0);
+  const num = (v: number) => String(Number(v.toPrecision(4)));
+  const lhs = reasonFormula?.tree
+    ? toTex((reasonFormula.tree as { args: FormulaNode[] }).args[0]!, { symbols: reasonFormula.symbols })
+    : "E(X)";
+
+  let body: ReactNode, cta: ReactNode;
+  if (stage === 0) {
+    body = (
+      <>
+        <div className={s.themes} role="radiogroup" aria-label="テーマ">
+          {def.themes.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={t.id === theme.id}
+              onClick={() => {
+                haptic();
+                setTheme(t);
+              }}
+            >
+              <span aria-hidden="true">{t.icon}</span>
+              {t.name}
+            </button>
+          ))}
+        </div>
+        <section className={s.card}>
+          <p className={s.h}>
+            表<span>値と確率</span>
+          </p>
+          {theme.story && <p className={s.story}>{theme.story}</p>}
+          <Bars theory={th} labels={labels} at={support} mark={pv} height={150} label="表の確率と予測" />
+        </section>
+        <section className={s.card}>
+          <label className={s.peak}>
+            <span>何度も引いた平均は、いくつに近づく？</span>
+            <b>
+              {r2(pv)}
+              {unit}
+            </b>
+            <input
+              type="range"
+              min={lo}
+              max={hi}
+              step={step}
+              value={pv}
+              onChange={(e) => setPv(Number(e.target.value))}
+              style={{ "--fill": `${((pv - lo) / Math.max(1e-9, hi - lo)) * 100}%` } as CSSProperties}
+              aria-label="予測する平均"
+            />
+          </label>
+          <p className={s.h}>その値は、1回引いて出る？</p>
+          <div className={s.choice} role="radiogroup" aria-label="1回で出るかの予測">
+            {APPEARS.map((d, i) => (
+              <button
+                key={d}
+                type="button"
+                role="radio"
+                aria-checked={appears === i}
+                onClick={() => {
+                  haptic();
+                  setAppears(i);
+                }}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} disabled={appears === undefined} onClick={() => go(1)}>
+        {appears === undefined ? "まず予測を選ぶ" : "この予測で引いてみる"}
+      </button>
+    );
+  } else if (stage === 1) {
+    body = (
+      <>
+        <section className={s.card}>
+          <p className={s.h}>
+            引いた値
+            <span>
+              {theme.icon} {theme.name}
+            </span>
+          </p>
+          <div className={s.draws} data-testid="exp-draws" key={rec.sets}>
+            {last.length ? (
+              last.map((v, i) => (
+                <span key={`${rec.sets}-${i}`} className={i === last.length - 1 ? s.drawNew : s.draw}>
+                  {labelOf(v)}
+                </span>
+              ))
+            ) : (
+              <span className={s.muted}>「1回」を押すと、表から1つ引く</span>
+            )}
+          </div>
+          {rec.sets > 0 && (
+            <p className={s.muted}>
+              平均 <b data-testid="exp-mean">{r2(sum.mean)}</b>
+              {unit}（{rec.sets} 回）
+            </p>
+          )}
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>
+            出た値の割合<span data-testid="exp-sets">{rec.sets} 回</span>
+          </p>
+          <Bars freq={sum.freq} labels={labels} at={support} label="引いた値の割合" />
+        </section>
+      </>
+    );
+    cta = (
+      <>
+        <div className={s.two}>
+          <button type="button" className={s.secondary} onClick={() => run(1)} data-testid="exp-run-1">
+            1回
+          </button>
+          <button type="button" className={s.primary} onClick={() => run(100)} data-testid="exp-run-100">
+            ▶ 100回
+          </button>
+        </div>
+        <button
+          type="button"
+          className={s.next}
+          disabled={rec.sets < 20}
+          onClick={() => go(2)}
+          data-testid="exp-to-observe"
+        >
+          {rec.sets < 20 ? `あと ${20 - rec.sets} 回で観察できる` : "観察する →"}
+        </button>
+      </>
+    );
+  } else if (stage === 2) {
+    const ok = appears === actual;
+    body = (
+      <>
+        <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
+          <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>　期待値は <b>{r2(m)}</b>
+          {unit}（予測 {r2(pv)}
+          {unit}）。
+          {isValue ? "この値は表の中にあり、1回で出ることもある" : "この値は表の中になく、1回では一度も出ない"}
+          <span className={s.shape}>
+            棒（引いた値）は表の値にしか立たない。平均は▲（期待値）へ近づく。期待値は「よく出る値」ではなく、何度も引いた平均の行き着く先（てんびんの支点）
+          </span>
+        </div>
+        <section className={s.card}>
+          <div className={s.legend}>
+            <span>
+              <i className={s.kBar} />
+              引いた値の割合
+            </span>
+            <span>
+              <i className={s.kDot} />
+              表の確率
+            </span>
+            <span>
+              <i className={s.kGuess} />
+              あなたの予測
+            </span>
+          </div>
+          <Bars
+            freq={sum.freq}
+            theory={th}
+            labels={labels}
+            at={support}
+            marker={m}
+            mark={pv}
+            height={170}
+            label="引いた割合と表の確率と期待値と予測"
+          />
+        </section>
+        <div className={s.tiles}>
+          <div data-testid="exp-tile-exp">
+            平均（引いた）
+            <b>
+              {r2(sum.mean)}
+              {unit}
+            </b>
+            <i>{rec.sets} 回</i>
+          </div>
+          <div data-testid="exp-tile-theory">
+            期待値（表から）
+            <b>
+              {r2(m)}
+              {unit}
+            </b>
+            <i>{isValue ? "表の値にある" : "表の値にない"}</i>
+          </div>
+        </div>
+        <Replay rec={rec} theory={th} labels={labels} unit={unit} per="回" />
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(3)}>
+        なぜ {r2(m)}
+        {unit} になる？ 理由を考える
+      </button>
+    );
+  } else {
+    const shownStep = Math.min(si, Math.max(0, steps.length - 1));
+    body = (
+      <section className={s.card}>
+        <p className={s.h}>
+          {def.reason?.title ?? "式で検証"}
+          <span>{steps.length > 1 ? `${shownStep + 1}／${steps.length}` : ""}</span>
+        </p>
+        {steps.length > 0 && (
+          <div
+            className={s.math}
+            data-testid="exp-expand"
+            dangerouslySetInnerHTML={{
+              __html: tex(`${lhs}=${toTex(steps[shownStep]!, { symbols: reasonFormula?.symbols, num })}`),
+            }}
+          />
+        )}
+        {steps.length > 1 && (
+          <div className={s.two}>
+            <button
+              type="button"
+              className={s.secondary}
+              disabled={shownStep <= 0}
+              onClick={() => setSi(shownStep - 1)}
+              aria-label="前の段"
+            >
+              ‹ 前の段
+            </button>
+            <button
+              type="button"
+              className={s.secondary}
+              disabled={shownStep >= steps.length - 1}
+              onClick={() => setSi(shownStep + 1)}
+              aria-label="次の段"
+            >
+              次の段 ›
+            </button>
+          </div>
+        )}
+        <p className={s.muted}>値×確率をすべて足した数なので、表の値の間（重心）に来ることがある</p>
+      </section>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別の表で試す
+      </button>
+    );
+  }
+  return (
+    <LabShell
+      title={def.title}
+      question="何度も引いた平均の行き先（期待値）は、1回引いて出る値？"
+      stage={stage}
+      reached={reached}
+      go={go}
+      onBack={onBack}
+      stages={SUPPORT_STAGES}
+      body={body}
+      cta={cta}
+      onInfo={() => setSheet(true)}
+    >
+      {sheet && (
+        <TableInfo
+          def={def}
+          theme={theme}
+          reasonFormula={reasonFormula}
+          definitions={definitions}
+          onConcept={onConcept}
+          conceptName={conceptName}
+          onClose={() => setSheet(false)}
+        />
+      )}
+    </LabShell>
+  );
+}
