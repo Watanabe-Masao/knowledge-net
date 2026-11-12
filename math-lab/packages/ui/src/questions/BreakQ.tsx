@@ -87,6 +87,11 @@ export function BreakQ(props: QProps & { initial?: string }) {
           </div>
         </Card>
         <Card title={`二項分布（n＝${b.n}・p＝${pc(b.p)}）と比べて、山の広がりは？`}>
+          {/* 4つの起き方とも、1回ごとの確率の平均は p のまま（平均の成功回数は np）。書かないと「確率が下がる→成功が減る→狭い」と誤った理由でも当たる（2級の学習者の役のレビュー。stats2-course #379） */}
+          <p className={qs.muted} data-testid="exp-break-mean">
+            どの起き方でも、1回ごとの確率をならすと {pc(b.p)}{" "}
+            のまま（平均の成功回数は二項分布と同じ）。違うのは、確率のずれ方だけ。
+          </p>
           <div className={s.choice} role="radiogroup" aria-label="広がりの予測">
             {SPREAD3.map((t, i) => (
               <button
