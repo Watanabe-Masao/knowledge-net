@@ -1167,15 +1167,17 @@ export function TableSupportQ({
 }
 
 const MEAN3 = ["A が大きい", "同じ", "B が大きい"] as const;
-const WOBBLE3 = ["A", "同じくらい", "B"] as const;
 const varOf = (values: number[], weights: number[]) => modelMoments(tbl(values, weights)).variance;
 
 /**
  * 期待値が同じ2つの表を比べる問い（期待値の実験室 D-01。stats2-course の issue 119。kn-experiment の改訂6）。
- * 予測：何度も引いた平均の行き先はどちらが大きいか・同じ回数ずつ引いたとき平均の線が大きくゆれるのはどちらか →
- * 実験：2つの表を同じ回数ずつ引く（#121） → 観察：▲（期待値）は同じ所なのに、棒の広がりと平均の線のゆれ方が違う →
- * 考察：散らばりを (値−期待値)²×確率 の和（分散）で2つの表に開き、いちばん効いている項を出す。
- * ▲は予測の前に出さない（予測する量だから）。表の期待値が同じことは題でも言わない（予測 1 の答えになるから）
+ * 予測は1つ：何度も引いた平均は A と B でどうなるか（見えている2つの表から答えられる）→
+ * 実験：2つの表を同じ回数ずつ引く（#121） → 観察：照らすのは予測だけ。▲（期待値）は同じ所なのに何が違うかは、
+ *   棒の広がりと2本の平均の線から自分で見つける（答えと理由は言わず、見る所だけを指す）→
+ * 考察：違い（値の散らばり）を (値−期待値)²×確率 の和（分散）で2つの表に開き、いちばん効いている項を出す。
+ *   散らばりが大きい表ほど平均が落ち着かないことは、考察の段で言う。
+ * ▲は予測の前に出さない（予測する量だから）。表の期待値が同じことは題でも言わない（予測の答えになるから）。
+ * 前の形（予測2つ目「平均の線が大きくゆれるのは？」）は、予測の段でまだ見ていない線について聞いていて、何を問われているか分からなかった（渡辺さん 2026-11-12）
  */
 export function TableSameMeanQ({
   def,
@@ -1204,12 +1206,9 @@ export function TableSameMeanQ({
     vB = varOf(theme.values, wB);
   const tol = 1e-9 * Math.max(1, Math.abs(mA));
   const actMean = Math.abs(mA - mB) <= tol ? 1 : mA > mB ? 0 : 2;
-  const actWob = Math.abs(vA - vB) <= 0.05 * Math.max(vA, vB) ? 1 : vA > vB ? 0 : 2;
   const [pm, setPm] = useState<number | undefined>(undefined);
-  const [pw, setPw] = useState<number | undefined>(undefined);
   useEffect(() => {
     setPm(undefined);
-    setPw(undefined);
   }, [theme]);
   const { before: recA, after: recB, run } = usePairRuns(TA, TB);
   const sumA = summarize(recA),
@@ -1284,19 +1283,15 @@ export function TableSameMeanQ({
           <Bars theory={thB} labels={labels} at={support} height={130} label="B の表の確率" />
         </section>
         <section className={s.card}>
-          <p className={s.h}>何度も引いた平均の行き先は？</p>
-          {choice(MEAN3, pm, setPm, "平均の行き先の予測", "exp-pred-mean")}
-          <p className={s.h}>
-            同じ回数ずつ引いたとき、平均の線が行き先のまわりで大きくゆれる（なかなか落ち着かない）のは？
-          </p>
-          {choice(WOBBLE3, pw, setPw, "平均のゆれの予測", "exp-pred-wobble")}
+          <p className={s.h}>A と B をそれぞれ何度も引くと、引いた値の平均はどうなる？</p>
+          {choice(MEAN3, pm, setPm, "平均の予測", "exp-pred-mean")}
         </section>
       </>
     );
-    const ready = pm !== undefined && pw !== undefined;
+    const ready = pm !== undefined;
     cta = (
       <button type="button" className={s.primary} disabled={!ready} onClick={() => go(1)}>
-        {ready ? "この予測で引いてみる" : "まず2つとも予測を選ぶ"}
+        {ready ? "この予測で引いてみる" : "まず予測を選ぶ"}
       </button>
     );
   } else if (stage === 1) {
@@ -1384,22 +1379,25 @@ export function TableSameMeanQ({
       </>
     );
   } else if (stage === 2) {
-    const okM = pm === actMean,
-      okW = pw === actWob;
+    const okM = pm === actMean;
     body = (
       <>
-        <div className={okM && okW ? s.ok : s.ng} data-testid="exp-verdict">
-          <b>{okM && okW ? "✓ 予測どおり" : okM || okW ? "△ 片方は予測どおり" : "✗ 予測と違った"}</b>
+        <div className={okM ? s.ok : s.ng} data-testid="exp-verdict">
+          <b>{okM ? "✓ 予測どおり" : "✗ 予測と違った"}</b>
           <span className={s.shape} data-testid="exp-verdict-mean">
-            {okM ? "✓" : "✗"} 平均の行き先は{MEAN3[actMean]}（期待値 A {r2(mA)}
+            平均の行き先は{MEAN3[actMean]}（期待値 A {r2(mA)}
             {unit}・B {r2(mB)}
             {unit}）
           </span>
-          <span className={s.shape} data-testid="exp-verdict-wobble">
-            {okW ? "✓" : "✗"} 平均の線が大きくゆれるのは{actWob === 1 ? "どちらも同じくらい" : ` ${WOBBLE3[actWob]}`}
-            。行き先は同じでも、値の散らばりが大きい表ほど、平均はなかなか落ち着かない
-          </span>
         </div>
+        {actMean === 1 && (
+          <section className={s.card} data-testid="exp-look">
+            <p className={s.h}>行き先は同じ。では、A と B は何が違う？</p>
+            <p className={s.muted}>
+              下の棒の広がりと、平均の移り変わりの2本の線（A と B）を見比べる。「再生」で1回目から追える
+            </p>
+          </section>
+        )}
         <section className={s.card}>
           <div className={s.legend}>
             <span>
@@ -1458,7 +1456,7 @@ export function TableSameMeanQ({
     );
     cta = (
       <button type="button" className={s.primary} onClick={() => go(3)}>
-        行き先が同じなのに、なぜゆれ方が違う？
+        見つけた違いを数にする
       </button>
     );
   } else {
