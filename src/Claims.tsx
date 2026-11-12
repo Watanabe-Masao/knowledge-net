@@ -18,7 +18,7 @@ function Item({ c, net, self, onTerm }: { c: Claim; net: Network; self: string; 
   return (
     <li className={s.item} data-testid={`claim-${c.id}`}>
       <p className={s.head}>
-        {c.label && <span className={s.label}>{c.label}</span>}
+        {/* 製本の番号（④-1 など）は作る側の索引なので出さない（画面の原則 14。stats2-course #188 の iPhone 確認 2026-11-12）。並びには使う */}
         <span className={s.kind}>{c.kind}</span>
       </p>
       <p className={s.text}>{c.statement.text}</p>
