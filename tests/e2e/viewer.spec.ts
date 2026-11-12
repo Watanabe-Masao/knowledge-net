@@ -815,7 +815,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
     /A分布の形と仕組み3／4/,
     /B事象と確率計算3／4/,
     /C理論と実験2／3/,
-    /D期待値・分散との接続2／3/,
+    /D期待値・分散との接続2／2/, // D-03 は期待値の実験室の expect-D-01 へ（retired。stats2-course #119）
     /E前提条件と反例4／4/,
     /F応用・発展0／4/,
     /自分で条件を決めて比較カード 0 枚/,
@@ -989,6 +989,7 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
     .getByRole("link", { name: /^実験室/ })
     .click();
   await page.getByTestId("open-stats2:EXP-expect-table").click();
+  await page.getByTestId("experiment").getByTestId("exp-q-A-01").click(); // テーマ体系の入口から最初の問い（#119）
   const x = page.getByTestId("experiment");
   await expect(x).toContainText("表を変えると");
   await expect(x.getByTestId("exp-marker")).toHaveCount(1); // ▲＝今の表の期待値
@@ -1422,9 +1423,9 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
     "F-01",
     "F-02",
   ]);
-  expect(await ids("related")).toEqual(["B-02", "B-03", "C-04", "D-03", "F-03", "F-04"]);
+  expect(await ids("related")).toEqual(["B-02", "B-03", "C-04", "F-03", "F-04"]); // D-03 は retired（stats2-course #119）
   await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-main-head")).toContainText("主となる問い16 問");
-  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-related-head")).toContainText("関連する問い6 問");
+  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-related-head")).toContainText("関連する問い5 問");
   await expect(lab.getByTestId("lab-open-stats2:binom-C-03")).toHaveCount(0);
   await expect(lab.getByTestId("lab-open-stats2:binom-E-03")).toContainText("主：二項分布と超幾何分布のつながり");
   // 絞った概念が主の問いは「主：二項分布」を省き、関連だけ（全行に同じ名前を並べない。UI レビュー「重複と量」。故障：全行に「主：二項分布」）
@@ -1435,9 +1436,9 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await expect(sh.getByTestId("lab-c-stats2:TERM-hyper")).toContainText("1 問"); // その概念を使う問いの数
   await sh.getByTestId("lab-c-stats2:TERM-expect").click();
   await expect(sh.getByTestId("lab-sheet-rule")).toContainText(
-    "二項分布・期待値をすべて使う問い（主概念か関連概念に入っている問い）：3 問",
+    "二項分布・期待値をすべて使う問い（主概念か関連概念に入っている問い）：2 問", // D-03 は retired（stats2-course #119）
   );
-  await sh.getByTestId("lab-show").click(); // 「3 問を見る」で閉じる
+  await sh.getByTestId("lab-show").click(); // 「2 問を見る」で閉じる
   await expect(sh).toHaveCount(0);
   await expect(lab.getByTestId("lab-rule")).toContainText("二項分布・期待値をすべて使う問い");
   expect(
@@ -1445,9 +1446,9 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
       .getByTestId("lab-q-stats2:EXP-binom-p")
       .locator("[data-testid^=lab-open-]")
       .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")!.replace("lab-open-stats2:binom-", ""))),
-  ).toEqual(["D-01", "D-03", "F-01"]);
-  await expect(lab.getByTestId("lab-open-stats2:binom-D-03")).toContainText(
-    "主：期待値｜関連：分散・確率分布", // 絞った概念（二項分布）は関連からも省く
+  ).toEqual(["D-01", "F-01"]);
+  await expect(lab.getByTestId("lab-open-stats2:binom-F-01")).toContainText(
+    "主：二項分布｜関連：標準偏差", // 絞った概念（期待値）は関連から省く（D-03 で見ていた形を、D-03 を retired にしたので F-01 で見る。stats2-course #119）
   );
   await expect(lab.getByTestId("lab-open-stats2:binom-D-01")).not.toContainText("まだ");
   await expect(lab.getByTestId("lab-open-stats2:binom-F-01")).toContainText("まだ");
@@ -1756,6 +1757,7 @@ test("値の表の実験室：横は値に比例し、▲（期待値）と予�
     .getByRole("link", { name: /^実験室/ })
     .click();
   await page.getByTestId("open-stats2:EXP-expect-table").click();
+  await page.getByTestId("experiment").getByTestId("exp-q-A-01").click(); // テーマ体系の入口から最初の問い（#119）
   const x = page.getByTestId("experiment");
   await x.getByRole("radio", { name: /くじの賞金/ }).click();
   const xs = await x.locator("svg rect[data-x]").evaluateAll((els) => els.map((e) => Number(e.getAttribute("data-x"))));

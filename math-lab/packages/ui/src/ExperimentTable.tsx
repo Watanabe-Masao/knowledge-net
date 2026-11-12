@@ -283,6 +283,58 @@ function TableCompare({
   );
 }
 
+/** 実験室の「基本と用語」（値の表）。入口の一覧と問いの中で同じ面を開く（画面の原則 4。二項分布の LabInfo と同じ部品） */
+export function TableInfo({
+  def,
+  theme,
+  reasonFormula,
+  definitions,
+  onConcept,
+  conceptName,
+  onClose,
+}: Pick<Props, "reasonFormula" | "definitions" | "onConcept" | "conceptName"> & {
+  def: TableDef;
+  theme: TableDef["themes"][number];
+  onClose: () => void;
+}) {
+  const name = (id: string) => conceptName?.(id) ?? id;
+  return (
+    <LabInfo
+      title={def.title}
+      points={def.points}
+      main={def.reason?.concept ?? def.links.concepts?.[0]}
+      related={def.links.concepts}
+      name={name}
+      onConcept={onConcept}
+      onClose={onClose}
+      formula={
+        reasonFormula?.tree ? (
+          <TableWorkspace
+            only="formula"
+            formula={reasonFormula}
+            tables={[
+              {
+                id: theme.id,
+                name: theme.name,
+                unit: theme.unit,
+                values: theme.values,
+                weights: theme.start,
+                labels: theme.labels,
+              },
+            ]}
+            definitions={definitions}
+            onConcept={onConcept}
+            conceptName={conceptName}
+            experiment={false}
+          />
+        ) : (
+          reasonFormula?.tex && <div className={s.math} dangerouslySetInnerHTML={{ __html: tex(reasonFormula.tex) }} />
+        )
+      }
+    />
+  );
+}
+
 export function TableLab({
   def,
   reasonFormula,
@@ -793,40 +845,14 @@ export function TableLab({
       cta={cta}
     >
       {sheet === "info" && (
-        <LabInfo
-          title={def.title}
-          points={def.points}
-          main={def.reason?.concept ?? def.links.concepts?.[0]}
-          related={def.links.concepts}
-          name={name}
+        <TableInfo
+          def={def}
+          theme={theme}
+          reasonFormula={reasonFormula}
+          definitions={definitions}
           onConcept={onConcept}
+          conceptName={conceptName}
           onClose={() => setSheet(null)}
-          formula={
-            reasonFormula?.tree ? (
-              <TableWorkspace
-                only="formula"
-                formula={reasonFormula}
-                tables={[
-                  {
-                    id: theme.id,
-                    name: theme.name,
-                    unit: theme.unit,
-                    values: theme.values,
-                    weights: theme.start,
-                    labels: theme.labels,
-                  },
-                ]}
-                definitions={definitions}
-                onConcept={onConcept}
-                conceptName={conceptName}
-                experiment={false}
-              />
-            ) : (
-              reasonFormula?.tex && (
-                <div className={s.math} dangerouslySetInnerHTML={{ __html: tex(reasonFormula.tex) }} />
-              )
-            )
-          }
         />
       )}
     </LabShell>
