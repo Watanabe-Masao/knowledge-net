@@ -18595,7 +18595,11 @@
        "id": "stats2:expect-A-02",
        "title": "期待値は、実際に出る値？",
        "finds": "期待値と実際に出る値の違い",
-       "concept": "stats2:TERM-expect"
+       "concept": "stats2:TERM-expect",
+       "predict": "何度も引いた平均の行き先（値）と、その値が1回引いて出るか",
+       "operate": "引く回数（表は変えない。テーマは選べる）",
+       "judge": "期待値は値×確率の和で、分布の重心（てんびんの支点）なので、表の値の1つとは限らないことを、別の表（例：0円と100円が半々なら50円）でも説明できる",
+       "open": "support"
       },
       {
        "id": "stats2:expect-A-03",
