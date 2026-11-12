@@ -17,6 +17,11 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
   const P = probOf(f, ev),
     se = (N: number) => 2 * Math.sqrt((P * (1 - P)) / N);
   const [guess, setGuess] = useState<number | null>(null);
+  // 予測は、予測の段に見えている具体の数で聞く（⑦ の 2。stats2-course #372）：「ずれの目安」は観察で付ける名前なので、
+  // 100 セットでのずれの幅（±2SE をポイントで）を先に見せ、10000 セットでの幅を選ばせる。並びは CONV3（100分の1・10分の1・変わらない）と同じ
+  const pt = (v: number) => Number((v * 100).toPrecision(2)).toString();
+  const w100 = se(100),
+    convChoices = [`±${pt(w100 / 100)} ポイント`, `±${pt(w100 / 10)} ポイント`, `±${pt(w100)} ポイント`];
   const { rec, run } = useRuns({ kind: "bernoulli", ...cond }, props.seed);
   const path = useMemo(() => runningShare(rec.ks.map(inEv(ev))), [rec]); // eslint-disable-line react-hooks/exhaustive-deps
   const N = rec.sets,
@@ -43,9 +48,12 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             {pctSig(P)} に近づくか。近づくなら、どんな速さか。
           </p>
         </Card>
-        <Card title="セットを 100 倍にすると、理論とのずれの目安は？">
+        <Card title="10000 セット重ねると、割合のずれはどのくらいまで？">
+          <p className={qs.muted} data-testid="exp-conv-given">
+            100 セットでは、割合は理論の {pctSig(P)} から ±{pt(w100)} ポイントくらいまでよくずれる。
+          </p>
           <div className={s.choice} role="radiogroup" aria-label="ずれの予測">
-            {CONV3.map((t, i) => (
+            {convChoices.map((t, i) => (
               <button
                 key={t}
                 type="button"
@@ -124,8 +132,8 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
     body = (
       <>
         <Verdict ok={guess === 1} big="10分の1">
-          ずれの目安は √(セット数) に反比例する。セットを 100 倍にすると √100＝10 で、10分の1。予測は「{CONV3[guess!]}
-          」。
+          ずれの目安（±2×標準誤差）は √(セット数) に反比例する。セットを 100 倍にすると √100＝10 で、10分の1（±
+          {pt(w100)} → ±{pt(w100 / 10)} ポイント）。予測は「{convChoices[guess!]}」（{CONV3[guess!]}）。
         </Verdict>
         <Card title="理論と実験" sub="差が目安の中か">
           <CompareTable

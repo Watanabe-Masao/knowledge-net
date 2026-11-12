@@ -712,7 +712,7 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
               ＋
             </button>
           </div>
-          <p className={qs.muted}>0.5 {unit}刻みで選ぶ。平均は、取れない値（3.5 など）にもなる。</p>
+          <p className={qs.muted}>0.5 {unit}刻みで選ぶ。平均は、1セットでは取れない小数の値にもなる。</p>
         </Card>
       </>
     );
@@ -741,7 +741,8 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
     );
     cta = <RunButtons run={run} sets={N} need={100} go={() => go(2)} />;
   } else if (stage === 2) {
-    const ok = guess !== null && Math.abs(guess - np) <= 0.5;
+    // 照らしは予測と同じ粒度（0.5 刻みのいちばん近い目）。±0.5 だと山の頂点（最頻値）を選んでも○になり、平均と最頻値の取り違えを照らせない（⑦ の 2。stats2-course #372）
+    const ok = guess !== null && Math.abs(guess - np) < 0.25;
     body = (
       <>
         <Verdict ok={ok} big={`${r2(np)} ${unit}`}>
