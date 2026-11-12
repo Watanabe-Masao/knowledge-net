@@ -357,11 +357,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
 }
 
 // ---------------- くり返し：理論分布と実験結果は一致する？（C-01） ----------------
-const REPEAT3 = [
-  "毎回、理論とぴったり一致する",
-  "一致するとは限らず、実験ごとにばらつく",
-  "いつも同じ向きにずれる",
-] as const;
+const REPEAT3 = ["毎回、理論とぴったり一致する", "理論の上にも下にもばらつく", "いつも同じ向きにずれる"] as const;
 export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "repeat" }> }) {
   const { def, q } = props,
     c = q.set,

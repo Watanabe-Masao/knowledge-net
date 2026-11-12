@@ -122,7 +122,8 @@ export function ShiftQ(props: QProps) {
     );
     cta = <RunButtons run={run} sets={A.sets} need={100} go={() => go(2)} />;
   } else if (stage === 2) {
-    const ok = guess !== null && dir(guess) === dir(k1),
+    // 予測1つに照らし1つ（⑦ の 2。stats2-course #372）：予測で選ぶのは頂点の回数なので、回数で照らす（前は向きだけで照らしていた）
+    const ok = guess !== null && guess === k1,
       N = B.sets;
     const rows: CmpRow[] = [
       { label: "平均（前）", exp: summarize(A).mean, th: meanOf(f0), se: (2 * sdOf(f0)) / Math.sqrt(A.sets) },
@@ -138,8 +139,8 @@ export function ShiftQ(props: QProps) {
     body = (
       <>
         <Verdict ok={ok}>
-          山は{["左へ動く", "動かない", "右へ動く"][dir(k1)]}。いちばん高いのは {k1} 回（予測は {guess} 回
-          {guess === k1 ? "で、ぴったり" : ""}）。
+          いちばん高いのは {k1} 回（予測は {guess} 回）。山は{["左へ動く", "動かない", "右へ動く"][dir(k1)]}
+          {guess !== null && guess !== k1 && dir(guess) === dir(k1) ? "（向きは予測どおり）" : ""}。
         </Verdict>
         <Card title="理論と実験" sub="差が目安の中か">
           <CompareTable rows={rows} />
@@ -162,13 +163,14 @@ export function ShiftQ(props: QProps) {
     );
     cta = (
       <button type="button" className={s.primary} onClick={() => go(3)}>
-        なぜ {r2(meanOf(f1))} が中心？ 理由を考える
+        なぜ山が動く？ 理由を考える
       </button>
     );
   } else if (stage === 3) {
     body = (
       <>
-        <Card title={def.reason?.title ?? "山の中心＝期待値 n×p"}>
+        {/* 平均＝np は D-01 で見つけることなので、ここでは言わない（⑦ の 2。stats2-course #372）。頂点とその確率だけを並べる */}
+        <Card title={def.reason?.title ?? "なぜ山が動く？"}>
           <table className={qs.table}>
             <thead>
               <tr>
@@ -179,14 +181,9 @@ export function ShiftQ(props: QProps) {
             </thead>
             <tbody>
               <tr>
-                <td>1回の平均</td>
-                <td>{start.p}</td>
-                <td>{next.p}</td>
-              </tr>
-              <tr>
-                <td>n 回分（×{start.n}）</td>
-                <td>{r2(meanOf(f0))}</td>
-                <td>{r2(meanOf(f1))}</td>
+                <td>成功確率</td>
+                <td>{pc(start.p)}</td>
+                <td>{pc(next.p)}</td>
               </tr>
               <tr>
                 <td>頂点</td>

@@ -63,7 +63,10 @@ test("A-02：予測の前に期待値を見せず、さいころの 3.5 は1回�
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   // 逆の予測は ✗
   await x.getByRole("list", { name: "段" }).getByRole("button", { name: /予測/ }).click();
-  await x.getByRole("radiogroup", { name: "1回で出るかの予測" }).getByRole("radio", { name: "1回で出る" }).click();
+  await x
+    .getByRole("radiogroup", { name: "1回で出るかの予測" })
+    .getByRole("radio", { name: "表の値の1つ（1回で出る）" })
+    .click();
   await x.getByRole("list", { name: "段" }).getByRole("button", { name: /観察/ }).click();
   await expect(x.getByTestId("exp-verdict")).toContainText("✗ 予測と違った");
   expect(errs).toEqual([]);

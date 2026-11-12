@@ -131,7 +131,7 @@ function TableCounter({
   onConcept?: (id: string) => void;
   name: (id: string) => string;
 }) {
-  const SETTLE = ["落ち着く", "ばらつき続ける"] as const;
+  const SETTLE = ["もう跳ねない（落ち着く）", "まだ大きく跳ねる"] as const;
   const [guess, setGuess] = useState<number | undefined>();
   const { rec, run } = useDraws(cx.values, cx.weights);
   const mm = modelMoments(tbl(cx.values, cx.weights)),
@@ -150,7 +150,8 @@ function TableCounter({
         <b>表</b>
         {shown}
       </p>
-      <p className={s.h}>何度も引くと、平均は…</p>
+      {/* 正解は「1000 回」の基準で決まるので、回数を問いに書く（stats2-course #372） */}
+      <p className={s.h}>1000 回引いても、平均はまれな大当たりで大きく跳ねる？</p>
       <div className={s.choice} role="radiogroup" aria-label="反例の予測" style={{ gridTemplateColumns: "1fr 1fr" }}>
         {SETTLE.map((t, i) => (
           <button
@@ -536,7 +537,7 @@ export function TableLab({
           </div>
           <label className={s.peak}>
             <span>
-              平均はいくつになる？
+              平均はいくつになる？（数は任意。照らすのは向き）
               <small className={s.muted}>
                 　今は {r2(mStart)}
                 {unit}
@@ -685,10 +686,10 @@ export function TableLab({
           {unit}。予測は {r2(pred.value)}
           {unit}）
           {notAValue && (
+            // 「表の値としては出ない」は A-02 で見つけること。ここでは言わず案内だけ（⑦ の 2。stats2-course #372）
             <span className={s.shape}>
-              期待値の読み方：{r2(mNext)}
-              {unit} は、表の中の値としては<b>一度も出ない</b>
-              。「よく出る値」ではなく、何度も引いたときの平均の行き着く先
+              この {r2(mNext)}
+              {unit} は、1回引いて出る値？ → A-02 で確かめる
             </span>
           )}
         </div>
@@ -887,7 +888,7 @@ export function TableLab({
 export type { FormulaData };
 
 const SUPPORT_STAGES = ["予測", "実験", "観察", "考察"] as const;
-const APPEARS = ["1回で出る", "1回では出ない"] as const;
+const APPEARS = ["表の値の1つ（1回で出る）", "表の値ではない（1回では出ない）"] as const;
 
 /**
  * 表を変えない問い（期待値の実験室 A-02「期待値は、実際に出る値？」。stats2-course の issue 119）。
@@ -974,7 +975,8 @@ export function TableSupportQ({
               aria-label="予測する平均"
             />
           </label>
-          <p className={s.h}>その値は、1回引いて出る？</p>
+          {/* 「その値」は自分の予測とも本当の行き先とも読めたので、何を聞くかを書く（stats2-course #372） */}
+          <p className={s.h}>何度も引いた平均の行き先は、表の値の1つ？</p>
           <div className={s.choice} role="radiogroup" aria-label="1回で出るかの予測">
             {APPEARS.map((d, i) => (
               <button
@@ -1065,8 +1067,9 @@ export function TableSupportQ({
           {unit}（予測 {r2(pv)}
           {unit}）。
           {isValue ? "この値は表の中にあり、1回で出ることもある" : "この値は表の中になく、1回では一度も出ない"}
+          {/* 観察は見る所を指す。理由（てんびんの支点）は考察で（⑦ の 2。stats2-course #372） */}
           <span className={s.shape}>
-            棒（引いた値）は表の値にしか立たない。平均は▲（期待値）へ近づく。期待値は「よく出る値」ではなく、何度も引いた平均の行き着く先（てんびんの支点）
+            棒（引いた値）がどこに立ち、平均の線が▲（期待値）のどこへ近づくかを下の図で見る
           </span>
         </div>
         <section className={s.card}>

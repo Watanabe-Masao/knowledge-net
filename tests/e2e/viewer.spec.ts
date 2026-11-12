@@ -871,7 +871,9 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(cmp.locator("tr", { hasText: "頂点（後）" }).locator("td").nth(2)).toHaveText("8 回");
   await expect(x.getByTestId("q-cmprows").locator("[role=listitem]")).toHaveCount(11);
   await expect(x.getByTestId("q-run-stat")).toContainText("理論 前 5・後 8");
-  await x.getByRole("button", { name: /理由を考える/ }).click();
+  await x.getByRole("button", { name: /なぜ山が動く/ }).click();
+  // 考察で平均＝np（D-01 で見つけること）を表に出さない（⑦ の 2。stats2-course #372）
+  await expect(x).not.toContainText("n 回分（×"); // 表の行「n 回分（×10）＝ np」を出さない（理由の文は教材のデータ）
   await expect(x.getByTestId("exp-workspace").getByTestId("ws-result")).toContainText("P(X=8)");
   await x.getByRole("button", { name: "応用の課題へ" }).click(); // 理由の段のボタンは課題へ（前の「p を自由に変える」の名残を外した。渡辺さん 2026-11-03）
   // 応用の課題（stats2-course #171）：練習（p→中心）と別の考え方（中心→p の逆算）。答えは画面が engine で求め、% で照らす。発見メモ（ChatGPT へ）は出さない
@@ -1020,7 +1022,7 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   await expect(x.getByTestId("exp-verdict")).toContainText("3.5 → 4.13");
   await expect(x.getByTestId("exp-tile-theory")).toContainText("3.5 → 4.13"); // 前の表と変えた表の期待値
   await expect(x.getByTestId("exp-replay").getByTestId("exp-run-line-b")).toHaveCount(1);
-  await expect(x.getByTestId("exp-verdict")).toContainText("一度も出ない");
+  await expect(x.getByTestId("exp-verdict")).toContainText("A-02 で確かめる");
   await expect(x.getByTestId("exp-replay")).toBeVisible();
   await x.getByRole("button", { name: /理由を考える/ }).click();
   const ex = x.getByTestId("exp-expand");
@@ -1035,7 +1037,7 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   await expect(ex).toContainText("4.125"); // 最後は表から求めた期待値
   await x.getByRole("button", { name: "別の条件で試す" }).click();
   await x.getByTestId("exp-bnd-doubling").click();
-  await x.getByRole("radio", { name: "ばらつき続ける" }).click();
+  await x.getByRole("radio", { name: "まだ大きく跳ねる" }).click();
   await x.getByTestId("exp-cx-run-100").click();
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("予測どおり", { timeout: 15000 });
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("期待値 41"); // どの項も 2^k×(1/2)^k＝1。40 項＋最後の 2
