@@ -26,3 +26,23 @@ test("二項分布 D-01：頂点の 3 は ✗、平均の 3.5 は ✓（照ら�
   await expect(await predictAndObserve(page, 4)).toContainText("予測と違った");
   await expect(await predictAndObserve(page, 3)).toContainText("予測どおり");
 });
+
+// 確かめる対象：二項分布 A-01（p を 50%→80%、n＝10）で、予測した頂点の回数で照らすこと（予測1つに照らし1つ。⑦ の 2。stats2-course #372）。
+// 想定する故障：頂点の回数を選ばせて向きだけで照らす（7 回と予測しても「右へ動く」が合えば ✓ になる）。
+// 見つけ方：7 回と予測すると ✗ で「向きは予測どおり」が添えられる（8 回と予測して ✓ になるのは viewer.spec.ts の流れのテスト）。
+// 既存との違い：viewer.spec.ts の A-01 は正しい予測（8 回）だけ。
+// 検出の確かめ（2026-11-13）：照らしを dir(guess) === dir(k1) に戻すと「予測と違った」で落ちることを見た
+test("二項分布 A-01：頂点を 7 回と予測すると ✗（向きは合っても回数で照らす）", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-A-01`);
+  const x = page.getByTestId("experiment");
+  await x
+    .getByRole("radiogroup", { name: /いちばん高い所/ })
+    .getByRole("radio", { name: "7 回" })
+    .click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
+  await x.getByTestId("exp-run-big").click();
+  await x.getByTestId("exp-to-observe").click();
+  await expect(x.getByTestId("exp-verdict")).toContainText("予測と違った");
+  await expect(x.getByTestId("exp-verdict")).toContainText("向きは予測どおり");
+});
