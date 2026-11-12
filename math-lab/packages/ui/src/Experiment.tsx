@@ -6,7 +6,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { modelPmf, type CardMechanism } from "@math-lab/engine";
 import { FoundContext, LabShell, peak, r2, tex } from "./labParts";
-import { TableInfo, TableLab, type TableDef } from "./ExperimentTable";
+import { TableInfo, TableLab, TableSupportQ, type TableDef } from "./ExperimentTable";
 import {
   BreakQ,
   ConvQ,
@@ -587,7 +587,7 @@ function TableEntry(props: Props & { def: TableDef }) {
     return (
       <QuestionMenu
         title={def.title}
-        groups={menuGroups(def.catalog, () => "shift")}
+        groups={menuGroups(def.catalog, (op) => (op === "support" ? "mean" : "shift"))}
         group={grp ?? undefined}
         onGroup={setGrp}
         onPick={setPick}
@@ -610,7 +610,11 @@ function TableEntry(props: Props & { def: TableDef }) {
   const back = def.catalog?.length && !props.open ? () => setPick(null) : props.onBack;
   return (
     <FoundContext.Provider value={foundOf(item, props)}>
-      <TableLab {...props} def={def} onBack={back} />
+      {pick === "support" ? (
+        <TableSupportQ {...props} def={def} onBack={back} />
+      ) : (
+        <TableLab {...props} def={def} onBack={back} />
+      )}
     </FoundContext.Provider>
   );
 }
