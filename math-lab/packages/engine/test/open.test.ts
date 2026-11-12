@@ -17,7 +17,7 @@ describe("記号を開く", () => {
     expect(a.count).toBe(1);
     expect(tex(a)).toBe("Z=\\dfrac{X-\\mu}{\\sqrt{V(X)}}");
     const defs = definitionsFor("V", of("TERM-var"));
-    expect(defs.length).toBe(2); // V(X)＝E((X−μ)²)＝E(X²)−E(X)² の2つの形（V(aX+b) は引数が式なので候補にしない）
+    expect(defs.length).toBe(3); // V(X)＝E((X−μ)²)＝E(X²)−E(X)² の2つの形と、値ごとの和 Σ(x−μ)²p(x)（V(aX+b) は引数が式なので候補にしない）
     const b = openSymbol(a.tree, a.symbols, "V", defs[0]!, a.marks);
     expect(tex(b)).toBe("Z=\\dfrac{X-\\mu}{\\sqrt{E((X-\\mu)^{2})}}");
     expect(tex(openSymbol(a.tree, a.symbols, "V", defs[1]!))).toBe("Z=\\dfrac{X-\\mu}{\\sqrt{E(X^{2})-(E(X))^{2}}}");

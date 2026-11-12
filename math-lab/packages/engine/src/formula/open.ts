@@ -49,6 +49,14 @@ export type Opened = {
   reason?: string;
 };
 
+/** 端のない Σ・∫（とりうる値すべての和・積分）を含むか */
+const hasSupportSum = (n: FormulaNode): boolean =>
+  isOp(n) &&
+  (((n.op === "sum" || n.op === "int") && n.lower === undefined && n.upper === undefined) ||
+    n.args.some(hasSupportSum) ||
+    (n.lower !== undefined && hasSupportSum(n.lower)) ||
+    (n.upper !== undefined && hasSupportSum(n.upper)));
+
 const sub = (s: string) => s.replace(/_\{?([^}]*)\}?$/, "").trim();
 
 /**
@@ -74,6 +82,12 @@ export function openSymbol(
 
   /** 1か所を開いた木を作る（params：定義の引数 → 実際の引数） */
   const build = (params: Map<string, FormulaNode>): FormulaNode | null => {
+    // 端のない Σ_x・∫（とりうる値すべての和。Σ x p(x)・Σ (x−μ)²p(x)）は、その確率変数の値と確率 p(x) で書いた形。
+    // 引数を別の確率変数や式に替えると p(x) が元の確率変数のままになるので開かない（stats2-course #119 の F-var-sum で見つけた）
+    if ([...params].some(([p, arg]) => !(isSym(arg) && arg.sym === p)) && hasSupportSum(rhs)) {
+      reason = "とりうる値すべての和の形は、その確率変数の値と確率で書いた式なので、引数を替えて開けない";
+      return null;
+    }
     let body = clone(rhs);
     // 1. 定義の引数に属する記号（of）を移す
     const rename = new Map<string, FormulaNode>();

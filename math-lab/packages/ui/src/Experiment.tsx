@@ -6,7 +6,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { modelPmf, type CardMechanism } from "@math-lab/engine";
 import { FoundContext, LabShell, peak, r2, tex } from "./labParts";
-import { TableInfo, TableLab, TableSupportQ, type TableDef } from "./ExperimentTable";
+import { TableInfo, TableLab, TableSameMeanQ, TableSupportQ, type TableDef } from "./ExperimentTable";
 import {
   BreakQ,
   ConvQ,
@@ -181,6 +181,8 @@ export type Props = {
   def: ExperimentDef;
   /** 理由の段で使う式（定義の reason.concept の reason.formula。E(X)＝np など） */
   reasonFormula?: FormulaData;
+  /** 散らばりの考察で使う式（値の表の spread_reason。V(X)＝Σ(x−μ)²p(x)。改訂6） */
+  spreadFormula?: FormulaData;
   /** ⓘ に出す主役の式（P(X＝k)＝…） */
   mainFormula?: FormulaData;
   seed?: number;
@@ -587,7 +589,7 @@ function TableEntry(props: Props & { def: TableDef }) {
     return (
       <QuestionMenu
         title={def.title}
-        groups={menuGroups(def.catalog, (op) => (op === "support" ? "mean" : "shift"))}
+        groups={menuGroups(def.catalog, (op) => (op === "support" ? "mean" : op === "same-mean" ? "var" : "shift"))}
         group={grp ?? undefined}
         onGroup={setGrp}
         onPick={setPick}
@@ -612,6 +614,8 @@ function TableEntry(props: Props & { def: TableDef }) {
     <FoundContext.Provider value={foundOf(item, props)}>
       {pick === "support" ? (
         <TableSupportQ {...props} def={def} onBack={back} />
+      ) : pick === "same-mean" ? (
+        <TableSameMeanQ {...props} def={def} onBack={back} />
       ) : (
         <TableLab {...props} def={def} onBack={back} />
       )}

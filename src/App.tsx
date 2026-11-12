@@ -387,6 +387,11 @@ export default function App() {
           cards={cards ?? undefined}
           onCards={(e) => setCards(e || null)}
           reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)}
+          spreadFormula={
+            "spread_reason" in xdef && xdef.spread_reason
+              ? formulaOf(xdef.spread_reason.concept, xdef.spread_reason.formula)
+              : undefined
+          }
           mainFormula={formulaOf(xdef.links.concepts?.[0])}
           onConcept={(id) => net.concepts.has(id) && setSel(id)}
           conceptName={(id) => name(net, id)}
