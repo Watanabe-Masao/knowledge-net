@@ -46,3 +46,14 @@ test("二項分布 A-01：頂点を 7 回と予測すると ✗（向きは合�
   await expect(x.getByTestId("exp-verdict")).toContainText("予測と違った");
   await expect(x.getByTestId("exp-verdict")).toContainText("向きは予測どおり");
 });
+
+// 確かめる対象：前提崩し（E-01〜04）の予測の段に、1回ごとの確率をならすと p のままであることが出ること（stats2-course #379）。
+// 想定する故障：書かないと「確率が下がる→成功が減る→山が狭い」と誤った理由でも E-01 で ✓ になる（2級の学習者の役のレビューで見つけた）。
+// 見つけ方：E-01 を開いた予測の段に、二項分布の p（50%）と「のまま」が出る。
+// 既存との違い：viewer.spec.ts の前提崩しのテストは照らしと観察の数を見て、予測の段の文は見ていない。
+// 検出の確かめ（2026-11-13）：BreakQ の exp-break-mean の段落を見つからなくする（testid を変える）と落ちることを見た
+test("前提崩し E-01：予測の段に「確率をならすと p のまま」", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
+  await expect(page.getByTestId("experiment").getByTestId("exp-break-mean")).toContainText("50% のまま");
+});
