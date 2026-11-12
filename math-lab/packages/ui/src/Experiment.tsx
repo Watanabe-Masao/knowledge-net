@@ -6,7 +6,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { modelPmf, type CardMechanism } from "@math-lab/engine";
 import { FoundContext, LabShell, peak, r2, tex } from "./labParts";
-import { TableLab, type TableDef } from "./ExperimentTable";
+import { TableInfo, TableLab, type TableDef } from "./ExperimentTable";
 import {
   BreakQ,
   ConvQ,
@@ -581,6 +581,7 @@ function TableEntry(props: Props & { def: TableDef }) {
   const { def } = props;
   const [pick, setPick] = useState<string | null>(props.open ?? (props.cards || !def.catalog?.length ? "shift" : null));
   const [grp, setGrp] = useState<string | null>(null);
+  const [info, setInfo] = useState(false);
   const item = pick ? def.catalog?.flatMap((g) => g.items).find((it) => it.open === pick && !it.retired) : undefined;
   if (pick === null && def.catalog?.length)
     return (
@@ -591,7 +592,20 @@ function TableEntry(props: Props & { def: TableDef }) {
         onGroup={setGrp}
         onPick={setPick}
         onBack={props.onBack}
-      />
+        onInfo={() => setInfo(true)}
+      >
+        {info && (
+          <TableInfo
+            def={def}
+            theme={def.themes[0]!}
+            reasonFormula={props.reasonFormula}
+            definitions={props.definitions}
+            onConcept={props.onConcept}
+            conceptName={props.conceptName}
+            onClose={() => setInfo(false)}
+          />
+        )}
+      </QuestionMenu>
     );
   const back = def.catalog?.length && !props.open ? () => setPick(null) : props.onBack;
   return (
