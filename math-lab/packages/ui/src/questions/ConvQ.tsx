@@ -136,7 +136,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
           ずれの目安（±2×標準誤差）は、100 セットの ±{pt(w100)} ポイントから 10000 セットで ±{pt(w100 / 10)}{" "}
           ポイントに。10分の1。予測は「{convChoices[guess!]}」（{CONV3[guess!]}）。
         </Verdict>
-        <Card title="理論と実験" sub="差がずれの目安の中か">
+        <Card title="理論と実験" sub="ずれがずれの目安の中か">
           <CompareTable
             rows={[{ label: `${N.toLocaleString()} セットの割合`, exp: share, th: P, se: se(N), fmt: pShort }]}
           />

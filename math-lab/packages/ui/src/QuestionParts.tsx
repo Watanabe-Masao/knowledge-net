@@ -239,7 +239,9 @@ export function CompareRows({
       >
         {pmf.map((v, k) => {
           const e = fr[k]!,
-            d = e - v;
+            d = e - v,
+            // 強調の基準はずれの目安（±2×標準誤差）と同じ（固定の 2 ポイントを別に置かない。⑦ の 4。stats2-course #389）
+            out = sets > 0 && Math.abs(d) > 2 * Math.sqrt((v * (1 - v)) / sets) + 1e-12;
           return (
             <div key={k} role="listitem" className={inEvent?.(k) ? s.in : undefined}>
               <span>{k} 回</span>
@@ -249,7 +251,7 @@ export function CompareRows({
               </span>
               <span>{pShort(e)}</span>
               <span>{pShort(v)}</span>
-              <span className={Math.abs(d) >= 0.02 ? s.bigD : undefined}>
+              <span className={out ? s.bigD : undefined} data-out={out ? "true" : undefined}>
                 {d >= 0 ? "＋" : "−"}
                 {Number((Math.abs(d) * 100).toFixed(1))}
               </span>
@@ -257,7 +259,10 @@ export function CompareRows({
           );
         })}
       </div>
-      <p className={s.muted}>ずれは実験−{thName}（ポイント）。2 ポイント以上を濃く出す。</p>
+      <p className={s.muted}>
+        ずれは実験−{thName}
+        （ポイント）。ずれの目安（±2×標準誤差）の外の行を濃く出す（理論どおりでも1行につき約5%は外に出る）。
+      </p>
     </>
   );
 }
@@ -272,9 +277,13 @@ export type CmpRow = {
   hi?: boolean;
 };
 /** 数の比べ表：実験・理論・差（揺れの目安 ±2×標準誤差）と「中／外」。一致したとは言わない */
-export function CompareTable({ rows }: { rows: CmpRow[] }) {
+export function CompareTable({ rows, independent = false }: { rows: CmpRow[]; independent?: boolean }) {
   // 目安（se）のある行がなければ、差の列と「中・外」の凡例を出さない（目安のない行に目安の見出しを付けない。⑦ の 4。stats2-course #379）
   const hasSe = rows.some((r) => r.se !== undefined);
+  // 行が多い照らしは、表全体のどれかが外に出る頻度も書く（⑦ の 2。stats2-course #389）。
+  // 同じ実験から出した行はいっしょに動くので、独立と仮定した 1−0.95^k は上限（「最大で」）。別々の実験の行（independent）はそのまま
+  const k = rows.filter((r) => r.se !== undefined).length,
+    anyOut = 1 - 0.95 ** k;
   return (
     <>
       <table className={s.table} data-testid="q-cmp">
@@ -283,7 +292,7 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
             <th scope="col" />
             <th scope="col">実験</th>
             <th scope="col">理論</th>
-            {hasSe && <th scope="col">差（ずれの目安）</th>}
+            {hasSe && <th scope="col">ずれ（ずれの目安）</th>}
           </tr>
         </thead>
         <tbody>
@@ -318,8 +327,16 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
       </table>
       {hasSe && (
         <p className={s.muted}>
-          「中」：差がずれの目安（±2×標準誤差。理論どおりなら約95%
-          がこの中に入る）の中。このずれは偶然のばらつきと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。ただし理論が正しくても、1行につき約5%（20回に1回）は外に出る（行が多ければ、どれかが外に出るのはふつう。割合と回数の行は同じ結果を見ているので、いっしょに中・外になる）。セットを足しても外が続くなら、理論の前提が合っていないかを考える。
+          「中」：ずれがずれの目安（±2×標準誤差。理論どおりなら約95%
+          がこの中に入る）の中。このずれは偶然のばらつきと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。ただし理論が正しくても、1行につき約5%（20回に1回）は外に出る。
+          {k >= 2 && (
+            <span data-testid="q-cmp-any">
+              理論どおりでも、この表の {k} 行のどれかが外に出るのは{independent ? "" : "最大で"}
+              {about(anyOut)}
+              {independent ? "" : "（同じ実験から出した行はいっしょに中・外になるので、これより少ない）"}。
+            </span>
+          )}
+          セットを足しても外が続くなら、理論の前提が合っていないかを考える。
         </p>
       )}
     </>
@@ -438,11 +455,15 @@ export function RunChart({
   };
   return (
     <div data-testid="q-run" data-upto={u}>
+      {/* 目盛りのボタンの単位は、並びの上の1行で言う（ボタンを44px より細くしない。⑦ の 4。stats2-course #389） */}
+      <p className={s.muted} data-testid="q-run-unit">
+        何{per}目までを見るか（全部で {N.toLocaleString()} {per}）
+      </p>
       <div
         className={s.chips}
         style={{ gridTemplateColumns: `repeat(${chips.length + 1}, 1fr)` }}
         role="radiogroup"
-        aria-label="何セット目まで"
+        aria-label={`何${per}目まで`}
       >
         {chips.map((t) => (
           <button
@@ -455,7 +476,7 @@ export function RunChart({
               setUpto(t === N ? null : t);
             }}
           >
-            {t === N ? `全 ${N.toLocaleString()}` : t.toLocaleString()}
+            {t === N ? "全部" : t.toLocaleString()}
           </button>
         ))}
         <button type="button" onClick={replay}>

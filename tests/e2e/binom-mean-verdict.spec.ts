@@ -49,8 +49,8 @@ test("二項分布 A-01：頂点を 7 回と予測すると ✗（向きは合�
   await expect(x.getByTestId("exp-peak-note")).toContainText("隣の棒にずれる");
   // 頻度をその場で書く（⑦ の 2）：頂点と隣の棒の数が入れ替わる確率（正規近似。1,000 セットで約 8%。検算役の試行では 7.8%）
   await expect(x.getByTestId("exp-peak-note")).toContainText(/いまの 1,000 セットで約 [78](\.\d)?%/);
-  // 目安のない表に「差（ずれの目安）」の列と「中・外」の凡例を出さない（⑦ の 4）
-  await expect(x.getByTestId("q-cmp")).not.toContainText("差（ずれの目安）");
+  // 目安のない表に「ずれ（ずれの目安）」の列と「中・外」の凡例を出さない（⑦ の 4）
+  await expect(x.getByTestId("q-cmp")).not.toContainText("ずれ（ずれの目安）");
   await expect(x).not.toContainText("平均（後）");
 });
 
@@ -106,7 +106,9 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
   await expect(x.getByTestId("exp-var-swap")).toContainText(/50% 以外になるのは、いまの各 1,000 セットで約 0\.4%/);
   await expect(x.getByTestId("exp-var-swap")).toContainText("どちらが大きく出るかは半々");
   // 実験の分散にもずれの目安の列（⑦ の 4。#379）。色の行は実験でいちばん大きかった p
-  await expect(x.getByTestId("q-cmp")).toContainText("差（ずれの目安）");
+  await expect(x.getByTestId("q-cmp")).toContainText("ずれ（ずれの目安）");
+  // 行が多い照らしは表全体の頻度も（⑦ の 2。#389）：5つの p は別々の実験なので独立。1−0.95⁵＝0.226
+  await expect(x.getByTestId("q-cmp-any")).toHaveText("理論どおりでも、この表の 5 行のどれかが外に出るのは約 23%。");
   await expect(x.getByTestId("q-cmp").locator("tr[data-inside]")).toHaveCount(5);
   await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
   await x.getByTestId("exp-bnd-fatigue").click();
@@ -149,4 +151,36 @@ test("実験を起こすボタンの数に単位がある", async ({ page }) => 
     await expect(bs.first()).toBeVisible();
     for (const t of await bs.allInnerTexts()) expect(t, q).toMatch(/回|セット|実験/);
   }
+});
+
+// 確かめる対象：分布の表（CompareRows）の強調の基準が、ずれの目安（±2×標準誤差）と同じであること（⑦ の 4。stats2-course #389）。
+// 想定する故障：固定の「2 ポイント以上」に戻る、標準誤差にセット数を入れない、理論の確率でなく実験の割合で幅を求める。
+// 見つけ方：前提崩し（疲れる・100 セット）の観察で、表の各行の実験の割合と理論の確率を画面から読み、
+//   テストの中で |実験−理論| ＞ 2√(理論(1−理論)/100) を求めて、濃く出す行（data-out）と照らす。100 セットでは目安が約 ±5〜10 ポイントあり、
+//   2 ポイントの基準と結果が分かれる行が出る。
+// 既存との違い：ほかのテストは表の数を見ていて、どの行を強調するかは見ていない。
+// 検出の確かめ（2026-11-14）：基準を Math.abs(d) >= 0.02 に戻すと落ちることを見た
+test("分布の表の強調は、ずれの目安の外の行だけ", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
+  const x = page.getByTestId("experiment");
+  await x.getByTestId("exp-bnd-fatigue").click();
+  await x.getByRole("radiogroup", { name: /予測/ }).getByRole("radio").first().click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
+  await x.getByTestId("exp-run-100").click();
+  await expect(x.getByTestId("exp-to-observe")).toBeEnabled();
+  await x.getByTestId("exp-to-observe").click();
+  const items = x.getByTestId("q-cmprows").first().getByRole("listitem");
+  const n = await items.count();
+  expect(n).toBe(11);
+  let differ = 0;
+  for (let i = 0; i < n; i++) {
+    const cells = await items.nth(i).locator(":scope > span").allInnerTexts();
+    const e = parseFloat(cells[2]!) / 100,
+      v = parseFloat(cells[3]!) / 100;
+    const out = Math.abs(e - v) > 2 * Math.sqrt((v * (1 - v)) / 100);
+    if (out !== Math.abs(e - v) >= 0.02) differ++;
+    await expect(items.nth(i).locator("[data-out]"), `${i} 回`).toHaveCount(out ? 1 : 0);
+  }
+  expect(differ).toBeGreaterThan(0); // 2 ポイントの基準と分かれる行がある（検出に使える）
 });

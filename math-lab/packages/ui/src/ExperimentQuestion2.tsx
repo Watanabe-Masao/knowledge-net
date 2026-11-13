@@ -417,7 +417,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
         <tr>
           <th>実験の番号</th>
           <th>割合</th>
-          <th>{band ? "ずれの目安の中か" : "理論との差"}</th>
+          <th>{band ? "ずれの目安の中か" : "理論とのずれ"}</th>
         </tr>
       </thead>
       <tbody>
@@ -782,9 +782,9 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
         <Verdict ok={ok} big={`${r2(np)} ${unit}`}>
           {/* 観察は数で照らすだけ。n×p で決まる理由は考察で（⑦ の 2。stats2-course #379） */}
           実験の平均は {r2(path[N - 1])} {unit}、理論の平均は {r2(np)} {unit}（予測は {guess} {unit}
-          ）。差が目安の中かは下の表で見る。
+          ）。ずれがずれの目安の中かは下の表で見る。
         </Verdict>
-        <Card title="理論と実験" sub="差がずれの目安の中か">
+        <Card title="理論と実験" sub="ずれがずれの目安の中か">
           <CompareTable
             rows={[{ label: "成功回数の平均", exp: summarize(rec).mean, th: np, se: (2 * sd) / Math.sqrt(N) }]}
           />
@@ -1066,7 +1066,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
           理論の分散がいちばん大きいのは p＝{pc(ps[best]!)}（{r2(th[best])}。予測は p＝{pc(ps[guess!]!)}）。下の表で、p
           を変えたときの分散の並び方を見る。
         </Verdict>
-        <Card title="理論の分散と実験の分散" sub="差がずれの目安の中か">
+        <Card title="理論の分散と実験の分散" sub="ずれがずれの目安の中か">
           {/* 実験の分散にも、ずれの目安（±2×標本分散の標準偏差。二項分布の4次モーメントから）を付ける（⑦ の 4。stats2-course #379） */}
           <CompareTable
             rows={ps.map((p, i) => ({
@@ -1076,6 +1076,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
               se: 2 * sampleVarianceSd(th[i]!, binomMu4(n, p), M),
               hi: i === mi,
             }))}
+            independent
           />
           <p className={qs.note}>
             この実験で分散がいちばん大きかったのは p＝{pc(ps[mi]!)}
