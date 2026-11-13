@@ -40,7 +40,7 @@ test("A-02：予測の前に期待値を見せず、さいころの 3.5 は1回�
   await page.goto(`./?${SRC}&x=${encodeURIComponent("stats2:EXP-expect-table")}`);
   const x = page.getByTestId("experiment");
   await x.getByTestId("exp-q-A-02").click();
-  await expect(x.getByTestId("exp-question")).toContainText("1回引いて出る値");
+  await expect(x.getByTestId("exp-question")).toContainText("実際に出る値"); // 画面の問いは題から（#379）
   await expect(x.getByRole("radiogroup", { name: "テーマ" }).getByRole("radio", { name: /さいころ/ })).toHaveAttribute(
     "aria-checked",
     "true",
