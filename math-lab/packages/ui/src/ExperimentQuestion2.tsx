@@ -782,7 +782,8 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
           )}
         </Card>
         <p className={qs.note}>
-          {peakText}平均が1セットで実際に出る値かは、期待値の実験室の「何度も引いた平均の行き先（期待値）は、1回で出る値？」（A-02）で確かめる。
+          {peakText}
+          平均が1セットで実際に出る値かは、期待値の実験室の「何度も引いた平均の行き先（期待値）は、1回で出る値？」（A-02）で確かめる。
         </p>
       </>
     );
