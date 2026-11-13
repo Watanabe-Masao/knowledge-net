@@ -1021,6 +1021,10 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-verdict")).toContainText("3.5 → 4.13");
   await expect(x.getByTestId("exp-tile-theory")).toContainText("3.5 → 4.13"); // 前の表と変えた表の期待値
+  // 引いた平均の差のずれの目安と、向きが逆に出る頻度（⑦ の 2・4。stats2-course #379）。手で求めた値：分散は 35/12 と 3.359、
+  //   各 101 回の差の SE＝√((2.917＋3.359)/101)＝0.249 → ±0.50、Φ(−0.625/0.249)＝0.6%。
+  //   故障：分散に変えた表の重みを使わない・SE に回数を入れない・向きの頻度に差の絶対値を使わない（検出の確かめ：se の /N を外すと落ちることを見た）
+  await expect(x.getByTestId("exp-mean-margin")).toContainText(/表の差 0\.63 の上下 ±0\.50?[^]*各 101 回なら約 0\.6%/);
   await expect(x.getByTestId("exp-replay").getByTestId("exp-run-line-b")).toHaveCount(1);
   await expect(x.getByTestId("exp-verdict")).toContainText("（A-02）で確かめる");
   await expect(x.getByTestId("exp-replay")).toBeVisible();

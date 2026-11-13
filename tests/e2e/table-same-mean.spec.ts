@@ -40,6 +40,11 @@ test("D-01：期待値が同じ2つの表。予測1つ → 引く → 照らし�
   await expect(x.getByTestId("exp-verdict")).toContainText("平均の行き先は同じ");
   await expect(x.getByTestId("exp-look")).toContainText("何が違う？");
   await expect(x).not.toContainText("落ち着かない");
+  // 期待値が同じでも出る平均の差の目安（⑦ の 2・4。#379）：くじ A の分散 20356・B 11356（手で求めた値）、各 N 回で 2√(31712/N)。
+  //   N は引き終わるまでの時間で変わるので、文の回数から求める。故障：B の重みを使わない（A の分散だけなら 2√(40712/N)）
+  const mg = await x.getByTestId("exp-mean-margin").innerText();
+  const [, w, nn] = mg.match(/±([\d.]+)円[^]*各 (\d+) 回/)!;
+  expect(Number(w)).toBeCloseTo(2 * Math.sqrt(31712 / Number(nn)), 2);
   // 観察の再生は A・B で呼ぶ（条件を変えていないので「変更前・変更後」「なぜ平均が変わったか」と言わない）
   await expect(x.getByTestId("exp-replay-stat")).toContainText("実験平均 A");
   await expect(x).not.toContainText("変更前");

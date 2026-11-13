@@ -2,7 +2,19 @@
 // どれも 予測 → 実験 → 観察 → 理由 → 応用 の5段。予想の答えは定義に書かず、理論（modelPmf）から求める。
 // 応用は ApplyTask（答えは engine の solveApply）。「グラフを問いに合わせる」で下の道具が問いの値になり、答えの所に色が付く。
 import { useMemo, useRef, useState, type ReactNode } from "react";
-import { NUM2, PCT1, comb, createRandom, formatApply, runningMean, summarize, type Random } from "@math-lab/engine";
+import {
+  NUM2,
+  PCT1,
+  binomMu4,
+  comb,
+  createRandom,
+  formatApply,
+  probLargest,
+  runningMean,
+  sampleVarianceSd,
+  summarize,
+  type Random,
+} from "@math-lab/engine";
 import { haptic } from "./motion";
 import { LabShell, peak, useRuns, useStages } from "./labParts";
 import {
@@ -12,6 +24,7 @@ import {
   Field,
   RunChart,
   TheoryRows,
+  about,
   pc,
   pctSig,
   ptShort,
@@ -1057,8 +1070,22 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
           {rows(vars, true, mi)}
           <p className={qs.note}>
             この実験で実測の分散がいちばん大きかったのは p＝{pc(ps[mi]!)}
-            （色の行）。実測の分散も標本なのでばらつく。理論の差が小さい p
-            どうしは、実験によって大小が入れ替わることがある。
+            （色の行）。実測の分散も標本なのでばらつく。
+          </p>
+          {/* 大小の入れ替わりは「ある」と言わず、頻度をその場で書く（⑦ の 2。標本分散の標準偏差は二項分布の4次モーメントから。stats2-course #379） */}
+          <p className={qs.note} data-testid="exp-var-swap">
+            いちばん大きい p が {pc(ps[best]!)} 以外に出るのは、{M.toLocaleString()} セットずつなら
+            {about(
+              1 -
+                probLargest(
+                  th,
+                  ps.map((p, i) => sampleVarianceSd(th[i]!, binomMu4(n, p), M)),
+                  best,
+                ),
+            )}
+            。
+            {th.some((v, i) => th.some((w, j) => j > i && i !== best && Math.abs(v - w) < 1e-12)) &&
+              "理論の分散が同じ p どうし（左右対称の組）は、どちらが大きく出るかは半々。"}
           </p>
         </Card>
       </>

@@ -5,6 +5,8 @@ import {
   NUM2,
   fatigueP,
   mixSpread,
+  normalCdf,
+  sampleVarianceSd,
   formatApply,
   mechanismMoments,
   runningSd,
@@ -14,7 +16,19 @@ import {
 } from "@math-lab/engine";
 import { haptic } from "../motion";
 import { LabShell, usePairRuns, useStages } from "../labParts";
-import { CompareRows, CompareTable, Dock, Field, PairRows, RunChart, TheoryRows, pc, qs, r2 } from "../QuestionParts";
+import {
+  CompareRows,
+  CompareTable,
+  Dock,
+  Field,
+  PairRows,
+  RunChart,
+  TheoryRows,
+  about,
+  pc,
+  qs,
+  r2,
+} from "../QuestionParts";
 import type { BinomDef } from "../Experiment";
 import s from "../Experiment.module.css";
 import { Cond, STAGES_Q, pmfOf, SPREAD3 } from "./common";
@@ -160,11 +174,20 @@ export function BreakQ(props: QProps & { initial?: string }) {
     const vA = summarize(A).variance ?? NaN,
       vB = summarize(B).variance ?? NaN,
       N = A.sets;
+    // 実験の分散の大小が理論と逆に出る頻度（⑦ の 2）。下の表の目安と同じく正規分布を仮定（4次モーメント 3σ⁴）したおおよそ
+    const sdOf = (v: number) => sampleVarianceSd(v, 3 * v * v, N),
+      flip = ans === 1 ? NaN : normalCdf(-Math.abs(vm - vb) / Math.hypot(sdOf(vm), sdOf(vb)));
     body = (
       <>
         <Verdict ok={guess === ans} testid="exp-cx-verdict">
           山は二項分布より<b>{["広くなる", "変わらない", "狭くなる"][ans]}</b>。理論の分散：崩した起き方 {r2(vm)}
           ・二項分布 {r2(vb)}。実験：崩した {r2(vB)}・条件どおり {r2(vA)}。予測は「{SPREAD3[guess!]}」。
+          {ans !== 1 && (
+            <span data-testid="exp-cx-flip">
+              実験の分散の大小が理論と逆に出るのは、各 {N.toLocaleString()} セットなら{about(flip)}
+              （正規分布を仮定したおおよそ）。
+            </span>
+          )}
         </Verdict>
         <Card title="理論と実験" sub="差が目安の中か">
           <CompareTable

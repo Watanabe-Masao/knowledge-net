@@ -88,3 +88,28 @@ test("前提崩し：予測の段に、選んだ起き方の仕組みが数で�
     await expect(line).toContainText(re);
   }
 });
+
+// 確かめる対象：結果が理論と逆の大小に見えうる所で、頻度をその場で書くこと（⑦ の 2。stats2-course #379）。
+// 想定する故障：「入れ替わることがある」とだけ言う（どのくらいか分からず、外れた結果を理論の誤りと読む）か、頻度の計算をつなぎ違える。
+// 見つけ方：D-02（p＝10〜90%・各 1,000 セット）で、いちばん大きい p が 50% 以外に出る頻度が約 0.4%（独立な乱数の試行では 0.37%）。
+//   前提崩しは各 N セットで分散の大小が逆に出る頻度が出る（値は正規近似。engine の swap.test.ts で式を確かめている）。
+// 既存との違い：engine のテストは確率の計算だけ。ここは画面の文へのつなぎ。
+// 検出の確かめ（2026-11-13）：VarQ で probLargest に best ではなく 0 を渡すと落ちることを見た
+test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で書く", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-D-02`);
+  const x = page.getByTestId("experiment");
+  await x.getByRole("radio", { name: "50%" }).click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
+  await x.getByTestId("exp-run-big").click();
+  await x.getByTestId("exp-to-observe").click();
+  await expect(x.getByTestId("exp-var-swap")).toContainText(/50% 以外に出るのは、1,000 セットずつなら約 0\.4%/);
+  await expect(x.getByTestId("exp-var-swap")).toContainText("どちらが大きく出るかは半々");
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
+  await x.getByTestId("exp-bnd-fatigue").click();
+  await x.getByRole("radio").first().click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
+  await x.getByTestId("exp-run-big").click();
+  await x.getByTestId("exp-to-observe").click();
+  await expect(x.getByTestId("exp-cx-flip")).toContainText(/各 [\d,]+ セットなら(約 [\d.]+%|0\.1% 未満)/);
+});
