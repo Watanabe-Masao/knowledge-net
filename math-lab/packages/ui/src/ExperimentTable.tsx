@@ -670,7 +670,7 @@ export function TableLab({
             前と後 1回
           </button>
           <button type="button" className={s.primary} onClick={() => run(100)} data-testid="exp-run-100">
-            ▶ 各 100回
+            ▶ 各 100 回
           </button>
         </div>
         <button type="button" className={s.next} disabled={rec.sets < 20} onClick={() => go(2)}>
@@ -1061,7 +1061,7 @@ export function TableSupportQ({
             1回
           </button>
           <button type="button" className={s.primary} onClick={() => run(100)} data-testid="exp-run-100">
-            ▶ 100回
+            ▶ 100 回
           </button>
         </div>
         <button
@@ -1402,7 +1402,7 @@ export function TableSameMeanQ({
             A と B 1回
           </button>
           <button type="button" className={s.primary} onClick={() => run(100)} data-testid="exp-run-100">
-            ▶ 各 100回
+            ▶ 各 100 回
           </button>
         </div>
         <button
@@ -1425,7 +1425,7 @@ export function TableSameMeanQ({
           <span className={s.shape} data-testid="exp-verdict-mean">
             平均の行き先は{MEAN3[actMean]}（期待値 A {r2(mA)}
             {unit}・B {r2(mB)}
-            {unit}）
+            {unit}）。予測は「{MEAN3[pm!]}」。
           </span>
         </div>
         {actMean === 1 && (

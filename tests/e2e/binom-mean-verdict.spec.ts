@@ -46,11 +46,11 @@ test("二項分布 A-01：頂点を 7 回と予測すると ✗（向きは合�
   await expect(x.getByTestId("exp-verdict")).toContainText("予測と違った");
   await expect(x.getByTestId("exp-verdict")).toContainText("向きは予測どおり");
   // 観察は頂点だけ。平均（D-01 で見つける）を出さず、頂点が乱数で隣にずれうる頻度を書く（⑦ の 2。stats2-course #379）
-  await expect(x.getByTestId("exp-peak-note")).toContainText("隣にずれやすい");
+  await expect(x.getByTestId("exp-peak-note")).toContainText("隣の棒にずれる");
   // 頻度をその場で書く（⑦ の 2）：頂点と隣の棒の数が入れ替わる確率（正規近似。1,000 セットで約 8%。検算役の試行では 7.8%）
-  await expect(x.getByTestId("exp-peak-note")).toContainText(/1,000 セットなら約 [78](\.\d)?%/);
-  // 目安のない表に「差（目安）」の列と「中・外」の凡例を出さない（⑦ の 4）
-  await expect(x.getByTestId("q-cmp")).not.toContainText("差（目安）");
+  await expect(x.getByTestId("exp-peak-note")).toContainText(/いまの 1,000 セットで約 [78](\.\d)?%/);
+  // 目安のない表に「差（ずれの目安）」の列と「中・外」の凡例を出さない（⑦ の 4）
+  await expect(x.getByTestId("q-cmp")).not.toContainText("差（ずれの目安）");
   await expect(x).not.toContainText("平均（後）");
 });
 
@@ -112,4 +112,33 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-cx-flip")).toContainText(/いまの各 [\d,]+ セットで(約 [\d.]+%|0\.1% 未満)/);
+});
+
+// 確かめる対象：実験を起こすボタンの数に単位があること（⑦ の 4。stats2-course #385）。
+// 想定する故障：「100」「×10」「▶ 1,000」のように数だけで、回（1セットの中の1回）・セット・実験のどれか分からない。
+// 見つけ方：ボタンの部品が違う問い（共通の RunButtons・ずれの問い・くり返しの問い・p を変える問い・期待値の実験室）を開き、
+//   exp-run- で始まる全部のボタンの文に「回・セット・実験」のどれかがある。
+// 既存との違い：ほかのテストはボタンを testid で押すだけで、文を見ていない。
+// 検出の確かめ（2026-11-13）：parts.tsx の「100 セット」を「100」に戻すと落ちることを見た
+test("実験を起こすボタンの数に単位がある", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const qs = [
+    "x=stats2:EXP-binom-p&q=stats2:binom-B-01",
+    "x=stats2:EXP-binom-p&q=stats2:binom-C-02",
+    "x=stats2:EXP-binom-p&q=stats2:binom-C-01",
+    "x=stats2:EXP-binom-p&q=stats2:binom-D-02",
+    "x=stats2%3AEXP-expect-table&q=stats2%3Aexpect-A-02",
+  ];
+  for (const q of qs) {
+    await page.goto(`./?${SRC}&${q}`);
+    const x = page.getByTestId("experiment");
+    // 予測を選んで実験の段へ（選び肢の形は問いで違うので、予測の選び肢の組ごとに最初の選び肢を選ぶ）
+    const gs = x.getByRole("radiogroup", { name: /予測/ });
+    await expect(gs.first()).toBeVisible(); // 読み込みの前に数えると 0 になる
+    for (let i = 0; i < (await gs.count()); i++) await gs.nth(i).getByRole("radio").first().click();
+    await x.getByRole("button", { name: /この予測で/ }).click();
+    const bs = x.locator('[data-testid^="exp-run-"]');
+    await expect(bs.first()).toBeVisible();
+    for (const t of await bs.allInnerTexts()) expect(t, q).toMatch(/回|セット|実験/);
+  }
 });

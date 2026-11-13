@@ -215,7 +215,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
         <Verdict ok={ok}>
           {ans === 2 ? "同じくらい" : `${opts[ans]}の方が起こりやすい`}。理論では {ka} {unit}が {pctSig(f[ka]!)}、{kb}{" "}
           {unit}が {pctSig(f[kb]!)}。実験では {rec.sets.toLocaleString()} セットのうち {ka} {unit}が {rec.counts[ka]}、
-          {kb} {unit}が {rec.counts[kb]}。
+          {kb} {unit}が {rec.counts[kb]}。予測は「{opts[guess!]}」。
         </Verdict>
         {/* 観察は見る所を指す。並びの数で決まることは考察で言う（⑦ の 2。stats2-course #379） */}
         <Card title="回数ごとの並びの数" sub="2つの回数の行を見比べる">
@@ -439,7 +439,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
     body = (
-      <Card title="理論と実測は一致する？" sub={`理論 ${pctSig(P)}`}>
+      <Card title="理論と実験の割合は一致する？" sub={`理論 ${pctSig(P)}`}>
         <p className={qs.muted}>
           1セット＝{c.n} 回（成功確率 {pc(c.p)}）。{m} セットを1回の実験として、{evText(ev)}になったセットの割合を理論の{" "}
           {pctSig(P)} と比べる。同じ条件の実験を何回もくり返すと？
@@ -462,7 +462,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
           </Card>
         )}
         {exps.length > 0 && (
-          <Card title={`${evText(ev)}の割合`} sub={`理論 ${pctSig(P)}・最近の 8 回`}>
+          <Card title={`${evText(ev)}の割合`} sub={`理論 ${pctSig(P)}・最近の 8 回の実験`}>
             {table(exps, false)}
           </Card>
         )}
@@ -472,10 +472,10 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
       <>
         <div className={s.two}>
           <button type="button" className={s.secondary} onClick={() => run(1)} data-testid="exp-run-1">
-            {m} セット×1
+            実験を 1 回
           </button>
           <button type="button" className={s.primary} onClick={() => run(20)} data-testid="exp-run-big">
-            ▶ 20 回くり返す
+            ▶ 実験を 20 回くり返す
           </button>
         </div>
         <button
@@ -485,7 +485,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
           onClick={() => go(2)}
           data-testid="exp-to-observe"
         >
-          {exps.length < 5 ? `あと ${5 - exps.length} 回で観察できる` : "観察する →"}
+          {exps.length < 5 ? `あと ${5 - exps.length} 回の実験で観察できる` : "観察する →"}
         </button>
       </>
     );
@@ -497,8 +497,8 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
     body = (
       <>
         <Verdict ok={guess === 1}>
-          理論の確率は {pctSig(P)} の1つに決まっているが、実測の割合は実験のたびに変わる。この {exps.length}{" "}
-          回では、理論より多い回が {up}、少ない回が {down}（予測は「{REPEAT3[guess!]}」）。
+          理論の確率は {pctSig(P)} の1つに決まっているが、実験の割合は実験のたびに変わる。この {exps.length}{" "}
+          回の実験では、理論より多い実験が {up}、少ない実験が {down}（予測は「{REPEAT3[guess!]}」）。
         </Verdict>
         <Card
           title="ずれの目安（±2×標準誤差）と比べる"
@@ -506,7 +506,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
         >
           {table(exps, true)}
           <p className={qs.note} data-testid="exp-repeat-in">
-            {exps.length} 回のうち {nin} 回が ±2SE の中（理論が正しければ、およそ 95%
+            {exps.length} 回の実験のうち {nin} 回がずれの目安（±2SE）の中（理論が正しければ、およそ 95%
             が中に入る）。帯から少し出る実験があっても、それだけで理論が誤りとは言えない。
           </p>
         </Card>
@@ -530,7 +530,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
     );
   } else if (stage === 3) {
     body = (
-      <Card title="実測の割合＝理論の確率＋標本のばらつき">
+      <Card title="実験の割合＝理論の確率＋標本のばらつき">
         <table className={qs.table}>
           <thead>
             <tr>
@@ -561,7 +561,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
         </table>
         <p className={qs.note}>
           {m} セットのうち{evText(ev)}になるセットの数は、確率 {pctSig(P)}{" "}
-          で起きる回数そのもので、それ自体がばらつく。理論が合っていても、実測がぴったり一致することはまずない。逆に、目安を大きく外れることが何度も続くなら、前提（各回が独立・p
+          で起きる回数そのもので、それ自体がばらつく。理論が合っていても、実験の割合がぴったり一致することはまずない。逆に、ずれの目安を大きく外れることが何度も続くなら、前提（各回が独立・p
           が同じ）を疑う。
         </p>
         <p className={qs.note}>
@@ -611,7 +611,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
             </div>
           </div>
           <p className={qs.note}>
-            実測の割合がこの幅の中なら、理論どおりでも起こるくらいのばらつき。外なら、偶然だけとは言いにくい。
+            実験の割合がこの幅の中なら、理論どおりでも起こるくらいのばらつき。外なら、偶然だけとは言いにくい。
           </p>
         </Card>
         <AppExtra
@@ -784,7 +784,7 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
           実験の平均は {r2(path[N - 1])} {unit}、理論の平均は {r2(np)} {unit}（予測は {guess} {unit}
           ）。差が目安の中かは下の表で見る。
         </Verdict>
-        <Card title="理論と実験" sub="差が目安の中か">
+        <Card title="理論と実験" sub="差がずれの目安の中か">
           <CompareTable
             rows={[{ label: "成功回数の平均", exp: summarize(rec).mean, th: np, se: (2 * sd) / Math.sqrt(N) }]}
           />

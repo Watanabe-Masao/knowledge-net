@@ -38,6 +38,7 @@ test("D-01：期待値が同じ2つの表。予測1つ → 引く → 照らし�
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict")).toContainText("✗ 予測と違った");
   await expect(x.getByTestId("exp-verdict")).toContainText("平均の行き先は同じ");
+  await expect(x.getByTestId("exp-verdict")).toContainText("予測は「A が大きい」"); // 照らしは「結果 → 予測は『…』」（⑦ の 2。#385）
   await expect(x.getByTestId("exp-look")).toContainText("何が違う？");
   await expect(x).not.toContainText("落ち着かない");
   // 期待値が同じでも出る平均の差の目安（⑦ の 2・4。#379）：くじ A の分散 20356・B 11356（手で求めた値）、各 N 回で 2√(31712/N)。

@@ -92,7 +92,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             </div>
             <div>
               理論とのずれ<b>{share === undefined ? "—" : ptShort(Math.abs(share - P))}</b>
-              <i>目安 ±{N ? ptShort(se(N)) : "—"}</i>
+              <i>ずれの目安 ±{N ? ptShort(se(N)) : "—"}</i>
             </div>
           </div>
         </Card>
@@ -102,7 +102,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
       <>
         <div className={s.two} style={{ gridTemplateColumns: "1fr 1fr 1.3fr" }}>
           <button type="button" className={s.secondary} onClick={() => run(10)} data-testid="exp-run-10">
-            10
+            10 セット
           </button>
           <button
             type="button"
@@ -110,7 +110,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             onClick={() => run(Math.max(100, N * 9), 200)}
             data-testid="exp-run-x10"
           >
-            ×10
+            セットを10倍
           </button>
           <button
             type="button"
@@ -119,7 +119,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             onClick={() => run(10000 - N, 500)}
             data-testid="exp-run-big"
           >
-            ▶ 10000 まで
+            ▶ 計 10,000 セット
           </button>
         </div>
         <button type="button" className={s.next} disabled={N < 1000} onClick={() => go(2)} data-testid="exp-to-observe">
@@ -136,7 +136,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
           ずれの目安（±2×標準誤差）は、100 セットの ±{pt(w100)} ポイントから 10000 セットで ±{pt(w100 / 10)}{" "}
           ポイントに。10分の1。予測は「{convChoices[guess!]}」（{CONV3[guess!]}）。
         </Verdict>
-        <Card title="理論と実験" sub="差が目安の中か">
+        <Card title="理論と実験" sub="差がずれの目安の中か">
           <CompareTable
             rows={[{ label: `${N.toLocaleString()} セットの割合`, exp: share, th: P, se: se(N), fmt: pShort }]}
           />
@@ -147,7 +147,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
               <tr>
                 <th>セット</th>
                 <th>実際のずれ</th>
-                <th>目安 ±2SE</th>
+                <th>ずれの目安</th>
               </tr>
             </thead>
             <tbody>
@@ -166,7 +166,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
         </Card>
         <Card title="割合の移り変わり" sub="何セット目までか（倍々）">
           {chart(
-            "目安の帯は、セットを増やすほど細くなる。線は多くの場合この帯の中にあるが、外に出ることもある。実際のずれは傾向として小さくなるが、いったん大きくなることもある。",
+            "ずれの目安の帯は、セットを増やすほど細くなる。線は多くの場合この帯の中にあるが、外に出ることもある。実際のずれは傾向として小さくなるが、いったん大きくなることもある。",
           )}
         </Card>
       </>
@@ -184,7 +184,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             <tr>
               <th>セット N</th>
               <th>√N</th>
-              <th>目安 ±2SE</th>
+              <th>ずれの目安</th>
             </tr>
           </thead>
           <tbody>
@@ -258,7 +258,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
           <p className={qs.note}>
             {Pa < 0.05 || Pa > 0.95
               ? "理論の確率が 0 や 1 に近いと、ずれの目安も小さい。ただし珍しい結果は、そもそも起きた回数が少ない。"
-              : "セットを 100 倍にするたびに、目安は 10分の1。"}
+              : "セットを 100 倍にするたびに、ずれの目安は 10分の1。"}
           </p>
         </Card>
         <AppExtra

@@ -9,6 +9,7 @@ import {
   Field,
   PairRows,
   TheoryRows,
+  about,
   pc,
   qs,
   r2,
@@ -139,17 +140,16 @@ export function ShiftQ(props: QProps) {
           いちばん高いのは {k1} 回（予測は {guess} 回）。山は{["左へ動く", "動かない", "右へ動く"][dir(k1)]}
           {guess !== null && guess !== k1 && dir(guess) === dir(k1) ? "（向きは予測どおり）" : ""}。
         </Verdict>
-        <Card title="理論と実験" sub="差が目安の中か">
+        <Card title="理論と実験" sub="差がずれの目安の中か">
           <CompareTable rows={rows} />
         </Card>
         <Card title={`後（p＝${pc(next.p)}）の分布：実験と理論`} sub={`${N.toLocaleString()} セット`}>
           <CompareRows counts={B.counts} sets={N} pmf={f1} inEvent={(k) => k === k1} />
         </Card>
         <p className={qs.muted} data-testid="exp-peak-note">
-          実験の頂点が理論とずれることもある：後の頂点 {k1} 回（{pc(pk1)}）と隣の棒（{pc(nb)}
-          ）の差が小さいほど、またセットが少ないほど、実験の頂点は隣にずれやすい（この条件で {N.toLocaleString()}{" "}
-          セットなら約 {pc(flip)}
-          ）。山の中心（平均）がどこに来るかは「成功回数の期待値はどこにある？」（D-01）で確かめる。
+          理論どおりでも、実験の頂点が隣の棒にずれるのは、いまの {N.toLocaleString()} セットで{about(flip)}（後の頂点{" "}
+          {k1} 回（{pc(pk1)}）と隣の棒（{pc(nb)}
+          ）の差が小さいほど、セットが少ないほどずれやすい）。山の中心（平均）がどこに来るかは「成功回数の期待値はどこにある？」（D-01）で確かめる。
         </p>
       </>
     );
