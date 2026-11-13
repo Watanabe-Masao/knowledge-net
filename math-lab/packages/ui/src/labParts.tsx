@@ -842,11 +842,11 @@ export function Replay({
         }}
         data-testid="exp-run-band-toggle"
       >
-        {showBand ? "平均のばらつきの目安を非表示" : "平均のばらつきの目安を表示"}
+        {showBand ? "平均のずれの目安を非表示" : "平均のずれの目安を表示"}
       </button>
       {showBand && (
         <p className={s.note}>
-          帯＝平均のばらつきの目安（期待値 ±2×標準偏差÷√{per}
+          帯＝平均のずれの目安（期待値 ±2×標準偏差÷√{per}
           数。4倍集めると幅は半分）。いつも必ずこの中に入る範囲ではない。
         </p>
       )}

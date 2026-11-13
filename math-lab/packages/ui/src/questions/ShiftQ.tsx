@@ -1,6 +1,6 @@
 // 位置の問い（ExperimentQuestion.tsx から分けた。stats2-course #212）
 import { useMemo, useState, type ReactNode } from "react";
-import { summarize } from "@math-lab/engine";
+import { normalCdf, summarize } from "@math-lab/engine";
 import { LabShell, peak, usePairRuns, useStages } from "../labParts";
 import {
   CompareRows,
@@ -126,7 +126,9 @@ export function ShiftQ(props: QProps) {
       N = B.sets;
     // 観察は頂点だけを照らし、見る所を指す（⑦ の 2。平均＝np は D-01 で見つけるので、平均の行と移り変わりは出さない。stats2-course #379）
     const pk1 = f1[k1] ?? 0,
-      nb = Math.max(f1[k1 - 1] ?? 0, f1[k1 + 1] ?? 0);
+      nb = Math.max(f1[k1 - 1] ?? 0, f1[k1 + 1] ?? 0),
+      // 頂点と隣の棒の数の差 N(pk1−nb) の標準偏差 √(N(pk1＋nb−(pk1−nb)²))（多項分布）。差が 0 以下になる確率を正規分布で近似する
+      flip = normalCdf((-N * (pk1 - nb)) / Math.sqrt(N * (pk1 + nb - (pk1 - nb) ** 2)));
     const rows: CmpRow[] = [
       { label: "頂点（前）", exp: peak(summarize(A).freq), th: peak(f0), fmt: (v) => `${v} 回` },
       { label: "頂点（後）", exp: peak(summarize(B).freq), th: k1, fmt: (v) => `${v} 回` },
@@ -145,7 +147,9 @@ export function ShiftQ(props: QProps) {
         </Card>
         <p className={qs.muted} data-testid="exp-peak-note">
           実験の頂点が理論とずれることもある：後の頂点 {k1} 回（{pc(pk1)}）と隣の棒（{pc(nb)}
-          ）の差が小さいほど、実験では頂点が隣にずれやすい。山の中心（平均）がどこに来るかは「成功回数の期待値はどこにある？」（D-01）で確かめる。
+          ）の差が小さいほど、またセットが少ないほど、実験の頂点は隣にずれやすい（この条件で {N.toLocaleString()}{" "}
+          セットなら約 {pc(flip)}
+          ）。山の中心（平均）がどこに来るかは「成功回数の期待値はどこにある？」（D-01）で確かめる。
         </p>
       </>
     );

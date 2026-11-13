@@ -218,8 +218,8 @@ function ProbRun(
             exp = N * P;
           return (
             <Verdict key={i} ok={g === ans} edge={edge} head={evText(e)} big={pctSig(P)} testid={`exp-verdict-${i}`}>
-              {oneIn(P)}。目盛りでは「{sc.labels[ans]}」、予測は「{sc.labels[g]}」。この回数での見込み {fmtN(exp)}{" "}
-              セット、実際は {hits[i]} セット
+              {oneIn(P)}。目盛りでは「{sc.labels[ans]}」、予測は「{sc.labels[g]}」。{N.toLocaleString()}{" "}
+              セットでの見込み {fmtN(exp)} セット、実際は {hits[i]} セット
               {exp < 1 && hits[i] === 0 ? "（見込みが1セットより少ないので、0 セットがふつう。確率 0 ではない）" : ""}。
             </Verdict>
           );
@@ -235,7 +235,8 @@ function ProbRun(
             {Ps.some((P) => P < 0.05) && (
               <p className={qs.note}>
                 5%
-                より小さい結果を「珍しい」と呼ぶことが多い。ただし検定では、ちょうどその値ではなく「その値以上（以下）」の確率で珍しさを見る（ちょうど1つの値の確率は、回数を増やすとどの値でも小さくなるから）。
+                より小さい結果を「珍しい」と呼ぶことが多い。ただし検定では、ちょうどその値ではなく「その値か、それより偏った値」の確率で珍しさを見る（1セットの回数
+                n を増やすと、ちょうど1つの値の確率はどの値でも小さくなるから）。
               </p>
             )}
           </Card>

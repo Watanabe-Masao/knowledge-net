@@ -47,6 +47,10 @@ test("二項分布 A-01：頂点を 7 回と予測すると ✗（向きは合�
   await expect(x.getByTestId("exp-verdict")).toContainText("向きは予測どおり");
   // 観察は頂点だけ。平均（D-01 で見つける）を出さず、頂点が乱数で隣にずれうる頻度を書く（⑦ の 2。stats2-course #379）
   await expect(x.getByTestId("exp-peak-note")).toContainText("隣にずれやすい");
+  // 頻度をその場で書く（⑦ の 2）：頂点と隣の棒の数が入れ替わる確率（正規近似。1,000 セットで約 8%。検算役の試行では 7.8%）
+  await expect(x.getByTestId("exp-peak-note")).toContainText(/1,000 セットなら約 [78](\.\d)?%/);
+  // 目安のない表に「差（目安）」の列と「中・外」の凡例を出さない（⑦ の 4）
+  await expect(x.getByTestId("q-cmp")).not.toContainText("差（目安）");
   await expect(x).not.toContainText("平均（後）");
 });
 

@@ -5,7 +5,19 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { NUM2, PCT1, comb, createRandom, formatApply, runningMean, summarize, type Random } from "@math-lab/engine";
 import { haptic } from "./motion";
 import { LabShell, peak, useRuns, useStages } from "./labParts";
-import { CompareRows, CompareTable, Dock, Field, RunChart, TheoryRows, pc, pctSig, qs, r2 } from "./QuestionParts";
+import {
+  CompareRows,
+  CompareTable,
+  Dock,
+  Field,
+  RunChart,
+  TheoryRows,
+  pc,
+  pctSig,
+  ptShort,
+  qs,
+  r2,
+} from "./QuestionParts";
 import {
   AppExtra,
   ApplyTask,
@@ -135,7 +147,10 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
     body = (
-      <Card title="どちらが起こりやすい？" sub={`n＝${n}・p＝${pc(c.p)}`}>
+      <Card
+        title="どちらが起こりやすい？"
+        sub={`回数 n＝${n}・成功確率 p＝${pc(c.p)}。${n} 回を1セットとして何度もくり返す`}
+      >
         <p className={qs.muted}>
           {theme.story?.replace("n 回", `${n} 回`)}。1回ごとの確率は {pc(c.p)}。
         </p>
@@ -280,8 +295,9 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
             回を選ぶ数）で決まり、真ん中ほど多い。
           </p>
           <p className={qs.note}>
-            p が 50% でないと、1つの並びの確率も k で変わる。並びの数（真ん中で多い）と1つの並びの確率（p が大きいほど k
-            の大きい方で高い）の掛け算で、山の位置が決まる。
+            p が 50% でないと、1つの並びの確率も k で変わる。p が 50%
+            より大きければ成功の多い並びほど確率が高く、小さければ逆（同じ並びでも、p
+            を上げると確率が上がるとは限らない）。並びの数（真ん中で多い）とこの1つの並びの確率の掛け算で、山の位置が決まる。
           </p>
         </Card>
         <Ws props={props} c={c} k={kb} sub="k を動かすと並びの数と確率" />
@@ -397,11 +413,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
             <td>{list.length - Math.min(8, list.length) + i + 1} 回目</td>
             <td>{formatApply(e.share, PCT1)}</td>
             <td>
-              {band
-                ? inside(e.share)
-                  ? "中"
-                  : "外"
-                : `${e.share >= P ? "＋" : "−"}${formatApply(Math.abs(e.share - P), PCT1)}`}
+              {band ? (inside(e.share) ? "中" : "外") : `${e.share >= P ? "＋" : "−"}${ptShort(Math.abs(e.share - P))}`}
             </td>
           </tr>
         ))}
@@ -475,7 +487,10 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
           理論の確率は {pctSig(P)} の1つに決まっているが、実測の割合は実験のたびに変わる。この {exps.length}{" "}
           回では、理論より多い回が {up}、少ない回が {down}（予測は「{REPEAT3[guess!]}」）。
         </Verdict>
-        <Card title="ばらつきの目安と比較" sub={`±2SE＝${formatApply(lo, PCT1)}〜${formatApply(hi, PCT1)}`}>
+        <Card
+          title="ずれの目安（±2×標準誤差）と比べる"
+          sub={`±2SE＝${formatApply(lo, PCT1)}〜${formatApply(hi, PCT1)}`}
+        >
           {table(exps, true)}
           <p className={qs.note} data-testid="exp-repeat-in">
             {exps.length} 回のうち {nin} 回が ±2SE の中（理論が正しければ、およそ 95%
@@ -518,8 +533,8 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
               <td>{pctSig(P)}</td>
             </tr>
             <tr>
-              <td>ばらつきの目安</td>
-              <td>SE＝√(P(1−P)÷m)</td>
+              <td>標準誤差（N＝1回の実験のセット数）</td>
+              <td>SE＝√(P(1−P)÷N)</td>
               <td>{formatApply(se, PCT1)}</td>
             </tr>
             <tr>
@@ -537,7 +552,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
           が同じ）を疑う。
         </p>
         <p className={qs.note}>
-          セットを増やすとばらつきの目安がどう縮むかは「実験セット数を増やすと誤差はどう変わる？」で確かめる。ここは同じ条件の実験どうしの違いを、標本のばらつきとして説明する。
+          セットを増やすとずれの目安がどう縮むかは「実験セット数を増やすとずれはどう変わる？」（C-02）で確かめる。ここは同じ条件の実験どうしの違いを、標本のばらつきとして説明する。
         </p>
       </Card>
     );
@@ -575,11 +590,11 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
               <i>P</i>
             </div>
             <div {...MK(mkS.read === "band")}>
-              ばらつきの目安 ±2SE
+              ずれの目安 ±2SE
               <b data-testid="exp-app-band">
                 {formatApply(Math.max(0, Pa - 2 * sa), PCT1)}〜{formatApply(Math.min(1, Pa + 2 * sa), PCT1)}
               </b>
-              <i>P±2√(P(1−P)÷m)</i>
+              <i>P±2√(P(1−P)÷N)</i>
             </div>
           </div>
           <p className={qs.note}>
@@ -683,7 +698,10 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
   if (stage === 0) {
     body = (
       <>
-        <Card title="成功回数の分布" sub={`n＝${c.n}・p＝${pc(c.p)}`}>
+        <Card
+          title="成功回数の分布"
+          sub={`回数 n＝${c.n}・成功確率 p＝${pc(c.p)}。${c.n} 回を1セットとして何度もくり返す`}
+        >
           <TheoryRows pmf={f} />
         </Card>
         <Card title="セットをくり返すと、成功回数の平均はいくつに近づく？">
@@ -706,7 +724,7 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
               ＋
             </button>
           </div>
-          <p className={qs.muted}>0.5 {unit}刻みで選ぶ。平均は、1セットでは取れない小数の値にもなる。</p>
+          <p className={qs.muted}>0.5 {unit}刻みで選ぶ。</p>
         </Card>
       </>
     );
@@ -737,6 +755,15 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
   } else if (stage === 2) {
     // 照らしは予測と同じ粒度（0.5 刻みのいちばん近い目）。±0.5 だと山の頂点（最頻値）を選んでも○になり、平均と最頻値の取り違えを照らせない（⑦ の 2。stats2-course #372）
     const ok = guess !== null && Math.abs(guess - np) < 0.25;
+    // 頂点と平均の関係は条件で変わる：頂点が2つ（(n＋1)p が整数）・頂点と平均が同じ（np が整数）を分けて言う（検算役のレビュー。stats2-course #379）
+    const fmax = Math.max(...f),
+      peaks = f.flatMap((v, k) => (Math.abs(v - fmax) < 1e-12 ? [k] : [])),
+      peakText =
+        peaks.length > 1
+          ? `いちばん起こりやすい回数（山の頂点）は ${peaks.join(" と ")} ${unit}（同じ高さ）で、平均の ${r2(np)} ${unit}とは別。`
+          : Math.abs(peaks[0]! - np) < 1e-9
+            ? `この条件では、山の頂点と平均が同じ ${peaks[0]} ${unit}（いつもそうなるとは限らない）。`
+            : `いちばん起こりやすい回数（山の頂点）は ${peaks[0]} ${unit}で、平均の ${r2(np)} ${unit}とは別。`;
     body = (
       <>
         <Verdict ok={ok} big={`${r2(np)} ${unit}`}>
@@ -755,8 +782,8 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
           )}
         </Card>
         <p className={qs.note}>
-          いちばん起こりやすい回数（山の頂点）は {f.indexOf(Math.max(...f))} {unit}で、平均の {r2(np)} {unit}
-          とは別。平均が1セットで実際に出る値かは、期待値の実験室の「期待値は、実際に出る値？」（A-02）で確かめる。
+          {peakText}
+          平均が1セットで実際に出る値かは、期待値の実験室の「何度も引いた平均の行き先（期待値）は、1回で出る値？」（A-02）で確かめる。
         </p>
       </>
     );
@@ -984,9 +1011,13 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
   let body: ReactNode, cta: ReactNode;
   if (stage === 0) {
     body = (
-      <Card title="分散がいちばん大きくなる p は？" sub={`n＝${n} に決めておく`}>
+      <Card
+        title="分散がいちばん大きくなる p は？"
+        sub={`回数 n＝${n} に決めておく（${n} 回を1セットとして何度もくり返す）`}
+      >
         <p className={qs.muted}>
-          回数は {n} 回のまま、成功確率 p だけを変える。成功回数の分散（ばらつき）がいちばん大きいのは？
+          回数は {n} 回のまま、成功確率 p
+          だけを変える。成功回数の分散（セットごとの散らばりの大きさ）がいちばん大きいのは？
         </p>
         <Choices items={ps.map(pc)} value={guess} onChange={setGuess} label="分散がいちばん大きい p の予測" />
       </Card>
