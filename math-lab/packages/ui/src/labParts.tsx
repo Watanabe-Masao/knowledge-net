@@ -678,6 +678,9 @@ export function Replay({
       <p className={s.h}>
         平均の移り変わり<span>何{per}目までの平均か（約3倍ずつの目盛り）</span>
       </p>
+      <p className={s.muted} data-testid="exp-replay-unit">
+        何{per}目までを見るか（全部で {N.toLocaleString()} {per}）
+      </p>
       <div className={s.marks} role="radiogroup" aria-label={`何${per}目まで`}>
         {marks.map((m, i) => (
           <button
@@ -690,7 +693,7 @@ export function Replay({
               setT(i);
             }}
           >
-            {i === marks.length - 1 ? `全 ${m}` : m}
+            {i === marks.length - 1 ? "全部" : m}
           </button>
         ))}
         <button type="button" className={s.play} onClick={play} disabled={playing} aria-label={`1${per}目から再生`}>

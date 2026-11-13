@@ -128,7 +128,7 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
           割合の標準偏差は {r2(sd(n1) / n1 / (sd(n0) / n0))} 倍に<b>{SPREAD3[ansR]}</b>（実験 {pShort(sdA / n0)} →{" "}
           {pShort(sdB / n1)}）。予測は「{SPREAD3[gR!]}」。
         </Verdict>
-        <Card title="理論と実験" sub="差がずれの目安の中か">
+        <Card title="理論と実験" sub="ずれがずれの目安の中か">
           <CompareTable
             rows={[
               { label: `回数の標準偏差（n＝${n0}）`, exp: sdA, th: sd(n0), se: (2 * sd(n0)) / Math.sqrt(2 * N) },

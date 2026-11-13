@@ -108,7 +108,8 @@
   background: var(--data-hi);
 }
 .bigD {
-  color: var(--bad) !important;
+  /* 予測の照らし（違った）の色と分ける（⑦ の 4。stats2-course #389） */
+  color: var(--data-hi) !important;
   font-weight: 700;
 }
 .pair {

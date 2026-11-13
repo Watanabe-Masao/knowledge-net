@@ -241,7 +241,7 @@ function ProbRun(
             )}
           </Card>
         )}
-        <Card title="理論と実験" sub="差がずれの目安の中か">
+        <Card title="理論と実験" sub="ずれがずれの目安の中か">
           <CompareTable
             rows={events.flatMap((e, i) => [
               {
