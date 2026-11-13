@@ -16,7 +16,7 @@ import {
 } from "../QuestionParts";
 import s from "../Experiment.module.css";
 import { Cond, STAGES_Q, pmfOf } from "./common";
-import { AppExtra, ApplyTask, Card, Lane, QProps, RunButtons, Verdict, descOf, useFit } from "./parts";
+import { AppExtra, ApplyTask, Card, Lane, QProps, RunButtons, Verdict, descOf, succName, useFit } from "./parts";
 
 export function ShiftQ(props: QProps) {
   const { def } = props;
@@ -106,7 +106,7 @@ export function ShiftQ(props: QProps) {
           </div>
         </Card>
         <Card
-          title={`${theme.success}の数ごとの割合`}
+          title={`${succName(theme)}の回数ごとの割合`}
           sub={`各 ${A.sets.toLocaleString()} セット`}
           testid="exp-sets-card"
         >

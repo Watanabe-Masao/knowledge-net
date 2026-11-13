@@ -860,7 +860,8 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await x.getByTestId("exp-run-1").click();
   await expect(x.getByTestId("exp-set").locator("span")).toHaveCount(10);
   await expect(x.getByTestId("exp-set-before").locator("span")).toHaveCount(10);
-  await expect(x).toContainText(/表 \d+ 回（10 回中）/);
+  // 数える量は「成功」と呼び、題材の言葉は括弧で添える（⑦ の 4。stats2-course #379。succName を外して theme.success だけに戻すと落ちる）
+  await expect(x).toContainText(/成功（表） \d+ 回（10 回中）/);
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");

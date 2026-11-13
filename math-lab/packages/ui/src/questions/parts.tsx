@@ -34,6 +34,10 @@ export type QProps = {
   apply?: ApplySpec;
   children?: ReactNode;
 };
+/** 数える量は画面のどこでも「成功」と呼び、題材の言葉（表・買った など）は括弧で添える（⑦ の 4：1つの量に1つの名前。
+ *  コインの絵は p＝30% や崩した起き方でも出るので、「表」だけでは成功の回数と同じものか分からない。stats2-course #379） */
+export const succName = (theme: { success: string }) =>
+  theme.success === "成功" ? "成功" : `成功（${theme.success}）`;
 export function Lane({
   tag,
   last,
@@ -59,7 +63,7 @@ export function Lane({
           <span className={s.muted}>まだ</span>
         ) : (
           <span>
-            {theme.success} <em>{k}</em> {unit}（{n} {unit}中）
+            {succName(theme)} <em>{k}</em> {unit}（{n} {unit}中）
           </span>
         )}
       </div>
