@@ -196,13 +196,18 @@ export function BreakQ(props: QProps & { initial?: string }) {
           )}
         </Verdict>
         <Card title="理論と実験" sub="ずれがずれの目安の中か">
+          {/* 平均の2行は理論が同じことを指し、見る所を分散の行へ（理由は予測の段の「ならすと p のまま」。⑦ の 2。stats2-course #379） */}
+          <p className={qs.muted} data-testid="exp-cx-meanline">
+            平均の理論は、条件どおりも崩した方も同じ {r2(b.n * b.p)}（予測の段で見たとおり、どの起き方も確率をならすと p
+            のまま）。違いは分散の行で見る。
+          </p>
           <CompareTable
             rows={[
               { label: "平均（条件どおり）", exp: summarize(A).mean, th: b.n * b.p, se: 2 * Math.sqrt(vb / N) },
               { label: "平均（崩した）", exp: summarize(B).mean, th: b.n * b.p, se: 2 * Math.sqrt(vm / N) },
               { label: "分散（条件どおり）と二項分布", exp: vA, th: vb, se: 2 * vb * Math.sqrt(2 / N) },
               { label: "分散（崩した）と二項分布", exp: vB, th: vb, se: 2 * vb * Math.sqrt(2 / N) },
-              { label: "分散（崩した）と起き方の理論", exp: vB, th: vm, se: 2 * vm * Math.sqrt(2 / N) },
+              { label: "分散（崩した）と崩した起き方の理論", exp: vB, th: vm, se: 2 * vm * Math.sqrt(2 / N) },
             ]}
           />
           <p className={qs.note}>

@@ -952,7 +952,7 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("崩した起き方 2.13・二項分布 2.5");
   await expect(
-    x.getByTestId("q-cmp").locator("tr", { hasText: "分散（崩した）と起き方の理論" }).locator("td").nth(2),
+    x.getByTestId("q-cmp").locator("tr", { hasText: "分散（崩した）と崩した起き方の理論" }).locator("td").nth(2),
   ).toHaveText("2.13");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390); // 長い行の名前でも横にはみ出さない
   await x.getByRole("button", { name: /理由を考える/ }).click();
