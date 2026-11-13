@@ -219,7 +219,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
         <Card title="崩した起き方の分布と二項分布" sub={`${N.toLocaleString()} セット`}>
           <CompareRows counts={B.counts} sets={N} pmf={pmfOf(b)} thName="二項分布" />
         </Card>
-        <Card title="分散の移り変わり" sub="何セット目までか（倍々）">
+        <Card title="分散の移り変わり" sub="何セット目までか（約3倍ずつ）">
           <RunChart
             title="分散の移り変わり"
             ylab="ここまでの分散"
@@ -227,7 +227,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
               { name: "条件どおり", path: runningSd(A.ks).map((v) => v * v), th: vb },
               { name: "崩した", path: runningSd(B.ks).map((v) => v * v), th: vm },
             ]}
-            note={`平均はどちらも ${r2(b.n * b.p)} の近くに落ち着くが、ばらつきは別の値に落ち着いていく（条件どおり ${r2(vb)}・崩した ${r2(vm)}）。はじめの数セットでは、どちらが大きいかが入れ替わることもある。`}
+            note={`平均はどちらも ${r2(b.n * b.p)} の近くに落ち着くが、分散は別の値に落ち着いていく（条件どおり ${r2(vb)}・崩した ${r2(vm)}）。はじめの数セットでは、どちらが大きいかが入れ替わることもある。`}
           />
         </Card>
       </>

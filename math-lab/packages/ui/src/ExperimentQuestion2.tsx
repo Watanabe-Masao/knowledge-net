@@ -415,15 +415,15 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
     <table className={qs.table} data-testid="exp-repeat-table">
       <thead>
         <tr>
-          <th>実験</th>
+          <th>実験の番号</th>
           <th>割合</th>
-          <th>{band ? "±2SE の中か" : "理論との差"}</th>
+          <th>{band ? "ずれの目安の中か" : "理論との差"}</th>
         </tr>
       </thead>
       <tbody>
         {list.slice(-8).map((e, i) => (
           <tr key={i}>
-            <td>{list.length - Math.min(8, list.length) + i + 1} 回目</td>
+            <td>{list.length - Math.min(8, list.length) + i + 1} 番目</td>
             <td>{formatApply(e.share, PCT1)}</td>
             <td>
               {band ? (inside(e.share) ? "中" : "外") : `${e.share >= P ? "＋" : "−"}${ptShort(Math.abs(e.share - P))}`}
@@ -453,7 +453,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
     body = (
       <>
         {last ? (
-          <Card title={`${exps.length} 回目の実験`} sub={`${m} セット`}>
+          <Card title={`${exps.length} 番目の実験`} sub={`${m} セット`}>
             <CompareRows counts={last.counts} sets={m} pmf={f} inEvent={inEv(ev)} />
           </Card>
         ) : (
@@ -502,11 +502,11 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
         </Verdict>
         <Card
           title="ずれの目安（±2×標準誤差）と比べる"
-          sub={`±2SE＝${formatApply(lo, PCT1)}〜${formatApply(hi, PCT1)}`}
+          sub={`理論 ${pctSig(P)} の上下 ±${ptShort((hi - lo) / 2)} に約95% が入る`}
         >
           {table(exps, true)}
           <p className={qs.note} data-testid="exp-repeat-in">
-            {exps.length} 回の実験のうち {nin} 回がずれの目安（±2SE）の中（理論が正しければ、およそ 95%
+            {exps.length} 回の実験のうち {nin} 回がずれの目安の中（理論が正しければ、約95%
             が中に入る）。帯から少し出る実験があっても、それだけで理論が誤りとは言えない。
           </p>
         </Card>
@@ -516,7 +516,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
             ylab="その実験の割合"
             fmt={(v) => formatApply(v, PCT1)}
             series={[{ name: "実験", path: shares, th: P, se: () => 2 * se }]}
-            note="線は1回ごとの実験の割合（ならした平均ではない）。理論のまわりに上下にばらつき、たいていは ±2SE の帯の中にある。"
+            note="線は1回ごとの実験の割合（ならした平均ではない）。理論のまわりに上下にばらつき、たいていはずれの目安の帯の中にある。"
             per="回目の実験"
             axis="何回目の実験か（1回の実験＝100 セット）"
           />
@@ -789,7 +789,7 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
             rows={[{ label: "成功回数の平均", exp: summarize(rec).mean, th: np, se: (2 * sd) / Math.sqrt(N) }]}
           />
         </Card>
-        <Card title="平均の移り変わり" sub="何セット目までか（倍々）">
+        <Card title="平均の移り変わり" sub="何セット目までか（約3倍ずつ）">
           {chart(
             `平均は ${r2(np)} に向かって一直線に近づくわけではない。上下しながら、セットが増えるほどばらつき幅が小さくなる。`,
           )}
