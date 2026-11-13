@@ -15732,7 +15732,7 @@
      "items": [
       {
        "id": "stats2:binom-B-01",
-       "title": "ちょうど k 回成功する確率を調べる",
+       "title": "ちょうど k 回成功する確率は、どのくらい？",
        "finds": "ちょうど k 回の確率の決まり方",
        "concept": "stats2:TERM-binom",
        "related": [
@@ -15987,7 +15987,7 @@
       },
       {
        "id": "stats2:binom-B-02",
-       "title": "ちょうど k 回と k 回以上を比べる",
+       "title": "「ちょうど k 回」と「k 回以上」、確率はどう違う？",
        "finds": "累積確率と事象の範囲",
        "concept": "stats2:TERM-dist",
        "related": [
@@ -18462,7 +18462,7 @@
       },
       {
        "id": "stats2:binom-F-03",
-       "title": "観測した成功回数から成功確率を推定する",
+       "title": "観測した成功回数から、成功確率はどこまで言える？",
        "finds": "母比率の推定",
        "concept": "stats2:TERM-sample-prop",
        "related": [
@@ -18750,7 +18750,7 @@
       },
       {
        "id": "stats2:expect-B-02",
-       "title": "期待値がいくらでも大きくなるくじ",
+       "title": "期待値がいくらでも大きくなるくじで、何度も引いた平均は？",
        "finds": "和が有限でないときの平均",
        "concept": "stats2:TERM-expect"
       }
