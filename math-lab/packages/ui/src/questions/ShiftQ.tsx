@@ -277,7 +277,7 @@ export function ShiftQ(props: QProps) {
   return (
     <LabShell
       title={def.title}
-      question={def.question}
+      question={props.title ?? def.question}
       stage={stage}
       reached={reached}
       go={go}

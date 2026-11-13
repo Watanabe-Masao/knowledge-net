@@ -1885,12 +1885,14 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await expect(x.getByTestId("exp-app-prob")).toHaveText("38.3%");
   await expect(x.getByTestId("exp-app-cut")).toHaveText("10 回以上");
   await x.getByTestId("exp-app-go").click();
-  await expect(x.getByTestId("exp-question")).toContainText("8 回以上");
+  // 今回の問いは開いた問いの題（#379）。応用で決め直した結果は、予測の段の選び肢の組に出る
+  await expect(x.getByRole("radiogroup", { name: /8 回以上/ })).toBeVisible();
   await expect(x.getByRole("button", { name: "まず予測を選ぶ" })).toBeDisabled(); // 前の予想は残らない
   await x.getByRole("button", { name: "戻る" }).click();
   // B-01 と B-02 は同じ形（確率の値）でも別の問い：初期の条件・予想する事象が違う（渡辺さん 2026-11-02。同じ画面を開くだけにしない）
   await openQ(x, "B-01");
-  await expect(x.getByTestId("exp-question")).toContainText("ちょうど 3 回");
+  // 今回の問いは題（#379）。事象の違いは予測の選び肢の組で見る
+  await expect(x.getByRole("radiogroup", { name: "ちょうど 3 回 の確率の予測" })).toBeVisible();
   await expect(x.getByRole("radiogroup", { name: /の確率の予測/ })).toHaveCount(1);
   await x.getByRole("button", { name: "戻る" }).click();
   // 確率の値（決まった問い）
@@ -1918,8 +1920,10 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await openQ(x, "C-02");
   // 予測は見えている具体の数で聞く（⑦ の 2。stats2-course #372）：100 セットでの幅 ±9.7 ポイント（P＝62.3%、2SE）を見せ、10000 セットの幅を選ぶ
   await expect(x.getByTestId("exp-conv-given")).toContainText("±9.7 ポイント");
-  await expect(x.getByTestId("exp-question")).toContainText("10000 セット重ねると、割合のずれはどのくらいまで？");
-  await expect(x.getByText("10000 セット重ねると、割合のずれはどのくらいまで？")).toHaveCount(1); // 問いの文とカードの題を重ねない
+  // 今回の問いは開いた問いの題（テーマ体系の title。#379）。問いの文とカードの題を重ねない
+  await expect(x.getByTestId("exp-question")).toContainText("実験セット数を増やすとずれはどう変わる？");
+  await expect(x.getByText("実験セット数を増やすとずれはどう変わる？")).toHaveCount(1);
+  await expect(x.getByText("10000 セットでは？")).toBeVisible(); // 具体の数は予測の段の本文に
   await x.getByRole("radio", { name: "±0.97 ポイント" }).click();
   await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();

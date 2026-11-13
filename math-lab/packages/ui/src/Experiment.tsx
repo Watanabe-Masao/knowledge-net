@@ -301,6 +301,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
         )
       : undefined,
     apply: item?.apply,
+    title: item?.title,
     conceptLink: (id: string) =>
       props.onConcept && (
         <button type="button" className={s.link} onClick={() => props.onConcept!(id)}>

@@ -315,7 +315,11 @@ export function BreakQ(props: QProps & { initial?: string }) {
   return (
     <LabShell
       title={def.title}
-      question={`「${cx.name}」とき、成功の回数の山は二項分布と比べてどうなる？`}
+      question={
+        // 起き方は画面の中で選び替えられるので、開いた問いの題ではなく、いま選んでいる起き方の問い（テーマ体系の break:起き方）の題を出す
+        props.def.catalog?.flatMap((g) => g.items).find((it) => it.open === `break:${cx.id}` && !it.retired)?.title ??
+        `「${cx.name}」とき、成功の回数の山は二項分布と比べてどうなる？`
+      }
       stage={stage}
       reached={reached}
       go={go}

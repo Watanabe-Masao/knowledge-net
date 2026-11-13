@@ -32,6 +32,9 @@ export type QProps = {
   conceptLink?: (id: string) => ReactNode;
   /** 応用の課題（テーマ体系の問いの apply。stats2-course issue 171） */
   apply?: ApplySpec;
+  /** 開いた問いの題（テーマ体系の title）。画面の「今回の問い」はこれ1つから出し、問いの具体の数は予測の段の本文に出す
+   *  （同じことを2か所に書かない。値の表の実験室と同じ形。stats2-course #379）。テーマ体系のない実験室では、形ごとの問いの文に戻る */
+  title?: string;
   children?: ReactNode;
 };
 /** 数える量は画面のどこでも「成功」と呼び、題材の言葉（表・買った など）は括弧で添える（⑦ の 4：1つの量に1つの名前。
