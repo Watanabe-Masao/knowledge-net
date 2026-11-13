@@ -684,13 +684,13 @@ export function TableLab({
         <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
           <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>　平均は{DIRS[actual]}（期待値 {r2(mStart)} →{" "}
           <b>{r2(mNext)}</b>
-          {unit}。予測は {r2(pred.value)}
-          {unit}）
+          {unit}。予測は「{DIRS[pred.dir!]}」、数は {r2(pred.value)}
+          {unit}（数は任意））
           {notAValue && (
             // 「表の値としては出ない」は A-02 で見つけること。ここでは言わず案内だけ（⑦ の 2。stats2-course #372）
             <span className={s.shape}>
               この {r2(mNext)}
-              {unit} は、1回引いて出る値？ →「期待値は、実際に出る値？」（A-02）で確かめる
+              {unit} は、1回引いて出る値？ →「何度も引いた平均の行き先（期待値）は、1回で出る値？」（A-02）で確かめる
             </span>
           )}
         </div>
@@ -961,7 +961,7 @@ export function TableSupportQ({
         </section>
         <section className={s.card}>
           <label className={s.peak}>
-            <span>何度も引いた平均は、いくつに近づく？</span>
+            <span>何度も引いた平均は、いくつに近づく？（数は任意。照らすのは下の選び肢）</span>
             <b>
               {r2(pv)}
               {unit}
@@ -1066,7 +1066,7 @@ export function TableSupportQ({
       <>
         <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
           <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>　期待値は <b>{r2(m)}</b>
-          {unit}（予測 {r2(pv)}
+          {unit}。予測は「{APPEARS[appears!]}」（数は任意で {r2(pv)}
           {unit}）。
           {isValue ? "この値は表の中にあり、1回で出ることもある" : "この値は表の中になく、1回では一度も出ない"}
           {/* 観察は見る所を指す。理由（てんびんの支点）は考察で（⑦ の 2。stats2-course #372） */}
@@ -1249,8 +1249,17 @@ export function TableSameMeanQ({
   const top = (w: number[], m: number, v: number) => {
     const tot = w.reduce((a, b) => a + b, 0);
     const parts = theme.values.map((x, i) => ((x - m) ** 2 * w[i]!) / tot);
-    const i = parts.indexOf(Math.max(...parts));
-    return { label: labelOf(theme.values[i]!), pct: v > 0 ? Math.round((parts[i]! / v) * 100) : 0 };
+    // 同じ大きさの項が2つ以上あれば全部を言う（対称な表で1つだけ言うと、その項だけが効いて見える。検算役のレビュー。stats2-course #379）
+    const mx = Math.max(...parts),
+      is = parts.flatMap((p, i) => (Math.abs(p - mx) < 1e-9 * Math.max(1, mx) ? [i] : []));
+    const one = v > 0 ? Math.round((mx / v) * 100) : 0;
+    return {
+      label: is.map((i) => labelOf(theme.values[i]!)).join(" と "),
+      pct:
+        is.length > 1
+          ? `それぞれ ${one}%（合わせて ${v > 0 ? Math.round(((mx * is.length) / v) * 100) : 0}%）`
+          : `${one}%`,
+    };
   };
 
   let body: ReactNode, cta: ReactNode;
@@ -1485,7 +1494,7 @@ export function TableSameMeanQ({
               note={
                 <p className={s.muted}>
                   分散 {r2(v)}
-                  {unit ? `（${unit}の2乗）` : ""}のうち {t.pct}% は {t.label} の項から
+                  {unit ? `（${unit}の2乗）` : ""}のうち {t.pct} は {t.label} の項から
                 </p>
               }
             />

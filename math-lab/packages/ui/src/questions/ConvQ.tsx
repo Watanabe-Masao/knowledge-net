@@ -3,7 +3,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { INT, PCT4, formatApply, runningShare } from "@math-lab/engine";
 import { haptic } from "../motion";
 import { LabShell, useRuns, useStages } from "../labParts";
-import { CompareTable, Dock, Field, RunChart, pc, pctSig, pShort, qs } from "../QuestionParts";
+import { CompareTable, Dock, Field, RunChart, pc, pctSig, pShort, ptShort, qs } from "../QuestionParts";
 import s from "../Experiment.module.css";
 import { BinomQuestion, STAGES_Q, evText, inEv, pmfOf, probOf, CONV3 } from "./common";
 import { AppExtra, ApplyTask, Card, MK, QProps, Verdict, descOf, useFit } from "./parts";
@@ -91,8 +91,8 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
               <i>理論 {pctSig(P)}</i>
             </div>
             <div>
-              理論とのずれ<b>{share === undefined ? "—" : pShort(Math.abs(share - P))}</b>
-              <i>目安 ±{N ? pShort(se(N)) : "—"}</i>
+              理論とのずれ<b>{share === undefined ? "—" : ptShort(Math.abs(share - P))}</b>
+              <i>目安 ±{N ? ptShort(se(N)) : "—"}</i>
             </div>
           </div>
         </Card>
@@ -154,14 +154,14 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
               {at.map((t) => (
                 <tr key={t}>
                   <td>{t.toLocaleString()}</td>
-                  <td>{pShort(Math.abs(path[t - 1]! - P))}</td>
-                  <td>±{pShort(se(t))}</td>
+                  <td>{ptShort(Math.abs(path[t - 1]! - P))}</td>
+                  <td>±{ptShort(se(t))}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           <p className={qs.note}>
-            実際のずれは毎回ばらつく。目安より大きいこともあるし、たまたま小さいこともある。それでも、セットを増やすほど小さくなっていく。
+            実際のずれは毎回ばらつく。目安より大きいこともあるし、たまたま小さいこともある。傾向としてはセットを増やすほど小さくなるが、セットを10倍にしても約5回に1回はかえって大きくなる。
           </p>
         </Card>
         <Card title="割合の移り変わり" sub="何セット目までか（倍々）">
@@ -192,7 +192,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
               <tr key={t}>
                 <td>{t.toLocaleString()}</td>
                 <td>{Math.sqrt(t)}</td>
-                <td>±{pShort(se(t))}</td>
+                <td>±{ptShort(se(t))}</td>
               </tr>
             ))}
           </tbody>
@@ -250,7 +250,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
               {[100, 1000, 10000, 100000].map((t) => (
                 <tr key={t}>
                   <td>{t.toLocaleString()}</td>
-                  <td>±{pShort(sea(t))}</td>
+                  <td>±{ptShort(sea(t))}</td>
                 </tr>
               ))}
             </tbody>

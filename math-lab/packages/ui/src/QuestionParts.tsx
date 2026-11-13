@@ -11,7 +11,9 @@ import s from "./QuestionParts.module.css";
 export const pShort = (v: number) =>
   !Number.isFinite(v) ? "—" : v === 0 ? "0%" : v < 0.001 ? "<0.1%" : `${Number((v * 100).toFixed(1))}%`;
 /** 割合どうしの差は % ではなくポイントで呼ぶ（⑦ の 4：割合の % と差のポイントを分ける。stats2-course #379） */
-export const ptShort = (v: number) => (!Number.isFinite(v) ? "—" : `${Number((v * 100).toFixed(1))} ポイント`);
+export const ptShort = (v: number) =>
+  // 10 ポイントより小さい差は有効数字2桁（±0.97 を ±1 に丸めて、照らしの ±0.97 と食い違わせない。stats2-course #379）
+  !Number.isFinite(v) ? "—" : `${Number(v * 100 < 10 ? (v * 100).toPrecision(2) : (v * 100).toFixed(1))} ポイント`;
 /** 有効数字3桁の％（丸めて 0 に見せない）。応用の課題の答えと同じ関数（engine の formatApply。stats2-course #171） */
 export const pctSig = (v: number) => formatApply(v, SIG3);
 /** 約 N セットに1回 */
@@ -260,6 +262,8 @@ export function CompareRows({
 export type CmpRow = { label: string; exp: number | undefined; th: number; se?: number; fmt?: (v: number) => string };
 /** 数の比べ表：実験・理論・差（揺れの目安 ±2×標準誤差）と「中／外」。一致したとは言わない */
 export function CompareTable({ rows }: { rows: CmpRow[] }) {
+  // 目安（se）のある行がなければ、差の列と「中・外」の凡例を出さない（目安のない行に目安の見出しを付けない。⑦ の 4。stats2-course #379）
+  const hasSe = rows.some((r) => r.se !== undefined);
   return (
     <>
       <table className={s.table} data-testid="q-cmp">
@@ -268,7 +272,7 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
             <th scope="col" />
             <th scope="col">実験</th>
             <th scope="col">理論</th>
-            <th scope="col">差（目安）</th>
+            {hasSe && <th scope="col">差（目安）</th>}
           </tr>
         </thead>
         <tbody>
@@ -282,22 +286,26 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
                 <td>{r.label}</td>
                 <td>{r.exp === undefined ? "—" : f(r.exp)}</td>
                 <td>{f(r.th)}</td>
-                <td>
-                  {d === undefined ? "—" : `${d >= 0 ? "＋" : "−"}${df(Math.abs(d))}`}
-                  {r.se !== undefined && (
-                    <small>
-                      ±{df(r.se)} <b className={inside ? s.inside : s.outside}>{inside ? "中" : "外"}</b>
-                    </small>
-                  )}
-                </td>
+                {hasSe && (
+                  <td>
+                    {d === undefined ? "—" : `${d >= 0 ? "＋" : "−"}${df(Math.abs(d))}`}
+                    {r.se !== undefined && (
+                      <small>
+                        ±{df(r.se)} <b className={inside ? s.inside : s.outside}>{inside ? "中" : "外"}</b>
+                      </small>
+                    )}
+                  </td>
+                )}
               </tr>
             );
           })}
         </tbody>
       </table>
-      <p className={s.muted}>
-        「中」：差がずれの目安（±2×標準誤差）の中。このずれは偶然のばらつきと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。ただし理論が正しくても、1行につき約20回に1回は外に出る（行が多ければ、どれかが外に出るのはふつう）。セットを足しても外が続くなら、理論の前提が合っていないかを考える。
-      </p>
+      {hasSe && (
+        <p className={s.muted}>
+          「中」：差がずれの目安（±2×標準誤差）の中。このずれは偶然のばらつきと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。ただし理論が正しくても、1行につき約20回に1回は外に出る（行が多ければ、どれかが外に出るのはふつう。割合と回数の行は同じ結果を見ているので、いっしょに中・外になる）。セットを足しても外が続くなら、理論の前提が合っていないかを考える。
+        </p>
+      )}
     </>
   );
 }
@@ -527,11 +535,11 @@ export function RunChart({
       {series.some((x) => x.se) && (
         <>
           <button type="button" className={s.toggle} onClick={() => setBand(!band)} data-testid="q-run-band-toggle">
-            {band ? "ばらつきの目安を非表示" : "ばらつきの目安を表示"}
+            {band ? "ずれの目安を非表示" : "ずれの目安を表示"}
           </button>
           {band && (
             <p className={s.muted}>
-              色の帯はばらつきの目安（理論 ±2×標準誤差）。多くはこの中に入るが、いつも必ずこの中に入る範囲ではない。
+              色の帯はずれの目安（理論 ±2×標準誤差）。多くはこの中に入るが、いつも必ずこの中に入る範囲ではない。
             </p>
           )}
         </>

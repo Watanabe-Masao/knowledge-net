@@ -40,13 +40,13 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
   if (stage === 0) {
     body = (
       <>
-        <Card title={`n を ${n0} から ${n1} に`} sub={`p＝${pc(p)}`}>
+        <Card title={`回数 n を ${n0} から ${n1} に`} sub={`成功確率 p＝${pc(p)}。n 回を1セットとして何度もくり返す`}>
           <p className={qs.muted}>
             成功の<b>回数</b>（何回成功したか）と、成功の<b>割合</b>
             （回数÷n）の、両方のばらつき（セットごとの違いの大きさ。標準偏差で測る）を予測する。
           </p>
         </Card>
-        <Card title="成功の回数のばらつきは？">
+        <Card title="成功の回数の標準偏差は？">
           <div className={s.choice} role="radiogroup" aria-label="回数のばらつきの予測">
             {SPREAD3.map((t, i) => (
               <button
@@ -64,7 +64,7 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
             ))}
           </div>
         </Card>
-        <Card title="成功の割合のばらつきは？">
+        <Card title="成功の割合の標準偏差は？">
           <div className={s.choice} role="radiogroup" aria-label="割合のばらつきの予測">
             {SPREAD3.map((t, i) => (
               <button
