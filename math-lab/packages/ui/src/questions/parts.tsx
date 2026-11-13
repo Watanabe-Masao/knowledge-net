@@ -97,10 +97,10 @@ export function RunButtons({
           1セット
         </button>
         <button type="button" className={s.secondary} onClick={() => run(100, 20)} data-testid="exp-run-100">
-          100
+          100 セット
         </button>
         <button type="button" className={s.primary} onClick={() => run(big, 50)} data-testid="exp-run-big">
-          ▶ {big.toLocaleString()}
+          ▶ {big.toLocaleString()} セット
         </button>
       </div>
       <button type="button" className={s.next} disabled={sets < need} onClick={go} data-testid="exp-to-observe">

@@ -190,7 +190,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
             </span>
           )}
         </Verdict>
-        <Card title="理論と実験" sub="差が目安の中か">
+        <Card title="理論と実験" sub="差がずれの目安の中か">
           <CompareTable
             rows={[
               { label: "平均（条件どおり）", exp: summarize(A).mean, th: b.n * b.p, se: 2 * Math.sqrt(vb / N) },
