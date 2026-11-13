@@ -45,6 +45,9 @@ test("二項分布 A-01：頂点を 7 回と予測すると ✗（向きは合�
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict")).toContainText("予測と違った");
   await expect(x.getByTestId("exp-verdict")).toContainText("向きは予測どおり");
+  // 観察は頂点だけ。平均（D-01 で見つける）を出さず、頂点が乱数で隣にずれうる頻度を書く（⑦ の 2。stats2-course #379）
+  await expect(x.getByTestId("exp-peak-note")).toContainText("隣にずれやすい");
+  await expect(x).not.toContainText("平均（後）");
 });
 
 // 確かめる対象：前提崩し（E-01〜04）の予測の段に、1回ごとの確率をならすと p のままであることが出ること（stats2-course #379）。

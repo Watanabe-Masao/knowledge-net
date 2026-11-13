@@ -866,11 +866,11 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   await expect(x.getByTestId("exp-verdict")).toContainText("予測どおり");
   await expect(x.getByTestId("exp-verdict")).toContainText("いちばん高いのは 8 回");
   const cmp = x.getByTestId("q-cmp");
-  await expect(cmp.locator("tr", { hasText: "平均（後）" }).locator("td").nth(2)).toHaveText("8");
-  await expect(cmp.locator("tr", { hasText: "平均（前）" }).locator("td").nth(2)).toHaveText("5");
+  // 観察は頂点だけ（平均は D-01 で見つける。⑦ の 2。stats2-course #379）
+  await expect(cmp.locator("tr", { hasText: "頂点（前）" }).locator("td").nth(2)).toHaveText("5 回");
   await expect(cmp.locator("tr", { hasText: "頂点（後）" }).locator("td").nth(2)).toHaveText("8 回");
   await expect(x.getByTestId("q-cmprows").locator("[role=listitem]")).toHaveCount(11);
-  await expect(x.getByTestId("q-run-stat")).toContainText("理論 前 5・後 8");
+  await expect(x.getByTestId("q-run")).toHaveCount(0); // 平均の移り変わりは出さない（#379）
   await x.getByRole("button", { name: /なぜ山が動く/ }).click();
   // 考察で平均＝np（D-01 で見つけること）を表に出さない（⑦ の 2。stats2-course #372）
   await expect(x).not.toContainText("n 回分（×"); // 表の行「n 回分（×10）＝ np」を出さない（理由の文は教材のデータ）
@@ -993,7 +993,7 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   await page.getByTestId("experiment").getByTestId("exp-q-A-01").click(); // テーマ体系の入口から最初の問い（#119）
   const x = page.getByTestId("experiment");
-  await expect(x).toContainText("表を変えると");
+  await expect(x).toContainText("平均はどこへ動く");
   await expect(x.getByTestId("exp-marker")).toHaveCount(1); // ▲＝今の表の期待値
   await expect(x.getByRole("button", { name: "まず予測を選ぶ" })).toBeDisabled();
   // 向きと値は連動する：値を今の平均に戻すと「動かない」、右へ動かすと「右へ動く」
@@ -1022,7 +1022,7 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   await expect(x.getByTestId("exp-verdict")).toContainText("3.5 → 4.13");
   await expect(x.getByTestId("exp-tile-theory")).toContainText("3.5 → 4.13"); // 前の表と変えた表の期待値
   await expect(x.getByTestId("exp-replay").getByTestId("exp-run-line-b")).toHaveCount(1);
-  await expect(x.getByTestId("exp-verdict")).toContainText("A-02 で確かめる");
+  await expect(x.getByTestId("exp-verdict")).toContainText("（A-02）で確かめる");
   await expect(x.getByTestId("exp-replay")).toBeVisible();
   await x.getByRole("button", { name: /理由を考える/ }).click();
   const ex = x.getByTestId("exp-expand");
@@ -1649,7 +1649,7 @@ test("動きを減らす設定でも、移り変わりの再生は1セット目�
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${SRC}&x=stats2:EXP-binom-p`);
   const x = page.getByTestId("experiment");
-  await openQ(x, "A-01");
+  await openQ(x, "D-01"); // 移り変わりの図のある問い（A-01 の観察から平均の図を外した。#379）
   await x.getByRole("button", { name: "増やす" }).click();
   await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-100").click();
@@ -1901,8 +1901,11 @@ test("実験室の問い（広がり・確率の値・理論と実測）：手�
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-verdict-0")).toContainText("24.6%");
   await expect(x.getByTestId("exp-verdict-1")).toContainText("62.3%");
-  await expect(x.getByTestId("exp-compare-note")).toContainText("その 39%");
+  // 観察は見る所を指し、足し合わせの理由は考察で（⑦ の 2。stats2-course #379）
+  await expect(x.getByTestId("exp-compare-look")).toBeVisible();
+  await expect(x.getByTestId("exp-compare-note")).toHaveCount(0);
   await x.getByRole("button", { name: /理由を考える/ }).click();
+  await expect(x.getByTestId("exp-compare-note")).toContainText("のうち 39%");
   await x.getByRole("button", { name: "戻る" }).click();
   // 理論と実測
   await openQ(x, "C-02");

@@ -1,6 +1,6 @@
 // 位置の問い（ExperimentQuestion.tsx から分けた。stats2-course #212）
 import { useMemo, useState, type ReactNode } from "react";
-import { runningMean, summarize } from "@math-lab/engine";
+import { summarize } from "@math-lab/engine";
 import { LabShell, peak, usePairRuns, useStages } from "../labParts";
 import {
   CompareRows,
@@ -8,7 +8,6 @@ import {
   Dock,
   Field,
   PairRows,
-  RunChart,
   TheoryRows,
   pc,
   qs,
@@ -16,7 +15,7 @@ import {
   type CmpRow,
 } from "../QuestionParts";
 import s from "../Experiment.module.css";
-import { Cond, STAGES_Q, meanOf, pmfOf, sdOf } from "./common";
+import { Cond, STAGES_Q, pmfOf } from "./common";
 import { AppExtra, ApplyTask, Card, Lane, QProps, RunButtons, Verdict, descOf, useFit } from "./parts";
 
 export function ShiftQ(props: QProps) {
@@ -46,7 +45,7 @@ export function ShiftQ(props: QProps) {
       <>
         <Card
           title={`p を ${pc(next.p)} にすると、いちばん高い所は？`}
-          sub={`表はいまの山（n＝${start.n}・p＝${pc(start.p)}）`}
+          sub={`一覧はいまの山（回数 n＝${start.n}・成功確率 p＝${pc(start.p)}。${start.n} 回を1セットとして何度もくり返す）`}
         >
           <TheoryRows
             pmf={f0}
@@ -125,16 +124,12 @@ export function ShiftQ(props: QProps) {
     // 予測1つに照らし1つ（⑦ の 2。stats2-course #372）：予測で選ぶのは頂点の回数なので、回数で照らす（前は向きだけで照らしていた）
     const ok = guess !== null && guess === k1,
       N = B.sets;
+    // 観察は頂点だけを照らし、見る所を指す（⑦ の 2。平均＝np は D-01 で見つけるので、平均の行と移り変わりは出さない。stats2-course #379）
+    const pk1 = f1[k1] ?? 0,
+      nb = Math.max(f1[k1 - 1] ?? 0, f1[k1 + 1] ?? 0);
     const rows: CmpRow[] = [
-      { label: "平均（前）", exp: summarize(A).mean, th: meanOf(f0), se: (2 * sdOf(f0)) / Math.sqrt(A.sets) },
-      { label: "平均（後）", exp: summarize(B).mean, th: meanOf(f1), se: (2 * sdOf(f1)) / Math.sqrt(N) },
+      { label: "頂点（前）", exp: peak(summarize(A).freq), th: peak(f0), fmt: (v) => `${v} 回` },
       { label: "頂点（後）", exp: peak(summarize(B).freq), th: k1, fmt: (v) => `${v} 回` },
-      {
-        label: "ばらつき（後）",
-        exp: Math.sqrt(summarize(B).variance ?? NaN),
-        th: sdOf(f1),
-        se: (2 * sdOf(f1)) / Math.sqrt(2 * N),
-      },
     ];
     body = (
       <>
@@ -148,17 +143,10 @@ export function ShiftQ(props: QProps) {
         <Card title={`後（p＝${pc(next.p)}）の分布：実験と理論`} sub={`${N.toLocaleString()} セット`}>
           <CompareRows counts={B.counts} sets={N} pmf={f1} inEvent={(k) => k === k1} />
         </Card>
-        <Card title="平均の移り変わり" sub="何セット目までか（倍々）">
-          <RunChart
-            title="平均の移り変わり"
-            ylab="ここまでの平均"
-            series={[
-              { name: "前", path: runningMean(A.ks), th: meanOf(f0), se: (i) => (2 * sdOf(f0)) / Math.sqrt(i) },
-              { name: "後", path: runningMean(B.ks), th: meanOf(f1), se: (i) => (2 * sdOf(f1)) / Math.sqrt(i) },
-            ]}
-            note={`セット数が少ないうちは、平均が大きくばらつく。くり返すほど、前は ${r2(meanOf(f0))}、後は ${r2(meanOf(f1))} の近くに落ち着く様子を見る。途中では、2本の線が近づいたり離れたりすることもある。`}
-          />
-        </Card>
+        <p className={qs.muted} data-testid="exp-peak-note">
+          実験の頂点が理論とずれることもある：後の頂点 {k1} 回（{pc(pk1)}）と隣の棒（{pc(nb)}
+          ）の差が小さいほど、実験では頂点が隣にずれやすい。山の中心（平均）がどこに来るかは「成功回数の期待値はどこにある？」（D-01）で確かめる。
+        </p>
       </>
     );
     cta = (

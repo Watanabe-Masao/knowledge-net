@@ -42,7 +42,9 @@ function ProbRun(
   const scale = def.prob_scale ?? [0.5, 0.2, 0.05, 0.01, 0.001];
   const sc = scaleChoices(scale);
   const [guess, setGuess] = useState<(number | undefined)[]>(() => q.events.map(() => undefined));
-  const [focus, setFocus] = useState(0);
+  const [focus, setFocus] = useState(0); // 考察で「以上」を見るときは、下の段で選び替える
+  // 「ちょうど k 回」と「k 回以上」を比べる問い（B-02）
+  const rel = events.length === 2 && events[0]!.op === "eq" && events[1]!.op === "ge" && events[0]!.k === events[1]!.k;
   const theme = def.themes[0]!; // 題材は1つ（選んでも計算は同じなので切り替えは置かない）
   const f = useMemo(() => pmfOf(cond), [cond.n, cond.p]); // eslint-disable-line react-hooks/exhaustive-deps
   const Ps = events.map((e) => probOf(f, e));
@@ -149,7 +151,7 @@ function ProbRun(
             </Card>
           </>
         ) : (
-          <Card title={`n＝${cond.n}・p＝${pc(cond.p)}`}>
+          <Card title={`回数 n＝${cond.n}・成功確率 p＝${pc(cond.p)}`}>
             <p className={qs.muted}>
               成功確率 {pc(cond.p)} の試行を {cond.n} 回。これを1セットとして何度も起こす。
             </p>
@@ -206,8 +208,6 @@ function ProbRun(
     );
     cta = <RunButtons run={run} sets={N} need={100} go={() => go(2)} />;
   } else if (stage === 2) {
-    const rel =
-      events.length === 2 && events[0]!.op === "eq" && events[1]!.op === "ge" && events[0]!.k === events[1]!.k;
     body = (
       <>
         {events.map((e, i) => {
@@ -219,18 +219,17 @@ function ProbRun(
           return (
             <Verdict key={i} ok={g === ans} edge={edge} head={evText(e)} big={pctSig(P)} testid={`exp-verdict-${i}`}>
               {oneIn(P)}。目盛りでは「{sc.labels[ans]}」、予測は「{sc.labels[g]}」。この回数での見込み {fmtN(exp)}{" "}
-              回、実際は {hits[i]} 回
-              {exp < 1 && hits[i] === 0 ? "（見込みが1回より少ないので、0 回がふつう。確率 0 ではない）" : ""}。
+              セット、実際は {hits[i]} セット
+              {exp < 1 && hits[i] === 0 ? "（見込みが1セットより少ないので、0 セットがふつう。確率 0 ではない）" : ""}。
             </Verdict>
           );
         })}
         {(rel || Ps.some((P) => P < 0.05)) && (
           <Card title="読み方">
             {rel && (
-              <p className={qs.note} data-testid="exp-compare-note">
-                {evText(events[1]!)}には、ちょうど {events[0]!.k} 回も入る。{events[1]!.k} 回以上＝ちょうど{" "}
-                {events[1]!.k}・{events[1]!.k + 1}・…・{cond.n} 回の棒の合計で、ちょうど {events[0]!.k} 回はその{" "}
-                {pc(Ps[0]! / Math.max(1e-12, Ps[1]!))}。
+              // 観察は見る所を指す。どの棒が入るか（足し合わせ）は考察で言う（⑦ の 2。stats2-course #379）
+              <p className={qs.note} data-testid="exp-compare-look">
+                2つの確率を見比べる。{evText(events[1]!)}には、どの成功の回数の棒が入るか。
               </p>
             )}
             {Ps.some((P) => P < 0.05) && (
@@ -296,6 +295,13 @@ function ProbRun(
     const ks = f.map((_, k) => k).filter(inEv(e0));
     body = (
       <>
+        {rel && (
+          <p className={qs.note} data-testid="exp-compare-note">
+            {evText(events[1]!)}には、ちょうど {events[0]!.k} 回も入る。{events[1]!.k} 回以上＝ちょうど {events[1]!.k}・
+            {events[1]!.k + 1}・…・{cond.n} 回の棒の合計で、ちょうど {events[0]!.k} 回は {evText(events[1]!)}（
+            {pctSig(Ps[1]!)}）のうち {pc(Ps[0]! / Math.max(1e-12, Ps[1]!))}。
+          </p>
+        )}
         <Card title={`棒を合計：${evText(e0)}`} sub={`${ks.length} 本`}>
           {focusSeg}
           <table className={qs.table} data-testid="exp-sum">

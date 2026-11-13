@@ -424,7 +424,8 @@ export function TableLab({
   onBack,
   cards: cards0,
   onCards,
-}: Props & { def: TableDef }) {
+  question,
+}: Props & { def: TableDef; question?: string }) {
   const { stage, reached, go } = useStages(cards0 ? 5 : 0);
   const [cmpTheme, cmpCards] = cards0?.includes(":")
     ? [cards0.slice(0, cards0.indexOf(":")), cards0.slice(cards0.indexOf(":") + 1)]
@@ -689,7 +690,7 @@ export function TableLab({
             // 「表の値としては出ない」は A-02 で見つけること。ここでは言わず案内だけ（⑦ の 2。stats2-course #372）
             <span className={s.shape}>
               この {r2(mNext)}
-              {unit} は、1回引いて出る値？ → A-02 で確かめる
+              {unit} は、1回引いて出る値？ →「期待値は、実際に出る値？」（A-02）で確かめる
             </span>
           )}
         </div>
@@ -861,7 +862,7 @@ export function TableLab({
   return (
     <LabShell
       title={def.title}
-      question={def.question}
+      question={question ?? def.question}
       stage={stage}
       reached={reached}
       go={go}
@@ -902,7 +903,8 @@ export function TableSupportQ({
   onConcept,
   conceptName,
   definitions,
-}: Props & { def: TableDef }) {
+  question,
+}: Props & { def: TableDef; question?: string }) {
   const { stage, reached, go } = useStages(0);
   const [theme, setTheme] = useState(def.themes.find((t) => t.id === "dice") ?? def.themes[0]!);
   const unit = theme.unit ?? "";
@@ -1144,7 +1146,7 @@ export function TableSupportQ({
   return (
     <LabShell
       title={def.title}
-      question="何度も引いた平均の行き先（期待値）は、1回引いて出る値？"
+      question={question ?? "何度も引いた平均の行き先（期待値）は、1回引いて出る値？"}
       stage={stage}
       reached={reached}
       go={go}
@@ -1190,7 +1192,8 @@ export function TableSameMeanQ({
   onConcept,
   conceptName,
   definitions,
-}: Props & { def: TableDef }) {
+  question,
+}: Props & { def: TableDef; question?: string }) {
   const { stage, reached, go } = useStages(0);
   const themes = def.themes.filter((t) => t.same_mean);
   const [theme, setTheme] = useState(themes[0] ?? def.themes[0]!);
@@ -1509,7 +1512,7 @@ export function TableSameMeanQ({
   return (
     <LabShell
       title={def.title}
-      question="2つの表、何度も引くと何が違う？"
+      question={question ?? "2つの表、何度も引くと何が違う？"}
       stage={stage}
       reached={reached}
       go={go}

@@ -132,8 +132,9 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
     body = (
       <>
         <Verdict ok={guess === 1} big="10分の1">
-          ずれの目安（±2×標準誤差）は √(セット数) に反比例する。セットを 100 倍にすると √100＝10 で、10分の1（±
-          {pt(w100)} → ±{pt(w100 / 10)} ポイント）。予測は「{convChoices[guess!]}」（{CONV3[guess!]}）。
+          {/* 観察は数で照らすだけ。√ で縮む理由は考察で（⑦ の 2。stats2-course #379） */}
+          ずれの目安（±2×標準誤差）は、100 セットの ±{pt(w100)} ポイントから 10000 セットで ±{pt(w100 / 10)}{" "}
+          ポイントに。10分の1。予測は「{convChoices[guess!]}」（{CONV3[guess!]}）。
         </Verdict>
         <Card title="理論と実験" sub="差が目安の中か">
           <CompareTable
@@ -164,18 +165,20 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
           </p>
         </Card>
         <Card title="割合の移り変わり" sub="何セット目までか（倍々）">
-          {chart("目安の帯は √(セット数) に反比例して細くなる。線は多くの場合この帯の中にあるが、外に出ることもある。")}
+          {chart(
+            "目安の帯は、セットを増やすほど細くなる。線は多くの場合この帯の中にあるが、外に出ることもある。実際のずれは傾向として小さくなるが、いったん大きくなることもある。",
+          )}
         </Card>
       </>
     );
     cta = (
       <button type="button" className={s.primary} onClick={() => go(3)}>
-        なぜ √ で縮む？ 理由を考える
+        なぜ 10分の1？ 理由を考える
       </button>
     );
   } else if (stage === 3) {
     body = (
-      <Card title="割合のずれの目安＝√(P(1−P)÷N)">
+      <Card title="割合の標準誤差＝√(P(1−P)÷N)（ずれの目安はその2倍）">
         <table className={qs.table}>
           <thead>
             <tr>

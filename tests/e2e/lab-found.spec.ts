@@ -57,3 +57,22 @@ test("考察の段の終わりに、問いの主概念と関連概念を出し�
   await expect(page.getByTestId("detail").locator("h2")).toHaveText("標準偏差");
   expect(errs).toEqual([]);
 });
+
+// 確かめる対象：問いの主が関係（REL-…）のとき、考察の段の概念の札が関係の両端の名前で出ること（画面の原則 14。stats2-course #379）。
+// 想定する故障：札に「stats2:REL-binom-hyper-contrast」と id がそのまま出る（初学者の役のレビューで見つけた）。
+// 見つけ方：二項分布 E-03（戻さずに取る。主は二項分布と超幾何分布の比べる）を考察まで進め、札に id が出ず両端の名前が出る。
+// 既存との違い：上のテストは概念が主の問い。
+// 検出の確かめ（2026-11-13）：Detail.tsx の name() で関係を引かないと落ちることを見た
+test("考察の札：主が関係の問いは、関係の両端の名前で出す", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&x=stats2:EXP-binom-p&q=stats2:binom-E-03");
+  const x = page.getByTestId("experiment");
+  await x.getByRole("radiogroup", { name: "広がりの予測" }).getByRole("radio").first().click();
+  await x.getByRole("button", { name: /この予測で/ }).click();
+  await x.getByTestId("exp-run-big").click();
+  await x.getByTestId("exp-to-observe").click();
+  await x.locator("button").filter({ hasText: /理由/ }).last().click();
+  const found = x.getByTestId("exp-found");
+  await expect(found).toContainText("超幾何分布");
+  await expect(found).not.toContainText("REL-");
+});
