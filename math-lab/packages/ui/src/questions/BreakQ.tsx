@@ -86,7 +86,7 @@ export function BreakQ(props: QProps & { initial?: string }) {
             ))}
           </div>
         </Card>
-        <Card title={`二項分布（n＝${b.n}・p＝${pc(b.p)}）と比べて、山の広がりは？`}>
+        <Card title={`二項分布（回数 n＝${b.n}・成功確率 p＝${pc(b.p)}）と比べて、山の広がりは？`}>
           {/* 4つの起き方とも、1回ごとの確率の平均は p のまま（平均の成功回数は np）。書かないと「確率が下がる→成功が減る→狭い」と誤った理由でも当たる（2級の学習者の役のレビュー。stats2-course #379） */}
           <p className={qs.muted} data-testid="exp-break-mean">
             どの起き方でも、1回ごとの確率をならすと {pc(b.p)}{" "}
@@ -165,9 +165,9 @@ export function BreakQ(props: QProps & { initial?: string }) {
         <Card title="崩した起き方の分布と二項分布" sub={`${N.toLocaleString()} セット`}>
           <CompareRows counts={B.counts} sets={N} pmf={pmfOf(b)} thName="二項分布" />
         </Card>
-        <Card title="ばらつき（分散）の移り変わり" sub="何セット目までか（倍々）">
+        <Card title="分散の移り変わり" sub="何セット目までか（倍々）">
           <RunChart
-            title="ばらつき（分散）の移り変わり"
+            title="分散の移り変わり"
             ylab="ここまでの分散"
             series={[
               { name: "条件どおり", path: runningSd(A.ks).map((v) => v * v), th: vb },

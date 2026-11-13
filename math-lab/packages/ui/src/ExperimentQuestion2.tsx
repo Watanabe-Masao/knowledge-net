@@ -189,7 +189,8 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
           {unit}が {pctSig(f[kb]!)}。実験では {rec.sets.toLocaleString()} セットのうち {ka} {unit}が {rec.counts[ka]}、
           {kb} {unit}が {rec.counts[kb]}。
         </Verdict>
-        <Card title="違うのは、その回数に入る並びの数">
+        {/* 観察は見る所を指す。並びの数で決まることは考察で言う（⑦ の 2。stats2-course #379） */}
+        <Card title="回数ごとの並びの数" sub="2つの回数の行を見比べる">
           <table className={qs.table} data-testid="exp-paths-count">
             <thead>
               <tr>
@@ -235,12 +236,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
               </tbody>
             </table>
             <p className={qs.note}>
-              1つの並びはどれも同じ出やすさ（p＝{pc(c.p)} なら 1/{2 ** n}）。{kb} {unit}になる並びは {comb(n, kb)}{" "}
-              通り、{ka} {unit}は {comb(n, ka)} 通りなので、
-              {comb(n, kb) >= comb(n, ka)
-                ? `${kb} ${unit}の方が ${comb(n, kb) / comb(n, ka)} 倍起こりやすい`
-                : `${ka} ${unit}の方が ${comb(n, ka) / comb(n, kb)} 倍起こりやすい`}
-              。
+              理論ではどちらの並びも同じ出やすさ。それでも実験の数は偶然でこのくらい違う。上の表で、2つの回数に入る並びの数を見比べる。
             </p>
           </Card>
         )}
@@ -493,6 +489,8 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
             fmt={(v) => formatApply(v, PCT1)}
             series={[{ name: "実験", path: shares, th: P, se: () => 2 * se }]}
             note="線は1回ごとの実験の割合（ならした平均ではない）。理論のまわりに上下にばらつき、たいていは ±2SE の帯の中にある。"
+            per="回目の実験"
+            axis="何回目の実験か（1回の実験＝100 セット）"
           />
         </Card>
       </>
@@ -742,7 +740,9 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
     body = (
       <>
         <Verdict ok={ok} big={`${r2(np)} ${unit}`}>
-          平均は {r2(path[N - 1])} {unit}で、n×p＝{c.n}×{c.p}＝{r2(np)} に近い（予測は {guess} {unit}）。
+          {/* 観察は数で照らすだけ。n×p で決まる理由は考察で（⑦ の 2。stats2-course #379） */}
+          実験の平均は {r2(path[N - 1])} {unit}、理論の平均は {r2(np)} {unit}（予測は {guess} {unit}
+          ）。差が目安の中かは下の表で見る。
         </Verdict>
         <Card title="理論と実験" sub="差が目安の中か">
           <CompareTable
@@ -755,15 +755,14 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
           )}
         </Card>
         <p className={qs.note}>
-          平均の {r2(np)} {unit}は、1セットでちょうど起きる回数ではない（
-          {Number.isInteger(np) ? "" : "取れない値でもある。"}ちょうど {Math.round(np)} {unit}になるのは{" "}
-          {pctSig(f[Math.round(np)]!)}）。分布の重心の位置を表す。
+          いちばん起こりやすい回数（山の頂点）は {f.indexOf(Math.max(...f))} {unit}で、平均の {r2(np)} {unit}
+          とは別。平均が1セットで実際に出る値かは、期待値の実験室の「期待値は、実際に出る値？」（A-02）で確かめる。
         </p>
       </>
     );
     cta = (
       <button type="button" className={s.primary} onClick={() => go(3)}>
-        なぜ n×p？ 理由を考える
+        なぜその値？ 理由を考える
       </button>
     );
   } else if (stage === 3) {
@@ -965,7 +964,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
         <tr>
           <th>p</th>
           <th>実測の分散</th>
-          {theory && <th>理論 np(1−p)</th>}
+          {theory && <th>理論の分散</th>}
         </tr>
       </thead>
       <tbody>
@@ -1019,8 +1018,9 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
     body = (
       <>
         <Verdict ok={guess === best} big={`p＝${pc(ps[best]!)}`}>
-          理論の分散 np(1−p) は p＝{pc(ps[best]!)} で最大の {r2(th[best])}（予測は p＝{pc(ps[guess!]!)}）。p と 1−p
-          を入れ替えても同じ値で、左右対称。
+          {/* 観察は数で照らすだけ。式 np(1−p) と左右対称は考察で（⑦ の 2。stats2-course #379） */}
+          理論の分散がいちばん大きいのは p＝{pc(ps[best]!)}（{r2(th[best])}。予測は p＝{pc(ps[guess!]!)}）。下の表で、p
+          を変えたときの分散の並び方を見る。
         </Verdict>
         <Card title="理論の分散と実測の分散">
           {rows(vars, true, mi)}

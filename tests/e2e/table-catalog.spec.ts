@@ -66,13 +66,13 @@ test("期待値の実験室：テーマ体系の入口から問いを選び、�
   await expect(x.getByTestId("exp-q-A-02")).toContainText("まだ");
   await expect(x.getByTestId("exp-q-A-02").locator("xpath=self::div")).toHaveCount(1);
   await x.getByTestId("exp-q-A-01").click();
-  await expect(x.getByTestId("exp-question")).toContainText("表を変えると");
+  await expect(x.getByTestId("exp-question")).toContainText("平均はどこへ動く");
   await x.getByRole("button", { name: "戻る" }).click();
   await expect(x.getByTestId("exp-group-pick")).toBeVisible();
   await page.goto(
     `./?${SRC}&x=${encodeURIComponent("stats2:EXP-expect-table")}&q=${encodeURIComponent("stats2:expect-A-01")}`,
   );
-  await expect(page.getByTestId("exp-question")).toContainText("表を変えると");
+  await expect(page.getByTestId("exp-question")).toContainText("平均はどこへ動く");
   expect(errs).toEqual([]);
 });
 
@@ -87,4 +87,21 @@ test("実験室のタブ：カードの問いの範囲は、その実験室の�
   await page.goto(`./?${SRC}&t=lab`);
   await expect(page.getByTestId("open-stats2:EXP-expect-table")).toContainText("A〜D の問い");
   await expect(page.getByTestId("open-stats2:EXP-binom-p")).toContainText("A〜F の問い");
+});
+
+// 確かめる対象：期待値の実験室で、問いから開いた画面の問いが、その問いの題（catalog の title）と同じ文であること（stats2-course #379）。
+// 想定する故障：画面が実験室全体の question やコードに直書きした文を出し、題を直しても画面に届かない（A-01 で実際に起きた：題は「ある値を出やすくすると…」、画面は「表を変えると…」）。
+// 見つけ方：見本の catalog の title を読み、A-01・A-02・D-01 を開いて画面の問いと比べる（題の文をテストに書き写さない）。
+// 既存との違い：上のテストは入口のメニューとカード。ここは開いたあとの画面の問い。
+// 検出の確かめ（2026-11-13）：TableEntry で question を渡さないと A-01 で落ちることを見た
+test("期待値の実験室：開いた画面の問いは、その問いの題と同じ文", async ({ page, request }) => {
+  const d = await (await request.get("./sample/stats2.json")).json();
+  const x = d.experiments.find((e: { id: string }) => e.id === "stats2:EXP-expect-table");
+  const items = x.catalog.flatMap((g: { items: { id: string; title: string }[] }) => g.items);
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const id of ["stats2:expect-A-01", "stats2:expect-A-02", "stats2:expect-D-01"]) {
+    const title = items.find((it: { id: string }) => it.id === id).title;
+    await page.goto(`./?${SRC}&x=${encodeURIComponent("stats2:EXP-expect-table")}&q=${encodeURIComponent(id)}`);
+    await expect(page.getByTestId("experiment").getByTestId("exp-question")).toContainText(title);
+  }
 });

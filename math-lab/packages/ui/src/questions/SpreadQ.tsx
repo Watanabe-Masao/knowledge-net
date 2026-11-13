@@ -42,7 +42,8 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
       <>
         <Card title={`n を ${n0} から ${n1} に`} sub={`p＝${pc(p)}`}>
           <p className={qs.muted}>
-            成功の<b>回数</b>（何回成功したか）と、成功の<b>割合</b>（回数÷n）の、両方のばらつきを予測する。
+            成功の<b>回数</b>（何回成功したか）と、成功の<b>割合</b>
+            （回数÷n）の、両方のばらつき（セットごとの違いの大きさ。標準偏差で測る）を予測する。
           </p>
         </Card>
         <Card title="成功の回数のばらつきは？">
@@ -149,16 +150,16 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
             ]}
           />
         </Card>
-        <Card title="割合のばらつきの移り変わり" sub="何セット目までか（倍々）">
+        <Card title="割合の標準偏差の移り変わり" sub="何セット目までか（倍々）">
           <RunChart
-            title="割合のばらつきの移り変わり"
+            title="割合の標準偏差の移り変わり"
             ylab="ここまでの標準偏差"
             fmt={pShort}
             series={[
               { name: `n＝${n0}`, path: runningSd(A.ks, 1 / n0), th: sd(n0) / n0 },
               { name: `n＝${n1}`, path: runningSd(B.ks, 1 / n1), th: sd(n1) / n1 },
             ]}
-            note={`はじめの数セットではばらつきの値そのものが大きくばらつく。セットを重ねると、n＝${n0} は ${pShort(sd(n0) / n0)}、n＝${n1} は ${pShort(sd(n1) / n1)} の近くに落ち着いていく。`}
+            note={`はじめの数セットでは標準偏差の値そのものが大きくゆれる。セットを重ねると、n＝${n0} は ${pShort(sd(n0) / n0)}、n＝${n1} は ${pShort(sd(n1) / n1)} の近くに落ち着いていく。`}
           />
         </Card>
         <Card title="成功の割合ごとのセット">

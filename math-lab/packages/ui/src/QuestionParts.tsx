@@ -10,6 +10,8 @@ import s from "./QuestionParts.module.css";
 
 export const pShort = (v: number) =>
   !Number.isFinite(v) ? "—" : v === 0 ? "0%" : v < 0.001 ? "<0.1%" : `${Number((v * 100).toFixed(1))}%`;
+/** 割合どうしの差は % ではなくポイントで呼ぶ（⑦ の 4：割合の % と差のポイントを分ける。stats2-course #379） */
+export const ptShort = (v: number) => (!Number.isFinite(v) ? "—" : `${Number((v * 100).toFixed(1))} ポイント`);
 /** 有効数字3桁の％（丸めて 0 に見せない）。応用の課題の答えと同じ関数（engine の formatApply。stats2-course #171） */
 export const pctSig = (v: number) => formatApply(v, SIG3);
 /** 約 N セットに1回 */
@@ -272,6 +274,7 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
         <tbody>
           {rows.map((r) => {
             const f = r.fmt ?? r2,
+              df = r.fmt === pShort ? ptShort : f,
               d = r.exp === undefined ? undefined : r.exp - r.th,
               inside = r.se === undefined || d === undefined ? undefined : Math.abs(d) <= r.se;
             return (
@@ -280,10 +283,10 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
                 <td>{r.exp === undefined ? "—" : f(r.exp)}</td>
                 <td>{f(r.th)}</td>
                 <td>
-                  {d === undefined ? "—" : `${d >= 0 ? "＋" : "−"}${f(Math.abs(d))}`}
+                  {d === undefined ? "—" : `${d >= 0 ? "＋" : "−"}${df(Math.abs(d))}`}
                   {r.se !== undefined && (
                     <small>
-                      ±{f(r.se)} <b className={inside ? s.inside : s.outside}>{inside ? "中" : "外"}</b>
+                      ±{df(r.se)} <b className={inside ? s.inside : s.outside}>{inside ? "中" : "外"}</b>
                     </small>
                   )}
                 </td>
@@ -293,7 +296,7 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
         </tbody>
       </table>
       <p className={s.muted}>
-        「中」：差がばらつきの目安（±2×標準誤差）の中。このずれは偶然のばらつきと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。ただし理論が正しくても、1行につき約20回に1回は外に出る（行が多ければ、どれかが外に出るのはふつう）。セットを足しても外が続くなら、理論の前提が合っていないかを考える。
+        「中」：差がずれの目安（±2×標準誤差）の中。このずれは偶然のばらつきと矛盾しない。ただし、これだけで理論のモデルの前提が正しいとは言えない。「外」：偶然にしては大きいずれ。ただし理論が正しくても、1行につき約20回に1回は外に出る（行が多ければ、どれかが外に出るのはふつう）。セットを足しても外が続くなら、理論の前提が合っていないかを考える。
       </p>
     </>
   );
@@ -308,13 +311,20 @@ export function RunChart({
   fmt = r2,
   series,
   note,
+  per = "セット",
+  axis,
 }: {
   title: string;
   ylab: string;
   fmt?: (v: number) => string;
   series: RunSeries[];
   note: string;
+  /** 横軸の1つの単位（ふだんはセット。C-01 は1回の実験。⑦ の 4：実験の単位を同じ名前で。stats2-course #379） */
+  per?: string;
+  axis?: string;
 }) {
+  // 系列が1本のときは系列の名前を出さない（「実験 実験」と重ねない）
+  const nm = (x: RunSeries) => (series.length > 1 ? `${x.name} ` : "");
   const N = Math.max(0, ...series.map((x) => x.path.length));
   const [upto, setUpto] = useState<number | null>(null);
   const [band, setBand] = useState(false);
@@ -429,8 +439,11 @@ export function RunChart({
         </button>
       </div>
       <p className={s.muted} data-testid="q-run-stat">
-        <b>{u.toLocaleString()} セットまで</b>：実験 {series.map((x) => `${x.name} ${fmt(x.path[u - 1]!)}`).join("・")}
-        ／理論 {series.map((x) => `${x.name} ${fmt(x.th)}`).join("・")}
+        <b>
+          {u.toLocaleString()} {per}まで
+        </b>
+        ：実験 {series.map((x) => `${nm(x)}${fmt(x.path[u - 1]!)}`).join("・")}／理論{" "}
+        {series.map((x) => `${nm(x)}${fmt(x.th)}`).join("・")}
       </p>
       <svg
         viewBox={`0 0 ${W} ${H}`}
@@ -508,7 +521,7 @@ export function RunChart({
           </text>
         ))}
         <text x={(L + W - RR) / 2} y={H - 3} textAnchor="middle">
-          セット数（対数目盛：1・3・10・30…と倍々に進む）
+          {axis ?? `${per}数`}（対数目盛：1・3・10・30…と倍々に進む）
         </text>
       </svg>
       {series.some((x) => x.se) && (

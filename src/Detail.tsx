@@ -38,7 +38,13 @@ import {
 const keyed = (f: NetFormula) => ({ ...f, symbols: f.symbols?.flatMap((x) => (x.key ? [{ ...x, key: x.key }] : [])) });
 
 export function name(net: Network, id: string): string {
-  return net.concepts.get(id)?.name ?? id;
+  const c = net.concepts.get(id);
+  if (c) return c.name;
+  // 関係の id（問いの主が関係のとき）は、両端の名前と種類で呼ぶ。id を画面に出さない（画面の原則 14。stats2-course #379）
+  const r = net.relations.find((x) => x.id === id);
+  return r
+    ? `${net.concepts.get(r.from)?.name ?? r.from} と ${net.concepts.get(r.to)?.name ?? r.to}（${kindName(r.type)}）`
+    : id;
 }
 
 /** 関係を「□は■の前提」のような文にする。 */
