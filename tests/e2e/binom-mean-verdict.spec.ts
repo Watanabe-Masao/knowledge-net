@@ -122,6 +122,8 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
     /中に入るのは、いまの各 [\d,]+ セットで(約 [\d.]+%|0\.1% 未満)/,
   );
   await expect(x.getByTestId("exp-cx-verdict")).toContainText("理論では、山は二項分布より");
+  // 観察は見る所を指す：平均の2行は理論が同じ（n＝10・p＝50% で 5）、違いは分散の行（⑦ の 2。#379）
+  await expect(x.getByTestId("exp-cx-meanline")).toContainText("同じ 5（");
 });
 
 // 確かめる対象：実験を起こすボタンの数に単位があること（⑦ の 4。stats2-course #385）。

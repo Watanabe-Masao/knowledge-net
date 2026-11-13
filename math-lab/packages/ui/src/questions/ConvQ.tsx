@@ -110,7 +110,8 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             onClick={() => run(Math.max(100, N * 9), 200)}
             data-testid="exp-run-x10"
           >
-            セットを10倍
+            {/* 0 セットでは「10倍」が意味を持たないので、起こす数をそのまま言う（⑦ の 4。stats2-course #379） */}
+            {N === 0 ? "100 セット" : "セットを10倍"}
           </button>
           <button
             type="button"
@@ -161,7 +162,8 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             </tbody>
           </table>
           <p className={qs.note}>
-            実際のずれは毎回ばらつく。目安より大きいこともあるし、たまたま小さいこともある。傾向としてはセットを増やすほど小さくなるが、セットを10倍にしても約5回に1回はかえって大きくなる。
+            実際のずれは毎回ばらつく。ずれの目安より大きいこともあるし、たまたま小さいこともある。傾向としてはセットを増やすほど小さくなるが、セットを10倍にしても、約
+            19%（5回に1回ほど）はかえって大きくなる。
           </p>
         </Card>
         <Card title="割合の移り変わり" sub="何セット目までか（約3倍ずつ）">
