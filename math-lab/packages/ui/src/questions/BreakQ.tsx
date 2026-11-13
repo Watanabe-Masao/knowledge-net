@@ -178,10 +178,15 @@ export function BreakQ(props: QProps & { initial?: string }) {
     // 実験の分散の大小が理論と逆に出る頻度（⑦ の 2）。下の表の目安と同じく正規分布を仮定（4次モーメント 3σ⁴）したおおよそ
     const sdOf = (v: number) => sampleVarianceSd(v, 3 * v * v, N),
       flip = ans === 1 ? NaN : normalCdf(-Math.abs(vm - vb) / Math.hypot(sdOf(vm), sdOf(vb)));
+    // 崩した分散が、二項分布のずれの目安（下の表の行と同じ幅）の中に入る頻度。差が小さい起き方では中に入ることが多く、
+    // 「中」を見て「二項分布と同じ」と読まないよう、その場で書く（⑦ の 2。stats2-course #379）
+    const mg = 2 * vb * Math.sqrt(2 / N),
+      inside = ans === 1 ? NaN : normalCdf((vb + mg - vm) / sdOf(vm)) - normalCdf((vb - mg - vm) / sdOf(vm));
     body = (
       <>
         <Verdict ok={guess === ans} testid="exp-cx-verdict">
-          山は二項分布より<b>{["広くなる", "変わらない", "狭くなる"][ans]}</b>。理論の分散：崩した起き方 {r2(vm)}
+          理論では、山は二項分布より<b>{["広くなる", "変わらない", "狭くなる"][ans]}</b>。理論の分散：崩した起き方{" "}
+          {r2(vm)}
           ・二項分布 {r2(vb)}。実験：崩した {r2(vB)}・条件どおり {r2(vA)}。予測は「{SPREAD3[guess!]}」。
           {ans !== 1 && (
             <span data-testid="exp-cx-flip">
@@ -201,7 +206,14 @@ export function BreakQ(props: QProps & { initial?: string }) {
             ]}
           />
           <p className={qs.note}>
-            崩した方の分散を二項分布の理論と比べると、目安の外に出やすい。二項分布の前提が合っていないしるし。目安は正規分布を仮定したおおよその幅。
+            崩した方の分散が二項分布のずれの目安の外に出れば、二項分布の前提が合っていないしるし。
+            {ans !== 1 && (
+              <span data-testid="exp-cx-inside">
+                ただし、理論どおりに崩れていても、崩した分散が二項分布のずれの目安の中に入るのは、いまの各{" "}
+                {N.toLocaleString()} セットで{about(inside)}（「中」でも二項分布と同じとは言えない）。
+              </span>
+            )}
+            目安は正規分布を仮定したおおよその幅。
           </p>
         </Card>
         <Card title="崩した起き方の分布と二項分布" sub={`${N.toLocaleString()} セット`}>

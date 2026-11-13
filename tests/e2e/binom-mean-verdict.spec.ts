@@ -105,6 +105,9 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-var-swap")).toContainText(/50% 以外になるのは、いまの各 1,000 セットで約 0\.4%/);
   await expect(x.getByTestId("exp-var-swap")).toContainText("どちらが大きく出るかは半々");
+  // 実験の分散にもずれの目安の列（⑦ の 4。#379）。色の行は実験でいちばん大きかった p
+  await expect(x.getByTestId("q-cmp")).toContainText("差（ずれの目安）");
+  await expect(x.getByTestId("q-cmp").locator("tr[data-inside]")).toHaveCount(5);
   await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
   await x.getByTestId("exp-bnd-fatigue").click();
   await x.getByRole("radio").first().click();
@@ -112,6 +115,11 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-cx-flip")).toContainText(/いまの各 [\d,]+ セットで(約 [\d.]+%|0\.1% 未満)/);
+  // 「中」でも二項分布と同じと読ませない：崩した分散が二項分布の目安の中に入る頻度をその場で書く（⑦ の 2。#379）
+  await expect(x.getByTestId("exp-cx-inside")).toContainText(
+    /中に入るのは、いまの各 [\d,]+ セットで(約 [\d.]+%|0\.1% 未満)/,
+  );
+  await expect(x.getByTestId("exp-cx-verdict")).toContainText("理論では、山は二項分布より");
 });
 
 // 確かめる対象：実験を起こすボタンの数に単位があること（⑦ の 4。stats2-course #385）。

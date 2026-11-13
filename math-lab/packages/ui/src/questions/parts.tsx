@@ -66,7 +66,13 @@ export function Lane({
           <span className={s.muted}>まだ</span>
         ) : (
           <span>
-            {succName(theme)} <em>{k}</em> {unit}（{n} {unit}中）
+            {/* 括弧の途中で折り返さない（かたまりごとに折る。学習者の役のレビュー。stats2-course #379） */}
+            <span style={{ whiteSpace: "nowrap" }}>
+              {succName(theme)} <em>{k}</em> {unit}
+            </span>
+            <span style={{ whiteSpace: "nowrap" }}>
+              （{n} {unit}中）
+            </span>
           </span>
         )}
       </div>
