@@ -3,6 +3,8 @@ import { useState, type ReactNode } from "react";
 import {
   INT,
   NUM2,
+  fatigueP,
+  mixSpread,
   formatApply,
   mechanismMoments,
   runningSd,
@@ -35,6 +37,19 @@ export function mechOfCx(cx: Cx, c: Cond, x?: number): Mechanism {
   if (m.kind === "streak") return { kind: "streak", n: c.n, p: c.p, carry: x ?? m.carry ?? 0.3 };
   if (m.kind === "fatigue") return { kind: "fatigue", n: c.n, p: c.p, drop: x ?? m.drop ?? 0.3 };
   return { kind: "mix", n: c.n, p: c.p, spread: x ?? m.spread ?? 0.2 };
+}
+/** 予測の段で、起き方の仕組みを数で言う（予測は段に見えるものか具体的な数でさせる。⑦ の 2。stats2-course #379）。
+ *  名前と崩す条件だけでは、確率がどれだけ・どう変わるかが分からず、広がりを推し量れない（2級の学習者の役のレビュー） */
+export function mechLine(m: Mechanism): string {
+  if (m.kind === "urn")
+    return `箱に玉が ${m.total} 個（当たり ${m.success} 個）。1セットの ${m.n} 回は、取った玉を戻さずに続けて取る。`;
+  if (m.kind === "streak")
+    return `1回目は ${pc(m.p)}。成功のあとの回は ${pc(m.p + m.carry * (1 - m.p))}、失敗のあとの回は ${pc(m.p - m.carry * m.p)} になる。`;
+  if (m.kind === "fatigue")
+    return `1回目は ${pc(fatigueP(m, 0))}。回を追って同じ幅で下がり、${m.n} 回目は ${pc(fatigueP(m, m.n - 1))} になる。`;
+  if (m.kind !== "mix") return "";
+  const d = mixSpread(m);
+  return `セットの初めに確率を ${pc(m.p - d)} か ${pc(m.p + d)} に半々で決め、そのセットの ${m.n} 回は全部その確率で行う。`;
 }
 const baseOf = (m: Mechanism, c: Cond): Cond => (m.kind === "urn" ? { n: c.n, p: m.success / m.total } : c);
 export function BreakQ(props: QProps & { initial?: string }) {
@@ -91,6 +106,9 @@ export function BreakQ(props: QProps & { initial?: string }) {
           <p className={qs.muted} data-testid="exp-break-mean">
             どの起き方でも、1回ごとの確率をならすと {pc(b.p)}{" "}
             のまま（平均の成功回数は二項分布と同じ）。違うのは、確率が回ごと・セットごと・前の結果でどう変わるか（各回のつながり）。
+          </p>
+          <p className={qs.muted} data-testid="exp-break-mech">
+            {cx.name}：{mechLine(m)}
           </p>
           <div className={s.choice} role="radiogroup" aria-label="広がりの予測">
             {SPREAD3.map((t, i) => (

@@ -64,3 +64,27 @@ test("前提崩し E-01：予測の段に「確率をならすと p のまま」
   await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
   await expect(page.getByTestId("experiment").getByTestId("exp-break-mean")).toContainText("50% のまま");
 });
+
+// 確かめる対象：前提崩しの予測の段に、選んだ起き方の仕組みが具体的な数で出ること（⑦ の 2。stats2-course #379）。
+// 想定する故障：名前と崩す条件だけで予測させる（確率がどれだけ・どう変わるか分からず、広がりを推し量れない）か、
+//   出した数が起き方（engine の起き方の定義）とずれる（例：疲れるの n 回目に p−drop ではなく p を出す、混ざるの幅を d でなく 2d にする）。
+// 見つけ方：E-01（n＝10・p＝50%）で4つの起き方を順に選び、定義から手で求めた数が出る
+//   （箱：40 個・当たり 20 個／引きずる：carry 0.3 で 65%・35%／混ざる：d 0.2 で 30%・70%／疲れる：drop 0.3 で 80%→20%）。
+// 既存との違い：上の「p のまま」のテストは平均の文だけで、起き方ごとの数は見ていない。
+// 検出の確かめ（2026-11-13）：mechLine の疲れるの最後の回を fatigueP(m, m.n - 1) から fatigueP(m, m.n - 2) にすると落ちることを見た
+test("前提崩し：予測の段に、選んだ起き方の仕組みが数で出る", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
+  const x = page.getByTestId("experiment");
+  const line = x.getByTestId("exp-break-mech");
+  const cases: [string, RegExp][] = [
+    ["urn", /玉が 40 個（当たり 20 個）。1セットの 10 回は、取った玉を戻さずに/],
+    ["streak", /1回目は 50%。成功のあとの回は 65%、失敗のあとの回は 35%/],
+    ["mix", /確率を 30% か 70% に半々で決め、そのセットの 10 回は全部その確率/],
+    ["fatigue", /1回目は 80%。回を追って同じ幅で下がり、10 回目は 20%/],
+  ];
+  for (const [id, re] of cases) {
+    await x.getByTestId(`exp-bnd-${id}`).click();
+    await expect(line).toContainText(re);
+  }
+});
