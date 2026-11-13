@@ -105,3 +105,24 @@ test("期待値の実験室：開いた画面の問いは、その問いの題�
     await expect(page.getByTestId("experiment").getByTestId("exp-question")).toContainText(title);
   }
 });
+
+// 確かめる対象：二項分布の実験室でも、開いた画面の問いがその問いの題（catalog の title）と同じ文であること（stats2-course #379。
+//   渡辺さん 2026-11-13：問いの文はテーマ体系の題1つにそろえ、具体の数は予測の段の本文に出す）。
+// 想定する故障：問いの形ごとの文（questions[].question）や、コードで組み立てた文（前提崩し・位置）に戻り、題を直しても画面に届かない。
+// 見つけ方：見本の catalog から、開ける全部の問い（open がある・retired でない）を開き、画面の問いと題を比べる。
+//   前提崩しは起き方を画面の中で選び替えられるので、題は「いま選んでいる起き方の問い」から引く（E-01〜04 で見る）。
+// 既存との違い：上のテストは期待値の実験室の3問だけ。形ごとの部品が9つある二項分布の全部の問いを通す。
+// 検出の確かめ（2026-11-13）：Experiment.tsx の common から title を外すと B-01 などで落ちることを見た
+test("二項分布の実験室：開いた画面の問いは、その問いの題と同じ文", async ({ page, request }) => {
+  const d = await (await request.get("./sample/stats2.json")).json();
+  const x = d.experiments.find((e: { id: string }) => e.id === "stats2:EXP-binom-p");
+  const items = x.catalog
+    .flatMap((g: { items: { id: string; title: string; open?: string; retired?: boolean }[] }) => g.items)
+    .filter((it: { open?: string; retired?: boolean }) => it.open && !it.retired);
+  expect(items.length).toBeGreaterThan(10);
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const it of items) {
+    await page.goto(`./?${SRC}&x=${encodeURIComponent("stats2:EXP-binom-p")}&q=${encodeURIComponent(it.id)}`);
+    await expect(page.getByTestId("experiment").getByTestId("exp-question"), it.id).toHaveText(`今回の問い${it.title}`);
+  }
+});

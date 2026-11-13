@@ -366,7 +366,7 @@ export function PathsQ(props: QProps & { q: Extract<BinomQuestion, { form: "path
   return (
     <LabShell
       title={def.title}
-      question={q.question}
+      question={props.title ?? q.question}
       stage={stage}
       reached={reached}
       go={go}
@@ -667,7 +667,7 @@ export function RepeatQ(props: QProps & { q: Extract<BinomQuestion, { form: "rep
   return (
     <LabShell
       title={def.title}
-      question={q.question}
+      question={props.title ?? q.question}
       stage={stage}
       reached={reached}
       go={go}
@@ -957,7 +957,7 @@ export function MeanQ(props: QProps & { q: Extract<BinomQuestion, { form: "mean"
   return (
     <LabShell
       title={def.title}
-      question={q.question}
+      question={props.title ?? q.question}
       stage={stage}
       reached={reached}
       go={go}
@@ -1193,7 +1193,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
   return (
     <LabShell
       title={def.title}
-      question={q.question}
+      question={props.title ?? q.question}
       stage={stage}
       reached={reached}
       go={go}

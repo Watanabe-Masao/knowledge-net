@@ -527,7 +527,7 @@ function ProbRun(
   return (
     <LabShell
       title={def.title}
-      question={question}
+      question={props.title ?? question}
       stage={stage}
       reached={reached}
       go={go}
