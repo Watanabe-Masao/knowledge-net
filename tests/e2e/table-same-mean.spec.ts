@@ -43,8 +43,9 @@ test("D-01：期待値が同じ2つの表。予測1つ → 引く → 照らし�
   // 期待値が同じでも出る平均の差の目安（⑦ の 2・4。#379）：くじ A の分散 20356・B 11356（手で求めた値）、各 N 回で 2√(31712/N)。
   //   N は引き終わるまでの時間で変わるので、文の回数から求める。故障：B の重みを使わない（A の分散だけなら 2√(40712/N)）
   const mg = await x.getByTestId("exp-mean-margin").innerText();
-  const [, w, nn] = mg.match(/±([\d.]+)円[^]*各 (\d+) 回/)!;
-  expect(Number(w)).toBeCloseTo(2 * Math.sqrt(31712 / Number(nn)), 2);
+  //   目安なので有効数字2桁（35.62 円を 36 円に）。「ほどは出る」は 95% の範囲を下限のように読ませた（学習者の役のレビュー）ので「までに約95%」と言う
+  const [, nn, w] = mg.match(/いまの各 (\d+) 回では ±([\d.]+)円 までに約95% が入る/)!;
+  expect(Number(w)).toBe(Number((2 * Math.sqrt(31712 / Number(nn))).toPrecision(2)));
   // 観察の再生は A・B で呼ぶ（条件を変えていないので「変更前・変更後」「なぜ平均が変わったか」と言わない）
   await expect(x.getByTestId("exp-replay-stat")).toContainText("実験平均 A");
   await expect(x).not.toContainText("変更前");

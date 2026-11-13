@@ -20,7 +20,7 @@ import {
   type FormulaNode,
   type SetRecord,
 } from "@math-lab/engine";
-import { about } from "./QuestionParts";
+import { about, fmtN } from "./QuestionParts";
 import { nudge } from "./nudge";
 import { useRunner } from "./runner";
 import { haptic, reduced, useTween } from "./motion";
@@ -759,11 +759,9 @@ export function TableLab({
             d = mNext - mStart;
           return N > 0 ? (
             <p className={s.muted} data-testid="exp-mean-margin">
-              引いた平均の差は、表の差 {r2(d)} の上下 ±{r2(2 * se)}
-              {unit} に収まることが多い（ずれの目安。約95%）。
-              {d !== 0 &&
-                se > 0 &&
-                `差の向きが表と逆に出るのは、各 ${N.toLocaleString()} 回なら${about(normalCdf(-Math.abs(d) / se))}。`}
+              引いた平均の差は、いまの各 {N.toLocaleString()} 回では、期待値の差 {r2(d)} の上下 ±{fmtN(2 * se)}
+              {unit} に約95% が入る（ずれの目安）。
+              {d !== 0 && se > 0 && `向きが期待値と逆に出るのは${about(normalCdf(-Math.abs(d) / se))}。`}
             </p>
           ) : null;
         })()}
@@ -1138,8 +1136,9 @@ export function TableSupportQ({
         {rec.sets > 0 && (
           // 引いた平均のずれの目安（±2SE）をその場で書く（⑦ の 2・4。stats2-course #379）
           <p className={s.muted} data-testid="exp-mean-margin">
-            引いた平均は、期待値 {r2(m)} の上下 ±{r2(2 * Math.sqrt(varOf(theme.values, theme.start) / rec.sets))}
-            {unit} に収まることが多い（ずれの目安。約95%。{rec.sets.toLocaleString()} 回のとき）。
+            引いた平均は、いまの {rec.sets.toLocaleString()} 回では、期待値 {r2(m)} の上下 ±
+            {fmtN(2 * Math.sqrt(varOf(theme.values, theme.start) / rec.sets))}
+            {unit} に約95% が入る（ずれの目安）。
           </p>
         )}
         <Replay rec={rec} theory={th} labels={labels} unit={unit} per="回" />
@@ -1485,9 +1484,9 @@ export function TableSameMeanQ({
         {recB.sets > 0 && (
           // 期待値が同じでも、引いた平均の差がどのくらい出るか（ずれの目安 ±2SE。⑦ の 2・4。stats2-course #379）
           <p className={s.muted} data-testid="exp-mean-margin">
-            期待値が同じでも、A と B の引いた平均の差は ±
-            {r2(2 * Math.sqrt((varOf(theme.values, wA) + varOf(theme.values, wB)) / recB.sets))}
-            {unit} ほどは出る（ずれの目安。約95%。各 {recB.sets.toLocaleString()} 回のとき）。
+            期待値が同じでも、A と B の引いた平均の差は、いまの各 {recB.sets.toLocaleString()} 回では ±
+            {fmtN(2 * Math.sqrt((varOf(theme.values, wA) + varOf(theme.values, wB)) / recB.sets))}
+            {unit} までに約95% が入る（ずれの目安。偶然でこのくらいまでは出る）。
           </p>
         )}
         <Replay

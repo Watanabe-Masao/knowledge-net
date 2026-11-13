@@ -103,7 +103,7 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
   await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-var-swap")).toContainText(/50% 以外に出るのは、1,000 セットずつなら約 0\.4%/);
+  await expect(x.getByTestId("exp-var-swap")).toContainText(/50% 以外になるのは、いまの各 1,000 セットで約 0\.4%/);
   await expect(x.getByTestId("exp-var-swap")).toContainText("どちらが大きく出るかは半々");
   await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
   await x.getByTestId("exp-bnd-fatigue").click();
@@ -111,5 +111,5 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
   await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
   await x.getByTestId("exp-to-observe").click();
-  await expect(x.getByTestId("exp-cx-flip")).toContainText(/各 [\d,]+ セットなら(約 [\d.]+%|0\.1% 未満)/);
+  await expect(x.getByTestId("exp-cx-flip")).toContainText(/いまの各 [\d,]+ セットで(約 [\d.]+%|0\.1% 未満)/);
 });
