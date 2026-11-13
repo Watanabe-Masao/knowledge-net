@@ -1003,7 +1003,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
       <thead>
         <tr>
           <th>p</th>
-          <th>実測の分散</th>
+          <th>実験の分散</th>
           {theory && <th>理論の分散</th>}
         </tr>
       </thead>
@@ -1066,15 +1066,15 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
           理論の分散がいちばん大きいのは p＝{pc(ps[best]!)}（{r2(th[best])}。予測は p＝{pc(ps[guess!]!)}）。下の表で、p
           を変えたときの分散の並び方を見る。
         </Verdict>
-        <Card title="理論の分散と実測の分散">
+        <Card title="理論の分散と実験の分散">
           {rows(vars, true, mi)}
           <p className={qs.note}>
-            この実験で実測の分散がいちばん大きかったのは p＝{pc(ps[mi]!)}
-            （色の行）。実測の分散も標本なのでばらつく。
+            この実験で分散がいちばん大きかったのは p＝{pc(ps[mi]!)}
+            （色の行）。実験の分散も標本なのでばらつく。
           </p>
           {/* 大小の入れ替わりは「ある」と言わず、頻度をその場で書く（⑦ の 2。標本分散の標準偏差は二項分布の4次モーメントから。stats2-course #379） */}
           <p className={qs.note} data-testid="exp-var-swap">
-            いちばん大きい p が {pc(ps[best]!)} 以外に出るのは、{M.toLocaleString()} セットずつなら
+            実験の分散がいちばん大きく出る p が {pc(ps[best]!)} 以外になるのは、いまの各 {M.toLocaleString()} セットで
             {about(
               1 -
                 probLargest(
@@ -1085,7 +1085,7 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
             )}
             。
             {th.some((v, i) => th.some((w, j) => j > i && i !== best && Math.abs(v - w) < 1e-12)) &&
-              "理論の分散が同じ p どうし（左右対称の組）は、どちらが大きく出るかは半々。"}
+              "理論の分散が同じ p の組（表で理論の分散が同じ行）は、実験でどちらが大きく出るかは半々。"}
           </p>
         </Card>
       </>

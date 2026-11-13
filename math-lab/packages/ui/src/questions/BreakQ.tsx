@@ -114,15 +114,16 @@ export function BreakQ(props: QProps & { initial?: string }) {
               </button>
             ))}
           </div>
+          {/* 選んだ札のすぐ下に出す（下の帯に隠れない所。学習者の役のレビュー。stats2-course #379） */}
+          <p className={qs.muted} data-testid="exp-break-mech">
+            {cx.name}：{mechLine(m)}
+          </p>
         </Card>
         <Card title={`二項分布（回数 n＝${b.n}・成功確率 p＝${pc(b.p)}）と比べて、山の広がりは？`}>
           {/* 4つの起き方とも、1回ごとの確率の平均は p のまま（平均の成功回数は np）。書かないと「確率が下がる→成功が減る→狭い」と誤った理由でも当たる（2級の学習者の役のレビュー。stats2-course #379） */}
           <p className={qs.muted} data-testid="exp-break-mean">
             どの起き方でも、1回ごとの確率をならすと {pc(b.p)}{" "}
-            のまま（平均の成功回数は二項分布と同じ）。違うのは、確率が回ごと・セットごと・前の結果でどう変わるか（各回のつながり）。
-          </p>
-          <p className={qs.muted} data-testid="exp-break-mech">
-            {cx.name}：{mechLine(m)}
+            のまま（平均の成功回数は二項分布と同じ）。違うのは、確率が回ごと・セットごと・前の結果でどう変わるか。
           </p>
           <div className={s.choice} role="radiogroup" aria-label="広がりの予測">
             {SPREAD3.map((t, i) => (
@@ -184,8 +185,8 @@ export function BreakQ(props: QProps & { initial?: string }) {
           ・二項分布 {r2(vb)}。実験：崩した {r2(vB)}・条件どおり {r2(vA)}。予測は「{SPREAD3[guess!]}」。
           {ans !== 1 && (
             <span data-testid="exp-cx-flip">
-              実験の分散の大小が理論と逆に出るのは、各 {N.toLocaleString()} セットなら{about(flip)}
-              （正規分布を仮定したおおよそ）。
+              実験の分散の大小が理論と逆に出るのは、いまの各 {N.toLocaleString()} セットで{about(flip)}
+              （おおよその値）。
             </span>
           )}
         </Verdict>
