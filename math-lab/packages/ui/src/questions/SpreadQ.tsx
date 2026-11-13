@@ -150,7 +150,7 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
             ]}
           />
         </Card>
-        <Card title="割合の標準偏差の移り変わり" sub="何セット目までか（倍々）">
+        <Card title="割合の標準偏差の移り変わり" sub="何セット目までか（約3倍ずつ）">
           <RunChart
             title="割合の標準偏差の移り変わり"
             ylab="ここまでの標準偏差"

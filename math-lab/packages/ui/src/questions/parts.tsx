@@ -103,7 +103,7 @@ export function RunButtons({
     <>
       <div className={s.two} style={{ gridTemplateColumns: "1fr 1fr 1.3fr" }}>
         <button type="button" className={s.secondary} onClick={() => run(1)} data-testid="exp-run-1">
-          1セット
+          1 セット
         </button>
         <button type="button" className={s.secondary} onClick={() => run(100, 20)} data-testid="exp-run-100">
           100 セット
@@ -113,7 +113,7 @@ export function RunButtons({
         </button>
       </div>
       <button type="button" className={s.next} disabled={sets < need} onClick={go} data-testid="exp-to-observe">
-        {sets < need ? `あと ${need - sets} セットで観察できる` : "観察する →"}
+        {sets < need ? `あと ${(need - sets).toLocaleString()} セットで観察できる` : "観察する →"}
       </button>
     </>
   );

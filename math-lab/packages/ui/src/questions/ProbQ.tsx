@@ -265,7 +265,7 @@ function ProbRun(
           {focusSeg}
           <CompareRows counts={rec.counts} sets={N} pmf={f} inEvent={inEv(e0)} />
         </Card>
-        <Card title="当てはまった割合の移り変わり" sub="何セット目までか（倍々）">
+        <Card title="当てはまった割合の移り変わり" sub="何セット目までか（約3倍ずつ）">
           <RunChart
             title="当てはまった割合の移り変わり"
             ylab="ここまでの割合"

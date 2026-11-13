@@ -15,7 +15,8 @@ export const ptShort = (v: number) =>
   // 10 ポイントより小さい差は有効数字2桁（±0.97 を ±1 に丸めて、照らしの ±0.97 と食い違わせない。stats2-course #379）
   !Number.isFinite(v) ? "—" : `${Number(v * 100 < 10 ? (v * 100).toPrecision(2) : (v * 100).toFixed(1))} ポイント`;
 /** 頻度を「約 x%」で言う（0.1% より小さければ「0.1% 未満」。丸めて 0% に見せない。⑦ の 2。stats2-course #379） */
-export const about = (v: number) => (!Number.isFinite(v) ? "—" : v < 0.001 ? "0.1% 未満" : `約 ${pShort(v)}`);
+export const about = (v: number) =>
+  !Number.isFinite(v) ? "—" : v < 0.001 ? "0.1% 未満" : `約 ${Number((v * 100).toPrecision(2))}%`;
 /** 有効数字3桁の％（丸めて 0 に見せない）。応用の課題の答えと同じ関数（engine の formatApply。stats2-course #171） */
 export const pctSig = (v: number) => formatApply(v, SIG3);
 /** 約 N セットに1回 */
@@ -544,7 +545,7 @@ export function RunChart({
           </text>
         ))}
         <text x={(L + W - RR) / 2} y={H - 3} textAnchor="middle">
-          {axis ?? `${per}数`}（対数目盛：1・3・10・30…と倍々に進む）
+          {axis ?? `${per}数`}（対数目盛：1・3・10・30…と約3倍ずつ進む）
         </text>
       </svg>
       {series.some((x) => x.se) && (

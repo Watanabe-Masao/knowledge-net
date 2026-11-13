@@ -80,7 +80,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
     body = (
       <>
         {N > 0 && (
-          <Card title="割合の移り変わり" sub="何セット目までか（倍々）">
+          <Card title="割合の移り変わり" sub="何セット目までか（約3倍ずつ）">
             {chart("セット数が少ないうちは割合が大きくばらつく。くり返すほど理論の近くに落ち着いていく様子を見る。")}
           </Card>
         )}
@@ -119,11 +119,11 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             onClick={() => run(10000 - N, 500)}
             data-testid="exp-run-big"
           >
-            ▶ 計 10,000 セット
+            ▶ 計 1万 セット
           </button>
         </div>
         <button type="button" className={s.next} disabled={N < 1000} onClick={() => go(2)} data-testid="exp-to-observe">
-          {N < 1000 ? `あと ${1000 - N} セットで観察できる` : "観察する →"}
+          {N < 1000 ? `あと ${(1000 - N).toLocaleString()} セットで観察できる` : "観察する →"}
         </button>
       </>
     );
@@ -164,7 +164,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
             実際のずれは毎回ばらつく。目安より大きいこともあるし、たまたま小さいこともある。傾向としてはセットを増やすほど小さくなるが、セットを10倍にしても約5回に1回はかえって大きくなる。
           </p>
         </Card>
-        <Card title="割合の移り変わり" sub="何セット目までか（倍々）">
+        <Card title="割合の移り変わり" sub="何セット目までか（約3倍ずつ）">
           {chart(
             "ずれの目安の帯は、セットを増やすほど細くなる。線は多くの場合この帯の中にあるが、外に出ることもある。実際のずれは傾向として小さくなるが、いったん大きくなることもある。",
           )}

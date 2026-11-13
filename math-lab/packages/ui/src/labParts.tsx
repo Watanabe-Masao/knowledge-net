@@ -676,7 +676,7 @@ export function Replay({
   return (
     <section className={s.card} data-testid="exp-replay">
       <p className={s.h}>
-        平均の移り変わり<span>何{per}目までの平均か（倍々の目盛り）</span>
+        平均の移り変わり<span>何{per}目までの平均か（約3倍ずつの目盛り）</span>
       </p>
       <div className={s.marks} role="radiogroup" aria-label={`何${per}目まで`}>
         {marks.map((m, i) => (
@@ -829,7 +829,7 @@ export function Replay({
           </text>
         ))}
         <text x={(L + W - Rm) / 2} y={H - 3} textAnchor="middle" className={s.axisTitle}>
-          {per}数（対数目盛：1・3・10・30…と倍々に進む）
+          {per}数（対数目盛：1・3・10・30…と約3倍ずつ進む）
         </text>
       </svg>
       <button
