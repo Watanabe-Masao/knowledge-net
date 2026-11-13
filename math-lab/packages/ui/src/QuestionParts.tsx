@@ -261,7 +261,15 @@ export function CompareRows({
   );
 }
 
-export type CmpRow = { label: string; exp: number | undefined; th: number; se?: number; fmt?: (v: number) => string };
+export type CmpRow = {
+  label: string;
+  exp: number | undefined;
+  th: number;
+  se?: number;
+  fmt?: (v: number) => string;
+  /** 注目する行（文から「色の行」と指す行） */
+  hi?: boolean;
+};
 /** 数の比べ表：実験・理論・差（揺れの目安 ±2×標準誤差）と「中／外」。一致したとは言わない */
 export function CompareTable({ rows }: { rows: CmpRow[] }) {
   // 目安（se）のある行がなければ、差の列と「中・外」の凡例を出さない（目安のない行に目安の見出しを付けない。⑦ の 4。stats2-course #379）
@@ -284,7 +292,11 @@ export function CompareTable({ rows }: { rows: CmpRow[] }) {
               d = r.exp === undefined ? undefined : r.exp - r.th,
               inside = r.se === undefined || d === undefined ? undefined : Math.abs(d) <= r.se;
             return (
-              <tr key={r.label} data-inside={inside === undefined ? undefined : String(inside)}>
+              <tr
+                key={r.label}
+                data-inside={inside === undefined ? undefined : String(inside)}
+                style={r.hi ? { fontWeight: 700, color: "var(--data-hi)" } : undefined}
+              >
                 <td>{r.label}</td>
                 <td>{r.exp === undefined ? "—" : f(r.exp)}</td>
                 <td>{f(r.th)}</td>

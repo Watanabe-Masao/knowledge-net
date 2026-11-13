@@ -1066,8 +1066,17 @@ export function VarQ(props: QProps & { q: Extract<BinomQuestion, { form: "var" }
           理論の分散がいちばん大きいのは p＝{pc(ps[best]!)}（{r2(th[best])}。予測は p＝{pc(ps[guess!]!)}）。下の表で、p
           を変えたときの分散の並び方を見る。
         </Verdict>
-        <Card title="理論の分散と実験の分散">
-          {rows(vars, true, mi)}
+        <Card title="理論の分散と実験の分散" sub="差がずれの目安の中か">
+          {/* 実験の分散にも、ずれの目安（±2×標本分散の標準偏差。二項分布の4次モーメントから）を付ける（⑦ の 4。stats2-course #379） */}
+          <CompareTable
+            rows={ps.map((p, i) => ({
+              label: `p＝${pc(p)}`,
+              exp: vars![i],
+              th: th[i]!,
+              se: 2 * sampleVarianceSd(th[i]!, binomMu4(n, p), M),
+              hi: i === mi,
+            }))}
+          />
           <p className={qs.note}>
             この実験で分散がいちばん大きかったのは p＝{pc(ps[mi]!)}
             （色の行）。実験の分散も標本なのでばらつく。
