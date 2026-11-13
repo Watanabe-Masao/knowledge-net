@@ -11,6 +11,7 @@ import {
   expand,
   modelMoments,
   modelPmf,
+  normalCdf,
   runSets,
   summarize,
   supportOf,
@@ -19,6 +20,7 @@ import {
   type FormulaNode,
   type SetRecord,
 } from "@math-lab/engine";
+import { about } from "./QuestionParts";
 import { nudge } from "./nudge";
 import { useRunner } from "./runner";
 import { haptic, reduced, useTween } from "./motion";
@@ -750,6 +752,21 @@ export function TableLab({
             <i>差 {r2(mNext - mStart)}</i>
           </div>
         </div>
+        {(() => {
+          // 引いた平均の差のずれの目安（±2SE）と、差の向きが表と逆に出る頻度をその場で書く（⑦ の 2・4。stats2-course #379）
+          const N = rec.sets,
+            se = Math.sqrt((varOf(theme.values, theme.start) + varOf(theme.values, theme.compare)) / N),
+            d = mNext - mStart;
+          return N > 0 ? (
+            <p className={s.muted} data-testid="exp-mean-margin">
+              引いた平均の差は、表の差 {r2(d)} の上下 ±{r2(2 * se)}
+              {unit} に収まることが多い（ずれの目安。約95%）。
+              {d !== 0 &&
+                se > 0 &&
+                `差の向きが表と逆に出るのは、各 ${N.toLocaleString()} 回なら${about(normalCdf(-Math.abs(d) / se))}。`}
+            </p>
+          ) : null;
+        })()}
         <Replay
           rec={rec}
           theory={thNext}
@@ -1118,6 +1135,13 @@ export function TableSupportQ({
             <i>{isValue ? "表の値にある" : "表の値にない"}</i>
           </div>
         </div>
+        {rec.sets > 0 && (
+          // 引いた平均のずれの目安（±2SE）をその場で書く（⑦ の 2・4。stats2-course #379）
+          <p className={s.muted} data-testid="exp-mean-margin">
+            引いた平均は、期待値 {r2(m)} の上下 ±{r2(2 * Math.sqrt(varOf(theme.values, theme.start) / rec.sets))}
+            {unit} に収まることが多い（ずれの目安。約95%。{rec.sets.toLocaleString()} 回のとき）。
+          </p>
+        )}
         <Replay rec={rec} theory={th} labels={labels} unit={unit} per="回" />
       </>
     );
@@ -1458,6 +1482,14 @@ export function TableSameMeanQ({
             <i>▲ は同じ所</i>
           </div>
         </div>
+        {recB.sets > 0 && (
+          // 期待値が同じでも、引いた平均の差がどのくらい出るか（ずれの目安 ±2SE。⑦ の 2・4。stats2-course #379）
+          <p className={s.muted} data-testid="exp-mean-margin">
+            期待値が同じでも、A と B の引いた平均の差は ±
+            {r2(2 * Math.sqrt((varOf(theme.values, wA) + varOf(theme.values, wB)) / recB.sets))}
+            {unit} ほどは出る（ずれの目安。約95%。各 {recB.sets.toLocaleString()} 回のとき）。
+          </p>
+        )}
         <Replay
           rec={recB}
           theory={thB}

@@ -48,6 +48,7 @@ export {
   type Model,
   type SetRecord,
 } from "./lab";
+export { binomMu4, probLargest, sampleVarianceSd } from "./swap";
 export {
   APPLY_FIELDS,
   applyCheck,

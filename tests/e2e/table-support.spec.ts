@@ -57,6 +57,8 @@ test("A-02：予測の前に期待値を見せず、さいころの 3.5 は1回�
   await expect(v).toContainText("✓ 予測どおり");
   await expect(v).toContainText("期待値は 3.5");
   await expect(v).toContainText("1回では一度も出ない");
+  // 引いた平均のずれの目安（⑦ の 2・4。#379）：さいころの分散 35/12、100 回で 2√(2.917/100)＝0.34
+  await expect(x.getByTestId("exp-mean-margin")).toContainText("期待値 3.5 の上下 ±0.34");
   await x.getByRole("button", { name: /理由を考える/ }).click();
   await expect(x.getByTestId("exp-expand")).toBeVisible();
   await expect(x.getByTestId("exp-found").getByRole("button")).toHaveText(["期待値"]);
