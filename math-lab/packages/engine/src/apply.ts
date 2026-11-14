@@ -50,9 +50,9 @@ export type ApplySolve =
   /** 逆算（値の表）：index 番目の値の重みを w に替えると、期待値 Σxw÷Σw が mean になる w（ほかの重みはそのまま） */
   | { method: "table-weight-for-mean"; values: number[]; weights: number[]; index: number; mean: number }
   /** 評価（値の表）：3つの表のうち、期待値が表の値の1つと等しいのはどれか（ちょうど1つ）。answer は番号 */
-  | { method: "table-mean-on-table"; tables: ApplyTable[] }
+  | { method: "table-mean-on-table"; tables: ApplyTable[]; unit?: string }
   /** モデル選択（値の表）：期待値が同じ3つの表のうち、分散 Σ(x−μ)²p(x) がいちばん小さいのはどれか。answer は番号 */
-  | { method: "table-min-var"; tables: ApplyTable[] };
+  | { method: "table-min-var"; tables: ApplyTable[]; unit?: string };
 
 type ApplyMethod = ApplySolve["method"];
 type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
@@ -76,8 +76,8 @@ export const APPLY_FIELDS = {
   "linear-sum": { required: ["n", "p", "a", "b"] },
   "compare-var": { required: ["a", "b"], choices: 3 },
   "table-weight-for-mean": { required: ["values", "weights", "index", "mean"] },
-  "table-mean-on-table": { required: ["tables"], choices: 3 },
-  "table-min-var": { required: ["tables"], choices: 3 },
+  "table-mean-on-table": { required: ["tables"], optional: ["unit"], choices: 3 },
+  "table-min-var": { required: ["tables"], optional: ["unit"], choices: 3 },
 } as const satisfies {
   [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
 };
@@ -298,7 +298,9 @@ function solveCore(s: ApplySolve): ApplyResult {
         }
       });
       if (Math.abs(x - s.mean) < EPS)
-        throw new RangeError(`替える値 ${x} が目標の期待値と同じ（重みで期待値は動かない）`);
+        throw new RangeError(
+          `替える値 ${x} が目標と同じ（重みを変えても期待値は ${x} に近づくだけで、${x} にはならない）`,
+        );
       // (S＋x·w)÷(W＋w)＝mean を w について解く
       const w = (s.mean * W - S) / (x - s.mean);
       if (!(w >= -EPS && Number.isFinite(w)))
