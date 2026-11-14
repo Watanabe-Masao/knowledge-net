@@ -52,6 +52,10 @@ export const APPLY_TEXT_SPEC: Record<string, { vars: readonly string[]; variants
   "table-mean-on-table.goal": { vars: [], variants: [] },
   "table-mean-on-table.judge": { vars: ["mu", "name"], variants: [] },
   "table-mean-on-table.means": { vars: [], variants: [] },
+  "table-transform-mean.goal": { vars: ["a", "b"], variants: ["all"] },
+  "table-transform-mean.table": { vars: [], variants: [] },
+  "table-transform-mean.mean": { vars: [], variants: [] },
+  "table-transform-mean.formula": { vars: ["mu", "share"], variants: ["all"] },
   "table-mean-median-gap.goal": { vars: [], variants: [] },
   "table-mean-median-gap.formula": { vars: [], variants: [] },
   "table-mean-median-gap.means": { vars: [], variants: [] },
@@ -641,6 +645,29 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
           tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${sumTex(t)}=${tx(ms[j]!, NUM2)}`)),
         },
         { ...T("table-mean-on-table.judge", { name: tName(s.tables[i]!, i), mu: fa(ms[i]!, NUM2) + (s.unit ?? "") }) },
+      ];
+    }
+    case "table-transform-mean": {
+      const only = s.only ?? s.values.map((_, j) => j),
+        all = only.length === s.values.length,
+        ys = s.values.map((x, j) => (only.includes(j) ? s.a * x + s.b : x)),
+        t = { values: ys, weights: s.weights },
+        mu = tableMoments(s).mean,
+        W = s.weights.reduce((a, w) => a + w, 0),
+        share = only.reduce((a, j) => a + s.weights[j]!, 0) / W;
+      return [
+        { ...T("table-transform-mean.goal", { a: f(s.a), b: f(s.b) }, all ? "all" : undefined) },
+        {
+          ...T("table-transform-mean.table"),
+          tex: al(s.values.map((x, j) => `${f(x)}&\\to ${f(ys[j]!)}\\quad(w=${f(s.weights[j]!)})`)),
+        },
+        { ...T("table-transform-mean.mean"), tex: `E=${sumTex(t)}=${tx(answer, NUM2)}` },
+        {
+          ...T("table-transform-mean.formula", { mu: fa(mu, NUM2), share: fa(share, PCT0) }, all ? "all" : undefined),
+          tex: all
+            ? `aE(X)+b=${f(s.a)}\\times${tx(mu, NUM2)}+${f(s.b)}=${tx(s.a * mu + s.b, NUM2)}`
+            : `aE(X)+b=${tx(s.a * mu + s.b, NUM2)}\\ne ${tx(answer, NUM2)}`,
+        },
       ];
     }
     case "table-mean-median-gap": {
