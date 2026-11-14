@@ -25,7 +25,7 @@ export type QProps = {
   onMenu: () => void;
   onInfo?: () => void;
   /** 応用で「この条件をカードに残す」 */
-  onKeep: (m: CardMechanism, from: string) => void;
+  onKeep: (m: CardMechanism) => void;
   /** 理由の段に置く作業台（二項分布の式。今の条件と k で始める） */
   workspace?: (c: Cond, k: number) => ReactNode;
   /** 概念へのリンク（反例の概念など） */
@@ -369,17 +369,7 @@ export function useFit() {
 export const MK = (on: boolean) => (on ? { className: s.tileMark, "data-mark": "answer" } : {});
 
 /** 応用の最後：この条件をカードに残す */
-export function AppExtra({
-  m,
-  from,
-  onKeep,
-  desc,
-}: {
-  m: CardMechanism;
-  from: string;
-  onKeep: QProps["onKeep"];
-  desc: string;
-}) {
+export function AppExtra({ m, onKeep, desc }: { m: CardMechanism; onKeep: QProps["onKeep"]; desc: string }) {
   const [kept, setKept] = useState(false);
   return (
     <>
@@ -393,7 +383,7 @@ export function AppExtra({
           className={s.secondary}
           onClick={() => {
             haptic();
-            onKeep(m, from);
+            onKeep(m);
             setKept(true);
           }}
           data-testid="exp-keep"

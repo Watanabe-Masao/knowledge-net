@@ -308,7 +308,6 @@ export function BreakQ(props: QProps & { initial?: string }) {
         </Card>
         <AppExtra
           m={ma as CardMechanism}
-          from={`前提崩し：${cx.name}`}
           onKeep={props.onKeep}
           desc={`${cx.name}・n＝${cond.n}・p＝${pc(ba.p)}・${st[0]} ${x}`}
         />

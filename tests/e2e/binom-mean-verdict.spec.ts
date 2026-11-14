@@ -163,6 +163,9 @@ test("実験を起こすボタンの数に単位がある", async ({ page }) => 
 // 既存との違い：ほかのテストは表の数を見ていて、どの行を強調するかは見ていない。
 // 検出の確かめ（2026-11-14）：基準を Math.abs(d) >= 0.02 に戻すと落ちることを見た
 test("分布の表の強調は、ずれの目安の外の行だけ", async ({ page }) => {
+  // 種は時刻から決まる（usePairRuns）ので、時刻を止めて結果を固定する。2 ポイントの基準と分かれる行が出る時刻を選んだ
+  //   （固定しないと、分かれる行が出ない回があり、基準の誤りを見逃す。2026-11-14 の CI で起きた）
+  await page.clock.setFixedTime(new Date(1763078400000)); // 2025-11-14 00:00 UTC（時刻そのものに意味はない）。この種で 2 ポイントの基準と分かれる行が5つ
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-E-01`);
   const x = page.getByTestId("experiment");

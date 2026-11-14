@@ -445,7 +445,6 @@ function ProbRun(
         </Card>
         <AppExtra
           m={{ kind: "bernoulli", n: app.n, p: app.p }}
-          from={q.title}
           onKeep={props.onKeep}
           desc={`${descOf({ kind: "bernoulli", n: app.n, p: app.p })}・${evText(e)}`}
         />
@@ -527,7 +526,7 @@ function ProbRun(
   return (
     <LabShell
       title={def.title}
-      question={props.title ?? question}
+      question={props.title ?? question ?? ""}
       stage={stage}
       reached={reached}
       go={go}
