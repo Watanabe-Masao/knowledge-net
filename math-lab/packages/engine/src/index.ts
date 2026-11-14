@@ -54,6 +54,7 @@ export {
   applyCheck,
   solveApply,
   solveValue,
+  meanBelowShare,
   tableMedian,
   tableMoments,
   type ApplyCheck,

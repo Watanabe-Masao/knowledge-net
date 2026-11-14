@@ -9,6 +9,7 @@ import {
   createRandom,
   emptySetRecord,
   expand,
+  meanBelowShare,
   modelMoments,
   modelPmf,
   normalCdf,
@@ -79,6 +80,8 @@ export type TableDef = {
     labels?: string[];
     text: string;
     concept?: string;
+    /** 打ち切りの回数（改訂13。期待値の実験室 B-01）。倍々のくじを最初の K 行で切り直す */
+    cutoffs?: number[];
   }[];
   points?: string[];
   /** テーマ体系（kn-experiment の改訂5。stats2-course の issue 119） */
@@ -97,15 +100,16 @@ function labelsFor(th: { values: number[]; labels?: string[] }, support: number[
 }
 
 /** 値の表を引き続ける記録（種つき・分けても同じ）。100回は20ずつ見せる */
-function useDraws(values: number[], weights: number[]) {
-  const [seed, setSeed] = useState(() => Date.now() % 100000);
+/** salt：同じ画面で別々の実験を同時に起こすときに種を分ける（同じ種だと、似た表どうしが同じ引きになる。B-01） */
+function useDraws(values: number[], weights: number[], salt = 0) {
+  const [seed, setSeed] = useState(() => (Date.now() + 7919 * salt) % 100000);
   const rng = useRef(createRandom(seed));
   const [rec, setRec] = useState<SetRecord>(() => emptySetRecord(seed, tbl(values, weights)));
   const { start, stop } = useRunner(); // 実行中の更新は1か所で止める（止めた後の更新は捨てる。#142）
   const key = `${values.join(",")}|${weights.join(",")}`;
   useEffect(() => {
     stop();
-    const sd = Date.now() % 100000;
+    const sd = (Date.now() + 7919 * salt) % 100000;
     setSeed(sd);
     rng.current = createRandom(sd);
     setRec(emptySetRecord(sd, tbl(values, weights)));
@@ -2627,6 +2631,331 @@ export function TablePriceQ({
         <TableInfo
           def={def}
           theme={theme}
+          reasonFormula={reasonFormula}
+          definitions={definitions}
+          onConcept={onConcept}
+          conceptName={conceptName}
+          onClose={() => setSheet(false)}
+        />
+      )}
+    </LabShell>
+  );
+}
+
+/** 有効数字2桁（1万以上は「万」で）。ずれの目安を桁の大きさで見せる（⑦ の 4：目安の数は有効数字2桁まで） */
+const sig2 = (x: number) => {
+  const units: [number, string][] = [
+    [1e12, "兆"],
+    [1e8, "億"],
+    [1e4, "万"],
+  ];
+  for (const [u, w] of units) if (x >= u) return `${Number((x / u).toPrecision(2)).toLocaleString()}${w}`;
+  return String(Number(x.toPrecision(2)));
+};
+/** 倍々のくじを最初の K 行で切り直す（k＜K の重みは 2^(K−k)、k＝K は 2。合計 2^K。型の改訂13 の cutoffs） */
+const cutTable = (cx: { values: number[]; labels?: string[] }, K: number) => ({
+  values: cx.values.slice(0, K),
+  weights: [...Array.from({ length: K - 1 }, (_, i) => 2 ** (K - 1 - i)), 2],
+  labels: cx.labels?.slice(0, K),
+});
+
+/**
+ * 打ち切りを変えた倍々のくじで、平均が期待値に近づくかを見る問い（期待値の実験室 B-01。B-02 をまとめた。stats2-course の issue 119）。
+ * 予測：打ち切り K₀ 回の表と期待値を見せ、打ち切りを K₁ 回に上げたときの期待値を3つの具体の数から →
+ * 実験：打ち切り K ごとに 1000 回ずつ引く（3つとも引くと観察へ）→
+ * 観察：打ち切りごとに 期待値・引いた平均 を並べ、ずれの目安（有効数字2桁）と、平均が期待値より下に出る頻度（決まった種のくり返し）を出す →
+ * 考察：項がどれも 1（打ち切りをなくすと期待値は有限でない）、期待値の大半をまれで巨大な額が支える、近づく先と目安が使える条件。
+ */
+export function TableLlnQ({
+  def,
+  reasonFormula,
+  onBack,
+  onConcept,
+  conceptName,
+  definitions,
+  question,
+  apply,
+}: Props & { def: TableDef; question?: string; apply?: ApplySpec }) {
+  const { stage, reached, go } = useStages(0);
+  const cx = def.counterexamples?.find((c) => c.cutoffs && c.cutoffs.length >= 3) ?? def.counterexamples![0]!;
+  const Ks = (cx.cutoffs ?? [10, 20, 40]).slice(0, 3) as [number, number, number];
+  const unit = "円";
+  const N = 1000;
+  const tabs = useMemo(() => Ks.map((K) => cutTable(cx, K)), [cx]); // eslint-disable-line react-hooks/exhaustive-deps
+  const Es = tabs.map((t) => meanOf(t.values, t.weights)),
+    Vs = tabs.map((t) => varOf(t.values, t.weights));
+  // 平均が期待値より下に出る割合（決まった種で N 回の実験を 2000 組。重い裾では正規近似が当たらないので、くり返しの計算で）
+  const below = useMemo(() => tabs.map((t) => meanBelowShare(t, N, 2000, 1)), [tabs]);
+  // 予測：打ち切り K₁ の表を N 回引いた平均は、期待値より下・上・同じくらいのどれが多いか（この問いの発見に触れる予測。⑦ の監査役 2026-11-15）
+  const CHOICES = [
+    `${r2(Es[1])}${unit} より下に出ることが多い`,
+    `${r2(Es[1])}${unit} より上に出ることが多い`,
+    "上と下が同じくらい",
+  ];
+  const b1 = below[1]!;
+  const actual = b1 > 0.6 ? 0 : b1 < 0.4 ? 1 : 2;
+  const [pr, setPr] = useState<number | undefined>(undefined);
+  const [k, setK] = useState(1);
+  // 3つの打ち切りは別々の実験なので、種を分ける（同じ種だと 20 回と 40 回の表は、裾を引かない限り同じ引きになる）
+  const d0 = useDraws(tabs[0]!.values, tabs[0]!.weights, 0),
+    d1 = useDraws(tabs[1]!.values, tabs[1]!.weights, 1),
+    d2 = useDraws(tabs[2]!.values, tabs[2]!.weights, 2);
+  const ds = [d0, d1, d2];
+  const means = ds.map((d) => summarize(d.rec).mean);
+  const done = ds.every((d) => d.rec.sets >= N);
+  const lab = (i: number) => `打ち切り ${Ks[i]} 回`;
+  const [sheet, setSheet] = useState(false);
+  const guide = (re: RegExp) =>
+    (def.catalog ?? [])
+      .flatMap((g) => g.items)
+      .filter((it) => re.test(it.id) && it.open && !it.retired)
+      .map((it) => `「${it.id.replace(/^.*-([A-Z]-\d+)$/, "$1")} ${it.title}」`)
+      .join("・");
+
+  let body: ReactNode, cta: ReactNode;
+  if (stage === 0) {
+    const t0 = tabs[1]!;
+    const sup = supportOf(tbl(t0.values, t0.weights));
+    body = (
+      <>
+        <section className={s.card} data-testid="exp-table-base">
+          <p className={s.h}>
+            倍々のくじ（{lab(1)}）<span>もらえる額と確率</span>
+          </p>
+          <p className={s.story}>
+            {cx.text.split("。")[0]}。{Ks[1]} 回目まで表が出なければ {Ks[1]} 回目の額
+          </p>
+          <Bars
+            theory={modelPmf(tbl(t0.values, t0.weights))}
+            labels={labelsFor({ values: t0.values, labels: t0.labels }, sup, unit)}
+            at={sup.map((_, i) => i)}
+            height={130}
+            label={`${lab(1)}の確率`}
+          />
+          <p className={s.muted} data-testid="exp-base-mean">
+            {lab(1)}の期待値は {r2(Es[1])}
+            {unit}
+          </p>
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>
+            このくじを {N.toLocaleString()} 回引いた平均は、期待値 {r2(Es[1])}
+            {unit} と比べてどう出ることが多い？
+          </p>
+          <div className={s.choice} role="radiogroup" aria-label="期待値の予測" data-testid="exp-pred-lln">
+            {CHOICES.map((d, i) => (
+              <button
+                key={d}
+                type="button"
+                role="radio"
+                aria-checked={pr === i}
+                onClick={() => {
+                  haptic();
+                  setPr(i);
+                }}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} disabled={pr === undefined} onClick={() => go(1)}>
+        {pr === undefined ? "まず予測を選ぶ" : "この予測で引いてみる"}
+      </button>
+    );
+  } else if (stage === 1) {
+    const d = ds[k]!;
+    body = (
+      <>
+        <div className={s.themes} role="radiogroup" aria-label="打ち切り">
+          {Ks.map((K, i) => (
+            <button
+              key={K}
+              type="button"
+              role="radio"
+              aria-checked={i === k}
+              onClick={() => {
+                haptic();
+                setK(i);
+              }}
+            >
+              {lab(i)}
+            </button>
+          ))}
+        </div>
+        <section className={s.card} data-testid="exp-lln-runs">
+          <p className={s.h}>
+            引いた平均<span>{N.toLocaleString()} 回ずつ</span>
+          </p>
+          {Ks.map((K, i) => (
+            <p key={K} className={s.muted} data-testid={`exp-lln-run-${i}`}>
+              {lab(i)}：
+              {ds[i]!.rec.sets ? (
+                <>
+                  平均 <b>{r2(means[i])}</b>
+                  {unit}（{ds[i]!.rec.sets.toLocaleString()} 回）
+                </>
+              ) : (
+                "まだ引いていない"
+              )}
+            </p>
+          ))}
+        </section>
+      </>
+    );
+    cta = (
+      <>
+        <button
+          type="button"
+          className={s.primary}
+          disabled={d.rec.sets >= N}
+          onClick={() => d.run(N, 100)}
+          data-testid="exp-run-1000"
+        >
+          {d.rec.sets >= N ? `${lab(k)}は引いた` : `▶ ${lab(k)}を 1000 回`}
+        </button>
+        <button type="button" className={s.next} disabled={!done} onClick={() => go(2)} data-testid="exp-to-observe">
+          {done ? "観察する →" : `3つの打ち切りを ${N.toLocaleString()} 回ずつ引くと観察できる`}
+        </button>
+      </>
+    );
+  } else if (stage === 2) {
+    const ok = pr === actual;
+    body = (
+      <>
+        <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
+          <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>
+          <span className={s.shape}>
+            {lab(1)}の {N.toLocaleString()} 回の平均が期待値 {r2(Es[1])}
+            {unit} より下に出るのは、おおよそ {`${sig2(100 * b1)}%`}（{CHOICES[actual]}）。予測は「
+            {CHOICES[pr!]}」。
+          </span>
+        </div>
+        <section className={s.card} data-testid="exp-lln-table">
+          <table className={s.cmpTable}>
+            <thead>
+              <tr>
+                <th scope="col">{N.toLocaleString()} 回</th>
+                <th scope="col">期待値</th>
+                <th scope="col">引いた平均</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Ks.map((K, i) => (
+                <tr key={K} data-testid={`exp-row-${i}`}>
+                  <td>{lab(i)}</td>
+                  <td>
+                    {r2(Es[i])}
+                    {unit}
+                  </td>
+                  <td>
+                    {r2(means[i])}
+                    {unit}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+        <p className={s.muted} data-testid="exp-mean-margin">
+          ずれの目安（±2×標準誤差）は、いまの各 {N.toLocaleString()} 回で{" "}
+          {Ks.map((K, i) => `${lab(i)} ±${sig2(2 * Math.sqrt(Vs[i]! / N))}${unit}`).join("・")}
+          。引いた平均の約95% がこの幅に入るのは、ずれの分布が正規分布に近い{lab(0)}
+          のとき。分散が有限なら、どんな分布でも目安の外に出るのは 25% 以下（チェビシェフの不等式）。
+        </p>
+        <p className={s.muted} data-testid="exp-below-freq">
+          理論どおりに引いても、{N.toLocaleString()} 回の平均が期待値より下に出るのは、おおよそ{" "}
+          {Ks.map((K, i) => `${`${sig2(100 * below[i]!)}%`}（${K} 回）`).join("・")}
+          （決まった種で {N.toLocaleString()} 回の実験を 2000 組くり返して求めたおおよその値）。
+        </p>
+        <section className={s.card} data-testid="exp-look">
+          <p className={s.h}>見る所</p>
+          <p className={s.muted}>引いた平均の列と期待値の列を、打ち切りごとに見比べる。</p>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(3)}>
+        なぜそうなる？ 理由を考える
+      </button>
+    );
+  } else {
+    // 1000 回で引くことがまれな額の境目：2^j（j＝log₂n を切り上げて 1 足す）。1回でそれ以上を引く確率は 2^−(j−1)
+    const j1 = Math.ceil(Math.log2(N)) + 1,
+      j2 = j1 + 4;
+    const Kmax = Ks[2]!;
+    const carried = Kmax - j1 + 2; // k＝j1〜K−1 の項がどれも 1、k＝K は 2
+    const pAny = (j: number) => 1 - (1 - 2 ** -(j - 1)) ** N;
+    const gA = guide(/-A-03$/);
+    body = (
+      <>
+        <section className={s.card}>
+          <p className={s.h}>打ち切りを上げると、期待値はどうなる？</p>
+          <p className={s.muted} data-testid="exp-lln-terms">
+            k 回目の額 2ᵏ 円に確率 (1/2)ᵏ を掛けた項は、どれも 1。打ち切りを 1 回上げるたびに期待値は 1 増える（{lab(0)}{" "}
+            {r2(Es[0])}円・{lab(1)} {r2(Es[1])}円・{lab(2)} {r2(Es[2])}
+            円）。打ち切りをなくすと期待値（項の和）は有限にならず、平均が近づく先がない。
+          </p>
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>なぜ引いた平均は期待値より下にとどまる？</p>
+          <p className={s.muted} data-testid="exp-lln-tail">
+            {lab(2)}の期待値 {r2(Es[2])} 円のうち、2^{j1} 円以上の額が {carried} 円分を担う。{N.toLocaleString()} 回で
+            2^{j1} 円以上を1回でも引く確率は約 {`${sig2(100 * pAny(j1))}%`}、2^{j2} 円以上は約{" "}
+            {`${sig2(100 * pAny(j2))}%`}
+            。期待値の大半をまれで巨大な額が支えるので、引ける回数では平均がたいてい期待値より下にとどまる。
+            {gA ? `まれな大きい値の効き方は ${gA} で確かめる。` : ""}
+          </p>
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>平均が期待値に近づくのは、どんなとき？</p>
+          <p className={s.muted} data-testid="exp-lln-cond">
+            同じ表から独立に引いた平均は、期待値が有限なら、引く回数を増やすと期待値の近くに入る確率が 1
+            に近づく（大数の法則）。ずれの目安 ±2σ/√n（σ は1回の額の標準偏差、n
+            は引く回数）で回数を見積もれるのは、分散も有限のとき。{lab(2)}で目安を期待値の 1 割（±
+            {r2(Es[2]! / 10)}円）にするには約 {sig2(((2 * Math.sqrt(Vs[2]!)) / (Es[2]! / 10)) ** 2)} 回要る。
+          </p>
+        </section>
+      </>
+    );
+    cta = apply ? (
+      <button type="button" className={s.primary} onClick={() => go(4)}>
+        応用の課題へ
+      </button>
+    ) : (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        はじめから
+      </button>
+    );
+  }
+  if (stage === 4 && apply) {
+    body = <ApplyTask spec={apply} />;
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        はじめから
+      </button>
+    );
+  }
+  return (
+    <LabShell
+      title={def.title}
+      question={question ?? "何度も引くと、平均は期待値に近づく？"}
+      stage={stage}
+      reached={reached}
+      go={go}
+      onBack={onBack}
+      stages={apply ? STAGES_Q : SUPPORT_STAGES}
+      body={body}
+      cta={cta}
+      onInfo={() => setSheet(true)}
+    >
+      {sheet && (
+        <TableInfo
+          def={def}
+          theme={def.themes[0]!}
           reasonFormula={reasonFormula}
           definitions={definitions}
           onConcept={onConcept}

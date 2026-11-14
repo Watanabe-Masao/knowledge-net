@@ -1,7 +1,7 @@
 // 値の表の応用の課題（stats2-course #364）：期待値の実験室の A-01（逆算）・A-02（評価）・D-01（モデル選択）。
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { solveApply, tableMedian, tableMoments } from "../src";
+import { meanBelowShare, solveApply, tableMedian, tableMoments } from "../src";
 
 describe("値の表の応用", () => {
   // 確かめる対象：table-weight-for-mean の答え w。
@@ -178,6 +178,59 @@ describe("値の表の応用", () => {
         },
       ),
     );
+  });
+
+  // 確かめる対象：table-mean-which（B-01 の応用：n 回引いた平均が、2つの表のどちらと矛盾するか。ずれが目安 ±2σ/√n の外の表）。
+  // 想定する故障：√n で割り忘れる（σ をそのまま目安にする）・2 を掛け忘れる・内と外の向きを逆にする。
+  // 見つけ方：倍々のくじの打ち切り 10 回（期待値 11・分散 2949）と 20 回（21・3,145,285）を 1000 回引いた平均が 15 円。
+  //   10 回の表はずれ 4＞目安 3.43 で矛盾、20 回の表はずれ 6≦目安 112 で矛盾しない → 答えは 10 回の表（手で求めた値。⑦ の監査役が検算）。
+  //   √n で割り忘れると目安が 108・3547 でどちらも内になり止まる。2 を掛け忘れると 1.72・56 で 10 回の表だけが外のまま（見つからない）ので、
+  //   平均 13 円（10 回の表はずれ 2：目安 3.43 の内、掛け忘れの 1.72 の外）では「どちらも内」で止まることを確かめる。
+  // 既存との違い：二項分布の within-band は割合。これは2つの値の表の平均。
+  // 検出の確かめ（2026-11-15）：√n で割り忘れると 15 円で、2 を掛け忘れると 13 円で、向きを逆にすると 15 円で落ちることを見た
+  it("反証：引いた平均と矛盾する表（目安の外の表）を選ぶ", () => {
+    const cut = (K: number) => ({
+      values: Array.from({ length: K }, (_, i) => 2 ** (i + 1)),
+      weights: [...Array.from({ length: K - 1 }, (_, i) => 2 ** (K - 1 - i)), 2],
+    });
+    const tables = [
+      { ...cut(10), name: "打ち切り 10 回" },
+      { ...cut(20), name: "打ち切り 20 回" },
+    ];
+    const r = solveApply({ method: "table-mean-which", tables, n: 1000, observed: 15 });
+    expect(r.answer).toBe(0);
+    expect(r.facts.m0).toBeCloseTo(2 * Math.sqrt(2949 / 1000), 9);
+    expect(r.facts.m1).toBeCloseTo(2 * Math.sqrt(3145285 / 1000), 9);
+    expect(() => solveApply({ method: "table-mean-which", tables, n: 1000, observed: 13 })).toThrow(/ちょうど1つ/);
+  });
+
+  // 確かめる対象：meanBelowShare（B-01 の観察：n 回引いた平均が期待値より下に出る割合を、決まった種のくり返しで求める）。
+  // 想定する故障：累積の確率の探し方の端の誤り（最後の行を引かない・1つずれる）・期待値と比べる向きの逆・種で再現しない。
+  // 見つけ方：(1) 左右対称な表（さいころ）では下に出る割合は 1/2 の近く（標準誤差の5倍の幅。守ること 3）。
+  //   (2) 倍々のくじ（打ち切り 20 回）の 1000 回引きでは、独立に Python で求めた約 84%（2000 回のくり返し）の近く。
+  //   (3) 1回だけ（n＝1）なら、値が期待値より小さい確率そのもの（表から正確に求まる）に近い。最後の行が期待値より下にある表でも確かめる。(4) 同じ種なら同じ値。
+  // 既存との違い：ほかの表の課題は式で答えが決まる。これはくり返しの計算。
+  // 検出の確かめ（2026-11-15）：比べる向きを逆（mean < sum/n）にすると (1) は通るが (2)(3) で、最後の行を引かない（hi＝length−2）と (3) の最後の行が下にある表で落ちることを見た（倍々のくじだけでは見つからなかった）
+  it("向きの頻度：くり返しで求めた割合が、対称な表・1回引き・独立な計算と合う", () => {
+    const reps = 2000,
+      tol = (p: number) => 5 * Math.sqrt((p * (1 - p)) / reps);
+    const dice = { values: [1, 2, 3, 4, 5, 6], weights: [1, 1, 1, 1, 1, 1] };
+    expect(Math.abs(meanBelowShare(dice, 10, reps, 7) - 0.5)).toBeLessThan(tol(0.5) + 0.05); // 平均がちょうど 3.5 になる回は下に数えない
+    const K = 20,
+      dbl = {
+        values: Array.from({ length: K }, (_, i) => 2 ** (i + 1)),
+        weights: [...Array.from({ length: K - 1 }, (_, i) => 2 ** (K - 1 - i)), 2],
+      };
+    expect(Math.abs(meanBelowShare(dbl, 1000, reps, 1) - 0.84)).toBeLessThan(tol(0.84));
+    // 1回引きなら、値が期待値 21 より小さい確率（2・4・8・16 円：1/2＋1/4＋1/8＋1/16＝15/16）
+    expect(Math.abs(meanBelowShare(dbl, 1, 20000, 3) - 15 / 16)).toBeLessThan(
+      5 * Math.sqrt(((15 / 16) * (1 / 16)) / 20000),
+    );
+    // 最後の行が期待値より下にある表（10 円と 0 円が半分ずつ）：1回引きで下に出るのは 0 円の 1/2。最後の行を引かないと 0 になる
+    expect(Math.abs(meanBelowShare({ values: [10, 0], weights: [1, 1] }, 1, 4000, 5) - 0.5)).toBeLessThan(
+      5 * Math.sqrt(0.25 / 4000),
+    );
+    expect(meanBelowShare(dbl, 50, 300, 9)).toBe(meanBelowShare(dbl, 50, 300, 9));
   });
 
   // 確かめる対象：table-mean-on-table（期待値が表の値になる表を選ぶ）と table-min-var（期待値が同じ表で分散が最小のもの）。

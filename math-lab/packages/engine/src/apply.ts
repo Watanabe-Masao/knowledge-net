@@ -2,6 +2,7 @@
 // 原本には課題の種類（method）と条件だけを書き、答えはここで理論から求める（予想の答えを原本・公開の JSON に書かない決まりと同じ）。
 // 画面は answer を学習者の答えと照らし、steps（解き方の段）を答えのあとに出す。段の数はここで求めた値だけを使う（原本に数を書かないので、答えと説明がずれない）。
 import { checkMechanism, mechanismMoments, modelPmf, type Mechanism } from "./lab";
+import { createRandom } from "./random";
 import { INT, NUM2, PCT0, SIG3, type ApplyFormat } from "./applyFormat";
 import { explain } from "./applySteps";
 
@@ -58,7 +59,8 @@ export type ApplySolve =
   | { method: "table-mean-mode"; values: number[]; weights: number[]; unit?: string }
   | { method: "table-mean-median-gap"; tables: ApplyTable[]; unit?: string }
   | { method: "table-transform-mean"; values: number[]; weights: number[]; a: number; b: number; only?: number[] }
-  | { method: "table-best-net"; tables: ApplyTable[]; unit?: string };
+  | { method: "table-best-net"; tables: ApplyTable[]; unit?: string }
+  | { method: "table-mean-which"; tables: ApplyTable[]; n: number; observed: number; unit?: string };
 
 type ApplyMethod = ApplySolve["method"];
 type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
@@ -88,6 +90,7 @@ export const APPLY_FIELDS = {
   "table-mean-median-gap": { required: ["tables"], optional: ["unit"], choices: 3 },
   "table-transform-mean": { required: ["values", "weights", "a", "b"], optional: ["only"] },
   "table-best-net": { required: ["tables"], optional: ["unit"], choices: 3 },
+  "table-mean-which": { required: ["tables", "n", "observed"], optional: ["unit"], choices: 2 },
 } as const satisfies {
   [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
 };
@@ -394,6 +397,26 @@ function solveCore(s: ApplySolve): ApplyResult {
         throw new RangeError(`いちばん得な表がはっきり1つになるようにする：${nets.join("・")}`);
       return { answer: order[0]!, facts: { n0: nets[0]!, n1: nets[1]!, n2: nets[2]! }, steps: [] };
     }
+    case "table-mean-which": {
+      // 反証（期待値の実験室 B-01。stats2-course #119）：n 回引いた平均 observed が、2つの表のどちらと矛盾するか。
+      // ずれが目安 ±2σ/√n の外にある表がちょうど1つになる組だけを認める。境目のそば（目安の ±1 割）は読み違えやすいので止める
+      if (s.tables.length !== 2) throw new RangeError("表は2つ");
+      s.tables.forEach(checkTable);
+      if (!(Number.isInteger(s.n) && s.n >= 2)) throw new RangeError(`n は 2 以上の整数：${s.n}`);
+      if (!Number.isFinite(s.observed)) throw new RangeError("observed は数");
+      const r = s.tables.map((t) => {
+        const { mean, variance } = tableMoments(t);
+        return { mean, margin: 2 * Math.sqrt(variance / s.n), d: Math.abs(s.observed - mean) };
+      });
+      for (const x of r) {
+        if (!(x.margin > 0)) throw new RangeError("分散が 0 の表（ずれの目安がない）");
+        if (Math.abs(x.d - x.margin) < 0.1 * x.margin)
+          throw new RangeError(`ずれ ${x.d} が目安 ${x.margin} に近すぎる（1 割以上離す）`);
+      }
+      const out = r.flatMap((x, j) => (x.d > x.margin ? [j] : []));
+      if (out.length !== 1) throw new RangeError(`目安の外に出る表がちょうど1つになるようにする：${out.length} 個`);
+      return { answer: out[0]!, facts: { m0: r[0]!.margin, m1: r[1]!.margin }, steps: [] };
+    }
     case "table-mean-mode": {
       checkTable(s);
       const { mean, W } = tableMoments(s),
@@ -576,6 +599,7 @@ function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
     case "table-mean-mode":
     case "table-mean-median-gap":
     case "table-best-net":
+    case "table-mean-which":
       return { answerFormat: null, at: {}, mark: {}, vars: [] };
   }
 }
@@ -605,3 +629,38 @@ export const solveValue = (sv: ApplySolve, path: string): number | undefined => 
   }
   return sum;
 };
+
+/**
+ * n 回引いた平均が期待値より下に出る割合を、決まった種で reps 回くり返して求める（期待値の実験室 B-01。stats2-course #119）。
+ * 重い裾では標本平均の分布が正規分布に近くないので、向きの頻度を正規近似でなく、くり返しの計算で出す（⑦ の 2：おおよその値と添える）。
+ * 同じ種なら同じ値（守ること 2）。表は値の小さい順でなくてよい（累積の確率で引く）
+ */
+export function meanBelowShare(
+  t: { values: number[]; weights: number[] },
+  n: number,
+  reps: number,
+  seed: number,
+): number {
+  const { mean, W } = tableMoments(t);
+  const cum: number[] = [];
+  let c = 0;
+  for (const w of t.weights) cum.push((c += w) / W);
+  const r = createRandom(seed);
+  let below = 0;
+  for (let i = 0; i < reps; i++) {
+    let sum = 0;
+    for (let j = 0; j < n; j++) {
+      const u = r.next();
+      let lo = 0,
+        hi = cum.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (u < cum[mid]!) hi = mid;
+        else lo = mid + 1;
+      }
+      sum += t.values[lo]!;
+    }
+    if (sum / n < mean) below++;
+  }
+  return below / reps;
+}

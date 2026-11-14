@@ -75,6 +75,24 @@ const CASES: ApplySolve[] = [
   { method: "table-mean-mode", values: [0, 2, 8], weights: [3, 1, 1] },
   { method: "table-transform-mean", values: [0, 100, 1000], weights: [80, 18, 2], a: 2, b: 50, only: [1, 2] },
   {
+    method: "table-mean-which",
+    tables: [
+      {
+        values: [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024],
+        weights: [512, 256, 128, 64, 32, 16, 8, 4, 2, 2],
+        name: "10",
+      },
+      {
+        values: Array.from({ length: 20 }, (_, i) => 2 ** (i + 1)),
+        weights: [...Array.from({ length: 19 }, (_, i) => 2 ** (19 - i)), 2],
+        name: "20",
+      },
+    ],
+    n: 1000,
+    observed: 15,
+    unit: "円",
+  },
+  {
     method: "table-best-net",
     tables: [
       { values: [0, 200, 500], weights: [87, 10, 3], price: 25, name: "A" },

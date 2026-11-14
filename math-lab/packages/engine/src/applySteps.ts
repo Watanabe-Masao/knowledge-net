@@ -52,6 +52,10 @@ export const APPLY_TEXT_SPEC: Record<string, { vars: readonly string[]; variants
   "table-mean-on-table.goal": { vars: [], variants: [] },
   "table-mean-on-table.judge": { vars: ["mu", "name"], variants: [] },
   "table-mean-on-table.means": { vars: [], variants: [] },
+  "table-mean-which.goal": { vars: ["n", "obs"], variants: [] },
+  "table-mean-which.moments": { vars: [], variants: [] },
+  "table-mean-which.margin": { vars: ["n"], variants: [] },
+  "table-mean-which.judge": { vars: ["name"], variants: [] },
   "table-best-net.goal": { vars: [], variants: [] },
   "table-best-net.formula": { vars: [], variants: [] },
   "table-best-net.nets": { vars: [], variants: [] },
@@ -650,6 +654,40 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
           tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${sumTex(t)}=${tx(ms[j]!, NUM2)}`)),
         },
         { ...T("table-mean-on-table.judge", { name: tName(s.tables[i]!, i), mu: fa(ms[i]!, NUM2) + (s.unit ?? "") }) },
+      ];
+    }
+    case "table-mean-which": {
+      const u = s.unit ?? "",
+        ms = s.tables.map(tableMoments),
+        mg = ms.map((m) => 2 * Math.sqrt(m.variance / s.n)),
+        ds = ms.map((m) => Math.abs(s.observed - m.mean));
+      return [
+        { ...T("table-mean-which.goal", { n: f(s.n), obs: fa(s.observed, NUM2) + u }) },
+        {
+          ...T("table-mean-which.moments"),
+          tex: al(
+            s.tables.map(
+              (t, j) => `${tName(t, j)}&:E(X)=${tx(ms[j]!.mean, NUM2)},\\ V(X)=${tx(ms[j]!.variance, NUM2)}`,
+            ),
+          ),
+        },
+        {
+          ...T("table-mean-which.margin", { n: f(s.n) }),
+          tex: al(
+            s.tables.map(
+              (t, j) => `${tName(t, j)}&:2\\sqrt{${tx(ms[j]!.variance, NUM2)}/${f(s.n)}}=${tx(mg[j]!, NUM2)}`,
+            ),
+          ),
+        },
+        {
+          ...T("table-mean-which.judge", { name: tName(s.tables[answer]!, answer) }),
+          tex: al(
+            s.tables.map(
+              (t, j) =>
+                `${tName(t, j)}&:|${tx(s.observed, NUM2)}-${tx(ms[j]!.mean, NUM2)}|=${tx(ds[j]!, NUM2)}${ds[j]! > mg[j]! ? ">" : "\\le"}${tx(mg[j]!, NUM2)}`,
+            ),
+          ),
+        },
       ];
     }
     case "table-best-net": {
