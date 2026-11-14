@@ -77,3 +77,28 @@ describe("型 v2", () => {
     expect(ok(d)).toBe(false);
   });
 });
+
+// 確かめる対象：実験室の拡張の改訂7（stats2-course #387）。二項分布の問いの title・question は、テーマ体系（catalog）がない実験室だけ必須。
+// 想定する故障：必須から外しただけで条件を付け忘れ、テーマ体系のない実験室（画面の入口の一覧が問いの title・question を出す）でも
+//   書かずに通ってしまう。または条件の向きを誤り、テーマ体系のある教材の公開データ（問いの文を書かない）を拒む。
+// 見つけ方：教材の公開データの見本から二項分布の問いの title・question を全部消すと、テーマ体系があれば通り、テーマ体系も消すと止まる。
+// 既存との違い：上のテストは芯の型の決まり。これは実験室の拡張の条件付きの必須。
+// 検出の確かめ（2026-11-14）：experimentBinom の if／then を外すと「テーマ体系もない」の行が止まらずに落ちることを見た
+describe("実験室の拡張：問いの文はテーマ体系がないときだけ必須（改訂7）", () => {
+  const strip = (withCatalog: boolean) => {
+    const d = sampleV2() as { experiments: Row[] };
+    const x = d.experiments.find((e) => e.model !== "table" && Array.isArray(e.questions))!;
+    for (const q of x.questions as Row[]) {
+      delete q.title;
+      delete q.question;
+    }
+    if (!withCatalog) delete x.catalog;
+    return d;
+  };
+  it("テーマ体系があれば、問いの title・question を書かなくても通る", () => {
+    expect(validate(strip(true)) ? [] : validate.errors?.slice(0, 3)).toEqual([]);
+  });
+  it("テーマ体系もないと止まる", () => {
+    expect(ok(strip(false))).toBe(false);
+  });
+});

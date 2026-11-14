@@ -265,7 +265,6 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
         </Card>
         <AppExtra
           m={{ kind: "bernoulli", n: app.n, p: app.p }}
-          from={q.title}
           onKeep={props.onKeep}
           desc={descOf({ kind: "bernoulli", n: app.n, p: app.p })}
         />
@@ -334,7 +333,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
   return (
     <LabShell
       title={def.title}
-      question={props.title ?? q.question}
+      question={props.title ?? q.question ?? ""}
       stage={stage}
       reached={reached}
       go={go}

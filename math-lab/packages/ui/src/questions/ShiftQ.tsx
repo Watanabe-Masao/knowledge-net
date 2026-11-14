@@ -234,7 +234,6 @@ export function ShiftQ(props: QProps) {
         </Card>
         <AppExtra
           m={{ kind: "bernoulli", ...app }}
-          from={def.question}
           onKeep={props.onKeep}
           desc={descOf({ kind: "bernoulli", ...app })}
         />

@@ -260,7 +260,6 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
         </Card>
         <AppExtra
           m={{ kind: "bernoulli", ...app }}
-          from={q.title}
           onKeep={props.onKeep}
           desc={descOf({ kind: "bernoulli", ...app })}
         />
@@ -305,7 +304,7 @@ export function SpreadQ(props: QProps & { q: Extract<BinomQuestion, { form: "spr
   return (
     <LabShell
       title={def.title}
-      question={props.title ?? q.question}
+      question={props.title ?? q.question ?? ""}
       stage={stage}
       reached={reached}
       go={go}

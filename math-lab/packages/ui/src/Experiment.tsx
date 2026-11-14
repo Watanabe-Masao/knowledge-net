@@ -75,33 +75,33 @@ export type BinomDef = {
     | {
         id: string;
         form: "prob";
-        title: string;
-        question: string;
+        title?: string;
+        question?: string;
         set: Cond;
         events: { op: "eq" | "ge" | "le"; k: number }[];
         free?: boolean;
       }
-    | { id: string; form: "spread"; title: string; question: string; set: Cond; to: { n: number } }
+    | { id: string; form: "spread"; title?: string; question?: string; set: Cond; to: { n: number } }
     | {
         id: string;
         form: "conv";
-        title: string;
-        question: string;
+        title?: string;
+        question?: string;
         set: Cond;
         events: { op: "eq" | "ge" | "le"; k: number }[];
       }
-    | { id: string; form: "paths"; title: string; question: string; set: Cond; ks: [number, number] }
+    | { id: string; form: "paths"; title?: string; question?: string; set: Cond; ks: [number, number] }
     | {
         id: string;
         form: "repeat";
-        title: string;
-        question: string;
+        title?: string;
+        question?: string;
         set: Cond;
         events: { op: "eq" | "ge" | "le"; k: number }[];
         sets: number;
       }
-    | { id: string; form: "mean"; title: string; question: string; set: Cond }
-    | { id: string; form: "var"; title: string; question: string; set: Cond; ps: number[] }
+    | { id: string; form: "mean"; title?: string; question?: string; set: Cond }
+    | { id: string; form: "var"; title?: string; question?: string; set: Cond; ps: number[] }
   )[];
   /** 確率の値の問いの予想の目盛り（大きい順の境目） */
   prob_scale?: number[];
@@ -350,7 +350,7 @@ function BinomEntry(props: Props & { def: BinomDef }) {
     }
     const items: MenuItem[] = [
       { id: "shift", form: "shift", title: def.question },
-      ...(def.questions ?? []).map((q) => ({ id: q.id, form: q.form, title: q.title, sub: q.question })),
+      ...(def.questions ?? []).map((q) => ({ id: q.id, form: q.form, title: q.title ?? q.id, sub: q.question ?? "" })),
       ...(def.counterexamples?.length
         ? [
             {
