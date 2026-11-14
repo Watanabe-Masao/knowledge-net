@@ -615,11 +615,11 @@ function TableEntry(props: Props & { def: TableDef }) {
     <FoundContext.Provider value={foundOf(item, props)}>
       {/* 画面の問いは、開いた問いの題（catalog の title）から引く。同じことを2か所に書かない（stats2-course #379） */}
       {pick === "support" ? (
-        <TableSupportQ {...props} def={def} onBack={back} question={item?.title} />
+        <TableSupportQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
       ) : pick === "same-mean" ? (
-        <TableSameMeanQ {...props} def={def} onBack={back} question={item?.title} />
+        <TableSameMeanQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
       ) : (
-        <TableLab {...props} def={def} onBack={back} question={item?.title} />
+        <TableLab {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
       )}
     </FoundContext.Provider>
   );

@@ -63,6 +63,23 @@ const CASES: ApplySolve[] = [
   { method: "min-total", n: 10, ratio: 0.8, step: 2 },
   { method: "min-total", n: 10, ratio: 0.8 },
   { method: "solve-spread", n: 10, p: 0.5, variance: 3.4 },
+  { method: "table-weight-for-mean", values: [1, 2, 3, 4, 5, 6], weights: [1, 1, 1, 1, 1, 1], index: 5, mean: 4 },
+  {
+    method: "table-mean-on-table",
+    tables: [
+      { values: [1, 2, 3], weights: [2, 1, 1] },
+      { values: [0, 2, 8], weights: [3, 1, 1] },
+      { values: [1, 2, 6], weights: [3, 1, 1] },
+    ],
+  },
+  {
+    method: "table-min-var",
+    tables: [
+      { values: [0, 100, 1000], weights: [80, 18, 2], name: "A" },
+      { values: [0, 100, 1000], weights: [71, 28, 1], name: "B" },
+      { values: [0, 100, 1000], weights: [62, 38, 0], name: "C" },
+    ],
+  },
 ];
 
 describe("応用の段の文の型", () => {

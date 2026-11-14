@@ -1,0 +1,107 @@
+// 値の表の応用の課題（stats2-course #364）：期待値の実験室の A-01（逆算）・A-02（評価）・D-01（モデル選択）。
+import fc from "fast-check";
+import { describe, expect, it } from "vitest";
+import { solveApply, tableMoments } from "../src";
+
+describe("値の表の応用", () => {
+  // 確かめる対象：table-weight-for-mean の答え w。
+  // 想定する故障：(S＋x·w)÷(W＋w)＝mean を解くときの移項の誤り（符号・W と S の取り違え・替える値の重みを W に含める）。
+  // 見つけ方：ランダムな表と、届く目標（替える値と残りの平均の間）で、答えの w を重みに入れて期待値を求め直すと目標になる（性質）。
+  //   さいころで 6 の目の重みを替えて期待値を 4 にする w＝2.5 は手で解いた値（(15＋6w)÷(5＋w)＝4）。
+  // 既存との違い：二項分布の課題（apply.test.ts）は n・p の式。これは値の表の重み。
+  // 検出の確かめ（2026-11-14）：w の式の分母を (s.mean − x) にすると落ちることを見た
+  it("逆算：答えの重みで期待値が目標になる", () => {
+    expect(
+      solveApply({
+        method: "table-weight-for-mean",
+        values: [1, 2, 3, 4, 5, 6],
+        weights: [1, 1, 1, 1, 1, 1],
+        index: 5,
+        mean: 4,
+      }).answer,
+    ).toBeCloseTo(2.5, 12);
+    fc.assert(
+      fc.property(
+        fc.array(fc.integer({ min: -50, max: 50 }), { minLength: 2, maxLength: 6 }),
+        fc.array(fc.integer({ min: 1, max: 9 }), { minLength: 6, maxLength: 6 }),
+        fc.nat(),
+        fc.double({ min: 0.05, max: 0.95, noNaN: true }),
+        (vals, ws, ii, t) => {
+          const values = [...new Set(vals)];
+          fc.pre(values.length >= 2);
+          const weights = values.map((_, j) => ws[j]!),
+            index = ii % values.length,
+            x = values[index]!;
+          const rest = tableMoments({
+            values: values.filter((_, j) => j !== index),
+            weights: weights.filter((_, j) => j !== index),
+          }).mean;
+          fc.pre(Math.abs(x - rest) > 1e-6);
+          const mean = rest + t * (x - rest); // 残りの平均と替える値の間（届く目標）
+          const w = solveApply({ method: "table-weight-for-mean", values, weights, index, mean }).answer;
+          const after = tableMoments({ values, weights: weights.map((v, j) => (j === index ? w : v)) }).mean;
+          expect(after).toBeCloseTo(mean, 9);
+        },
+      ),
+    );
+  });
+  it("逆算：届かない目標・動かない値は理由を言って止まる", () => {
+    const d = { values: [1, 2, 3, 4, 5, 6], weights: [1, 1, 1, 1, 1, 1], index: 5 };
+    // 6 の重みを 0 にしても残りの平均は 3 なので、2 には届かない（3 はちょうど重み 0 で届く）
+    expect(() => solveApply({ method: "table-weight-for-mean", ...d, mean: 2 })).toThrow(/できない/);
+    expect(solveApply({ method: "table-weight-for-mean", ...d, mean: 3 }).answer).toBeCloseTo(0, 12);
+    expect(() => solveApply({ method: "table-weight-for-mean", ...d, mean: 6 })).toThrow(/同じ/);
+  });
+
+  // 確かめる対象：table-mean-on-table（期待値が表の値になる表を選ぶ）と table-min-var（期待値が同じ表で分散が最小のもの）。
+  // 想定する故障：重みを確率に直さない（Σw で割らない）・重み 0 の値を「表の値」に数える・分散で平均を引かない。
+  // 見つけ方：手で求めた値と照らす。A-02 の案：1・2・3（重み 2・1・1）→ 1.75、0・2・8（3・1・1）→ 2（表にある）、1・2・6（3・1・1）→ 2.2。
+  //   D-01 の案：くじ 0・100・1000 円、A（80・18・2）・B（71・28・1）・C（62・38・0）。期待値は全部 38、分散は 20356・11356・2356。
+  //   C は 1000 円の重みが 0 なので、期待値 38 は「表の値」に当たらない（重み 0 の値を数える故障を見る組み合わせは下の例）。
+  // 既存との違い：上は逆算。これは選ぶ形の2つ。
+  // 検出の確かめ（2026-11-14）：tableMoments の分散で平均を引かない（x² の重み付き平均）にすると落ちることを見た
+  it("評価・モデル選択：手で求めた値と合う", () => {
+    const a02 = solveApply({
+      method: "table-mean-on-table",
+      tables: [
+        { values: [1, 2, 3], weights: [2, 1, 1] },
+        { values: [0, 2, 8], weights: [3, 1, 1] },
+        { values: [1, 2, 6], weights: [3, 1, 1] },
+      ],
+    });
+    expect(a02.answer).toBe(1);
+    expect([a02.facts.m0, a02.facts.m1, a02.facts.m2]).toEqual([1.75, 2, 2.2]);
+    // 重み 0 の値は表に出ない値なので数えない（0・5・10 の 5 の重みが 0 なら、期待値 5 は表の値でない）
+    expect(() =>
+      solveApply({
+        method: "table-mean-on-table",
+        tables: [
+          { values: [0, 5, 10], weights: [1, 0, 1] },
+          { values: [1, 2, 3], weights: [2, 1, 1] },
+          { values: [1, 2, 6], weights: [3, 1, 1] },
+        ],
+      }),
+    ).toThrow(/ちょうど1つ/);
+    const d01 = solveApply({
+      method: "table-min-var",
+      tables: [
+        { values: [0, 100, 1000], weights: [80, 18, 2] },
+        { values: [0, 100, 1000], weights: [71, 28, 1] },
+        { values: [0, 100, 1000], weights: [62, 38, 0] },
+      ],
+    });
+    expect(d01.answer).toBe(2);
+    expect(d01.facts.mean).toBeCloseTo(38, 12);
+    expect([d01.facts.v0, d01.facts.v1, d01.facts.v2].map((v) => Math.round(v!))).toEqual([20356, 11356, 2356]);
+    expect(() =>
+      solveApply({
+        method: "table-min-var",
+        tables: [
+          { values: [0, 100], weights: [1, 1] },
+          { values: [0, 100], weights: [1, 3] },
+          { values: [0, 100], weights: [3, 1] },
+        ],
+      }),
+    ).toThrow(/期待値が同じ/);
+  });
+});

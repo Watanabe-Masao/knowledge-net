@@ -5,7 +5,7 @@
 import { comb } from "./formula/evaluate";
 import { mechanismMoments, modelPmf, fatigueP, mixSpread, type Mechanism } from "./lab";
 import { INT, NUM2, PCT0, PCT1, PCT2, PCT4, SIG3, formatApply as fa, texApply as tx } from "./applyFormat";
-import type { ApplyEvent, ApplySolve, ApplyStep } from "./apply";
+import { tableMoments, type ApplyEvent, type ApplySolve, type ApplyStep, type ApplyTable } from "./apply";
 /** 割合どうしの差（ずれの目安）は「ポイント」で言う（stats2-course issue 199。% と書くと相対的な増え方と取り違える） */
 /** ポイントの数だけ（「ポイント」の語は教材の文の型が付ける） */
 const ptn = (x: number, f: Parameters<typeof fa>[1]) => fa(x, f).replace(/%$/, "");
@@ -48,6 +48,19 @@ export const APPLY_TEXT_SPEC: Record<string, { vars: readonly string[]; variants
   "compare-var.mean": { vars: [], variants: [] },
   "compare-var.var": { vars: [], variants: [] },
   "event.each": { vars: [], variants: [] },
+  "table-mean-on-table.formula": { vars: [], variants: [] },
+  "table-mean-on-table.goal": { vars: [], variants: [] },
+  "table-mean-on-table.judge": { vars: ["mu", "name"], variants: [] },
+  "table-mean-on-table.means": { vars: [], variants: [] },
+  "table-min-var.compare": { vars: ["name", "r"], variants: [] },
+  "table-min-var.formula": { vars: [], variants: [] },
+  "table-min-var.goal": { vars: ["mu"], variants: [] },
+  "table-min-var.var": { vars: [], variants: [] },
+  "table-weight-for-mean.calc": { vars: [], variants: [] },
+  "table-weight-for-mean.check": { vars: [], variants: [] },
+  "table-weight-for-mean.formula": { vars: [], variants: [] },
+  "table-weight-for-mean.goal": { vars: ["mean", "x"], variants: [] },
+  "table-weight-for-mean.put": { vars: ["S", "W"], variants: [] },
   "event.one": { vars: [], variants: [] },
   "event.sum": { vars: ["k", "nin", "nrest", "op"], variants: ["rest"] },
   "event.total": { vars: [], variants: [] },
@@ -577,8 +590,69 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         },
       ];
     }
+    // ---- 値の表（stats2-course #364）----
+    case "table-weight-for-mean": {
+      const x = s.values[s.index]!,
+        W = s.weights.reduce((a, w, j) => (j === s.index ? a : a + w), 0),
+        S = s.values.reduce((a, v, j) => (j === s.index ? a : a + v * s.weights[j]!), 0),
+        w = answer;
+      return [
+        { ...T("table-weight-for-mean.goal", { x: f(x), mean: f(s.mean) }) },
+        { ...T("table-weight-for-mean.formula"), tex: "E(X)=\\dfrac{\\sum x\\,w}{\\sum w}" },
+        {
+          ...T("table-weight-for-mean.put", { S: f(S), W: f(W) }),
+          tex: `\\dfrac{${f(S)}+${f(x)}\\,w}{${f(W)}+w}=${f(s.mean)}`,
+        },
+        {
+          ...T("table-weight-for-mean.calc"),
+          tex: al([
+            `${f(S)}+${f(x)}\\,w&=${f(s.mean)}\\times(${f(W)}+w)`,
+            `(${f(x)}-${f(s.mean)})\\,w&=${f(s.mean * W)}-${f(S)}`,
+            `w&=${tx(w, NUM2)}`,
+          ]),
+        },
+        {
+          ...T("table-weight-for-mean.check"),
+          tex: `\\dfrac{${f(S)}+${f(x)}\\times${f(w)}}{${f(W)}+${f(w)}}=${f((S + x * w) / (W + w))}`,
+        },
+      ];
+    }
+    case "table-mean-on-table": {
+      const ms = s.tables.map((t) => tableMoments(t).mean),
+        i = answer;
+      return [
+        { ...T("table-mean-on-table.goal") },
+        { ...T("table-mean-on-table.formula"), tex: "E(X)=\\dfrac{\\sum x\\,w}{\\sum w}" },
+        {
+          ...T("table-mean-on-table.means"),
+          tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${sumTex(t)}=${tx(ms[j]!, NUM2)}`)),
+        },
+        { ...T("table-mean-on-table.judge", { name: tName(s.tables[i]!, i), mu: fa(ms[i]!, NUM2) }) },
+      ];
+    }
+    case "table-min-var": {
+      const ms = s.tables.map(tableMoments),
+        i = answer,
+        others = ms.filter((_, j) => j !== i).map((m) => m.variance),
+        r = Math.min(...others) / ms[i]!.variance;
+      return [
+        { ...T("table-min-var.goal", { mu: fa(ms[0]!.mean, NUM2) }) },
+        { ...T("table-min-var.formula"), tex: "V(X)=\\dfrac{\\sum (x-\\mu)^2\\,w}{\\sum w}" },
+        {
+          ...T("table-min-var.var"),
+          tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${tx(ms[j]!.variance, NUM2)}`)),
+        },
+        { ...T("table-min-var.compare", { name: tName(s.tables[i]!, i), r: fa(r, NUM2) }) },
+      ];
+    }
   }
 }
+const tName = (t: ApplyTable, j: number) => t.name ?? String(j + 1);
+/** Σxw÷Σw を値と重みで書く（重みが 0 の行は書かない） */
+const sumTex = (t: ApplyTable) => {
+  const terms = t.values.flatMap((x, j) => (t.weights[j]! > 0 ? [`${f(x)}\\times${f(t.weights[j]!)}`] : []));
+  return `\\dfrac{${terms.join("+")}}{${f(t.weights.reduce((a, b) => a + b, 0))}}`;
+};
 
 /** 崩した起き方の平均と分散の計算（判断の課題） */
 function mechSteps(m: Extract<Mechanism, { p: number }>): ApplyStep[] {
