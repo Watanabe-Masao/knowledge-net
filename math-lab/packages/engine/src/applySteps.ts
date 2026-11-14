@@ -312,7 +312,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         },
         { ...T("expected-observers.one"), tex: "P(X=k)={}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}" },
         ...eventSteps(s.n, s.p, s.event),
-        { ...T("expected-observers.mean", { people: s.people }), tex: al(["Y&\\sim B(N,\\,P)", "E(Y)&=N\\times P"]) },
+        { ...T("expected-observers.mean", { people: s.people }), tex: al(["Y&\\sim B(N,\\,q)", "E(Y)&=N\\times q"]) },
         {
           ...T(
             "expected-observers.calc",
@@ -321,7 +321,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
           ),
           tex: al([`E(Y)&=${s.people}\\times${f(P)}`, `&=${tx(s.people * P, NUM2)}`]),
         },
-        { ...T("expected-observers.any"), tex: al([`1-(1-P)^{N}&=1-(1-${f(P)})^{${s.people}}`, `&=${tx(any, SIG3)}`]) },
+        { ...T("expected-observers.any"), tex: al([`1-(1-q)^{N}&=1-(1-${f(P)})^{${s.people}}`, `&=${tx(any, SIG3)}`]) },
       ];
     }
     case "sets-for-error": {
@@ -342,7 +342,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         },
         { ...T("sets-for-error.prob"), tex: "P(X=k)={}_{n}\\mathrm{C}_{k}\\,p^{k}(1-p)^{n-k}" },
         ...eventSteps(s.n, s.p, s.event),
-        { ...T("sets-for-error.se"), tex: al(["SE&=\\sqrt{\\dfrac{P(1-P)}{N}}", "\\text{目安}&=2\\times SE"]) },
+        { ...T("sets-for-error.se"), tex: al(["SE&=\\sqrt{\\dfrac{q(1-q)}{N}}", "\\text{目安}&=2\\times SE"]) },
         { ...T("sets-for-error.put"), tex: al([`2\\sqrt{\\dfrac{${f(P)}\\times${f(1 - P)}}{N}}&\\le ${f(s.err)}`]) },
         {
           ...T("sets-for-error.calc"),
@@ -426,7 +426,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         {
           ...T("min-total.formula"),
           tex: al([
-            "V_{\\text{戻さない}}&=nP(1-P)\\cdot\\dfrac{N-n}{N-1}",
+            "V_{\\text{戻さない}}&=np(1-p)\\cdot\\dfrac{N-n}{N-1}",
             "\\dfrac{V_{\\text{戻さない}}}{V_{\\text{戻す}}}&=\\dfrac{N-n}{N-1}",
           ]),
         },
