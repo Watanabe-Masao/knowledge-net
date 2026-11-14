@@ -72,6 +72,8 @@ const CASES: ApplySolve[] = [
       { values: [1, 2, 6], weights: [3, 1, 1] },
     ],
   },
+  { method: "table-mean-mode", values: [0, 2, 8], weights: [3, 1, 1] },
+  { method: "table-mean-mode", values: [0, 2, 4], weights: [1, 2, 1], unit: "円" },
   {
     method: "table-min-var",
     tables: [

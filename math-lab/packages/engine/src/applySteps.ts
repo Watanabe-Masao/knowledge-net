@@ -52,6 +52,11 @@ export const APPLY_TEXT_SPEC: Record<string, { vars: readonly string[]; variants
   "table-mean-on-table.goal": { vars: [], variants: [] },
   "table-mean-on-table.judge": { vars: ["mu", "name"], variants: [] },
   "table-mean-on-table.means": { vars: [], variants: [] },
+  "table-mean-mode.goal": { vars: ["mu"], variants: [] },
+  "table-mean-mode.formula": { vars: [], variants: [] },
+  "table-mean-mode.mean": { vars: [], variants: [] },
+  "table-mean-mode.probs": { vars: [], variants: [] },
+  "table-mean-mode.judge": { vars: ["mode", "mu", "pmode", "pmu"], variants: ["same"] },
   "table-min-var.compare": { vars: ["name", "r"], variants: [] },
   "table-min-var.formula": { vars: [], variants: [] },
   "table-min-var.goal": { vars: ["mu"], variants: [] },
@@ -591,6 +596,8 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
       ];
     }
     // ---- 値の表（stats2-course #364）----
+    case "table-mean-mode":
+      return meanModeSteps(s, answer);
     case "table-weight-for-mean": {
       const x = s.values[s.index]!,
         W = s.weights.reduce((a, w, j) => (j === s.index ? a : a + w), 0),
@@ -648,6 +655,37 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
   }
 }
 const tName = (t: ApplyTable, j: number) => t.name ?? String(j + 1);
+/** 反証：期待値の値と、いちばん出やすい値（確率の比べ） */
+function meanModeSteps(s: Extract<ApplySolve, { method: "table-mean-mode" }>, answer: number): ApplyStep[] {
+  const { mean, W } = tableMoments(s),
+    u = s.unit ?? "",
+    top = Math.max(...s.weights),
+    mode = s.values[s.weights.indexOf(top)]!,
+    at = s.values.findIndex((x) => Math.abs(x - mean) <= 1e-9 * Math.max(1, Math.abs(x)));
+  return [
+    { ...T("table-mean-mode.goal", { mu: fa(mean, NUM2) + u }) },
+    { ...T("table-mean-mode.formula"), tex: "E(X)=\\dfrac{\\sum x\\,w}{\\sum w}" },
+    { ...T("table-mean-mode.mean"), tex: `E(X)=${sumTex(s)}=${tx(mean, NUM2)}` },
+    {
+      ...T("table-mean-mode.probs"),
+      tex: al(
+        s.values.map((x, j) => `P(X=${f(x)})&=\\dfrac{${f(s.weights[j]!)}}{${f(W)}}=${tx(s.weights[j]! / W, PCT0)}`),
+      ),
+    },
+    {
+      ...T(
+        "table-mean-mode.judge",
+        {
+          mu: fa(mean, NUM2) + u,
+          pmu: fa(s.weights[at]! / W, PCT0),
+          mode: fa(mode, NUM2) + u,
+          pmode: fa(top / W, PCT0),
+        },
+        answer === 0 ? "same" : undefined,
+      ),
+    },
+  ];
+}
 /** Σxw÷Σw を値と重みで書く（重みが 0 の行は書かない） */
 const sumTex = (t: ApplyTable) => {
   const terms = t.values.flatMap((x, j) => (t.weights[j]! > 0 ? [`${f(x)}\\times${f(t.weights[j]!)}`] : []));

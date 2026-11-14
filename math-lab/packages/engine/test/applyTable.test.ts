@@ -117,4 +117,22 @@ describe("値の表の応用", () => {
       }),
     ).toThrow(/期待値が同じ/);
   });
+
+  // 確かめる対象：table-mean-mode（反証：期待値が表の値でも、その値がいちばん出やすいとは限らない。A-02 の応用。#364 のレビューで作り直し）。
+  // 想定する故障：期待値の値の確率と最頻値の確率の取り違え、重みが並んだとき（最頻値が1つに決まらない）を「言える」にする、
+  //   期待値が表の値でない表を通す。
+  // 見つけ方：手で求めた値と照らす。0・2・8（重み 3・1・1）は期待値 2、P(2)＝20%、いちばん出るのは 0（60%）なので「言えない」。
+  //   0・2・4（重み 1・2・1）は期待値 2 でいちばん出るのも 2（50%）なので「言える」。重みが全部同じ（2・2・2）なら最頻値が1つに決まらず「言えない」。
+  // 既存との違い：上の3つは期待値と分散。これは期待値と最頻値の比べ。
+  // 検出の確かめ（2026-11-14）：same の条件から modes.length === 1 を外すと、重みが同じ表で落ちることを見た
+  it("反証：期待値が表の値でも、いちばん出やすいとは限らない", () => {
+    const r = solveApply({ method: "table-mean-mode", values: [0, 2, 8], weights: [3, 1, 1] });
+    expect(r.answer).toBe(1);
+    expect(r.facts).toMatchObject({ mean: 2, pMean: 0.2, mode: 0, pMode: 0.6 });
+    expect(solveApply({ method: "table-mean-mode", values: [0, 2, 4], weights: [1, 2, 1] }).answer).toBe(0);
+    expect(solveApply({ method: "table-mean-mode", values: [0, 2, 4], weights: [2, 2, 2] }).answer).toBe(1);
+    expect(() => solveApply({ method: "table-mean-mode", values: [1, 2, 3], weights: [2, 1, 1] })).toThrow(
+      /表の値になる表/,
+    );
+  });
 });

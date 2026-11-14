@@ -1,11 +1,11 @@
 // 値の表の実験室（期待値）の応用の段（stats2-course #364）。見本にはまだ応用がないので、読み込みを書き換えて足す（CLAUDE.md「テストの見本」）。
 //
-// 確かめる対象：A-01（逆算）・A-02（評価）・D-01（モデル選択）で、考察のあとに応用の段へ進み、課題に答えると engine が求めた答えで照らし、
+// 確かめる対象：A-01（逆算）・A-02（反証）・D-01（モデル選択）で、考察のあとに応用の段へ進み、課題に答えると engine が求めた答えで照らし、
 //   解き方の段が出ること。つまみ合わせ（グラフを問いに合わせる）は値の表にはまだないので出さない。
 // 想定する故障：値の表の問いに apply を渡し忘れる（応用の段が出ない・考察から先へ進めない）、A-02・D-01 の段の数を変え忘れる
 //   （応用の段の名前が出ない）、つまみのない実験室に「下のつまみを合わせる」と書く、答えの番号と選び肢がずれる。
 // 見つけ方：3問を予測から応用まで通し、正しい答え（手で求めた値：A-01 は (15＋6w)÷(5＋w)＝4 から w＝2.5、A-02 は 0・2・8（重み 3・1・1）の
-//   期待値 2、D-01 は 1000 円の当たりがない C（0・500 円）の分散が 17556 で、B の 11356 がいちばん小さい）で「合っている」、
+//   期待値 2 は表の値でも P(2)＝20% で、いちばん出るのは 0（60%）なので「言えない」、D-01 は 1000 円の当たりがない C（0・500 円）の分散が 17556 で、B の 11356 がいちばん小さい）で「合っている」、
 //   A-02 は違う答えで「ちがう」になり、自分の答えと正しい答えを分けて出す。
 // 既存との違い：engine のテスト（applyTable.test.ts）は答えの数。これは画面の流れと照らし。二項分布の応用のテストは別の部品（つまみ合わせつき）。
 // 検出の確かめ（2026-11-14）：Experiment.tsx で TableSupportQ に apply を渡さないと A-02 が落ちることを見た
@@ -28,18 +28,11 @@ const APPLY: Record<string, object> = {
     why: "動かしたい先から逆に、重みを1つ決められる。",
   },
   "stats2:expect-A-02": {
-    kind: "評価",
-    task: "表1：1・2・3（重み 2・1・1）、表2：0・2・8（重み 3・1・1）、表3：1・2・6（重み 3・1・1）。期待値が表の値の1つになるのはどれ？",
-    solve: {
-      method: "table-mean-on-table",
-      tables: [
-        { values: [1, 2, 3], weights: [2, 1, 1] },
-        { values: [0, 2, 8], weights: [3, 1, 1] },
-        { values: [1, 2, 6], weights: [3, 1, 1] },
-      ],
-    },
-    answer: { type: "choice", options: ["表1", "表2", "表3"] },
-    why: "期待値は値×確率の和で、表の値になることもならないこともある。",
+    kind: "反証",
+    task: "値 0・2・8（重み 3・1・1）の表は、期待値がちょうど表の値の1つになる。では「1回引くと、期待値の値がいちばん出やすい」と言える？",
+    solve: { method: "table-mean-mode", values: [0, 2, 8], weights: [3, 1, 1] },
+    answer: { type: "choice", options: ["言える", "言えない"] },
+    why: "期待値は値×確率の和（重心）で、いちばん出やすい値とは別のもの。",
   },
   "stats2:expect-D-01": {
     kind: "モデル選択",
@@ -104,7 +97,7 @@ test("A-01：考察のあとの応用（逆算）で、重み 2.5 を照らす",
   await expect(a.getByTestId("exp-apply-steps").getByRole("listitem")).toHaveCount(5);
 });
 
-test("A-02：考察のあとに5段目（応用）が出て、評価の答えを照らす", async ({ page }) => {
+test("A-02：考察のあとに5段目（応用）が出て、反証の答えを照らす", async ({ page }) => {
   await page.goto(`./?${SRC}&x=${X}&q=${encodeURIComponent("stats2:expect-A-02")}`);
   const x = page.getByTestId("experiment");
   await expect(x.getByRole("list", { name: "段" }).getByRole("button")).toHaveCount(5);
@@ -115,13 +108,16 @@ test("A-02：考察のあとに5段目（応用）が出て、評価の答えを
   await x.getByTestId("exp-to-observe").click();
   await x.getByRole("button", { name: /理由を考える/ }).click();
   const a = await reasonToApply(page);
-  await a.getByRole("radio", { name: "表1" }).click();
+  await expect(a).toHaveAttribute("data-kind", "反証");
+  await a.getByRole("radio", { name: "言える", exact: true }).click();
   await a.getByTestId("exp-apply-check").click();
   await expect(a.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "false");
-  await expect(a.getByTestId("exp-apply-answer")).toHaveText("表2");
-  await expect(a.getByTestId("exp-apply-yours")).toContainText("あなたの答え：表1");
+  await expect(a.getByTestId("exp-apply-answer")).toHaveText("言えない");
+  await expect(a.getByTestId("exp-apply-yours")).toContainText("あなたの答え：言える");
+  // 解き方の段で、期待値の値の確率（20%）といちばん出る値（0 の 60%）を比べる
+  await expect(a.getByTestId("exp-apply-steps")).toContainText("60%");
   await a.getByTestId("exp-apply-retry").click();
-  await a.getByRole("radio", { name: "表2" }).click();
+  await a.getByRole("radio", { name: "言えない" }).click();
   await a.getByTestId("exp-apply-check").click();
   await expect(a.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "true");
 });

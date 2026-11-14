@@ -52,7 +52,10 @@ export type ApplySolve =
   /** 評価（値の表）：3つの表のうち、期待値が表の値の1つと等しいのはどれか（ちょうど1つ）。answer は番号 */
   | { method: "table-mean-on-table"; tables: ApplyTable[]; unit?: string }
   /** モデル選択（値の表）：期待値が同じ3つの表のうち、分散 Σ(x−μ)²p(x) がいちばん小さいのはどれか。answer は番号 */
-  | { method: "table-min-var"; tables: ApplyTable[]; unit?: string };
+  | { method: "table-min-var"; tables: ApplyTable[]; unit?: string }
+  /** 反証（値の表）：期待値が表の値の1つになる表で、「期待値の値が1回でいちばん出やすい」と言えるか。
+   *  answer は 0＝言える（期待値の値の重みだけがいちばん大きい）・1＝言えない */
+  | { method: "table-mean-mode"; values: number[]; weights: number[]; unit?: string };
 
 type ApplyMethod = ApplySolve["method"];
 type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
@@ -78,6 +81,7 @@ export const APPLY_FIELDS = {
   "table-weight-for-mean": { required: ["values", "weights", "index", "mean"] },
   "table-mean-on-table": { required: ["tables"], optional: ["unit"], choices: 3 },
   "table-min-var": { required: ["tables"], optional: ["unit"], choices: 3 },
+  "table-mean-mode": { required: ["values", "weights"], optional: ["unit"], choices: 2 },
 } as const satisfies {
   [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
 };
@@ -331,6 +335,20 @@ function solveCore(s: ApplySolve): ApplyResult {
         throw new RangeError(`いちばん小さい分散がはっきり1つになるようにする（1.1 倍以上の差）：${vs.join("・")}`);
       return { answer: order[0]!, facts: { mean: mu, v0: vs[0]!, v1: vs[1]!, v2: vs[2]! }, steps: [] };
     }
+    case "table-mean-mode": {
+      checkTable(s);
+      const { mean, W } = tableMoments(s),
+        at = s.values.findIndex((x, j) => s.weights[j]! > 0 && Math.abs(x - mean) <= 1e-9 * Math.max(1, Math.abs(x)));
+      if (at < 0) throw new RangeError(`期待値 ${mean} が表の値になる表にする`);
+      const top = Math.max(...s.weights),
+        modes = s.weights.flatMap((w, j) => (w === top ? [j] : []));
+      const same = modes.length === 1 && modes[0] === at;
+      return {
+        answer: same ? 0 : 1,
+        facts: { mean, pMean: s.weights[at]! / W, mode: s.values[modes[0]!]!, pMode: top / W },
+        steps: [],
+      };
+    }
   }
 }
 
@@ -495,6 +513,7 @@ function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
       return { answerFormat: NUM2, at: {}, mark: {}, vars: [] };
     case "table-mean-on-table":
     case "table-min-var":
+    case "table-mean-mode":
       return { answerFormat: null, at: {}, mark: {}, vars: [] };
   }
 }
