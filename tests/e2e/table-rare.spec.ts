@@ -80,7 +80,7 @@ test("A-03：1本を替えた表。予測（倍率の範囲）→ 同じ引き�
   await expect(x.getByTestId("exp-rare-term")).toContainText("1万×1/100＝100円");
   await expect(x.getByTestId("exp-rare-term")).toContainText("替える前は 100×1/100＝1円");
   await expect(x.getByTestId("exp-rare-term")).toContainText("ほかの項の和は 37円");
-  await expect(x.getByTestId("exp-median-why")).toContainText("100 個を並べたら 50・51 番目");
+  await expect(x.getByTestId("exp-median-why")).toContainText("全部〔100〕を小さい順に並べたら 50・51 番目");
   await x.getByRole("button", { name: "応用の課題へ" }).click();
   const a = x.getByTestId("exp-apply");
   await expect(a).toHaveAttribute("data-kind", "評価");

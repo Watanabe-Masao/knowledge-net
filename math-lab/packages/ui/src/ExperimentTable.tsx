@@ -54,8 +54,8 @@ export type TableTheme = {
   same_mean?: { weights: number[]; change: string };
   /** 1本だけ大きな値に替えた表：values[from] の重みを1減らし、値 to を重み1で足す（改訂10。期待値の実験室 A-03） */
   rare?: { from: number; to: number; label?: string; change: string };
-  /** 全部の値を a 倍して b 足す変換（改訂11。期待値の実験室 C-01） */
-  linear?: { a: number; b: number; change: string };
+  /** 全部の値を a 倍して b 足す変換（改訂11。期待値の実験室 C-01）。unit は変えた値の単位（改訂14。なければテーマの単位） */
+  linear?: { a: number; b: number; change: string; unit?: string };
   /** 1回あたりの値段（改訂12。期待値の実験室 E-01）。word は呼び名（値段・参加費） */
   price?: { c: number; word: string; change: string };
 };
@@ -1927,10 +1927,10 @@ export function TableRareQ({
           {unit}。
         </p>
         <p className={s.muted} data-testid="exp-mean-margin-freq">
-          理論どおりでも、平均の行の1マスが目安の外に出るのは約5%、2マスのどちらかが外に出るのは最大で約9.8%。
+          理論どおりでも、平均の行の1つの数が目安の外に出るのは約5%、2つの数のどちらかが外に出るのは最大で約9.8%。
         </p>
         <p className={s.muted} data-testid="exp-range-freq">
-          理論どおりでも、いまの {n.toLocaleString()} 回で、替えた表の引いた平均が期待値と別の選び肢の範囲に入るのは{" "}
+          理論どおりでも、いまの {n.toLocaleString()} 回で、替えた表の引いた平均が、正しい選び肢と違う範囲に入るのは{" "}
           {about(outside)}（正規分布で近似したおおよその値）。
         </p>
         <section className={s.card} data-testid="exp-look">
@@ -1971,8 +1971,9 @@ export function TableRareQ({
         <section className={s.card}>
           <p className={s.h}>中央値はなぜ動かない？</p>
           <p className={s.muted} data-testid="exp-median-why">
-            中央値は、小さい順に並べた真ん中の順位の値で決まる（表の {tot} 個を並べたら {tot / 2}・{tot / 2 + 1}{" "}
-            番目）。替えた1つは真ん中より上の側に並ぶ。その値をどれだけ大きくしても、真ん中より上の側にある限り、真ん中の順位にある値は変わらない
+            中央値は、小さい順に並べた真ん中の順位の値で決まる（表の全部〔{tot}〕を小さい順に並べたら {tot / 2}・
+            {tot / 2 + 1}{" "}
+            番目）。替えた1つは真ん中より上の側に並ぶ。その値をどれだけ大きくしても、真ん中より上の側にある限り、真ん中の順位にある値は変わらない。引いた値の中央値も、同じ理由で動かない
           </p>
         </section>
       </>
@@ -2046,6 +2047,7 @@ export function TableLinearQ({
   const unit = theme.unit ?? "";
   const lin = theme.linear ?? { a: 1, b: 0, change: "" };
   const { a, b } = lin;
+  const yUnit = lin.unit ?? unit; // 変えた値の単位（買い上げ点数 → ポイント。学習者役のレビュー 2026-11-15。#401 の型7）
   const ys = useMemo(() => theme.values.map((x) => a * x + b), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
   const support = useMemo(() => supportOf(tbl(theme.values, theme.start)), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
   const labels = labelsFor(theme, support, unit);
@@ -2058,7 +2060,7 @@ export function TableLinearQ({
     () => [a * m + b, a * (m + b), a * m].map((x, i) => ({ x, i })).sort((p, q) => p.x - q.x),
     [theme], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const CHOICES = cands.map((c) => `${r2(c.x)}${unit}`);
+  const CHOICES = cands.map((c) => `${r2(c.x)}${yUnit}`);
   const actual = cands.findIndex((c) => c.i === 0);
   const [pr, setPr] = useState<number | undefined>(undefined);
   useEffect(() => setPr(undefined), [theme]);
@@ -2067,7 +2069,7 @@ export function TableLinearQ({
   const meanY = sum.mean === undefined ? undefined : a * sum.mean + b; // 変換後の引いた平均：引いた値を写して平均（線形なので a×平均＋b と同じ値）
   const yKs = useMemo(() => rec.ks.map((k) => a * k + b), [rec]); // eslint-disable-line react-hooks/exhaustive-deps
   const meanYk = yKs.length ? yKs.reduce((p, q) => p + q, 0) / yKs.length : undefined;
-  const labelY = (x: number) => `${r2(a * x + b)}${unit}`;
+  const labelY = (x: number) => `${r2(a * x + b)}${yUnit}`;
   // b の向きを言葉で（負なら「引く」。記号に言葉を添える。⑦ の 4）
   const bWord = b >= 0 ? `${r2(b)} 足す` : `${r2(-b)} 引く`,
     bSigned = b >= 0 ? `＋${r2(b)}` : `−${r2(-b)}`;
@@ -2168,7 +2170,7 @@ export function TableLinearQ({
           <p className={s.muted}>
             平均 元の値 <b data-testid="exp-mean-base">{r2(sum.mean)}</b>
             {unit}・変えた値 <b data-testid="exp-mean-linear">{r2(meanYk)}</b>
-            {unit}（{rec.sets.toLocaleString()} 回）
+            {yUnit}（{rec.sets.toLocaleString()} 回）
           </p>
         )}
       </section>
@@ -2205,7 +2207,7 @@ export function TableLinearQ({
           <span className={s.shape}>
             期待値は {r2(m)}
             {unit} → {r2(mY)}
-            {unit}。予測は「{CHOICES[pr!]}」。
+            {yUnit}。予測は「{CHOICES[pr!]}」。
           </span>
         </div>
         <section className={s.card} data-testid="exp-linear-table">
@@ -2226,7 +2228,7 @@ export function TableLinearQ({
                 </td>
                 <td>
                   {r2(meanYk)}
-                  {unit}
+                  {yUnit}
                 </td>
               </tr>
               <tr data-testid="exp-row-theory">
@@ -2237,7 +2239,7 @@ export function TableLinearQ({
                 </td>
                 <td>
                   {r2(mY)}
-                  {unit}
+                  {yUnit}
                 </td>
               </tr>
             </tbody>
@@ -2247,8 +2249,8 @@ export function TableLinearQ({
           ずれの目安（±2×標準誤差。引いた平均の約95% が、期待値からこの幅に入る）は、いまの {n.toLocaleString()} 回で
           元の値 ±{fmtN(w)}
           {unit}・変えた値 ±{fmtN(Math.abs(a) * w)}
-          {unit}。理論どおりでも、いまの {n.toLocaleString()}{" "}
-          回で、平均の行のマスが目安の外に出るのは約5%（正規分布で近似したおおよその値）。2マスは同じ引きから作るので、外に出るときは一緒に出る。
+          {yUnit}。理論どおりでも、いまの {n.toLocaleString()}{" "}
+          回で、平均の行の数が目安の外に出るのは約5%（正規分布で近似したおおよその値）。2つの数は同じ引きから作るので、外に出るときは一緒に出る。
         </p>
         <section className={s.card} data-testid="exp-look">
           <p className={s.h}>見る所</p>
@@ -2280,7 +2282,7 @@ export function TableLinearQ({
                 <p className={s.muted} data-testid="exp-linear-check">
                   引いた値の平均でも同じ計算になる：{r2(a)}×（元の引いた平均 {r2(sum.mean)}
                   {unit}）{bSigned}＝{r2(meanY)}
-                  {unit}（変えた値の引いた平均と同じ）
+                  {yUnit}（変えた値の引いた平均と同じ）
                 </p>
               )}
             </>
@@ -2551,7 +2553,7 @@ export function TablePriceQ({
         <p className={s.muted} data-testid="exp-mean-margin">
           ずれの目安（±2×標準誤差。約95% が、理論からこの幅に入る）は、いまの {n.toLocaleString()} 回で 損得の平均 ±
           {fmtN(2 * se)}
-          {unit}・損した回の割合 ±{fmtN(200 * seQ)} ポイント。
+          {unit}・損した回の割合 ±{fmtN(200 * seQ)} ポイント（割合の % の差）。
         </p>
         <p className={s.muted} data-testid="exp-flip-freq">
           理論どおりでも、いまの {n.toLocaleString()} 回で、損得の平均の得と損が逆に出るのは {about(flip)}
@@ -2581,13 +2583,14 @@ export function TablePriceQ({
           note={
             <p className={s.muted} data-testid="exp-net-why">
               損得（もらえる額−{price.word}）の表を、値×確率の項に開いた。何度も引いた損得の平均は、この和 {sg(net)}
-              {unit} に近づく。
+              {unit} に近づく。{price.word}が期待値（{r2(m)}
+              {unit}）より小さければ平均で得、等しければ損得なし、大きければ平均で損になる。
               {gC ? `全部の値から同じ額を引くと期待値がどう動くかは ${gC} で確かめる。` : ""}
             </p>
           }
         />
         <section className={s.card}>
-          <p className={s.h}>損した回が多くても、平均では得？</p>
+          <p className={s.h}>損した回の割合と、平均の損得は別</p>
           <p className={s.muted} data-testid="exp-loss-why">
             損した回の割合（{pctSig(qLoss)}）と、1回あたりの損得の平均（{sg(net)}
             {unit}）は別の量。1回ごとに損しやすいかと、何度も引いたときに平均で得かは、別々に見る。
@@ -2701,9 +2704,17 @@ export function TableLlnQ({
     d1 = useDraws(tabs[1]!.values, tabs[1]!.weights, 1),
     d2 = useDraws(tabs[2]!.values, tabs[2]!.weights, 2);
   const ds = [d0, d1, d2];
-  const means = ds.map((d) => summarize(d.rec).mean);
-  const done = ds.every((d) => d.rec.sets >= N);
-  const lab = (i: number) => `打ち切り ${Ks[i]} 回`;
+  // 1組＝N 回。組をくり返して、期待値より下に出た組を数える（予測〔下に出ることが多いか〕と同じ粒度で照らす。学習者役のレビュー 2026-11-15。#401 の型8）
+  const SETS = 5;
+  const groups = ds.map((d) => {
+    const ms: number[] = [];
+    for (let j = 0; j + N <= d.rec.ks.length; j += N) ms.push(d.rec.ks.slice(j, j + N).reduce((p, q) => p + q, 0) / N);
+    return ms;
+  });
+  const belowCount = groups.map((ms, i) => ms.filter((m) => m < Es[i]!).length);
+  const done = groups.every((ms) => ms.length >= SETS);
+  // 打ち切りはコインを投げる回なので「投」で数える（1000 回引く の「回」と分ける。⑦ の 4）
+  const lab = (i: number) => `打ち切り ${Ks[i]} 投`;
   const [sheet, setSheet] = useState(false);
   const guide = (re: RegExp) =>
     (def.catalog ?? [])
@@ -2723,7 +2734,7 @@ export function TableLlnQ({
             倍々のくじ（{lab(1)}）<span>もらえる額と確率</span>
           </p>
           <p className={s.story}>
-            {cx.text.split("。")[0]}。{Ks[1]} 回目まで表が出なければ {Ks[1]} 回目の額
+            {cx.text.split("。")[0]}。{Ks[1]} 投目まで表が出なければ {Ks[1]} 投目の額
           </p>
           <Bars
             theory={modelPmf(tbl(t0.values, t0.weights))}
@@ -2739,7 +2750,7 @@ export function TableLlnQ({
         </section>
         <section className={s.card}>
           <p className={s.h}>
-            このくじを {N.toLocaleString()} 回引いた平均は、期待値 {r2(Es[1])}
+            このくじを {N.toLocaleString()} 回引いて平均を出す（1組）。組をくり返すと、平均は期待値 {r2(Es[1])}
             {unit} と比べてどう出ることが多い？
           </p>
           <div className={s.choice} role="radiogroup" aria-label="期待値の予測" data-testid="exp-pred-lln">
@@ -2788,15 +2799,17 @@ export function TableLlnQ({
         </div>
         <section className={s.card} data-testid="exp-lln-runs">
           <p className={s.h}>
-            引いた平均<span>{N.toLocaleString()} 回ずつ</span>
+            組ごとの平均<span>1組＝{N.toLocaleString()} 回</span>
           </p>
           {Ks.map((K, i) => (
             <p key={K} className={s.muted} data-testid={`exp-lln-run-${i}`}>
               {lab(i)}：
-              {ds[i]!.rec.sets ? (
+              {groups[i]!.length ? (
                 <>
-                  平均 <b>{r2(means[i])}</b>
-                  {unit}（{ds[i]!.rec.sets.toLocaleString()} 回）
+                  {groups[i]!.length} 組（期待値 {r2(Es[i])}
+                  {unit} より下に出た組 <b>{belowCount[i]}</b>）。いちばん新しい組の平均{" "}
+                  {r2(groups[i]![groups[i]!.length - 1])}
+                  {unit}
                 </>
               ) : (
                 "まだ引いていない"
@@ -2811,14 +2824,16 @@ export function TableLlnQ({
         <button
           type="button"
           className={s.primary}
-          disabled={d.rec.sets >= N}
-          onClick={() => d.run(N, 100)}
+          disabled={groups[k]!.length >= SETS}
+          onClick={() => d.run(SETS * N, 500)}
           data-testid="exp-run-1000"
         >
-          {d.rec.sets >= N ? `${lab(k)}は引いた` : `▶ ${lab(k)}を 1000 回`}
+          {groups[k]!.length >= SETS
+            ? `${lab(k)}は引いた`
+            : `▶ ${lab(k)}を ${SETS} 組（${N.toLocaleString()} 回ずつ）`}
         </button>
         <button type="button" className={s.next} disabled={!done} onClick={() => go(2)} data-testid="exp-to-observe">
-          {done ? "観察する →" : `3つの打ち切りを ${N.toLocaleString()} 回ずつ引くと観察できる`}
+          {done ? "観察する →" : `3つの打ち切りを ${SETS} 組ずつ引くと観察できる`}
         </button>
       </>
     );
@@ -2829,18 +2844,17 @@ export function TableLlnQ({
         <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
           <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>
           <span className={s.shape}>
-            {lab(1)}の {N.toLocaleString()} 回の平均が期待値 {r2(Es[1])}
-            {unit} より下に出るのは、おおよそ {`${sig2(100 * b1)}%`}（{CHOICES[actual]}）。予測は「
-            {CHOICES[pr!]}」。
+            {lab(1)}で、1組の平均が期待値 {r2(Es[1])}
+            {unit} より下に出るのは、おおよそ {`${sig2(100 * b1)}%`}（{CHOICES[actual]}）。予測は「{CHOICES[pr!]}」。
           </span>
         </div>
         <section className={s.card} data-testid="exp-lln-table">
           <table className={s.cmpTable}>
             <thead>
               <tr>
-                <th scope="col">{N.toLocaleString()} 回</th>
+                <th scope="col">{SETS} 組</th>
                 <th scope="col">期待値</th>
-                <th scope="col">引いた平均</th>
+                <th scope="col">下に出た組</th>
               </tr>
             </thead>
             <tbody>
@@ -2852,28 +2866,25 @@ export function TableLlnQ({
                     {unit}
                   </td>
                   <td>
-                    {r2(means[i])}
-                    {unit}
+                    {belowCount[i]} / {groups[i]!.length}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </section>
-        <p className={s.muted} data-testid="exp-mean-margin">
-          ずれの目安（±2×標準誤差）は、いまの各 {N.toLocaleString()} 回で{" "}
-          {Ks.map((K, i) => `${lab(i)} ±${sig2(2 * Math.sqrt(Vs[i]! / N))}${unit}`).join("・")}
-          。引いた平均の約95% がこの幅に入るのは、ずれの分布が正規分布に近い{lab(0)}
-          のとき。分散が有限なら、どんな分布でも目安の外に出るのは 25% 以下（チェビシェフの不等式）。
-        </p>
         <p className={s.muted} data-testid="exp-below-freq">
-          理論どおりに引いても、{N.toLocaleString()} 回の平均が期待値より下に出るのは、おおよそ{" "}
-          {Ks.map((K, i) => `${`${sig2(100 * below[i]!)}%`}（${K} 回）`).join("・")}
-          （決まった種で {N.toLocaleString()} 回の実験を 2000 組くり返して求めたおおよその値）。
+          理論どおりに引いても、1組（{N.toLocaleString()} 回）の平均が期待値より下に出るのは、おおよそ{" "}
+          {Ks.map((K, i) => `${sig2(100 * below[i]!)}%（${lab(i)}）`).join("・")}
+          （決まった種で 1組を 2000 組くり返して求めたおおよその値）。
+        </p>
+        <p className={s.muted} data-testid="exp-mean-margin">
+          ずれの目安（±2×標準誤差）は、1組の平均で{" "}
+          {Ks.map((K, i) => `${lab(i)} ±${sig2(2 * Math.sqrt(Vs[i]! / N))}${unit}`).join("・")}。
         </p>
         <section className={s.card} data-testid="exp-look">
           <p className={s.h}>見る所</p>
-          <p className={s.muted}>引いた平均の列と期待値の列を、打ち切りごとに見比べる。</p>
+          <p className={s.muted}>下に出た組の数を、打ち切りごとに見比べる。</p>
         </section>
       </>
     );
@@ -2883,11 +2894,10 @@ export function TableLlnQ({
       </button>
     );
   } else {
-    // 1000 回で引くことがまれな額の境目：2^j（j＝log₂n を切り上げて 1 足す）。1回でそれ以上を引く確率は 2^−(j−1)
-    const j1 = Math.ceil(Math.log2(N)) + 1,
-      j2 = j1 + 4;
+    // 1000 回で引くことがまれな額の境目：2^j（j＝log₂n を切り上げて 5 足す）。1回でそれ以上を引く確率は 2^−(j−1)
+    const j2 = Math.ceil(Math.log2(N)) + 5;
     const Kmax = Ks[2]!;
-    const carried = Kmax - j1 + 2; // k＝j1〜K−1 の項がどれも 1、k＝K は 2
+    const carried = Kmax - j2 + 2; // k＝j2〜K−1 の項がどれも 1、k＝K は 2
     const pAny = (j: number) => 1 - (1 - 2 ** -(j - 1)) ** N;
     const gA = guide(/-A-03$/);
     body = (
@@ -2895,28 +2905,32 @@ export function TableLlnQ({
         <section className={s.card}>
           <p className={s.h}>打ち切りを上げると、期待値はどうなる？</p>
           <p className={s.muted} data-testid="exp-lln-terms">
-            k 回目の額 2ᵏ 円に確率 (1/2)ᵏ を掛けた項は、どれも 1。打ち切りを 1 回上げるたびに期待値は 1 増える（{lab(0)}{" "}
+            k 投目の額 2ᵏ 円に確率 (1/2)ᵏ を掛けた項は、どれも 1。打ち切りを 1 投上げるたびに期待値は 1 増える（{lab(0)}{" "}
             {r2(Es[0])}円・{lab(1)} {r2(Es[1])}円・{lab(2)} {r2(Es[2])}
             円）。打ち切りをなくすと期待値（項の和）は有限にならず、平均が近づく先がない。
           </p>
         </section>
         <section className={s.card}>
-          <p className={s.h}>なぜ引いた平均は期待値より下にとどまる？</p>
+          <p className={s.h}>なぜ組の平均は期待値より下に出やすい？</p>
           <p className={s.muted} data-testid="exp-lln-tail">
-            {lab(2)}の期待値 {r2(Es[2])} 円のうち、2^{j1} 円以上の額が {carried} 円分を担う。{N.toLocaleString()} 回で
-            2^{j1} 円以上を1回でも引く確率は約 {`${sig2(100 * pAny(j1))}%`}、2^{j2} 円以上は約{" "}
-            {`${sig2(100 * pAny(j2))}%`}
-            。期待値の大半をまれで巨大な額が支えるので、引ける回数では平均がたいてい期待値より下にとどまる。
+            {lab(2)}の期待値 {r2(Es[2])} 円のうち {carried} 円分は、2^{j2} 円以上の額が担う。でも 1組（
+            {N.toLocaleString()} 回）でそれを1回でも引くのは約 {`${sig2(100 * pAny(j2))}%`}
+            。期待値の大半をまれで巨大な額が支えるので、1組の平均はたいてい期待値より下に出る。
             {gA ? `まれな大きい値の効き方は ${gA} で確かめる。` : ""}
           </p>
         </section>
         <section className={s.card}>
           <p className={s.h}>平均が期待値に近づくのは、どんなとき？</p>
           <p className={s.muted} data-testid="exp-lln-cond">
-            同じ表から独立に引いた平均は、期待値が有限なら、引く回数を増やすと期待値の近くに入る確率が 1
-            に近づく（大数の法則）。ずれの目安 ±2σ/√n（σ は1回の額の標準偏差、n
-            は引く回数）で回数を見積もれるのは、分散も有限のとき。{lab(2)}で目安を期待値の 1 割（±
-            {r2(Es[2]! / 10)}円）にするには約 {sig2(((2 * Math.sqrt(Vs[2]!)) / (Es[2]! / 10)) ** 2)} 回要る。
+            同じ表から独立に引いた平均は、分散が有限なら、引く回数を増やすと期待値の近くに入る確率が 1
+            に近づく（大数の法則）。期待値が有限でない表には、近づく先がない。
+          </p>
+          <p className={s.muted} data-testid="exp-lln-margin-why">
+            ずれの目安は ±2√(V(X)/n)（V(X) は1回の額の分散、n は引く回数）。引いた平均の約95%
+            がこの幅に入るのは、ずれの分布が正規分布に近いとき（
+            {lab(0)}）。分散が有限なら、どんな分布でも幅の外に出るのは 25% 以下（チェビシェフの不等式）。{lab(2)}
+            で目安を期待値の 1 割（±{r2(Es[2]! / 10)}円）にするには約{" "}
+            {sig2(((2 * Math.sqrt(Vs[2]!)) / (Es[2]! / 10)) ** 2)} 回要る。
           </p>
         </section>
       </>
