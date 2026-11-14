@@ -55,7 +55,8 @@ export type ApplySolve =
   | { method: "table-min-var"; tables: ApplyTable[]; unit?: string }
   /** 反証（値の表）：期待値が表の値の1つになる表で、「期待値の値が1回でいちばん出やすい」と言えるか。
    *  answer は 0＝言える（期待値の値の重みだけがいちばん大きい）・1＝言えない */
-  | { method: "table-mean-mode"; values: number[]; weights: number[]; unit?: string };
+  | { method: "table-mean-mode"; values: number[]; weights: number[]; unit?: string }
+  | { method: "table-mean-median-gap"; tables: ApplyTable[]; unit?: string };
 
 type ApplyMethod = ApplySolve["method"];
 type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
@@ -82,6 +83,7 @@ export const APPLY_FIELDS = {
   "table-mean-on-table": { required: ["tables"], optional: ["unit"], choices: 3 },
   "table-min-var": { required: ["tables"], optional: ["unit"], choices: 3 },
   "table-mean-mode": { required: ["values", "weights"], optional: ["unit"], choices: 2 },
+  "table-mean-median-gap": { required: ["tables"], optional: ["unit"], choices: 3 },
 } as const satisfies {
   [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
 };
@@ -123,6 +125,22 @@ export const tableMoments = (t: { values: number[]; weights: number[] }) => {
     mean = t.values.reduce((a, x, i) => a + x * t.weights[i]!, 0) / W,
     variance = t.values.reduce((a, x, i) => a + (x - mean) ** 2 * t.weights[i]!, 0) / W;
   return { mean, variance, W };
+};
+/** 重みを人数とみた表の中央値（全員を小さい順に並べた真ん中の人の値。偶数なら真ん中の2人の平均。データの中央値。stats2-course #119 A-03）。
+ *  pos は真ん中の順位（1 から。偶数なら2つ） */
+export const tableMedian = (t: { values: number[]; weights: number[] }) => {
+  const W = t.weights.reduce((a, b) => a + b, 0);
+  const order = t.values.map((v, j) => [v, t.weights[j]!] as const).sort((a, b) => a[0] - b[0]);
+  const at = (r: number) => {
+    let c = 0;
+    for (const [v, w] of order) {
+      c += w;
+      if (r <= c) return v;
+    }
+    return order[order.length - 1]![0];
+  };
+  const pos = W % 2 ? [(W + 1) / 2] : [W / 2, W / 2 + 1];
+  return { median: pos.reduce((a, r) => a + at(r), 0) / pos.length, pos, W };
 };
 const checkTable = (t: { values: number[]; weights: number[] }) => {
   if (!(t.values.length >= 2 && t.values.length === t.weights.length))
@@ -335,6 +353,19 @@ function solveCore(s: ApplySolve): ApplyResult {
         throw new RangeError(`いちばん小さい分散がはっきり1つになるようにする（1.1 倍以上の差）：${vs.join("・")}`);
       return { answer: order[0]!, facts: { mean: mu, v0: vs[0]!, v1: vs[1]!, v2: vs[2]! }, steps: [] };
     }
+    case "table-mean-median-gap": {
+      // 評価（期待値の実験室 A-03。stats2-course #119）：平均（期待値）と中央値がいちばん離れる表を選ぶ。重みは人数（整数）で、3つの表の人数はそろえる
+      checkThree(s.tables);
+      if (!s.tables.every((t) => t.weights.every(Number.isInteger)))
+        throw new RangeError("重みは人数（整数）にする（中央値を並べた順位で決めるため）");
+      const Ws = s.tables.map((t) => t.weights.reduce((a, b) => a + b, 0));
+      if (!Ws.every((W) => W === Ws[0])) throw new RangeError(`3つの表の人数をそろえる：${Ws.join("・")}`);
+      const gaps = s.tables.map((t) => Math.abs(tableMoments(t).mean - tableMedian(t).median)),
+        order = [0, 1, 2].sort((a, b) => gaps[b]! - gaps[a]!);
+      if (!(gaps[order[0]!]! >= 1.1 * gaps[order[1]!]!))
+        throw new RangeError(`いちばん大きい差がはっきり1つになるようにする（1.1 倍以上）：${gaps.join("・")}`);
+      return { answer: order[0]!, facts: { g0: gaps[0]!, g1: gaps[1]!, g2: gaps[2]! }, steps: [] };
+    }
     case "table-mean-mode": {
       checkTable(s);
       const { mean, W } = tableMoments(s),
@@ -514,6 +545,7 @@ function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
     case "table-mean-on-table":
     case "table-min-var":
     case "table-mean-mode":
+    case "table-mean-median-gap":
       return { answerFormat: null, at: {}, mark: {}, vars: [] };
   }
 }

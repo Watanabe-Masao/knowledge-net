@@ -54,6 +54,7 @@ export {
   applyCheck,
   solveApply,
   solveValue,
+  tableMedian,
   tableMoments,
   type ApplyCheck,
   type ApplyMark,

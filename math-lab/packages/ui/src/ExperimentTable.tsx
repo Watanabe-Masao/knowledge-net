@@ -15,6 +15,7 @@ import {
   runSets,
   summarize,
   supportOf,
+  tableMedian,
   toTex,
   type CardMechanism,
   type FormulaNode,
@@ -50,6 +51,8 @@ export type TableTheme = {
   change: string;
   /** 期待値が start と同じ別の表（重みは全部正）と、何を変えたかの文（kn-experiment の改訂6。期待値の実験室 D-01。stats2-course #119） */
   same_mean?: { weights: number[]; change: string };
+  /** 1本だけ大きな値に替えた表：values[from] の重みを1減らし、値 to を重み1で足す（改訂10。期待値の実験室 A-03） */
+  rare?: { from: number; to: number; label?: string; change: string };
 };
 export type TableDef = {
   id: string;
@@ -1585,6 +1588,399 @@ export function TableSameMeanQ({
     <LabShell
       title={def.title}
       question={question ?? "2つの表、何度も引くと何が違う？"}
+      stage={stage}
+      reached={reached}
+      go={go}
+      onBack={onBack}
+      stages={apply ? STAGES_Q : SUPPORT_STAGES}
+      body={body}
+      cta={cta}
+      onInfo={() => setSheet(true)}
+    >
+      {sheet && (
+        <TableInfo
+          def={def}
+          theme={theme}
+          reasonFormula={reasonFormula}
+          definitions={definitions}
+          onConcept={onConcept}
+          conceptName={conceptName}
+          onClose={() => setSheet(false)}
+        />
+      )}
+    </LabShell>
+  );
+}
+
+/**
+ * まれでも大きい値が1本ある表の問い（期待値の実験室 A-03。stats2-course の issue 119。kn-experiment の改訂10）。
+ * 予測：元の表の期待値 m を見せ、1本だけ大きな値に替えると期待値が m の何倍ほどになるか（3つの範囲）→
+ * 実験：替えた表から引く。元の表は「同じ引きで、替えた1本が元の値だったら」として引いた値を写す（比べる条件をそろえる：違うのは大当たりを引いた回だけ）→
+ * 観察：平均（引いた）・中央値（引いた）・期待値を2つの表で並べ、見る所だけを指す →
+ * 考察：替えた表を値×確率の項に開き、替えた1本の項の大きさと、中央値が順位で決まることを言う。
+ * 平均がなかなか落ち着かないことはこの問いで言わない（B-01・B-02 で確かめる。⑦ の 2）
+ */
+export function TableRareQ({
+  def,
+  reasonFormula,
+  onBack,
+  onConcept,
+  conceptName,
+  definitions,
+  question,
+  apply,
+}: Props & { def: TableDef; question?: string; apply?: ApplySpec }) {
+  const { stage, reached, go } = useStages(0);
+  const themes = def.themes.filter((t) => t.rare);
+  const [theme, setTheme] = useState(themes[0] ?? def.themes[0]!);
+  const unit = theme.unit ?? "";
+  const rare = theme.rare ?? { from: 0, to: theme.values[0]!, change: "" };
+  const R = useMemo(() => [...theme.values, rare.to], [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const wBase = useMemo(() => [...theme.start, 0], [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const wRare = useMemo(
+    () => [...theme.start.map((w, i) => (i === rare.from ? w - 1 : w)), 1],
+    [theme], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const support = useMemo(() => supportOf(tbl(R, wRare)), [R, wRare]);
+  const labels = labelsFor(
+    { values: R, labels: theme.labels ? [...theme.labels, rare.label ?? `${rare.to}${unit}`] : undefined },
+    support,
+    unit,
+  );
+  const pmf = (w: number[]) => {
+    const tot = w.reduce((a, b) => a + b, 0);
+    return support.map((v) => w[R.indexOf(v)]! / tot);
+  };
+  const thBase = useMemo(() => pmf(wBase), [support]); // eslint-disable-line react-hooks/exhaustive-deps
+  const thRare = useMemo(() => pmf(wRare), [support]); // eslint-disable-line react-hooks/exhaustive-deps
+  const mBase = meanOf(R, wBase),
+    mRare = meanOf(R, wRare);
+  const vBase = varOf(R, wBase),
+    vRare = varOf(R, wRare);
+  // 予測の選び肢：元の期待値の 1.2 倍・1.6 倍を境に3つ。予測の段に見えている数で聞き、見当では選べないよう境目を詰める
+  // （⑦ の 2。1.1 倍・2 倍では、買い上げ点数の答えが広い真ん中に入り「少し上がる」の見当で当たった。⑦ の監査役 2026-11-14）
+  const cut1 = 1.2 * mBase,
+    cut2 = 1.6 * mBase;
+  const RANGES = [`${r2(cut1)}${unit} まで`, `${r2(cut1)}〜${r2(cut2)}${unit}`, `${r2(cut2)}${unit} より大きい`];
+  const actual = mRare <= cut1 ? 0 : mRare <= cut2 ? 1 : 2;
+  const [pr, setPr] = useState<number | undefined>(undefined);
+  useEffect(() => setPr(undefined), [theme]);
+  const { rec, run } = useDraws(R, wRare);
+  const sum = summarize(rec);
+  const from = theme.values[rare.from]!;
+  // 元の表の引いた値：同じ引きで、替えた1本が元の値だったら（大当たりを引いた回だけが違う）
+  const baseKs = useMemo(() => rec.ks.map((k) => (k === rare.to ? from : k)), [rec]); // eslint-disable-line react-hooks/exhaustive-deps
+  const baseMean = baseKs.length ? baseKs.reduce((a, b) => a + b, 0) / baseKs.length : undefined;
+  const iTo = support.indexOf(rare.to),
+    iFrom = support.indexOf(from);
+  const hits = rec.counts[iTo] ?? 0;
+  const baseCounts = rec.counts.map((c, i) => (i === iTo ? 0 : i === iFrom ? c + hits : c));
+  // 引いた値の中央値（データの中央値。① の定義）：値ごとの回数を人数とみて、並べた真ん中
+  const medOf = (counts: number[]) =>
+    counts.some((c) => c > 0) ? tableMedian({ values: support, weights: counts }).median : undefined;
+  const medRare = medOf(rec.counts),
+    medBase = medOf(baseCounts);
+  const pHit = 1 / wRare.reduce((a, b) => a + b, 0);
+  const labelOf = (v: number) => labels[support.indexOf(v)] ?? `${v}${unit}`;
+  const NEED = 1000;
+  const [sheet, setSheet] = useState(false);
+
+  let body: ReactNode, cta: ReactNode;
+  if (stage === 0) {
+    body = (
+      <>
+        <div className={s.themes} role="radiogroup" aria-label="テーマ">
+          {themes.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={t.id === theme.id}
+              onClick={() => {
+                haptic();
+                setTheme(t);
+              }}
+            >
+              <span aria-hidden="true">{t.icon}</span>
+              {t.name}
+            </button>
+          ))}
+        </div>
+        <section className={s.card} data-testid="exp-table-base">
+          <p className={s.h}>
+            元の表<span>値と確率</span>
+          </p>
+          {theme.story && <p className={s.story}>{theme.story}</p>}
+          <Bars theory={thBase} labels={labels} at={support} height={120} label="元の表の確率" />
+          <p className={s.muted} data-testid="exp-base-mean">
+            元の表の期待値（何度も引いた平均の行き先）は {r2(mBase)}
+            {unit}
+          </p>
+        </section>
+        <section className={s.card} data-testid="exp-table-rare">
+          <p className={s.h}>
+            1本を替えた表<span>値と確率</span>
+          </p>
+          <p className={s.story}>{rare.change}</p>
+          <Bars theory={thRare} labels={labels} at={support} height={120} label="1本を替えた表の確率" />
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>1本だけ替えると、何度も引いた平均の行き先（期待値）は？</p>
+          <div className={s.choice} role="radiogroup" aria-label="期待値の予測" data-testid="exp-pred-rare">
+            {RANGES.map((d, i) => (
+              <button
+                key={d}
+                type="button"
+                role="radio"
+                aria-checked={pr === i}
+                onClick={() => {
+                  haptic();
+                  setPr(i);
+                }}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} disabled={pr === undefined} onClick={() => go(1)}>
+        {pr === undefined ? "まず予測を選ぶ" : "この予測で引いてみる"}
+      </button>
+    );
+  } else if (stage === 1) {
+    const last = rec.ks.slice(-8);
+    body = (
+      <>
+        <section className={s.card}>
+          <p className={s.h}>
+            引いた値<span>1本を替えた表</span>
+          </p>
+          <div className={s.draws} data-testid="exp-draws" key={rec.sets}>
+            {last.length ? (
+              last.map((v, i) => (
+                <span key={`${rec.sets}-${i}`} className={i === last.length - 1 ? s.drawNew : s.draw}>
+                  {labelOf(v)}
+                </span>
+              ))
+            ) : (
+              <span className={s.muted}>「▶ 100 回」を押すと、1本を替えた表から引く</span>
+            )}
+          </div>
+          <p className={s.muted}>
+            元の表は、同じ引きで替えた1本が元の {labelOf(from)} だったときの値（違うのは {labelOf(rare.to)}{" "}
+            を引いた回だけ）
+          </p>
+          {rec.sets > 0 && (
+            <p className={s.muted}>
+              平均 元の表 <b data-testid="exp-mean-base">{r2(baseMean)}</b>
+              {unit}・替えた表 <b data-testid="exp-mean-rare">{r2(sum.mean)}</b>
+              {unit}（{rec.sets.toLocaleString()} 回。{labelOf(rare.to)} は <span data-testid="exp-hits">{hits}</span>{" "}
+              回）
+            </p>
+          )}
+          {rec.sets > 0 && (
+            // 100 回で止めると大当たりなしが約37% あり、平均が変わらないように見える。そのことを今の回数で言う（⑦ の 2。監査役 2026-11-14）
+            <p className={s.muted} data-testid="exp-nohit">
+              理論どおりでも、いまの {rec.sets.toLocaleString()} 回で {labelOf(rare.to)} を1回も引かないのは{" "}
+              {about((1 - pHit) ** rec.sets)}
+            </p>
+          )}
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>
+            出た値の割合<span data-testid="exp-sets">{rec.sets.toLocaleString()} 回</span>
+          </p>
+          <Bars freq={sum.freq} labels={labels} at={support} label="1本を替えた表で引いた値の割合" />
+        </section>
+      </>
+    );
+    cta = (
+      <>
+        <div className={s.two}>
+          <button type="button" className={s.secondary} onClick={() => run(100, 20)} data-testid="exp-run-100">
+            ▶ 100 回
+          </button>
+          <button type="button" className={s.primary} onClick={() => run(1000, 100)} data-testid="exp-run-1000">
+            ▶ 1000 回
+          </button>
+        </div>
+        <button
+          type="button"
+          className={s.next}
+          disabled={rec.sets < NEED}
+          onClick={() => go(2)}
+          data-testid="exp-to-observe"
+        >
+          {rec.sets < NEED ? `あと ${(NEED - rec.sets).toLocaleString()} 回で観察できる` : "観察する →"}
+        </button>
+      </>
+    );
+  } else if (stage === 2) {
+    const ok = pr === actual;
+    const n = rec.sets;
+    // 引いた平均が、理論の答えと別の選び肢の範囲に入る頻度（正規近似なので「おおよそ」。⑦ の 2。監査役 2026-11-14）
+    const se = Math.sqrt(vRare / n),
+      lo = actual === 0 ? -Infinity : actual === 1 ? cut1 : cut2,
+      hi = actual === 0 ? cut1 : actual === 1 ? cut2 : Infinity;
+    const outside = 1 - (normalCdf((hi - mRare) / se) - normalCdf((lo - mRare) / se));
+    body = (
+      <>
+        <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
+          <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>
+          <span className={s.shape}>
+            期待値は {r2(mBase)}
+            {unit} → {r2(mRare)}
+            {unit}（{r2(mRare / mBase)} 倍）。予測は「{RANGES[pr!]}」。
+          </span>
+        </div>
+        <section className={s.card}>
+          <div className={s.legend}>
+            <span>
+              <i className={s.kBar} />
+              引いた値の割合
+            </span>
+            <span>
+              <i className={s.kDot} />
+              表の確率
+            </span>
+          </div>
+          <Bars
+            freq={sum.freq}
+            theory={thRare}
+            labels={labels}
+            at={support}
+            marker={mRare}
+            height={160}
+            label="1本を替えた表で引いた割合と表の確率と期待値"
+          />
+        </section>
+        <section className={s.card} data-testid="exp-rare-table">
+          <table className={s.cmpTable}>
+            <thead>
+              <tr>
+                <th scope="col">{n.toLocaleString()} 回</th>
+                <th scope="col">元の表</th>
+                <th scope="col">1本を替えた表</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-testid="exp-row-mean">
+                <td>平均（引いた）</td>
+                <td>
+                  {r2(baseMean)}
+                  {unit}
+                </td>
+                <td>
+                  {r2(sum.mean)}
+                  {unit}
+                </td>
+              </tr>
+              <tr data-testid="exp-row-median">
+                <td>中央値（引いた）</td>
+                <td>
+                  {r2(medBase)}
+                  {unit}
+                </td>
+                <td>
+                  {r2(medRare)}
+                  {unit}
+                </td>
+              </tr>
+              <tr data-testid="exp-row-theory">
+                <td>期待値（表から）</td>
+                <td>
+                  {r2(mBase)}
+                  {unit}
+                </td>
+                <td>
+                  {r2(mRare)}
+                  {unit}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p className={s.muted}>
+            中央値は、引いた値を小さい順に並べた真ん中の値。{labelOf(rare.to)} を引いたのは {n.toLocaleString()}{" "}
+            回のうち {hits} 回
+          </p>
+        </section>
+        <p className={s.muted} data-testid="exp-mean-margin">
+          引いた平均は、いまの {n.toLocaleString()} 回では、期待値の上下 ±{fmtN(2 * Math.sqrt(vBase / n))}
+          {unit}（元の表）・±{fmtN(2 * Math.sqrt(vRare / n))}
+          {unit}（替えた表）に約95%
+          が入る（ずれの目安。±2×標準誤差）。理論どおりでも、1つの列が目安の外に出るのはおおよそ5%、2つの列のどちらかが外に出るのは最大で約9.8%（2つの列は同じ引きから作るので、独立と仮定した値が上限）。
+        </p>
+        <p className={s.muted} data-testid="exp-range-freq">
+          理論どおりでも、いまの {n.toLocaleString()} 回で、替えた表の引いた平均が期待値と別の選び肢の範囲に入るのは{" "}
+          {about(outside)}（正規分布で近似したおおよその値）。
+        </p>
+        <section className={s.card} data-testid="exp-look">
+          <p className={s.h}>見る所</p>
+          <p className={s.muted}>
+            平均の行と中央値の行で、元の表と替えた表の数がどう違うかを見比べる。ずれの目安の幅の違いは B-01・D-01
+            で確かめる
+          </p>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(3)}>
+        なぜそうなる？ 理由を考える
+      </button>
+    );
+  } else {
+    const tot = wRare.reduce((a, b) => a + b, 0);
+    const term = rare.to / tot,
+      rest = mRare - term;
+    body = (
+      <>
+        <TableReason
+          title={def.reason?.title}
+          reasonFormula={reasonFormula}
+          values={R}
+          weights={wRare}
+          note={
+            <p className={s.muted} data-testid="exp-rare-term">
+              {labelOf(rare.to)}×1/{tot}＝{r2(term)}
+              {unit}。この1項だけで、ほかの項の和（{r2(rest)}
+              {unit}）{term > rest ? "より大きい" : "と比べて小さくない"}
+            </p>
+          }
+        />
+        <section className={s.card}>
+          <p className={s.h}>中央値はなぜ動かない？</p>
+          <p className={s.muted} data-testid="exp-median-why">
+            中央値は、小さい順に並べた真ん中の順位の値で決まる（{tot} 本を並べたら {tot / 2}・{tot / 2 + 1}{" "}
+            番目）。替えた1本は真ん中より上の側に並ぶので、その値を真ん中より上の側にある限りいくら大きくしても、真ん中の順位にある値は変わらない
+          </p>
+        </section>
+      </>
+    );
+    cta = apply ? (
+      <button type="button" className={s.primary} onClick={() => go(4)}>
+        応用の課題へ
+      </button>
+    ) : (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  if (stage === 4 && apply) {
+    body = <ApplyTask spec={apply} />;
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  return (
+    <LabShell
+      title={def.title}
+      question={question ?? "まれでも大きい当たりが1本あると？"}
       stage={stage}
       reached={reached}
       go={go}

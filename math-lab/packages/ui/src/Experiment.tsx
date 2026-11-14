@@ -6,7 +6,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { modelPmf, type CardMechanism } from "@math-lab/engine";
 import { FoundContext, LabShell, peak, r2, tex } from "./labParts";
-import { TableInfo, TableLab, TableSameMeanQ, TableSupportQ, type TableDef } from "./ExperimentTable";
+import { TableInfo, TableLab, TableRareQ, TableSameMeanQ, TableSupportQ, type TableDef } from "./ExperimentTable";
 import {
   BreakQ,
   ConvQ,
@@ -590,7 +590,9 @@ function TableEntry(props: Props & { def: TableDef }) {
     return (
       <QuestionMenu
         title={def.title}
-        groups={menuGroups(def.catalog, (op) => (op === "support" ? "mean" : op === "same-mean" ? "var" : "shift"))}
+        groups={menuGroups(def.catalog, (op) =>
+          op === "support" || op === "rare" ? "mean" : op === "same-mean" ? "var" : "shift",
+        )}
         group={grp ?? undefined}
         onGroup={setGrp}
         onPick={setPick}
@@ -616,6 +618,8 @@ function TableEntry(props: Props & { def: TableDef }) {
       {/* 画面の問いは、開いた問いの題（catalog の title）から引く。同じことを2か所に書かない（stats2-course #379） */}
       {pick === "support" ? (
         <TableSupportQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
+      ) : pick === "rare" ? (
+        <TableRareQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
       ) : pick === "same-mean" ? (
         <TableSameMeanQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
       ) : (
