@@ -105,6 +105,39 @@ describe("値の表の応用", () => {
     );
   });
 
+  // 確かめる対象：table-transform-mean（C-01 の応用：値を a 倍して b 足した表の期待値。only の行だけ変えることもある）。
+  // 想定する故障：only を見ずに全部の行を変える（公式 aE(X)＋b をそのまま返す）・only の行に b だけ足して a を掛け忘れる・
+  //   変えない行の重みを落とす（確率を変えてしまう）。
+  // 見つけ方：全部の行を変えると、どんな表でも aE(X)＋b と一致する（性質。公式は変換後の表を作らずに求めるので、独立な求め方）。
+  //   only のくじ（はずれ 0 のまま、当たり 100・1000 円を 2 倍して 50 円）は手で求めた 86 円（(250×18＋2050×2)÷100）。公式の 126 円とは違う。
+  // 既存との違い：二項分布の linear-sum は成功と失敗で別の額。これは値の表の行ごとの変換。
+  // 検出の確かめ（2026-11-15）：only を無視すると 86 で、b を足さないと性質で落ちることを見た
+  it("変換：全部なら aE(X)＋b、一部の行だけなら変えた表から求め直す", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.integer({ min: -30, max: 30 }), { minLength: 2, maxLength: 6 }),
+        fc.array(fc.integer({ min: 1, max: 9 }), { minLength: 6, maxLength: 6 }),
+        fc.integer({ min: -5, max: 5 }),
+        fc.integer({ min: -50, max: 50 }),
+        (values, ws, a, b) => {
+          const weights = values.map((_, j) => ws[j]!);
+          const r = solveApply({ method: "table-transform-mean", values, weights, a, b });
+          expect(r.answer).toBeCloseTo(a * tableMoments({ values, weights }).mean + b, 9);
+        },
+      ),
+    );
+    const r = solveApply({
+      method: "table-transform-mean",
+      values: [0, 100, 1000],
+      weights: [80, 18, 2],
+      a: 2,
+      b: 50,
+      only: [1, 2],
+    });
+    expect(r.answer).toBeCloseTo(86, 9);
+    expect(r.facts.formula).toBeCloseTo(126, 9);
+  });
+
   // 確かめる対象：table-mean-on-table（期待値が表の値になる表を選ぶ）と table-min-var（期待値が同じ表で分散が最小のもの）。
   // 想定する故障：重みを確率に直さない（Σw で割らない）・重み 0 の値を「表の値」に数える・分散で平均を引かない。
   // 見つけ方：手で求めた値と照らす。A-02 の案：1・2・3（重み 2・1・1）→ 1.75、0・2・8（3・1・1）→ 2（表にある）、1・2・6（3・1・1）→ 2.2。

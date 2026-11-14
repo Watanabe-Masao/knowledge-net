@@ -56,7 +56,8 @@ export type ApplySolve =
   /** 反証（値の表）：期待値が表の値の1つになる表で、「期待値の値が1回でいちばん出やすい」と言えるか。
    *  answer は 0＝言える（期待値の値の重みだけがいちばん大きい）・1＝言えない */
   | { method: "table-mean-mode"; values: number[]; weights: number[]; unit?: string }
-  | { method: "table-mean-median-gap"; tables: ApplyTable[]; unit?: string };
+  | { method: "table-mean-median-gap"; tables: ApplyTable[]; unit?: string }
+  | { method: "table-transform-mean"; values: number[]; weights: number[]; a: number; b: number; only?: number[] };
 
 type ApplyMethod = ApplySolve["method"];
 type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
@@ -84,6 +85,7 @@ export const APPLY_FIELDS = {
   "table-min-var": { required: ["tables"], optional: ["unit"], choices: 3 },
   "table-mean-mode": { required: ["values", "weights"], optional: ["unit"], choices: 2 },
   "table-mean-median-gap": { required: ["tables"], optional: ["unit"], choices: 3 },
+  "table-transform-mean": { required: ["values", "weights", "a", "b"], optional: ["only"] },
 } as const satisfies {
   [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
 };
@@ -366,6 +368,19 @@ function solveCore(s: ApplySolve): ApplyResult {
         throw new RangeError(`いちばん大きい差がはっきり1つになるようにする（1.1 倍以上）：${gaps.join("・")}`);
       return { answer: order[0]!, facts: { g0: gaps[0]!, g1: gaps[1]!, g2: gaps[2]! }, steps: [] };
     }
+    case "table-transform-mean": {
+      // 変換（期待値の実験室 C-01。stats2-course #119）：only の行（なければ全部）の値を a 倍して b 足した表の期待値。
+      // only があるとき、E(aX＋b)＝aE(X)＋b をそのまま使った値（formula）とは一般に違う
+      checkTable(s);
+      if (!(Number.isFinite(s.a) && Number.isFinite(s.b))) throw new RangeError("a と b は数");
+      const only = s.only ?? s.values.map((_, j) => j);
+      if (!only.length || !only.every((j) => Number.isInteger(j) && j >= 0 && j < s.values.length))
+        throw new RangeError(`only は 0〜${s.values.length - 1} の位置`);
+      const ys = s.values.map((x, j) => (only.includes(j) ? s.a * x + s.b : x));
+      const { mean } = tableMoments({ values: ys, weights: s.weights }),
+        formula = s.a * tableMoments(s).mean + s.b;
+      return { answer: mean, facts: { formula }, steps: [] };
+    }
     case "table-mean-mode": {
       checkTable(s);
       const { mean, W } = tableMoments(s),
@@ -541,6 +556,7 @@ function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
       return { answerFormat: null, at: { n: s.a.n, p: s.a.p }, mark: { read: "variance" }, vars: [] };
     // 値の表の課題は、実験室の表の行の重みを合わせる道具がまだないので、合わせる先を置かない（画面は「グラフを問いに合わせる」を出さない）
     case "table-weight-for-mean":
+    case "table-transform-mean":
       return { answerFormat: NUM2, at: {}, mark: {}, vars: [] };
     case "table-mean-on-table":
     case "table-min-var":

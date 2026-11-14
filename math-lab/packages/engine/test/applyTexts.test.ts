@@ -73,6 +73,8 @@ const CASES: ApplySolve[] = [
     ],
   },
   { method: "table-mean-mode", values: [0, 2, 8], weights: [3, 1, 1] },
+  { method: "table-transform-mean", values: [0, 100, 1000], weights: [80, 18, 2], a: 2, b: 50, only: [1, 2] },
+  { method: "table-transform-mean", values: [1, 2, 3, 4, 5, 6], weights: [1, 1, 1, 1, 1, 1], a: 2, b: 1 },
   {
     method: "table-mean-median-gap",
     tables: [

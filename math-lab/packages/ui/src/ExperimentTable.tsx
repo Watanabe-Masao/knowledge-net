@@ -53,6 +53,8 @@ export type TableTheme = {
   same_mean?: { weights: number[]; change: string };
   /** 1本だけ大きな値に替えた表：values[from] の重みを1減らし、値 to を重み1で足す（改訂10。期待値の実験室 A-03） */
   rare?: { from: number; to: number; label?: string; change: string };
+  /** 全部の値を a 倍して b 足す変換（改訂11。期待値の実験室 C-01） */
+  linear?: { a: number; b: number; change: string };
 };
 export type TableDef = {
   id: string;
@@ -1991,6 +1993,317 @@ export function TableRareQ({
     <LabShell
       title={def.title}
       question={question ?? "まれでも大きい値が1つあると？"}
+      stage={stage}
+      reached={reached}
+      go={go}
+      onBack={onBack}
+      stages={apply ? STAGES_Q : SUPPORT_STAGES}
+      body={body}
+      cta={cta}
+      onInfo={() => setSheet(true)}
+    >
+      {sheet && (
+        <TableInfo
+          def={def}
+          theme={theme}
+          reasonFormula={reasonFormula}
+          definitions={definitions}
+          onConcept={onConcept}
+          conceptName={conceptName}
+          onClose={() => setSheet(false)}
+        />
+      )}
+    </LabShell>
+  );
+}
+
+/**
+ * 全部の値を a 倍して b 足す問い（期待値の実験室 C-01。stats2-course の issue 119。kn-experiment の改訂11）。
+ * 予測：元の表と元の期待値、変換の文（change）を見せ、変換後の期待値を3つの具体の数（a×m＋b・a×(m＋b)・a×m）から選ぶ →
+ * 実験：元の表から引き、変換後の値は引いた値を a 倍して b 足して写す（同じ引き）→
+ * 観察：平均（引いた）と期待値を元・変換後で並べ、引いた平均でも a×（元の平均）＋b にちょうどなることを今の数で示す →
+ * 考察：変換後の表を値×確率の項に開き、Σ(ax＋b)p＝aΣxp＋bΣp（確率の和は 1）を今の数で。
+ */
+export function TableLinearQ({
+  def,
+  reasonFormula,
+  onBack,
+  onConcept,
+  conceptName,
+  definitions,
+  question,
+  apply,
+}: Props & { def: TableDef; question?: string; apply?: ApplySpec }) {
+  const { stage, reached, go } = useStages(0);
+  const themes = def.themes.filter((t) => t.linear);
+  const [theme, setTheme] = useState(themes[0] ?? def.themes[0]!);
+  const unit = theme.unit ?? "";
+  const lin = theme.linear ?? { a: 1, b: 0, change: "" };
+  const { a, b } = lin;
+  const ys = useMemo(() => theme.values.map((x) => a * x + b), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const support = useMemo(() => supportOf(tbl(theme.values, theme.start)), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const labels = labelsFor(theme, support, unit);
+  const th = useMemo(() => modelPmf(tbl(theme.values, theme.start)), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const m = meanOf(theme.values, theme.start),
+    mY = a * m + b;
+  const v = varOf(theme.values, theme.start);
+  // 予測の選び肢：よくある取り違えから具体の数で（a×m＋b・a×(m＋b)・a×m）。小さい順に並べる（⑦ の 2）
+  const cands = useMemo(
+    () => [a * m + b, a * (m + b), a * m].map((x, i) => ({ x, i })).sort((p, q) => p.x - q.x),
+    [theme], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const CHOICES = cands.map((c) => `${r2(c.x)}${unit}`);
+  const actual = cands.findIndex((c) => c.i === 0);
+  const [pr, setPr] = useState<number | undefined>(undefined);
+  useEffect(() => setPr(undefined), [theme]);
+  const { rec, run } = useDraws(theme.values, theme.start);
+  const sum = summarize(rec);
+  const meanY = sum.mean === undefined ? undefined : a * sum.mean + b; // 変換後の引いた平均：引いた値を写して平均（線形なので a×平均＋b と同じ値）
+  const yKs = useMemo(() => rec.ks.map((k) => a * k + b), [rec]); // eslint-disable-line react-hooks/exhaustive-deps
+  const meanYk = yKs.length ? yKs.reduce((p, q) => p + q, 0) / yKs.length : undefined;
+  const labelY = (x: number) => `${r2(a * x + b)}${unit}`;
+  // b の向きを言葉で（負なら「引く」。記号に言葉を添える。⑦ の 4）
+  const bWord = b >= 0 ? `${r2(b)} 足す` : `${r2(-b)} 引く`,
+    bSigned = b >= 0 ? `＋${r2(b)}` : `−${r2(-b)}`;
+  const labelOf = (x: number) => labels[support.indexOf(x)] ?? `${x}${unit}`;
+  const NEED = 100;
+  const [sheet, setSheet] = useState(false);
+
+  let body: ReactNode, cta: ReactNode;
+  if (stage === 0) {
+    body = (
+      <>
+        <div className={s.themes} role="radiogroup" aria-label="テーマ">
+          {themes.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={t.id === theme.id}
+              onClick={() => {
+                haptic();
+                setTheme(t);
+              }}
+            >
+              <span aria-hidden="true">{t.icon}</span>
+              {t.name}
+            </button>
+          ))}
+        </div>
+        <section className={s.card} data-testid="exp-table-base">
+          <p className={s.h}>
+            元の表<span>値と確率</span>
+          </p>
+          {theme.story && <p className={s.story}>{theme.story}</p>}
+          <Bars theory={th} labels={labels} at={support} height={130} label="元の表の確率" />
+          <p className={s.muted} data-testid="exp-base-mean">
+            元の表の期待値（何度も引いた平均の行き先）は {r2(m)}
+            {unit}
+          </p>
+        </section>
+        <section className={s.card} data-testid="exp-change">
+          <p className={s.h}>
+            全部の値を変える<span>確率はそのまま</span>
+          </p>
+          <p className={s.story}>{lin.change}</p>
+          <p className={s.muted} data-testid="exp-ab">
+            a＝{r2(a)}（何倍にするか）・b＝{r2(b)}（足す数。負なら引く）
+          </p>
+          <p className={s.muted}>{support.map((x) => `${labelOf(x)} → ${labelY(x)}`).join("、")}</p>
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>こう変えると、何度も引いた平均の行き先（期待値）は？</p>
+          <div className={s.choice} role="radiogroup" aria-label="期待値の予測" data-testid="exp-pred-linear">
+            {CHOICES.map((d, i) => (
+              <button
+                key={d}
+                type="button"
+                role="radio"
+                aria-checked={pr === i}
+                onClick={() => {
+                  haptic();
+                  setPr(i);
+                }}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} disabled={pr === undefined} onClick={() => go(1)}>
+        {pr === undefined ? "まず予測を選ぶ" : "この予測で引いてみる"}
+      </button>
+    );
+  } else if (stage === 1) {
+    const last = rec.ks.slice(-8);
+    body = (
+      <section className={s.card}>
+        <p className={s.h}>
+          引いた値<span>元の値 → 変えた値</span>
+        </p>
+        <div className={s.draws} data-testid="exp-draws" key={rec.sets}>
+          {last.length ? (
+            last.map((x, i) => (
+              <span key={`${rec.sets}-${i}`} className={i === last.length - 1 ? s.drawNew : s.draw}>
+                {labelOf(x)}→{labelY(x)}
+              </span>
+            ))
+          ) : (
+            <span className={s.muted}>「▶ 100 回」を押すと、元の表から引く</span>
+          )}
+        </div>
+        <p className={s.muted}>
+          変えた値は、引いた値を {r2(a)} 倍して {bWord}（同じ引きから写す）
+        </p>
+        {rec.sets > 0 && (
+          <p className={s.muted}>
+            平均 元の値 <b data-testid="exp-mean-base">{r2(sum.mean)}</b>
+            {unit}・変えた値 <b data-testid="exp-mean-linear">{r2(meanYk)}</b>
+            {unit}（{rec.sets.toLocaleString()} 回）
+          </p>
+        )}
+      </section>
+    );
+    cta = (
+      <>
+        <div className={s.two}>
+          <button type="button" className={s.secondary} onClick={() => run(100, 20)} data-testid="exp-run-100">
+            ▶ 100 回
+          </button>
+          <button type="button" className={s.primary} onClick={() => run(1000, 100)} data-testid="exp-run-1000">
+            ▶ 1000 回
+          </button>
+        </div>
+        <button
+          type="button"
+          className={s.next}
+          disabled={rec.sets < NEED}
+          onClick={() => go(2)}
+          data-testid="exp-to-observe"
+        >
+          {rec.sets < NEED ? `あと ${(NEED - rec.sets).toLocaleString()} 回で観察できる` : "観察する →"}
+        </button>
+      </>
+    );
+  } else if (stage === 2) {
+    const ok = pr === actual;
+    const n = rec.sets;
+    const w = 2 * Math.sqrt(v / n);
+    body = (
+      <>
+        <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
+          <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>
+          <span className={s.shape}>
+            期待値は {r2(m)}
+            {unit} → {r2(mY)}
+            {unit}。予測は「{CHOICES[pr!]}」。
+          </span>
+        </div>
+        <section className={s.card} data-testid="exp-linear-table">
+          <table className={s.cmpTable}>
+            <thead>
+              <tr>
+                <th scope="col">{n.toLocaleString()} 回</th>
+                <th scope="col">元の値</th>
+                <th scope="col">変えた値</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-testid="exp-row-mean">
+                <td>平均（引いた）</td>
+                <td>
+                  {r2(sum.mean)}
+                  {unit}
+                </td>
+                <td>
+                  {r2(meanYk)}
+                  {unit}
+                </td>
+              </tr>
+              <tr data-testid="exp-row-theory">
+                <td>期待値（表から）</td>
+                <td>
+                  {r2(m)}
+                  {unit}
+                </td>
+                <td>
+                  {r2(mY)}
+                  {unit}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <p className={s.muted} data-testid="exp-mean-margin">
+          ずれの目安（±2×標準誤差。引いた平均の約95% が、期待値からこの幅に入る）は、いまの {n.toLocaleString()} 回で
+          元の値 ±{fmtN(w)}
+          {unit}・変えた値 ±{fmtN(Math.abs(a) * w)}
+          {unit}。理論どおりでも、いまの {n.toLocaleString()}{" "}
+          回で、平均の行のマスが目安の外に出るのは約5%（正規分布で近似したおおよその値）。2マスは同じ引きから作るので、外に出るときは一緒に出る。
+        </p>
+        <section className={s.card} data-testid="exp-look">
+          <p className={s.h}>見る所</p>
+          <p className={s.muted}>変えた値の列で、平均（引いた）と期待値（表から）を見比べる。</p>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(3)}>
+        なぜそうなる？ 理由を考える
+      </button>
+    );
+  } else {
+    body = (
+      <>
+        <TableReason
+          title={def.reason?.title}
+          reasonFormula={reasonFormula}
+          values={ys}
+          weights={theme.start}
+          note={
+            <>
+              <p className={s.muted} data-testid="exp-linear-why">
+                Σ(ax＋b)p(x)＝a×Σx p(x)＋b×Σp(x)＝{r2(a)}×{r2(m)}
+                {bSigned}×1＝{r2(mY)}。確率の和は 1 なので、b はそのまま足される
+              </p>
+              {sum.mean !== undefined && (
+                // 引いた値の平均でも同じ計算でちょうど成り立つ（変えた値は同じ引きから写したので、作り方から決まる。観察では言わない。⑦ の 2・監査役 2026-11-15）
+                <p className={s.muted} data-testid="exp-linear-check">
+                  引いた値の平均でも同じ計算になる：{r2(a)}×（元の引いた平均 {r2(sum.mean)}
+                  {unit}）{bSigned}＝{r2(meanY)}
+                  {unit}（変えた値の引いた平均と同じ）
+                </p>
+              )}
+            </>
+          }
+        />
+      </>
+    );
+    cta = apply ? (
+      <button type="button" className={s.primary} onClick={() => go(4)}>
+        応用の課題へ
+      </button>
+    ) : (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  if (stage === 4 && apply) {
+    body = <ApplyTask spec={apply} />;
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  return (
+    <LabShell
+      title={def.title}
+      question={question ?? "全部の値を a 倍して b 足すと、期待値は？"}
       stage={stage}
       reached={reached}
       go={go}
