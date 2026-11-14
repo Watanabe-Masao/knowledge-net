@@ -93,6 +93,19 @@ describe("値の表の応用", () => {
     expect(d01.answer).toBe(2);
     expect(d01.facts.mean).toBeCloseTo(38, 12);
     expect([d01.facts.v0, d01.facts.v1, d01.facts.v2].map((v) => Math.round(v!))).toEqual([20356, 11356, 2356]);
+    // D-01 の課題の組（#364 のレビューで差し替え）：C は 1000 円の当たりがない（0 円・500 円、重み 924・76）のに、分散は B より大きい。
+    //   「大当たりがない方がそろう」という見当では選べず、分散を求めると B になる。手で求めた値：C の期待値 500×0.076＝38、
+    //   分散 250000×0.076−38²＝17556
+    const d01b = solveApply({
+      method: "table-min-var",
+      tables: [
+        { values: [0, 100, 1000], weights: [80, 18, 2] },
+        { values: [0, 100, 1000], weights: [71, 28, 1] },
+        { values: [0, 500], weights: [924, 76] },
+      ],
+    });
+    expect(d01b.answer).toBe(1);
+    expect([d01b.facts.v0, d01b.facts.v1, d01b.facts.v2].map((v) => Math.round(v!))).toEqual([20356, 11356, 17556]);
     expect(() =>
       solveApply({
         method: "table-min-var",

@@ -77,8 +77,9 @@ const CASES: ApplySolve[] = [
     tables: [
       { values: [0, 100, 1000], weights: [80, 18, 2], name: "A" },
       { values: [0, 100, 1000], weights: [71, 28, 1], name: "B" },
-      { values: [0, 100, 1000], weights: [62, 38, 0], name: "C" },
+      { values: [0, 500], weights: [924, 76], name: "C" },
     ],
+    unit: "円",
   },
 ];
 

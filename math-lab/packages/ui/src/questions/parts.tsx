@@ -286,6 +286,14 @@ export function ApplyTask({
         <>
           <div className={ok ? s.ok : s.ng} data-testid="exp-apply-verdict" data-ok={String(ok)}>
             <b>{ok ? "✓ 合っている" : "✗ ちがう"}</b>
+            {/* 違ったときは、自分の答えと正しい答えを分けて出す（大きな数が自分の答えに見えないように。#364 のレビュー） */}
+            {!ok && (
+              <span className={qs.muted} data-testid="exp-apply-yours">
+                あなたの答え：
+                {a.type === "choice" ? (a.options[Number(pick)] ?? "—") : `${val}${pctIn ? pctUnit : (a.unit ?? "")}`}
+                。正しい答え：
+              </span>
+            )}
             <span className={s.bigNum} data-testid="exp-apply-answer">
               {shown}
             </span>

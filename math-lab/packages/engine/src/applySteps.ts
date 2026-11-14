@@ -601,14 +601,14 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         { ...T("table-weight-for-mean.formula"), tex: "E(X)=\\dfrac{\\sum x\\,w}{\\sum w}" },
         {
           ...T("table-weight-for-mean.put", { S: f(S), W: f(W) }),
-          tex: `\\dfrac{${f(S)}+${f(x)}\\,w}{${f(W)}+w}=${f(s.mean)}`,
+          tex: `\\dfrac{${f(S)}+${f(x)}\\,t}{${f(W)}+t}=${f(s.mean)}`,
         },
         {
           ...T("table-weight-for-mean.calc"),
           tex: al([
-            `${f(S)}+${f(x)}\\,w&=${f(s.mean)}\\times(${f(W)}+w)`,
-            `(${f(x)}-${f(s.mean)})\\,w&=${f(s.mean * W)}-${f(S)}`,
-            `w&=${tx(w, NUM2)}`,
+            `${f(S)}+${f(x)}\\,t&=${f(s.mean)}\\times(${f(W)}+t)`,
+            `(${f(x)}-${f(s.mean)})\\,t&=${f(s.mean * W)}-${f(S)}`,
+            `t&=${tx(w, NUM2)}`,
           ]),
         },
         {
@@ -627,7 +627,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
           ...T("table-mean-on-table.means"),
           tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${sumTex(t)}=${tx(ms[j]!, NUM2)}`)),
         },
-        { ...T("table-mean-on-table.judge", { name: tName(s.tables[i]!, i), mu: fa(ms[i]!, NUM2) }) },
+        { ...T("table-mean-on-table.judge", { name: tName(s.tables[i]!, i), mu: fa(ms[i]!, NUM2) + (s.unit ?? "") }) },
       ];
     }
     case "table-min-var": {
@@ -636,7 +636,7 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
         others = ms.filter((_, j) => j !== i).map((m) => m.variance),
         r = Math.min(...others) / ms[i]!.variance;
       return [
-        { ...T("table-min-var.goal", { mu: fa(ms[0]!.mean, NUM2) }) },
+        { ...T("table-min-var.goal", { mu: fa(ms[0]!.mean, NUM2) + (s.unit ?? "") }) },
         { ...T("table-min-var.formula"), tex: "V(X)=\\dfrac{\\sum (x-\\mu)^2\\,w}{\\sum w}" },
         {
           ...T("table-min-var.var"),

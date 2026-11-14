@@ -5,7 +5,8 @@
 // 想定する故障：値の表の問いに apply を渡し忘れる（応用の段が出ない・考察から先へ進めない）、A-02・D-01 の段の数を変え忘れる
 //   （応用の段の名前が出ない）、つまみのない実験室に「下のつまみを合わせる」と書く、答えの番号と選び肢がずれる。
 // 見つけ方：3問を予測から応用まで通し、正しい答え（手で求めた値：A-01 は (15＋6w)÷(5＋w)＝4 から w＝2.5、A-02 は 0・2・8（重み 3・1・1）の
-//   期待値 2、D-01 は 1000 円の当たりがない C の分散 2356 がいちばん小さい）で「合っている」、A-02 は違う答えで「ちがう」になる。
+//   期待値 2、D-01 は 1000 円の当たりがない C（0・500 円）の分散が 17556 で、B の 11356 がいちばん小さい）で「合っている」、
+//   A-02 は違う答えで「ちがう」になり、自分の答えと正しい答えを分けて出す。
 // 既存との違い：engine のテスト（applyTable.test.ts）は答えの数。これは画面の流れと照らし。二項分布の応用のテストは別の部品（つまみ合わせつき）。
 // 検出の確かめ（2026-11-14）：Experiment.tsx で TableSupportQ に apply を渡さないと A-02 が落ちることを見た
 import { test, expect, type Page } from "@playwright/test";
@@ -42,14 +43,15 @@ const APPLY: Record<string, object> = {
   },
   "stats2:expect-D-01": {
     kind: "モデル選択",
-    task: "A・B に、期待値が同じ 38 円のくじ C（0 円 62・100 円 38・1000 円 0）を足す。毎回の結果をなるべくそろえたい人に向くのはどれ？",
+    task: "A・B に、期待値が同じ 38 円のくじ C（0 円 924・500 円 76）を足す。毎回の結果をなるべくそろえたい人に向くのはどれ？",
     solve: {
       method: "table-min-var",
       tables: [
         { values: [0, 100, 1000], weights: [80, 18, 2], name: "A" },
         { values: [0, 100, 1000], weights: [71, 28, 1], name: "B" },
-        { values: [0, 100, 1000], weights: [62, 38, 0], name: "C" },
+        { values: [0, 500], weights: [924, 76], name: "C" },
       ],
+      unit: "円",
     },
     answer: { type: "choice", options: ["A", "B", "C"] },
     why: "期待値が同じなら、散らばり（分散）で選ぶ。",
@@ -117,13 +119,14 @@ test("A-02：考察のあとに5段目（応用）が出て、評価の答えを
   await a.getByTestId("exp-apply-check").click();
   await expect(a.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "false");
   await expect(a.getByTestId("exp-apply-answer")).toHaveText("表2");
+  await expect(a.getByTestId("exp-apply-yours")).toContainText("あなたの答え：表1");
   await a.getByTestId("exp-apply-retry").click();
   await a.getByRole("radio", { name: "表2" }).click();
   await a.getByTestId("exp-apply-check").click();
   await expect(a.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "true");
 });
 
-test("D-01：散らばりを数にしたあとの応用（モデル選択）で C を照らす", async ({ page }) => {
+test("D-01：散らばりを数にしたあとの応用（モデル選択）で B を照らす", async ({ page }) => {
   await page.goto(`./?${SRC}&x=${X}&q=${encodeURIComponent("stats2:expect-D-01")}`);
   const x = page.getByTestId("experiment");
   await x.getByRole("radio", { name: /くじ/ }).click();
@@ -134,8 +137,9 @@ test("D-01：散らばりを数にしたあとの応用（モデル選択）で 
   await x.getByRole("button", { name: "見つけた違いを数にする" }).click();
   const a = await reasonToApply(page);
   await expect(a).toHaveAttribute("data-kind", "モデル選択");
-  await a.getByRole("radio", { name: "C" }).click();
+  await a.getByRole("radio", { name: "B" }).click();
   await a.getByTestId("exp-apply-check").click();
   await expect(a.getByTestId("exp-apply-verdict")).toHaveAttribute("data-ok", "true");
-  await expect(a.getByTestId("exp-apply-steps")).toContainText("2356");
+  await expect(a.getByTestId("exp-apply-steps")).toContainText("17556");
+  await expect(a.getByTestId("exp-apply-steps")).toContainText("期待値 38円"); // 期待値に単位（課題は円）
 });
