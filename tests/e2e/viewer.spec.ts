@@ -1042,7 +1042,9 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
     await nx.click();
   }
   await expect(ex).toContainText("4.125"); // 最後は表から求めた期待値
-  await x.getByRole("button", { name: "別の条件で試す" }).click();
+  // A-01 には応用の課題がある（#364）ので、考察の次の段へは「応用の課題へ」。反例は同じ段の下にある
+  await x.getByRole("button", { name: "応用の課題へ" }).click();
+  await expect(x.getByTestId("exp-apply")).toHaveAttribute("data-kind", "逆算");
   await x.getByTestId("exp-bnd-doubling").click();
   await x.getByRole("radio", { name: "まだ大きく跳ねる" }).click();
   await x.getByTestId("exp-cx-run-100").click();
