@@ -1,43 +1,13 @@
 // 期待値の実験室 E-01（値段を払って引く。開く先 price。kn-experiment の改訂12。stats2-course #119）。
-// 見本にはまだ E-01 の price と応用がないので、読み込みを書き換えて足す（CLAUDE.md「テストの見本」）。
-import { test, expect, type Page } from "@playwright/test";
+// 見本（教材の公開データの写し）の E-01 をそのまま使う（2026-11-15 の公開で入った。テーマの price と評価の応用）。
+import { test, expect } from "@playwright/test";
 
 const SRC = "src=sample/stats2.json";
 const X = encodeURIComponent("stats2:EXP-expect-table");
 const Q = encodeURIComponent("stats2:expect-E-01");
-const PRICE: Record<string, object> = {
-  lottery: { c: 30, word: "値段", change: "このくじを 1 枚 30 円で買う" },
-  dice: { c: 4, word: "参加費", change: "参加費 4 円を払ってさいころを1回振り、出た目の数だけ円をもらう" },
-};
-const APPLY = {
-  kind: "評価",
-  task: "3つのくじ（各 100 本）。何度も買うなら、1枚あたりの損得の平均がいちばん得なのはどれ？",
-  solve: {
-    method: "table-best-net",
-    tables: [
-      { values: [0, 200, 500], weights: [87, 10, 3], price: 25, name: "A" },
-      { values: [0, 100, 300], weights: [74, 25, 1], price: 20, name: "B" },
-      { values: [0, 500, 1000], weights: [83, 15, 2], price: 90, name: "C" },
-    ],
-    unit: "円",
-  },
-  answer: { type: "choice", options: ["A", "B", "C"] },
-  why: "何度も買うときの得は、期待値−値段で比べる。",
-};
-async function withPrice(page: Page) {
-  await page.route("**/sample/stats2.json", async (r) => {
-    const d = await (await r.fetch()).json();
-    const x = d.experiments.find((e: { id: string }) => e.id === "stats2:EXP-expect-table");
-    for (const t of x.themes) if (PRICE[t.id]) t.price = PRICE[t.id];
-    for (const g of x.catalog)
-      for (const it of g.items) if (it.id === "stats2:expect-E-01") Object.assign(it, { open: "price", apply: APPLY });
-    await r.fulfill({ json: d });
-  });
-}
 const fmt = (v: number) => (v >= 10 ? String(Math.round(v)) : String(Number(v.toPrecision(2))));
 
 test.beforeEach(async ({ page }) => {
-  await withPrice(page);
   await page.setViewportSize({ width: 390, height: 844 });
 });
 
