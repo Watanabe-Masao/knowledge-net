@@ -1,43 +1,12 @@
 // 期待値の実験室 B-01（何度も引くと、平均は期待値に近づく？ B-02 をまとめた。開く先 lln。kn-experiment の改訂13。stats2-course #119）。
-// 見本にはまだ B-01 の lln・反例の cutoffs・応用がないので、読み込みを書き換えて足す（CLAUDE.md「テストの見本」）。
-import { test, expect, type Page } from "@playwright/test";
+// 見本（教材の公開データの写し）の B-01 をそのまま使う（2026-11-15 の公開で入った。反例の cutoffs と反証の応用）。
+import { test, expect } from "@playwright/test";
 
 const SRC = "src=sample/stats2.json";
 const X = encodeURIComponent("stats2:EXP-expect-table");
 const Q = encodeURIComponent("stats2:expect-B-01");
-const cut = (K: number) => ({
-  values: Array.from({ length: K }, (_, i) => 2 ** (i + 1)),
-  weights: [...Array.from({ length: K - 1 }, (_, i) => 2 ** (K - 1 - i)), 2],
-});
-const APPLY = {
-  kind: "反証",
-  task: "倍々のくじを 1000 回引いた平均が 15 円だった。打ち切り 10 回の表と打ち切り 20 回の表の、どちらと矛盾する？",
-  solve: {
-    method: "table-mean-which",
-    tables: [
-      { ...cut(10), name: "打ち切り 10 回の表" },
-      { ...cut(20), name: "打ち切り 20 回の表" },
-    ],
-    n: 1000,
-    observed: 15,
-    unit: "円",
-  },
-  answer: { type: "choice", options: ["打ち切り 10 回の表", "打ち切り 20 回の表"] },
-  why: "目安で判断してよいのは、ずれの分布が正規分布に近い表。",
-};
-async function withLln(page: Page) {
-  await page.route("**/sample/stats2.json", async (r) => {
-    const d = await (await r.fetch()).json();
-    const x = d.experiments.find((e: { id: string }) => e.id === "stats2:EXP-expect-table");
-    for (const c of x.counterexamples) if (c.id === "doubling") c.cutoffs = [10, 20, 40];
-    for (const g of x.catalog)
-      for (const it of g.items) if (it.id === "stats2:expect-B-01") Object.assign(it, { open: "lln", apply: APPLY });
-    await r.fulfill({ json: d });
-  });
-}
 
 test.beforeEach(async ({ page }) => {
-  await withLln(page);
   await page.setViewportSize({ width: 390, height: 844 });
 });
 
