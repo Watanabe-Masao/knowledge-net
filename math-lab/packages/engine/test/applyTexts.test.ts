@@ -73,6 +73,23 @@ const CASES: ApplySolve[] = [
     ],
   },
   { method: "table-mean-mode", values: [0, 2, 8], weights: [3, 1, 1] },
+  {
+    method: "table-mean-median-gap",
+    tables: [
+      { values: [1, 2, 3, 4, 5, 100], weights: [40, 30, 15, 10, 4, 1], name: "A" },
+      { values: [1, 5], weights: [51, 49], name: "B" },
+      { values: [1, 2, 3, 20], weights: [30, 40, 29, 1], name: "C" },
+    ],
+    unit: "点",
+  },
+  {
+    method: "table-mean-median-gap",
+    tables: [
+      { values: [0, 9], weights: [3, 2] },
+      { values: [1, 2], weights: [2, 3] },
+      { values: [0, 1], weights: [4, 1] },
+    ],
+  },
   { method: "table-mean-mode", values: [0, 2, 4], weights: [1, 2, 1], unit: "円" },
   {
     method: "table-min-var",

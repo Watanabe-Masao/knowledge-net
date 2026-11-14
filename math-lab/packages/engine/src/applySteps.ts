@@ -5,7 +5,7 @@
 import { comb } from "./formula/evaluate";
 import { mechanismMoments, modelPmf, fatigueP, mixSpread, type Mechanism } from "./lab";
 import { INT, NUM2, PCT0, PCT1, PCT2, PCT4, SIG3, formatApply as fa, texApply as tx } from "./applyFormat";
-import { tableMoments, type ApplyEvent, type ApplySolve, type ApplyStep, type ApplyTable } from "./apply";
+import { tableMedian, tableMoments, type ApplyEvent, type ApplySolve, type ApplyStep, type ApplyTable } from "./apply";
 /** 割合どうしの差（ずれの目安）は「ポイント」で言う（stats2-course issue 199。% と書くと相対的な増え方と取り違える） */
 /** ポイントの数だけ（「ポイント」の語は教材の文の型が付ける） */
 const ptn = (x: number, f: Parameters<typeof fa>[1]) => fa(x, f).replace(/%$/, "");
@@ -52,6 +52,12 @@ export const APPLY_TEXT_SPEC: Record<string, { vars: readonly string[]; variants
   "table-mean-on-table.goal": { vars: [], variants: [] },
   "table-mean-on-table.judge": { vars: ["mu", "name"], variants: [] },
   "table-mean-on-table.means": { vars: [], variants: [] },
+  "table-mean-median-gap.goal": { vars: [], variants: [] },
+  "table-mean-median-gap.formula": { vars: [], variants: [] },
+  "table-mean-median-gap.means": { vars: [], variants: [] },
+  "table-mean-median-gap.medians": { vars: ["a", "b", "n"], variants: ["odd"] },
+  "table-mean-median-gap.gaps": { vars: [], variants: [] },
+  "table-mean-median-gap.judge": { vars: ["gap", "name", "r"], variants: [] },
   "table-mean-mode.goal": { vars: ["mu"], variants: [] },
   "table-mean-mode.formula": { vars: [], variants: [] },
   "table-mean-mode.mean": { vars: [], variants: [] },
@@ -635,6 +641,46 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
           tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${sumTex(t)}=${tx(ms[j]!, NUM2)}`)),
         },
         { ...T("table-mean-on-table.judge", { name: tName(s.tables[i]!, i), mu: fa(ms[i]!, NUM2) + (s.unit ?? "") }) },
+      ];
+    }
+    case "table-mean-median-gap": {
+      const u = s.unit ?? "",
+        ms = s.tables.map((t) => tableMoments(t).mean),
+        md = s.tables.map(tableMedian),
+        gaps = ms.map((m, j) => Math.abs(m - md[j]!.median)),
+        i = answer,
+        r = gaps[i]! / Math.max(...gaps.filter((_, j) => j !== i));
+      const pos = md[0]!.pos;
+      return [
+        { ...T("table-mean-median-gap.goal") },
+        { ...T("table-mean-median-gap.formula"), tex: "E(X)=\\dfrac{\\sum x\\,w}{\\sum w}" },
+        {
+          ...T("table-mean-median-gap.means"),
+          tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${sumTex(t)}=${tx(ms[j]!, NUM2)}`)),
+        },
+        {
+          ...T(
+            "table-mean-median-gap.medians",
+            { n: f(md[0]!.W), a: f(pos[0]!), b: f(pos[1] ?? pos[0]!) },
+            pos.length === 1 ? "odd" : undefined,
+          ),
+          tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${tx(md[j]!.median, NUM2)}`)),
+        },
+        {
+          ...T("table-mean-median-gap.gaps"),
+          tex: al(
+            s.tables.map(
+              (t, j) => `${tName(t, j)}&:|${tx(ms[j]!, NUM2)}-${tx(md[j]!.median, NUM2)}|=${tx(gaps[j]!, NUM2)}`,
+            ),
+          ),
+        },
+        {
+          ...T("table-mean-median-gap.judge", {
+            name: tName(s.tables[i]!, i),
+            gap: fa(gaps[i]!, NUM2) + u,
+            r: fa(r, NUM2),
+          }),
+        },
       ];
     }
     case "table-min-var": {

@@ -1,7 +1,7 @@
 // 値の表の応用の課題（stats2-course #364）：期待値の実験室の A-01（逆算）・A-02（評価）・D-01（モデル選択）。
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { solveApply, tableMoments } from "../src";
+import { solveApply, tableMedian, tableMoments } from "../src";
 
 describe("値の表の応用", () => {
   // 確かめる対象：table-weight-for-mean の答え w。
@@ -51,6 +51,58 @@ describe("値の表の応用", () => {
     expect(() => solveApply({ method: "table-weight-for-mean", ...d, mean: 2 })).toThrow(/できない/);
     expect(solveApply({ method: "table-weight-for-mean", ...d, mean: 3 }).answer).toBeCloseTo(0, 12);
     expect(() => solveApply({ method: "table-weight-for-mean", ...d, mean: 6 })).toThrow(/同じ/);
+  });
+
+  // 確かめる対象：表の中央値（tableMedian）と、table-mean-median-gap（平均と中央値がいちばん離れる表を選ぶ。A-03 の応用）。
+  // 想定する故障：真ん中の順位の数え違い（0 から数える・偶数のとき片方だけ取る）・並べずに表の順で数える・
+  //   値の種類の真ん中を取る（人数を見ない）・差の絶対値を取らない。
+  // 見つけ方：中央値は、表を人数ぶんの並びに展開して並べ替え、真ん中を取る別の求め方と照らす（性質。同じ誤りを共有しない）。
+  //   A-03 の応用の組は手で求めた値と照らす：A（1〜5点と100点、40・30・15・10・4・1）平均 3.05・中央値 2、
+  //   B（1点・5点、51・49）平均 2.96・中央値 1、C（1・2・3・20点、30・40・29・1）平均 2.17・中央値 2 → 差は 1.05・1.96・0.17 で B。
+  //   A は平均がいちばん大きく、大きな値も持つ（見当で選びやすい側）が、答えではない。
+  // 既存との違い：ほかの表の課題は期待値と分散だけ。中央値（順位で決まる量）はここだけ。
+  // 検出の確かめ（2026-11-14）：偶数のとき W/2 番目だけを取る・表の順のまま数える、の2つで落ちることを見た
+  it("中央値：人数ぶんに並べた真ん中と一致する", () => {
+    fc.assert(
+      fc.property(
+        fc.uniqueArray(fc.integer({ min: -30, max: 30 }), { minLength: 2, maxLength: 6 }),
+        fc.array(fc.integer({ min: 0, max: 7 }), { minLength: 6, maxLength: 6 }),
+        (values, ws) => {
+          const weights = values.map((_, j) => ws[j]!);
+          fc.pre(weights.some((w) => w > 0));
+          const list = values.flatMap((v, j) => Array<number>(weights[j]!).fill(v)).sort((a, b) => a - b),
+            n = list.length;
+          const want = n % 2 ? list[(n - 1) / 2]! : (list[n / 2 - 1]! + list[n / 2]!) / 2;
+          expect(tableMedian({ values, weights }).median).toBe(want);
+        },
+      ),
+    );
+  });
+  it("評価：平均と中央値がいちばん離れる表を選ぶ", () => {
+    const tables = [
+      { values: [1, 2, 3, 4, 5, 100], weights: [40, 30, 15, 10, 4, 1], name: "A" },
+      { values: [1, 5], weights: [51, 49], name: "B" },
+      { values: [1, 2, 3, 20], weights: [30, 40, 29, 1], name: "C" },
+    ];
+    const r = solveApply({ method: "table-mean-median-gap", tables, unit: "点" });
+    expect(r.answer).toBe(1);
+    expect([r.facts.g0, r.facts.g1, r.facts.g2].map((g) => Number(g!.toFixed(9)))).toEqual([1.05, 1.96, 0.17]);
+    // 人数がそろわない・人数が整数でない・差がはっきりしない組は、理由を言って止まる
+    expect(() =>
+      solveApply({
+        method: "table-mean-median-gap",
+        tables: [tables[0]!, { ...tables[1]!, weights: [52, 49] }, tables[2]!],
+      }),
+    ).toThrow(/そろえる/);
+    expect(() =>
+      solveApply({
+        method: "table-mean-median-gap",
+        tables: [tables[0]!, { ...tables[1]!, weights: [50.5, 49.5] }, tables[2]!],
+      }),
+    ).toThrow(/整数/);
+    expect(() => solveApply({ method: "table-mean-median-gap", tables: [tables[0]!, tables[0]!, tables[2]!] })).toThrow(
+      /はっきり/,
+    );
   });
 
   // 確かめる対象：table-mean-on-table（期待値が表の値になる表を選ぶ）と table-min-var（期待値が同じ表で分散が最小のもの）。
