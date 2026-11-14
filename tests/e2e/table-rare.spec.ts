@@ -1,39 +1,10 @@
 // 期待値の実験室 A-03（まれでも大きい当たりが1本ある表。開く先 rare。kn-experiment の改訂10。stats2-course #119）。
-// 見本にはまだ A-03 の rare と応用がないので、読み込みを書き換えて足す（CLAUDE.md「テストの見本」）。
+// 見本（教材の公開データの写し）の A-03 をそのまま使う（2026-11-14 の公開で入った。テーマの rare と評価の応用）。
 import { test, expect, type Page } from "@playwright/test";
 
 const SRC = "src=sample/stats2.json";
 const X = encodeURIComponent("stats2:EXP-expect-table");
 const Q = encodeURIComponent("stats2:expect-A-03");
-const RARE: Record<string, object> = {
-  lottery: { from: 1, to: 10000, label: "1万", change: "100円の当たり1本を、1万円の大当たりにする" },
-  basket: { from: 4, to: 100, change: "5点買った客の1人が、業務用に 100点買う" },
-};
-const APPLY = {
-  kind: "評価",
-  task: "3つの店で客 100 人の買い上げ点数を数えた。平均を「ふつうの客の点数」として伝えると、中央値からいちばん離れるのはどれ？",
-  solve: {
-    method: "table-mean-median-gap",
-    tables: [
-      { values: [1, 2, 3, 4, 5, 100], weights: [40, 30, 15, 10, 4, 1], name: "A" },
-      { values: [1, 5], weights: [51, 49], name: "B" },
-      { values: [1, 2, 3, 20], weights: [30, 40, 29, 1], name: "C" },
-    ],
-    unit: "点",
-  },
-  answer: { type: "choice", options: ["A", "B", "C"] },
-  why: "平均は値の大きさと割合で、中央値は並べた順位で決まる。",
-};
-async function withRare(page: Page) {
-  await page.route("**/sample/stats2.json", async (r) => {
-    const d = await (await r.fetch()).json();
-    const x = d.experiments.find((e: { id: string }) => e.id === "stats2:EXP-expect-table");
-    for (const t of x.themes) if (RARE[t.id]) t.rare = RARE[t.id];
-    for (const g of x.catalog)
-      for (const it of g.items) if (it.id === "stats2:expect-A-03") Object.assign(it, { open: "rare", apply: APPLY });
-    await r.fulfill({ json: d });
-  });
-}
 const errorsOf = (page: Page) => {
   const errs: string[] = [];
   page.on("pageerror", (e) => errs.push(e.message));
@@ -41,7 +12,6 @@ const errorsOf = (page: Page) => {
 };
 
 test.beforeEach(async ({ page }) => {
-  await withRare(page);
   await page.setViewportSize({ width: 390, height: 844 });
 });
 
