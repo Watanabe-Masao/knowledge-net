@@ -52,6 +52,11 @@ export const APPLY_TEXT_SPEC: Record<string, { vars: readonly string[]; variants
   "table-mean-on-table.goal": { vars: [], variants: [] },
   "table-mean-on-table.judge": { vars: ["mu", "name"], variants: [] },
   "table-mean-on-table.means": { vars: [], variants: [] },
+  "table-best-net.goal": { vars: [], variants: [] },
+  "table-best-net.formula": { vars: [], variants: [] },
+  "table-best-net.nets": { vars: [], variants: [] },
+  "table-best-net.losses": { vars: [], variants: [] },
+  "table-best-net.judge": { vars: ["name", "net", "loss"], variants: [] },
   "table-transform-mean.goal": { vars: ["a", "b"], variants: ["all"] },
   "table-transform-mean.table": { vars: [], variants: [] },
   "table-transform-mean.mean": { vars: [], variants: [] },
@@ -645,6 +650,37 @@ export function explain(s: ApplySolve, answer: number): ApplyStep[] {
           tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${sumTex(t)}=${tx(ms[j]!, NUM2)}`)),
         },
         { ...T("table-mean-on-table.judge", { name: tName(s.tables[i]!, i), mu: fa(ms[i]!, NUM2) + (s.unit ?? "") }) },
+      ];
+    }
+    case "table-best-net": {
+      // 損した回＝値が値段より小さい回（同じ額は入れない）
+      const u = s.unit ?? "",
+        ms = s.tables.map((t) => tableMoments(t).mean),
+        nets = s.tables.map((t, j) => ms[j]! - t.price!),
+        loss = s.tables.map((t) => {
+          const W = t.weights.reduce((a, w) => a + w, 0);
+          return t.values.reduce((a, x, j) => a + (x < t.price! ? t.weights[j]! : 0), 0) / W;
+        }),
+        i = answer;
+      const sg = (v: number) => (v >= 0 ? `+${tx(v, NUM2)}` : tx(v, NUM2));
+      return [
+        { ...T("table-best-net.goal") },
+        { ...T("table-best-net.formula"), tex: "E(X)-c" },
+        {
+          ...T("table-best-net.nets"),
+          tex: al(s.tables.map((t, j) => `${tName(t, j)}&:${tx(ms[j]!, NUM2)}-${f(t.price!)}=${sg(nets[j]!)}`)),
+        },
+        {
+          ...T("table-best-net.losses"),
+          tex: al(s.tables.map((t, j) => `${tName(t, j)}&:P(X<${f(t.price!)})=${tx(loss[j]!, PCT0)}`)),
+        },
+        {
+          ...T("table-best-net.judge", {
+            name: tName(s.tables[i]!, i),
+            net: (nets[i]! >= 0 ? "+" : "") + fa(nets[i]!, NUM2) + u,
+            loss: fa(loss[i]!, PCT0),
+          }),
+        },
       ];
     }
     case "table-transform-mean": {

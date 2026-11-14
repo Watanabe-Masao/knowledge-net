@@ -138,6 +138,48 @@ describe("値の表の応用", () => {
     expect(r.facts.formula).toBeCloseTo(126, 9);
   });
 
+  // 確かめる対象：table-best-net（E-01 の応用：何度も買うとき、1回あたりの損得の平均〔期待値−値段〕がいちばん大きい表を選ぶ）。
+  // 想定する故障：値段を引かずに期待値で選ぶ・値段の安さで選ぶ・損得の符号を取り違える。
+  // 見つけ方：手で求めた組（⑦ の監査役が検算した E-01 の応用）と照らす。A：はずれ 87・200円 10・500円 3、25円 → 期待値 35・+10。
+  //   B：はずれ 74・100円 25・300円 1、20円 → 28・+8。C：はずれ 83・500円 15・1000円 2、90円 → 95・+5。答えは A。
+  //   期待値で選ぶと C、値段の安さで選ぶと B になる（どちらの見当でも外れる組）。
+  //   性質：ランダムな3つの表で、答えの表の「値×本数の和÷本数−値段」（表を並べ直して平均する別の求め方）がいちばん大きい。
+  // 既存との違い：table-min-var・table-mean-median-gap は値段を持たない。これは値段を引いた損得。
+  // 検出の確かめ（2026-11-15）：値段を引かないと C で、値段の符号を逆にすると B で落ちることを見た
+  it("評価：1回あたりの損得の平均がいちばん大きい表を選ぶ", () => {
+    const tables = [
+      { values: [0, 200, 500], weights: [87, 10, 3], price: 25, name: "A" },
+      { values: [0, 100, 300], weights: [74, 25, 1], price: 20, name: "B" },
+      { values: [0, 500, 1000], weights: [83, 15, 2], price: 90, name: "C" },
+    ];
+    const r = solveApply({ method: "table-best-net", tables, unit: "円" });
+    expect(r.answer).toBe(0);
+    expect([r.facts.n0, r.facts.n1, r.facts.n2].map((v) => Number(v!.toFixed(9)))).toEqual([10, 8, 5]);
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            values: fc.uniqueArray(fc.integer({ min: 0, max: 50 }), { minLength: 2, maxLength: 4 }),
+            ws: fc.array(fc.integer({ min: 1, max: 6 }), { minLength: 4, maxLength: 4 }),
+            price: fc.integer({ min: 0, max: 40 }),
+          }),
+          { minLength: 3, maxLength: 3 },
+        ),
+        (raw) => {
+          const ts = raw.map((t) => ({ values: t.values, weights: t.values.map((_, j) => t.ws[j]!), price: t.price }));
+          const net = ts.map((t) => {
+            const list = t.values.flatMap((v, j) => Array<number>(t.weights[j]!).fill(v));
+            return list.reduce((a, b) => a + b, 0) / list.length - t.price;
+          });
+          const top = [...net].sort((a, b) => b - a);
+          fc.pre(top[0]! - top[1]! >= 0.1 * Math.abs(top[0]!) && top[0]! - top[1]! > 1e-6);
+          const i = solveApply({ method: "table-best-net", tables: ts }).answer;
+          expect(net[i]).toBeCloseTo(top[0]!, 9);
+        },
+      ),
+    );
+  });
+
   // 確かめる対象：table-mean-on-table（期待値が表の値になる表を選ぶ）と table-min-var（期待値が同じ表で分散が最小のもの）。
   // 想定する故障：重みを確率に直さない（Σw で割らない）・重み 0 の値を「表の値」に数える・分散で平均を引かない。
   // 見つけ方：手で求めた値と照らす。A-02 の案：1・2・3（重み 2・1・1）→ 1.75、0・2・8（3・1・1）→ 2（表にある）、1・2・6（3・1・1）→ 2.2。

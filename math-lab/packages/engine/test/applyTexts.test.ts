@@ -74,6 +74,15 @@ const CASES: ApplySolve[] = [
   },
   { method: "table-mean-mode", values: [0, 2, 8], weights: [3, 1, 1] },
   { method: "table-transform-mean", values: [0, 100, 1000], weights: [80, 18, 2], a: 2, b: 50, only: [1, 2] },
+  {
+    method: "table-best-net",
+    tables: [
+      { values: [0, 200, 500], weights: [87, 10, 3], price: 25, name: "A" },
+      { values: [0, 100, 300], weights: [74, 25, 1], price: 20, name: "B" },
+      { values: [0, 500, 1000], weights: [83, 15, 2], price: 90, name: "C" },
+    ],
+    unit: "円",
+  },
   { method: "table-transform-mean", values: [1, 2, 3, 4, 5, 6], weights: [1, 1, 1, 1, 1, 1], a: 2, b: 1 },
   {
     method: "table-mean-median-gap",

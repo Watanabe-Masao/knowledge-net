@@ -21,7 +21,7 @@ import {
   type FormulaNode,
   type SetRecord,
 } from "@math-lab/engine";
-import { about, fmtN } from "./QuestionParts";
+import { about, fmtN, pctSig } from "./QuestionParts";
 import { ApplyTask, type ApplySpec } from "./questions/parts";
 import { STAGES_Q } from "./questions/common";
 import { nudge } from "./nudge";
@@ -55,6 +55,8 @@ export type TableTheme = {
   rare?: { from: number; to: number; label?: string; change: string };
   /** 全部の値を a 倍して b 足す変換（改訂11。期待値の実験室 C-01） */
   linear?: { a: number; b: number; change: string };
+  /** 1回あたりの値段（改訂12。期待値の実験室 E-01）。word は呼び名（値段・参加費） */
+  price?: { c: number; word: string; change: string };
 };
 export type TableDef = {
   id: string;
@@ -2304,6 +2306,314 @@ export function TableLinearQ({
     <LabShell
       title={def.title}
       question={question ?? "全部の値を a 倍して b 足すと、期待値は？"}
+      stage={stage}
+      reached={reached}
+      go={go}
+      onBack={onBack}
+      stages={apply ? STAGES_Q : SUPPORT_STAGES}
+      body={body}
+      cta={cta}
+      onInfo={() => setSheet(true)}
+    >
+      {sheet && (
+        <TableInfo
+          def={def}
+          theme={theme}
+          reasonFormula={reasonFormula}
+          definitions={definitions}
+          onConcept={onConcept}
+          conceptName={conceptName}
+          onClose={() => setSheet(false)}
+        />
+      )}
+    </LabShell>
+  );
+}
+
+const NET3 = ["平均で得", "ちょうど損得なし", "平均で損"] as const;
+
+/**
+ * 値段を払って引く問い（期待値の実験室 E-01。stats2-course の issue 119。kn-experiment の改訂12）。
+ * 予測：表と値段（price）は見せ、期待値は見せない（期待値で決まること自体が発見）。何度も引くときの1回あたりの損得の平均は得・なし・損 →
+ * 実験：1回＝1回払って引く。損得（値−値段）と、損した回（値が値段より小さい回）を数える →
+ * 観察：損得の平均・損した回の割合を、引いた値と理論で並べる。見る所は2つの行を見比べることだけ →
+ * 考察：損得の表を値×確率の項に開く。変換の式（C-01）と、まれな大きい値が平均を引き上げること（A-03）は題を添えて案内に留める。
+ */
+export function TablePriceQ({
+  def,
+  reasonFormula,
+  onBack,
+  onConcept,
+  conceptName,
+  definitions,
+  question,
+  apply,
+}: Props & { def: TableDef; question?: string; apply?: ApplySpec }) {
+  const { stage, reached, go } = useStages(0);
+  const themes = def.themes.filter((t) => t.price);
+  const [theme, setTheme] = useState(themes[0] ?? def.themes[0]!);
+  const unit = theme.unit ?? "円"; // 値段を払って値の分だけもらう場面なので、単位のないテーマ（さいころ）も円で数える
+  const price = theme.price ?? { c: 0, word: "値段", change: "" };
+  const c = price.c;
+  const support = useMemo(() => supportOf(tbl(theme.values, theme.start)), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const labels = labelsFor(theme, support, unit);
+  const th = useMemo(() => modelPmf(tbl(theme.values, theme.start)), [theme]); // eslint-disable-line react-hooks/exhaustive-deps
+  const m = meanOf(theme.values, theme.start),
+    net = m - c,
+    v = varOf(theme.values, theme.start);
+  const W = theme.start.reduce((p, q) => p + q, 0);
+  const qLoss = theme.values.reduce((p, x, j) => p + (x < c ? theme.start[j]! : 0), 0) / W;
+  const actual = Math.abs(net) < 1e-9 ? 1 : net > 0 ? 0 : 2;
+  const [pr, setPr] = useState<number | undefined>(undefined);
+  useEffect(() => setPr(undefined), [theme]);
+  const { rec, run } = useDraws(theme.values, theme.start);
+  const sum = summarize(rec);
+  const netMean = sum.mean === undefined ? undefined : sum.mean - c;
+  const losses = rec.ks.filter((k) => k < c).length;
+  const sg = (x: number | undefined) => (x === undefined ? "—" : `${x > 0 ? "+" : ""}${r2(x)}`);
+  const labelOf = (x: number) => labels[support.indexOf(x)] ?? `${x}${unit}`;
+  const NEED = 1000;
+  // ほかの問いへの案内は、開ける問いだけを番号と題で（⑦ の 2。#401）
+  const guide = (re: RegExp) =>
+    (def.catalog ?? [])
+      .flatMap((g) => g.items)
+      .filter((it) => re.test(it.id) && it.open && !it.retired)
+      .map((it) => `「${it.id.replace(/^.*-([A-Z]-\d+)$/, "$1")} ${it.title}」`)
+      .join("・");
+  const [sheet, setSheet] = useState(false);
+
+  let body: ReactNode, cta: ReactNode;
+  if (stage === 0) {
+    body = (
+      <>
+        <div className={s.themes} role="radiogroup" aria-label="テーマ">
+          {themes.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={t.id === theme.id}
+              onClick={() => {
+                haptic();
+                setTheme(t);
+              }}
+            >
+              <span aria-hidden="true">{t.icon}</span>
+              {t.name}
+            </button>
+          ))}
+        </div>
+        <section className={s.card} data-testid="exp-table-base">
+          <p className={s.h}>
+            表<span>もらえる額と確率</span>
+          </p>
+          {theme.story && <p className={s.story}>{theme.story}</p>}
+          <Bars theory={th} labels={labels} at={support} height={130} label="表の確率" />
+        </section>
+        <section className={s.card} data-testid="exp-price">
+          <p className={s.h}>
+            {price.word}
+            <span>
+              1回 {r2(c)}
+              {unit}
+            </span>
+          </p>
+          <p className={s.story}>{price.change}</p>
+        </section>
+        <section className={s.card}>
+          <p className={s.h}>
+            この{price.word}で何度も引くと、1回あたりの損得（もらえる額−{price.word}）の平均は？
+          </p>
+          <div className={s.choice} role="radiogroup" aria-label="損得の予測" data-testid="exp-pred-net">
+            {NET3.map((d, i) => (
+              <button
+                key={d}
+                type="button"
+                role="radio"
+                aria-checked={pr === i}
+                onClick={() => {
+                  haptic();
+                  setPr(i);
+                }}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} disabled={pr === undefined} onClick={() => go(1)}>
+        {pr === undefined ? "まず予測を選ぶ" : "この予測で引いてみる"}
+      </button>
+    );
+  } else if (stage === 1) {
+    const last = rec.ks.slice(-8);
+    body = (
+      <section className={s.card}>
+        <p className={s.h}>
+          引いた額と損得<span>1回ごと</span>
+        </p>
+        <div className={s.draws} data-testid="exp-draws" key={rec.sets}>
+          {last.length ? (
+            last.map((x, i) => (
+              <span key={`${rec.sets}-${i}`} className={i === last.length - 1 ? s.drawNew : s.draw}>
+                {labelOf(x)}（{sg(x - c)}）
+              </span>
+            ))
+          ) : (
+            <span className={s.muted}>「▶ 100 回」を押すと、1回ごとに {price.word}を払って引く</span>
+          )}
+        </div>
+        {rec.sets > 0 && (
+          <p className={s.muted}>
+            損得の平均 <b data-testid="exp-net-mean">{sg(netMean)}</b>
+            {unit}・損した回 <b data-testid="exp-losses">{losses}</b> 回（{rec.sets.toLocaleString()} 回）
+          </p>
+        )}
+      </section>
+    );
+    cta = (
+      <>
+        <div className={s.two}>
+          <button type="button" className={s.secondary} onClick={() => run(100, 20)} data-testid="exp-run-100">
+            ▶ 100 回
+          </button>
+          <button type="button" className={s.primary} onClick={() => run(1000, 100)} data-testid="exp-run-1000">
+            ▶ 1000 回
+          </button>
+        </div>
+        <button
+          type="button"
+          className={s.next}
+          disabled={rec.sets < NEED}
+          onClick={() => go(2)}
+          data-testid="exp-to-observe"
+        >
+          {rec.sets < NEED ? `あと ${(NEED - rec.sets).toLocaleString()} 回で観察できる` : "観察する →"}
+        </button>
+      </>
+    );
+  } else if (stage === 2) {
+    const ok = pr === actual;
+    const n = rec.sets;
+    const se = Math.sqrt(v / n),
+      seQ = Math.sqrt((qLoss * (1 - qLoss)) / n);
+    // 損得の平均の得・損が理論と逆に出る頻度（正規分布で近似。⑦ の 2）
+    const flip = actual === 1 ? NaN : normalCdf(-Math.abs(net) / se);
+    body = (
+      <>
+        <div className={ok ? s.ok : s.ng} data-testid="exp-verdict">
+          <b>{ok ? "✓ 予測どおり" : "✗ 予測と違った"}</b>
+          <span className={s.shape}>
+            1回あたりの損得の平均の行き先は {sg(net)}
+            {unit}（{NET3[actual]}）。予測は「{NET3[pr!]}」。
+          </span>
+        </div>
+        <section className={s.card} data-testid="exp-net-table">
+          <table className={s.cmpTable}>
+            <thead>
+              <tr>
+                <th scope="col">{n.toLocaleString()} 回</th>
+                <th scope="col">引いた</th>
+                <th scope="col">理論</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-testid="exp-row-net">
+                <td>損得の平均（1回あたり）</td>
+                <td>
+                  {sg(netMean)}
+                  {unit}
+                </td>
+                <td>
+                  {sg(net)}
+                  {unit}
+                </td>
+              </tr>
+              <tr data-testid="exp-row-loss">
+                <td>損した回の割合</td>
+                <td>{pctSig(losses / n)}</td>
+                <td>{pctSig(qLoss)}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p className={s.muted}>
+            損した回＝もらえる額が{price.word}（{r2(c)}
+            {unit}）より小さい回（同じ額は入れない）
+          </p>
+        </section>
+        <p className={s.muted} data-testid="exp-mean-margin">
+          ずれの目安（±2×標準誤差。約95% が、理論からこの幅に入る）は、いまの {n.toLocaleString()} 回で 損得の平均 ±
+          {fmtN(2 * se)}
+          {unit}・損した回の割合 ±{fmtN(200 * seQ)} ポイント。
+        </p>
+        <p className={s.muted} data-testid="exp-flip-freq">
+          理論どおりでも、いまの {n.toLocaleString()} 回で、損得の平均の得と損が逆に出るのは {about(flip)}
+          （正規分布で近似したおおよその値）。2つの行のどちらかが目安の外に出るのは最大で約9.8%。
+        </p>
+        <section className={s.card} data-testid="exp-look">
+          <p className={s.h}>見る所</p>
+          <p className={s.muted}>損得の平均の行と、損した回の割合の行を見比べる。</p>
+        </section>
+      </>
+    );
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(3)}>
+        なぜそうなる？ 理由を考える
+      </button>
+    );
+  } else {
+    const gC = guide(/-C-01$/),
+      gA = guide(/-A-03$/);
+    body = (
+      <>
+        <TableReason
+          title="損得の平均の行き先"
+          reasonFormula={reasonFormula}
+          values={theme.values.map((x) => x - c)}
+          weights={theme.start}
+          note={
+            <p className={s.muted} data-testid="exp-net-why">
+              損得（もらえる額−{price.word}）の表を、値×確率の項に開いた。何度も引いた損得の平均は、この和 {sg(net)}
+              {unit} に近づく。
+              {gC ? `全部の値から同じ額を引くと期待値がどう動くかは ${gC} で確かめる。` : ""}
+            </p>
+          }
+        />
+        <section className={s.card}>
+          <p className={s.h}>損した回が多くても、平均では得？</p>
+          <p className={s.muted} data-testid="exp-loss-why">
+            損した回の割合（{pctSig(qLoss)}）と、1回あたりの損得の平均（{sg(net)}
+            {unit}）は別の量。1回ごとに損しやすいかと、何度も引いたときに平均で得かは、別々に見る。
+            {gA ? `まれな大きい額が平均をどう動かすかは ${gA} で確かめる。` : ""}
+          </p>
+        </section>
+      </>
+    );
+    cta = apply ? (
+      <button type="button" className={s.primary} onClick={() => go(4)}>
+        応用の課題へ
+      </button>
+    ) : (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  if (stage === 4 && apply) {
+    body = <ApplyTask spec={apply} />;
+    cta = (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  return (
+    <LabShell
+      title={def.title}
+      question={question ?? "値段は、いくらまでなら得？"}
       stage={stage}
       reached={reached}
       go={go}

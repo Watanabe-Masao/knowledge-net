@@ -8,7 +8,7 @@ import { explain } from "./applySteps";
 /** 事象：ちょうど（eq）・以上（ge）・以下（le）・より多い（gt） */
 export type ApplyEvent = { op: "eq" | "ge" | "le" | "gt"; k: number };
 /** 値の表（値の実験室。stats2-course #364）：値と重み（重みの比が確率）。name は解き方の段で呼ぶ名前（なければ 1・2・3） */
-export type ApplyTable = { values: number[]; weights: number[]; name?: string };
+export type ApplyTable = { values: number[]; weights: number[]; name?: string; price?: number };
 
 export type ApplySolve =
   /** 逆算：n 回で平均 mean にする p（＝mean÷n） */
@@ -57,7 +57,8 @@ export type ApplySolve =
    *  answer は 0＝言える（期待値の値の重みだけがいちばん大きい）・1＝言えない */
   | { method: "table-mean-mode"; values: number[]; weights: number[]; unit?: string }
   | { method: "table-mean-median-gap"; tables: ApplyTable[]; unit?: string }
-  | { method: "table-transform-mean"; values: number[]; weights: number[]; a: number; b: number; only?: number[] };
+  | { method: "table-transform-mean"; values: number[]; weights: number[]; a: number; b: number; only?: number[] }
+  | { method: "table-best-net"; tables: ApplyTable[]; unit?: string };
 
 type ApplyMethod = ApplySolve["method"];
 type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
@@ -86,6 +87,7 @@ export const APPLY_FIELDS = {
   "table-mean-mode": { required: ["values", "weights"], optional: ["unit"], choices: 2 },
   "table-mean-median-gap": { required: ["tables"], optional: ["unit"], choices: 3 },
   "table-transform-mean": { required: ["values", "weights", "a", "b"], optional: ["only"] },
+  "table-best-net": { required: ["tables"], optional: ["unit"], choices: 3 },
 } as const satisfies {
   [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
 };
@@ -381,6 +383,17 @@ function solveCore(s: ApplySolve): ApplyResult {
         formula = s.a * tableMoments(s).mean + s.b;
       return { answer: mean, facts: { formula }, steps: [] };
     }
+    case "table-best-net": {
+      // 評価（期待値の実験室 E-01。stats2-course #119）：何度も買うとき、1回あたりの損得の平均（期待値−値段）がいちばん大きい表
+      checkThree(s.tables);
+      if (!s.tables.every((t) => Number.isFinite(t.price))) throw new RangeError("どの表にも値段（price）を書く");
+      const nets = s.tables.map((t) => tableMoments(t).mean - t.price!),
+        order = [0, 1, 2].sort((a, b) => nets[b]! - nets[a]!);
+      const d1 = nets[order[0]!]! - nets[order[1]!]!;
+      if (!(d1 > 1e-9 && d1 >= 0.1 * Math.abs(nets[order[0]!]!)))
+        throw new RangeError(`いちばん得な表がはっきり1つになるようにする：${nets.join("・")}`);
+      return { answer: order[0]!, facts: { n0: nets[0]!, n1: nets[1]!, n2: nets[2]! }, steps: [] };
+    }
     case "table-mean-mode": {
       checkTable(s);
       const { mean, W } = tableMoments(s),
@@ -562,6 +575,7 @@ function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
     case "table-min-var":
     case "table-mean-mode":
     case "table-mean-median-gap":
+    case "table-best-net":
       return { answerFormat: null, at: {}, mark: {}, vars: [] };
   }
 }
