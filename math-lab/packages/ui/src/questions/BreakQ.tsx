@@ -79,7 +79,10 @@ export function BreakQ(props: QProps & { initial?: string }) {
     vb = b.n * b.p * (1 - b.p),
     vm = mechanismMoments(m).variance;
   const ans = Math.abs(vm - vb) <= 1e-9 * Math.max(1, vb) ? 1 : vm > vb ? 0 : 2;
-  const theme = def.themes[0]!; // 題材は1つ（選んでも計算は同じなので切り替えは置かない）
+  // 前提崩しは起き方そのものを見る問いなので、題材（コインなど）を使わず「成功・失敗」と中立の印で出す。
+  // 題材の絵は、疲れる・その日の調子・前の結果を引きずる起き方と合わず（コインは疲れない）、題材の単位（本・人）は
+  // 予測の段の「1回目・10 回目」とずれる（⑦ の 4。stats2-course #379）
+  const theme = { ...def.themes[0]!, success: "成功", failure: "失敗", icon: "●", unit: "回" };
   const { before: A, after: B, run } = usePairRuns({ kind: "bernoulli", ...b }, m, props.seed);
   const st = STRENGTH[m.kind]!;
   const xOf = (c: Cx) => {

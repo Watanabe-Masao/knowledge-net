@@ -115,6 +115,11 @@ test("D-02・前提崩し：大小が理論と逆に出る頻度をその場で�
   await x.getByRole("radio").first().click();
   await x.getByRole("button", { name: "この予測で実験する" }).click();
   await x.getByTestId("exp-run-big").click();
+  // 前提崩しは題材を使わず「成功・失敗」で出す（コインは疲れない。題材の単位は予測の段の「回」とずれる。#379）。
+  // 検出の確かめ（2026-11-14）：BreakQ の theme を def.themes[0] に戻すと落ちることを見た
+  await expect(x.getByText(/^成功 \d+ 回$/).first()).toBeVisible();
+  await expect(x.getByText(/成功（表）/)).toHaveCount(0);
+  await expect(x.getByTestId("exp-cx-set")).not.toContainText("🪙");
   await x.getByTestId("exp-to-observe").click();
   await expect(x.getByTestId("exp-cx-flip")).toContainText(/いまの各 [\d,]+ セットで(約 [\d.]+%|0\.1% 未満)/);
   // 「中」でも二項分布と同じと読ませない：崩した分散が二項分布の目安の中に入る頻度をその場で書く（⑦ の 2。#379）
