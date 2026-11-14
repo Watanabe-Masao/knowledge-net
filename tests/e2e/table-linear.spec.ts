@@ -1,36 +1,13 @@
 // 期待値の実験室 C-01（全部の値を a 倍して b 足す。開く先 linear。kn-experiment の改訂11。stats2-course #119）。
-// 見本にはまだ C-01 の linear と応用がないので、読み込みを書き換えて足す（CLAUDE.md「テストの見本」）。
-import { test, expect, type Page } from "@playwright/test";
+// 見本（教材の公開データの写し）の C-01 をそのまま使う（2026-11-15 の公開で入った。テーマの linear と変換の応用）。
+import { test, expect } from "@playwright/test";
 
 const SRC = "src=sample/stats2.json";
 const X = encodeURIComponent("stats2:EXP-expect-table");
 const Q = encodeURIComponent("stats2:expect-C-01");
-const LINEAR: Record<string, object> = {
-  lottery: { a: 0.5, b: -10, change: "賞金を全部半額にし、はずれも含めて全員から参加費 10 円を引く" },
-  dice: { a: 0.5, b: 3, change: "出た目を半分にして 3 足す" },
-  basket: { a: 10, b: 5, change: "ポイント＝点数×10＋来店の 5 ポイント" },
-};
-const APPLY = {
-  kind: "変換",
-  task: "くじ（はずれ 80 本・100円 18 本・1000円 2 本。期待値 38円）で、当たりの賞金だけを 2 倍して 50 円上乗せする（はずれは 0 円のまま）。新しいくじの期待値は何円？",
-  solve: { method: "table-transform-mean", values: [0, 100, 1000], weights: [80, 18, 2], a: 2, b: 50, only: [1, 2] },
-  answer: { type: "number", unit: "円", tol: { abs: 0.05 } },
-  why: "値ごとに変え方が違う（aX＋b の形でない）なら、変えたあとの表から期待値を求め直す。",
-};
-async function withLinear(page: Page) {
-  await page.route("**/sample/stats2.json", async (r) => {
-    const d = await (await r.fetch()).json();
-    const x = d.experiments.find((e: { id: string }) => e.id === "stats2:EXP-expect-table");
-    for (const t of x.themes) if (LINEAR[t.id]) t.linear = LINEAR[t.id];
-    for (const g of x.catalog)
-      for (const it of g.items) if (it.id === "stats2:expect-C-01") Object.assign(it, { open: "linear", apply: APPLY });
-    await r.fulfill({ json: d });
-  });
-}
 const fmt = (v: number) => (v >= 10 ? String(Math.round(v)) : String(Number(v.toPrecision(2))));
 
 test.beforeEach(async ({ page }) => {
-  await withLinear(page);
   await page.setViewportSize({ width: 390, height: 844 });
 });
 
