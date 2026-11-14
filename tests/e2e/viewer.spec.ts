@@ -1157,7 +1157,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     });
   });
   await page.goto("./?src=sample/stats2.json");
-  await expect(page.getByText(/（定義だけ 114）/)).toBeVisible(); // ベルヌーイ分布に定義、標準正規分布・無相関を骨格で足した（stats2-course #289）。データの分散・データの標準偏差を骨格で足した（#310）。データの共分散を骨格で足した（#317）
+  await expect(page.getByText(/（定義だけ 113）/)).toBeVisible(); // ベルヌーイ分布に定義、標準正規分布・無相関を骨格で足した（stats2-course #289）。データの分散・データの標準偏差を骨格で足した（#310）。データの共分散を骨格で足した（#317）。大数の法則に説明を書いた（#405）
   const lib = page.getByTestId("library");
   await expect(lib.locator("[data-testid^=lib-]")).toHaveCount(12); // 12の分類のタイル
   // 柱は教材の course.pillars から（上から 記述 → 確率 → 推測）

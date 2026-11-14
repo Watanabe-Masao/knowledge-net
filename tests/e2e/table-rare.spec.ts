@@ -20,7 +20,7 @@ test.beforeEach(async ({ page }) => {
 //   実験：元の表は「同じ引きで、替えた1本が元の 100円だったら」として写す。だから引いた平均の差は、いつも 9900×（大当たりの回数）÷回数 になる。
 //   観察：中央値（引いた）は 2つの表とも 0円（はずれが 80 本で、真ん中の 50・51 番目ははずれ）。ずれの目安は 2√(20356/N)・2√(1002931/N)（手で求めた分散）。
 //   考察：替える前は 100×1/100＝1円だった項が 1万×1/100＝100円になる（ほかの項の和は 37円）。中央値は表の 100 個を並べた 50・51 番目で決まる。
-//   案内：開ける問いだけを番号と題で（D-01 は開ける、B-01 はまだ開けない。#401）。
+//   案内：開ける問いだけを番号と題で（D-01 は開ける。B-01 はこのテストの中だけ開けない問いに書き換える。#401）。
 //   応用：評価（平均と中央値がいちばん離れる表）。B（1点 51人・5点 49人）は平均 2.96・中央値 1 で差 1.96。
 // 想定する故障：元の表を別の種で引く（違いが大当たりの回だけでなくなる）・中央値を平均で出す・予測の境目を 1.1 倍・2 倍のままにする・
 //   ずれの目安で替えた表の分散を使わない・考察の項の数を取り違える・応用の answer の番号と選び肢がずれる。
@@ -30,6 +30,13 @@ test.beforeEach(async ({ page }) => {
 //   境目を 1.1 倍にすると選び肢の名前で、案内を開ける問いに絞らないと B-01 が出て落ちることを見た（最後は 2026-11-14 の #401）
 test("A-03：1本を替えた表。予測（倍率の範囲）→ 同じ引きで比べる → 平均と中央値 → 項に開く → 応用", async ({ page }) => {
   const errs = errorsOf(page);
+  // 案内の絞り込み（開ける問いだけ）を確かめるため、この中だけ B-01 を開けない問いに戻す（2026-11-15 に B-01 を開いた。#405）
+  await page.route("**/sample/stats2.json", async (r) => {
+    const d = await (await r.fetch()).json();
+    const ex = d.experiments.find((e: { id: string }) => e.id === "stats2:EXP-expect-table");
+    for (const g of ex.catalog) for (const it of g.items) if (it.id === "stats2:expect-B-01") delete it.open;
+    await r.fulfill({ json: d });
+  });
   await page.goto(`./?${SRC}&x=${X}&q=${Q}`);
   const x = page.getByTestId("experiment");
   await expect(x.getByTestId("exp-question")).toContainText("まれでも大きい"); // 題は教材の catalog から（#401 で「値が1つ」に直す）
@@ -66,7 +73,7 @@ test("A-03：1本を替えた表。予測（倍率の範囲）→ 同じ引き�
   await expect(x.getByTestId("exp-mean-margin-freq")).toContainText("最大で約9.8%");
   await expect(x.getByTestId("exp-range-freq")).toContainText("近似したおおよその値");
   await expect(x.getByTestId("exp-look")).not.toContainText("落ち着かない"); // 平均の落ち着き方は B-01・B-02 で
-  // 案内は開ける問いだけを番号と題で（#401）。D-01 は開ける、B-01 はまだ開けない
+  // 案内は開ける問いだけを番号と題で（#401）。D-01 は開ける、B-01 は上で開けない問いにした
   await expect(x.getByTestId("exp-look")).toContainText("「D-01 ");
   await expect(x.getByTestId("exp-look")).not.toContainText("B-01");
   await x.getByRole("button", { name: /理由を考える/ }).click();
