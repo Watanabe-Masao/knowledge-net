@@ -105,3 +105,20 @@ describe("応用の段の文の型", () => {
     ).toEqual([]);
   });
 });
+
+// 確かめる対象：解き方の段の式で、確率の記号 P(X＝k) と同じ字を値（事象の確率など）に使わないこと（⑦ の 4。stats2-course #394）。
+// 想定する故障：「Y∼B(N, P)」「SE＝√(P(1−P)/N)」のように、P(X＝k) と同じ段の並びに値の P を書き、学ぶ人が同じものと読む。
+// 見つけ方：上の全部の課題で、段の式のどれかに「P(X」があれば、その課題の式に「P(X」以外の P を出さない。
+// 既存との違い：上のテストは文の型（id・穴）。これは式の字。
+// 検出の確かめ（2026-11-14）：expected-observers の「B(N, q)」を「B(N, P)」に戻すと落ちることを見た
+describe("解き方の式の字", () => {
+  it("P(X＝k) を使う課題では、値に P の字を使わない", () => {
+    for (const c of CASES) {
+      const texs = solveApply(c)
+        .steps.map((st) => st.tex ?? "")
+        .map((t) => t.replace(/\\text\{[^}]*\}/g, ""));
+      if (!texs.some((t) => t.includes("P(X"))) continue;
+      for (const t of texs) expect(t.match(/P(?!\(X)/g) ?? [], `${c.method}：${t}`).toEqual([]);
+    }
+  });
+});
