@@ -10,6 +10,7 @@ import {
   TableInfo,
   TableLab,
   TableLinearQ,
+  TablePriceQ,
   TableRareQ,
   TableSameMeanQ,
   TableSupportQ,
@@ -626,6 +627,8 @@ function TableEntry(props: Props & { def: TableDef }) {
       {/* 画面の問いは、開いた問いの題（catalog の title）から引く。同じことを2か所に書かない（stats2-course #379） */}
       {pick === "support" ? (
         <TableSupportQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
+      ) : pick === "price" ? (
+        <TablePriceQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
       ) : pick === "linear" ? (
         <TableLinearQ {...props} def={def} onBack={back} question={item?.title} apply={item?.apply} />
       ) : pick === "rare" ? (
