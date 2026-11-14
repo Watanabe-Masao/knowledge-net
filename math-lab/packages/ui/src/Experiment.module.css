@@ -1401,6 +1401,7 @@
   margin: 4px 0 10px;
   font-size: 15px;
   line-height: 1.6;
+  white-space: pre-line; /* 課題の文の改行（表を行で並べる。stats2-course #401） */
 }
 .applyIn {
   display: flex;
