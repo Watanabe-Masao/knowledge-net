@@ -54,6 +54,7 @@ export {
   applyCheck,
   solveApply,
   solveValue,
+  tableMoments,
   type ApplyCheck,
   type ApplyMark,
   type ApplyState,
@@ -62,6 +63,7 @@ export {
   type ApplyResult,
   type ApplyEvent,
   type ApplyStep,
+  type ApplyTable,
 } from "./apply";
 export {
   INT,

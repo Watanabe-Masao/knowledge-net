@@ -21,6 +21,8 @@ import {
   type SetRecord,
 } from "@math-lab/engine";
 import { about, fmtN } from "./QuestionParts";
+import { ApplyTask, type ApplySpec } from "./questions/parts";
+import { STAGES_Q } from "./questions/common";
 import { nudge } from "./nudge";
 import { useRunner } from "./runner";
 import { haptic, reduced, useTween } from "./motion";
@@ -427,7 +429,8 @@ export function TableLab({
   cards: cards0,
   onCards,
   question,
-}: Props & { def: TableDef; question?: string }) {
+  apply,
+}: Props & { def: TableDef; question?: string; apply?: ApplySpec }) {
   const { stage, reached, go } = useStages(cards0 ? 5 : 0);
   const [cmpTheme, cmpCards] = cards0?.includes(":")
     ? [cards0.slice(0, cards0.indexOf(":")), cards0.slice(cards0.indexOf(":") + 1)]
@@ -804,7 +807,7 @@ export function TableLab({
     );
     cta = (
       <button type="button" className={s.primary} onClick={() => go(4)}>
-        別の条件で試す
+        {apply ? "応用の課題へ" : "別の条件で試す"}
       </button>
     );
   } else if (stage === 5) {
@@ -834,6 +837,8 @@ export function TableLab({
     const cx = cxId ? def.counterexamples?.find((x) => x.id === cxId) : undefined;
     body = (
       <>
+        {/* 応用の課題（stats2-course #364）。値の表は道具を課題の値に合わせる仕組みがまだないので、つまみ合わせ（onFit）は置かない */}
+        {apply && <ApplyTask spec={apply} />}
         <section className={s.card}>
           <p className={s.h}>別のテーマで</p>
           {themeChips}
@@ -919,7 +924,8 @@ export function TableSupportQ({
   conceptName,
   definitions,
   question,
-}: Props & { def: TableDef; question?: string }) {
+  apply,
+}: Props & { def: TableDef; question?: string; apply?: ApplySpec }) {
   const { stage, reached, go } = useStages(0);
   const [theme, setTheme] = useState(def.themes.find((t) => t.id === "dice") ?? def.themes[0]!);
   const unit = theme.unit ?? "";
@@ -1150,7 +1156,7 @@ export function TableSupportQ({
         {unit} になる？ 理由を考える
       </button>
     );
-  } else {
+  } else if (stage === 3 || !apply) {
     body = (
       <TableReason
         title={def.reason?.title}
@@ -1160,6 +1166,18 @@ export function TableSupportQ({
         note={<p className={s.muted}>値×確率をすべて足した数なので、表の値の間（重心）に来ることがある</p>}
       />
     );
+    cta = apply ? (
+      <button type="button" className={s.primary} onClick={() => go(4)}>
+        応用の課題へ
+      </button>
+    ) : (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別の表で試す
+      </button>
+    );
+  } else {
+    // 応用の課題（stats2-course #364）
+    body = <ApplyTask spec={apply} />;
     cta = (
       <button type="button" className={s.primary} onClick={() => go(0)}>
         別の表で試す
@@ -1174,7 +1192,7 @@ export function TableSupportQ({
       reached={reached}
       go={go}
       onBack={onBack}
-      stages={SUPPORT_STAGES}
+      stages={apply ? STAGES_Q : SUPPORT_STAGES}
       body={body}
       cta={cta}
       onInfo={() => setSheet(true)}
@@ -1216,7 +1234,8 @@ export function TableSameMeanQ({
   conceptName,
   definitions,
   question,
-}: Props & { def: TableDef; question?: string }) {
+  apply,
+}: Props & { def: TableDef; question?: string; apply?: ApplySpec }) {
   const { stage, reached, go } = useStages(0);
   const themes = def.themes.filter((t) => t.same_mean);
   const [theme, setTheme] = useState(themes[0] ?? def.themes[0]!);
@@ -1543,6 +1562,19 @@ export function TableSameMeanQ({
         ) : null}
       </>
     );
+    cta = apply ? (
+      <button type="button" className={s.primary} onClick={() => go(4)}>
+        応用の課題へ
+      </button>
+    ) : (
+      <button type="button" className={s.primary} onClick={() => go(0)}>
+        別のテーマで試す
+      </button>
+    );
+  }
+  if (stage === 4 && apply) {
+    // 応用の課題（stats2-course #364）
+    body = <ApplyTask spec={apply} />;
     cta = (
       <button type="button" className={s.primary} onClick={() => go(0)}>
         別のテーマで試す
@@ -1557,7 +1589,7 @@ export function TableSameMeanQ({
       reached={reached}
       go={go}
       onBack={onBack}
-      stages={SUPPORT_STAGES}
+      stages={apply ? STAGES_Q : SUPPORT_STAGES}
       body={body}
       cta={cta}
       onInfo={() => setSheet(true)}

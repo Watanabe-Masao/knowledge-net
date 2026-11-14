@@ -240,7 +240,13 @@ export function ApplyTask({
       <p className={s.applyTask} data-testid="exp-apply-task">
         {spec.task}
       </p>
-      {!done && <p className={qs.muted}>下のつまみを課題の値に合わせ、図や表から読み取って答える。</p>}
+      {!done && (
+        <p className={qs.muted}>
+          {onFit
+            ? "下のつまみを課題の値に合わせ、図や表から読み取って答える。"
+            : "課題の数から計算して答える（解き方は答えのあとに出る）。"}
+        </p>
+      )}
       {!done &&
         (a.type === "choice" ? (
           <Seg

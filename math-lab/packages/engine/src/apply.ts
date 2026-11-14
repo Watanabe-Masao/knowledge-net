@@ -7,6 +7,8 @@ import { explain } from "./applySteps";
 
 /** 事象：ちょうど（eq）・以上（ge）・以下（le）・より多い（gt） */
 export type ApplyEvent = { op: "eq" | "ge" | "le" | "gt"; k: number };
+/** 値の表（値の実験室。stats2-course #364）：値と重み（重みの比が確率）。name は解き方の段で呼ぶ名前（なければ 1・2・3） */
+export type ApplyTable = { values: number[]; weights: number[]; name?: string };
 
 export type ApplySolve =
   /** 逆算：n 回で平均 mean にする p（＝mean÷n） */
@@ -44,7 +46,13 @@ export type ApplySolve =
   /** 変換：成功で a、失敗で b の値をとるとき、n 回の合計の期待値 n{ap＋b(1−p)}（期待値の線形性） */
   | { method: "linear-sum"; n: number; p: number; a: number; b: number }
   /** 評価：2つの二項分布の分散 np(1−p) を比べる。answer は 0＝a が大きい・1＝ほぼ同じ（比 0.9〜1.1）・2＝b が大きい */
-  | { method: "compare-var"; a: { n: number; p: number }; b: { n: number; p: number } };
+  | { method: "compare-var"; a: { n: number; p: number }; b: { n: number; p: number } }
+  /** 逆算（値の表）：index 番目の値の重みを w に替えると、期待値 Σxw÷Σw が mean になる w（ほかの重みはそのまま） */
+  | { method: "table-weight-for-mean"; values: number[]; weights: number[]; index: number; mean: number }
+  /** 評価（値の表）：3つの表のうち、期待値が表の値の1つと等しいのはどれか（ちょうど1つ）。answer は番号 */
+  | { method: "table-mean-on-table"; tables: ApplyTable[] }
+  /** モデル選択（値の表）：期待値が同じ3つの表のうち、分散 Σ(x−μ)²p(x) がいちばん小さいのはどれか。answer は番号 */
+  | { method: "table-min-var"; tables: ApplyTable[] };
 
 type ApplyMethod = ApplySolve["method"];
 type Of<M extends ApplyMethod> = Extract<ApplySolve, { method: M }>;
@@ -67,6 +75,9 @@ export const APPLY_FIELDS = {
   "within-band": { required: ["P", "m", "x"], choices: 2 },
   "linear-sum": { required: ["n", "p", "a", "b"] },
   "compare-var": { required: ["a", "b"], choices: 3 },
+  "table-weight-for-mean": { required: ["values", "weights", "index", "mean"] },
+  "table-mean-on-table": { required: ["tables"], choices: 3 },
+  "table-min-var": { required: ["tables"], choices: 3 },
 } as const satisfies {
   [M in ApplyMethod]: { required: readonly ReqKeys<Of<M>>[]; optional?: readonly OptKeys<Of<M>>[]; choices?: number };
 };
@@ -101,6 +112,24 @@ const prob = (n: number, p: number, e: ApplyEvent) => {
       s + ((e.op === "eq" ? k === e.k : e.op === "ge" ? k >= e.k : e.op === "le" ? k <= e.k : k > e.k) ? x : 0),
     0,
   );
+};
+/** 値の表の期待値と分散（重みの比を確率として） */
+export const tableMoments = (t: { values: number[]; weights: number[] }) => {
+  const W = t.weights.reduce((a, b) => a + b, 0),
+    mean = t.values.reduce((a, x, i) => a + x * t.weights[i]!, 0) / W,
+    variance = t.values.reduce((a, x, i) => a + (x - mean) ** 2 * t.weights[i]!, 0) / W;
+  return { mean, variance, W };
+};
+const checkTable = (t: { values: number[]; weights: number[] }) => {
+  if (!(t.values.length >= 2 && t.values.length === t.weights.length))
+    throw new RangeError(`値と重みは同じ数で2つ以上：${t.values.length}・${t.weights.length}`);
+  if (!t.values.every(Number.isFinite)) throw new RangeError("値は数");
+  if (!t.weights.every((w) => Number.isFinite(w) && w >= 0)) throw new RangeError("重みは0以上の数");
+  if (!(t.weights.reduce((a, b) => a + b, 0) > 0)) throw new RangeError("重みの合計は正");
+};
+const checkThree = (ts: ApplyTable[]) => {
+  if (ts.length !== 3) throw new RangeError(`表は3つ（選び肢の数）：${ts.length}`);
+  ts.forEach(checkTable);
 };
 const checkNP = (n: number, p: number) => {
   if (!(Number.isInteger(n) && n >= 1)) throw new RangeError(`n は1以上の整数：${n}`);
@@ -254,6 +283,51 @@ function solveCore(s: ApplySolve): ApplyResult {
         vb = s.b.n * s.b.p * (1 - s.b.p),
         r = va / vb;
       return { answer: r > 1.1 ? 0 : r < 1 / 1.1 ? 2 : 1, facts: { va, vb, ratio: r }, steps: [] };
+    }
+    case "table-weight-for-mean": {
+      checkTable(s);
+      if (!(Number.isInteger(s.index) && s.index >= 0 && s.index < s.values.length))
+        throw new RangeError(`index は 0〜${s.values.length - 1} の整数：${s.index}`);
+      const x = s.values[s.index]!;
+      let W = 0,
+        S = 0;
+      s.values.forEach((v, j) => {
+        if (j !== s.index) {
+          W += s.weights[j]!;
+          S += v * s.weights[j]!;
+        }
+      });
+      if (Math.abs(x - s.mean) < EPS)
+        throw new RangeError(`替える値 ${x} が目標の期待値と同じ（重みで期待値は動かない）`);
+      // (S＋x·w)÷(W＋w)＝mean を w について解く
+      const w = (s.mean * W - S) / (x - s.mean);
+      if (!(w >= -EPS && Number.isFinite(w)))
+        throw new RangeError(`${x} の重みだけでは期待値を ${s.mean} にできない（w＝${w}）`);
+      return { answer: Math.max(0, w), facts: { W, S }, steps: [] };
+    }
+    case "table-mean-on-table": {
+      checkThree(s.tables);
+      const means = s.tables.map((t) => tableMoments(t).mean),
+        hits = s.tables.flatMap((t, i) =>
+          t.values.some((x, j) => t.weights[j]! > 0 && Math.abs(x - means[i]!) <= 1e-9 * Math.max(1, Math.abs(x)))
+            ? [i]
+            : [],
+        );
+      if (hits.length !== 1)
+        throw new RangeError(`期待値が表の値になる表はちょうど1つにする（今は ${hits.length} つ）`);
+      return { answer: hits[0]!, facts: { m0: means[0]!, m1: means[1]!, m2: means[2]! }, steps: [] };
+    }
+    case "table-min-var": {
+      checkThree(s.tables);
+      const ms = s.tables.map(tableMoments),
+        mu = ms[0]!.mean;
+      if (!ms.every((m) => Math.abs(m.mean - mu) <= 1e-9 * Math.max(1, Math.abs(mu))))
+        throw new RangeError(`期待値が同じ表を比べる：${ms.map((m) => m.mean).join("・")}`);
+      const vs = ms.map((m) => m.variance),
+        order = [0, 1, 2].sort((a, b) => vs[a]! - vs[b]!);
+      if (!(vs[order[1]!]! >= 1.1 * vs[order[0]!]!))
+        throw new RangeError(`いちばん小さい分散がはっきり1つになるようにする（1.1 倍以上の差）：${vs.join("・")}`);
+      return { answer: order[0]!, facts: { mean: mu, v0: vs[0]!, v1: vs[1]!, v2: vs[2]! }, steps: [] };
     }
   }
 }
@@ -414,6 +488,12 @@ function check0(s: ApplySolve): Omit<ApplyCheck, "targets" | "probe"> {
       };
     case "compare-var":
       return { answerFormat: null, at: { n: s.a.n, p: s.a.p }, mark: { read: "variance" }, vars: [] };
+    // 値の表の課題は、実験室の表の行の重みを合わせる道具がまだないので、合わせる先を置かない（画面は「グラフを問いに合わせる」を出さない）
+    case "table-weight-for-mean":
+      return { answerFormat: NUM2, at: {}, mark: {}, vars: [] };
+    case "table-mean-on-table":
+    case "table-min-var":
+      return { answerFormat: null, at: {}, mark: {}, vars: [] };
   }
 }
 
