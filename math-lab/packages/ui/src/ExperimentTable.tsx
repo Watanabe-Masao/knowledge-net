@@ -1668,7 +1668,7 @@ export function TableRareQ({
   const { rec, run } = useDraws(R, wRare);
   const sum = summarize(rec);
   const from = theme.values[rare.from]!;
-  // 元の表の引いた値：同じ引きで、替えた1本が元の値だったら（大当たりを引いた回だけが違う）
+  // 元の表の引いた値：引いた to を from に読み替える（ほかの回は同じ。違うのは to を引いた回だけ）
   const baseKs = useMemo(() => rec.ks.map((k) => (k === rare.to ? from : k)), [rec]); // eslint-disable-line react-hooks/exhaustive-deps
   const baseMean = baseKs.length ? baseKs.reduce((a, b) => a + b, 0) / baseKs.length : undefined;
   const iTo = support.indexOf(rare.to),
@@ -1683,6 +1683,11 @@ export function TableRareQ({
   const pHit = 1 / wRare.reduce((a, b) => a + b, 0);
   const labelOf = (v: number) => labels[support.indexOf(v)] ?? `${v}${unit}`;
   const NEED = 1000;
+  // ほかの問いへの案内は、開ける問いだけを番号と題で（⑦ の 2。学習者役のレビュー 2026-11-14。#401）
+  const guide = (def.catalog ?? [])
+    .flatMap((g) => g.items)
+    .filter((it) => /-(B-01|D-01)$/.test(it.id) && it.open && !it.retired)
+    .map((it) => `「${it.id.replace(/^.*-([A-Z]-\d+)$/, "$1")} ${it.title}」`);
   const [sheet, setSheet] = useState(false);
 
   let body: ReactNode, cta: ReactNode;
@@ -1719,13 +1724,13 @@ export function TableRareQ({
         </section>
         <section className={s.card} data-testid="exp-table-rare">
           <p className={s.h}>
-            1本を替えた表<span>値と確率</span>
+            1つを替えた表<span>値と確率</span>
           </p>
           <p className={s.story}>{rare.change}</p>
-          <Bars theory={thRare} labels={labels} at={support} height={120} label="1本を替えた表の確率" />
+          <Bars theory={thRare} labels={labels} at={support} height={120} label="1つを替えた表の確率" />
         </section>
         <section className={s.card}>
-          <p className={s.h}>1本だけ替えると、何度も引いた平均の行き先（期待値）は？</p>
+          <p className={s.h}>1つだけ替えると、何度も引いた平均の行き先（期待値）は？</p>
           <div className={s.choice} role="radiogroup" aria-label="期待値の予測" data-testid="exp-pred-rare">
             {RANGES.map((d, i) => (
               <button
@@ -1756,7 +1761,7 @@ export function TableRareQ({
       <>
         <section className={s.card}>
           <p className={s.h}>
-            引いた値<span>1本を替えた表</span>
+            引いた値<span>1つを替えた表</span>
           </p>
           <div className={s.draws} data-testid="exp-draws" key={rec.sets}>
             {last.length ? (
@@ -1766,12 +1771,12 @@ export function TableRareQ({
                 </span>
               ))
             ) : (
-              <span className={s.muted}>「▶ 100 回」を押すと、1本を替えた表から引く</span>
+              <span className={s.muted}>「▶ 100 回」を押すと、1つを替えた表から引く</span>
             )}
           </div>
           <p className={s.muted}>
-            元の表は、同じ引きで替えた1本が元の {labelOf(from)} だったときの値（違うのは {labelOf(rare.to)}{" "}
-            を引いた回だけ）
+            元の表の平均は、引いた {labelOf(rare.to)} を {labelOf(from)} に読み替えて出す（ほかの回は同じ。違うのは{" "}
+            {labelOf(rare.to)} を引いた回だけ）
           </p>
           {rec.sets > 0 && (
             <p className={s.muted}>
@@ -1793,7 +1798,7 @@ export function TableRareQ({
           <p className={s.h}>
             出た値の割合<span data-testid="exp-sets">{rec.sets.toLocaleString()} 回</span>
           </p>
-          <Bars freq={sum.freq} labels={labels} at={support} label="1本を替えた表で引いた値の割合" />
+          <Bars freq={sum.freq} labels={labels} at={support} label="1つを替えた表で引いた値の割合" />
         </section>
       </>
     );
@@ -1854,7 +1859,7 @@ export function TableRareQ({
             at={support}
             marker={mRare}
             height={160}
-            label="1本を替えた表で引いた割合と表の確率と期待値"
+            label="1つを替えた表で引いた割合と表の確率と期待値"
           />
         </section>
         <section className={s.card} data-testid="exp-rare-table">
@@ -1863,7 +1868,7 @@ export function TableRareQ({
               <tr>
                 <th scope="col">{n.toLocaleString()} 回</th>
                 <th scope="col">元の表</th>
-                <th scope="col">1本を替えた表</th>
+                <th scope="col">1つを替えた表</th>
               </tr>
             </thead>
             <tbody>
@@ -1908,10 +1913,13 @@ export function TableRareQ({
           </p>
         </section>
         <p className={s.muted} data-testid="exp-mean-margin">
-          引いた平均は、いまの {n.toLocaleString()} 回では、期待値の上下 ±{fmtN(2 * Math.sqrt(vBase / n))}
-          {unit}（元の表）・±{fmtN(2 * Math.sqrt(vRare / n))}
-          {unit}（替えた表）に約95%
-          が入る（ずれの目安。±2×標準誤差）。理論どおりでも、1つの列が目安の外に出るのはおおよそ5%、2つの列のどちらかが外に出るのは最大で約9.8%（2つの列は同じ引きから作るので、独立と仮定した値が上限）。
+          ずれの目安（±2×標準誤差。引いた平均の約95% が、期待値からこの幅に入る）は、いまの {n.toLocaleString()} 回で
+          元の表 ±{fmtN(2 * Math.sqrt(vBase / n))}
+          {unit}・替えた表 ±{fmtN(2 * Math.sqrt(vRare / n))}
+          {unit}。
+        </p>
+        <p className={s.muted} data-testid="exp-mean-margin-freq">
+          理論どおりでも、平均の行の1マスが目安の外に出るのは約5%、2マスのどちらかが外に出るのは最大で約9.8%。
         </p>
         <p className={s.muted} data-testid="exp-range-freq">
           理論どおりでも、いまの {n.toLocaleString()} 回で、替えた表の引いた平均が期待値と別の選び肢の範囲に入るのは{" "}
@@ -1920,8 +1928,8 @@ export function TableRareQ({
         <section className={s.card} data-testid="exp-look">
           <p className={s.h}>見る所</p>
           <p className={s.muted}>
-            平均の行と中央値の行で、元の表と替えた表の数がどう違うかを見比べる。ずれの目安の幅の違いは B-01・D-01
-            で確かめる
+            平均の行と中央値の行で、元の表と替えた表の数がどう違うかを見比べる。
+            {guide.length ? `ずれの目安の幅の違いは ${guide.join("・")} で確かめる` : ""}
           </p>
         </section>
       </>
@@ -1934,6 +1942,7 @@ export function TableRareQ({
   } else {
     const tot = wRare.reduce((a, b) => a + b, 0);
     const term = rare.to / tot,
+      before = from / tot,
       rest = mRare - term;
     body = (
       <>
@@ -1944,17 +1953,18 @@ export function TableRareQ({
           weights={wRare}
           note={
             <p className={s.muted} data-testid="exp-rare-term">
-              {labelOf(rare.to)}×1/{tot}＝{r2(term)}
-              {unit}。この1項だけで、ほかの項の和（{r2(rest)}
-              {unit}）{term > rest ? "より大きい" : "と比べて小さくない"}
+              替える前は {labelOf(from)}×1/{tot}＝{r2(before)}
+              {unit} だった項が、{labelOf(rare.to)}×1/{tot}＝{r2(term)}
+              {unit} になる（{r2(term / before)} 倍）。ほかの項の和は {r2(rest)}
+              {unit}
             </p>
           }
         />
         <section className={s.card}>
           <p className={s.h}>中央値はなぜ動かない？</p>
           <p className={s.muted} data-testid="exp-median-why">
-            中央値は、小さい順に並べた真ん中の順位の値で決まる（{tot} 本を並べたら {tot / 2}・{tot / 2 + 1}{" "}
-            番目）。替えた1本は真ん中より上の側に並ぶので、その値を真ん中より上の側にある限りいくら大きくしても、真ん中の順位にある値は変わらない
+            中央値は、小さい順に並べた真ん中の順位の値で決まる（表の {tot} 個を並べたら {tot / 2}・{tot / 2 + 1}{" "}
+            番目）。替えた1つは真ん中より上の側に並ぶ。その値をどれだけ大きくしても、真ん中より上の側にある限り、真ん中の順位にある値は変わらない
           </p>
         </section>
       </>
@@ -1980,7 +1990,7 @@ export function TableRareQ({
   return (
     <LabShell
       title={def.title}
-      question={question ?? "まれでも大きい当たりが1本あると？"}
+      question={question ?? "まれでも大きい値が1つあると？"}
       stage={stage}
       reached={reached}
       go={go}
