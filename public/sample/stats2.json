@@ -13089,7 +13089,7 @@
      "title": "数え方ラボ",
      "kind": "check",
      "preset": "rel-perm-free",
-     "purpose": "役割の切り替えと n・r を自分で動かし、帯1本が r! 通りになるのを確かめる",
+     "purpose": "役割の切り替えと人数・選ぶ人数を自分で動かし、帯1本の並べ方の数を確かめる",
      "play": {
       "mode": "list",
       "set": {
@@ -15213,7 +15213,7 @@
      "title": "数え方ラボ",
      "kind": "tour",
      "preset": "rel-perm-comb-tour",
-     "purpose": "6人から2人・3人で、帯1本の r! 通りを1通りにまとめると組合せになるのを段ごとに見る",
+     "purpose": "6人から2人・3人で、同じ組の並べ方を1通りにまとめると組合せになるのを段ごとに見る",
      "play": {
       "mode": "list",
       "steps": [
@@ -15245,11 +15245,6 @@
         "states": [
          {
           "n": 6,
-          "r": 2,
-          "role": "なし"
-         },
-         {
-          "n": 6,
           "r": 3,
           "role": "あり"
          },
@@ -15275,7 +15270,7 @@
      "title": "数え方ラボ",
      "kind": "check",
      "preset": "rel-perm-free",
-     "purpose": "n・r と役割を自分で動かし、順列 ÷ r! が組合せになるのを確かめる",
+     "purpose": "人数・選ぶ人数・役割を自分で動かし、順列を組の中の並べ方の数で割ると組合せになるのを確かめる",
      "play": {
       "mode": "list",
       "set": {
@@ -15331,7 +15326,7 @@
      "title": "数え方ラボ",
      "kind": "tour",
      "preset": "rel-perm-fact-tour",
-     "purpose": "4人から r 人を並べ、r を 4 まで増やすと 4! になるのを段ごとに見る",
+     "purpose": "4人から選ぶ人数を1人ずつ増やして並べ、全員で 4! になるのを段ごとに見る",
      "play": {
       "mode": "list",
       "steps": [
@@ -15387,7 +15382,7 @@
      "title": "数え方ラボ",
      "kind": "check",
      "preset": "rel-perm-free",
-     "purpose": "r を n に合わせ、順列が n! になるのを自分で確かめる",
+     "purpose": "選ぶ人数を全員に合わせ、順列が人数の階乗になるのを自分で確かめる",
      "play": {
       "mode": "list",
       "set": {
