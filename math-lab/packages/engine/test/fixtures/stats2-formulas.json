@@ -4,11 +4,11 @@
   "index": 0,
   "id": "F-perm-def",
   "label": "階乗で表す",
-  "tex": "{}_{n}\\mathrm{P}_{k}=\\dfrac{n!}{(n-k)!}",
+  "tex": "{}_{n}\\mathrm{P}_{r}=\\dfrac{n!}{(n-r)!}",
   "symbols": [
    {
-    "symbol": "ₙPₖ",
-    "meaning": "n 個から k 個を取り出して並べる並べ方の数",
+    "symbol": "ₙPᵣ",
+    "meaning": "n 個から r 個を取り出して並べる並べ方の数",
     "key": "perm",
     "concept": "TERM-perm"
    },
@@ -23,9 +23,9 @@
     }
    },
    {
-    "symbol": "k",
+    "symbol": "r",
     "meaning": "取り出して並べる個数",
-    "key": "k",
+    "key": "r",
     "kind": "value",
     "domain": {
      "min": 0,
@@ -51,7 +51,7 @@
        "sym": "n"
       },
       {
-       "sym": "k"
+       "sym": "r"
       }
      ]
     },
@@ -78,7 +78,7 @@
            "sym": "n"
           },
           {
-           "sym": "k"
+           "sym": "r"
           }
          ]
         }
@@ -103,7 +103,7 @@
      1
     ],
     "name": "残した中の並べ方",
-    "meaning": "取り出さずに残した n−k 個の並びは数えないので、その並べ方の数で割る"
+    "meaning": "取り出さずに残した n−r 個の並びは数えないので、その並べ方の数で割る"
    }
   ],
   "contract": {
@@ -121,11 +121,11 @@
   "index": 0,
   "id": "F-comb-def",
   "label": "階乗で表す",
-  "tex": "{}_{n}\\mathrm{C}_{k}=\\dfrac{n!}{k!(n-k)!}",
+  "tex": "{}_{n}\\mathrm{C}_{r}=\\dfrac{n!}{r!(n-r)!}",
   "symbols": [
    {
-    "symbol": "ₙCₖ",
-    "meaning": "n 個から k 個を選ぶ選び方の数",
+    "symbol": "ₙCᵣ",
+    "meaning": "n 個から r 個を選ぶ選び方の数",
     "key": "comb",
     "concept": "TERM-comb"
    },
@@ -140,9 +140,9 @@
     }
    },
    {
-    "symbol": "k",
+    "symbol": "r",
     "meaning": "選ぶ個数",
-    "key": "k",
+    "key": "r",
     "kind": "value",
     "domain": {
      "min": 0,
@@ -168,7 +168,7 @@
        "sym": "n"
       },
       {
-       "sym": "k"
+       "sym": "r"
       }
      ]
     },
@@ -192,7 +192,7 @@
          "name": "fact",
          "args": [
           {
-           "sym": "k"
+           "sym": "r"
           }
          ]
         },
@@ -207,7 +207,7 @@
              "sym": "n"
             },
             {
-             "sym": "k"
+             "sym": "r"
             }
            ]
           }
@@ -235,7 +235,7 @@
      0
     ],
     "name": "選んだ中の並べ方",
-    "meaning": "選んだ k 個は順番を区別しないので、その並べ方の数で割る"
+    "meaning": "選んだ r 個は順番を区別しないので、その並べ方の数で割る"
    },
    {
     "path": [
@@ -244,7 +244,7 @@
      1
     ],
     "name": "残した中の並べ方",
-    "meaning": "残した n−k 個も順番を区別しないので、その並べ方の数で割る"
+    "meaning": "残した n−r 個も順番を区別しないので、その並べ方の数で割る"
    }
   ],
   "contract": {
@@ -3973,6 +3973,189 @@
     "非負",
     "不変",
     "同値"
+   ]
+  }
+ },
+ {
+  "concept": "TERM-prob",
+  "index": 0,
+  "id": "F-complement",
+  "label": "余事象の確率",
+  "tex": "P(Aᶜ)=1-P(A)",
+  "symbols": [
+   {
+    "symbol": "P( )",
+    "meaning": "確率",
+    "key": "P",
+    "concept": "TERM-prob"
+   },
+   {
+    "symbol": "Aᶜ",
+    "meaning": "A が起こらない事象（余事象。高校では Ā と書く）",
+    "key": "Ac",
+    "kind": "value",
+    "concept": "TERM-complement"
+   },
+   {
+    "symbol": "A",
+    "meaning": "事象",
+    "key": "A",
+    "kind": "value"
+   }
+  ],
+  "tree": {
+   "op": "eq",
+   "args": [
+    {
+     "op": "fn",
+     "name": "P",
+     "args": [
+      {
+       "sym": "Ac"
+      }
+     ]
+    },
+    {
+     "op": "sub",
+     "args": [
+      {
+       "num": 1
+      },
+      {
+       "op": "fn",
+       "name": "P",
+       "args": [
+        {
+         "sym": "A"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "contract": {
+   "kinds": [
+    "恒等式"
+   ],
+   "properties": [
+    "条件しだい"
+   ]
+  }
+ },
+ {
+  "concept": "TERM-addition",
+  "index": 0,
+  "id": "F-addition",
+  "label": "和の確率",
+  "tex": "P(A\\cup B)=P(A)+P(B)-P(A\\cap B)",
+  "symbols": [
+   {
+    "symbol": "P( )",
+    "meaning": "確率",
+    "key": "P",
+    "concept": "TERM-prob"
+   },
+   {
+    "symbol": "A∪B",
+    "meaning": "A か B の少なくとも一方が起きる",
+    "key": "AuB",
+    "kind": "value"
+   },
+   {
+    "symbol": "A",
+    "meaning": "事象",
+    "key": "A",
+    "kind": "value"
+   },
+   {
+    "symbol": "B",
+    "meaning": "事象",
+    "key": "B",
+    "kind": "value"
+   },
+   {
+    "symbol": "A∩B",
+    "meaning": "A と B が両方起きる",
+    "key": "AB",
+    "kind": "value"
+   }
+  ],
+  "tree": {
+   "op": "eq",
+   "args": [
+    {
+     "op": "fn",
+     "name": "P",
+     "args": [
+      {
+       "sym": "AuB"
+      }
+     ]
+    },
+    {
+     "op": "sub",
+     "args": [
+      {
+       "op": "add",
+       "args": [
+        {
+         "op": "fn",
+         "name": "P",
+         "args": [
+          {
+           "sym": "A"
+          }
+         ]
+        },
+        {
+         "op": "fn",
+         "name": "P",
+         "args": [
+          {
+           "sym": "B"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "op": "fn",
+       "name": "P",
+       "args": [
+        {
+         "sym": "AB"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "parts": [
+   {
+    "path": [
+     1,
+     0
+    ],
+    "name": "和",
+    "meaning": "2つの確率を足す。両方に入る結果を二重に数えている"
+   },
+   {
+    "path": [
+     1,
+     1
+    ],
+    "name": "重なり",
+    "meaning": "二重に数えた両方の確率を1回引く"
+   }
+  ],
+  "contract": {
+   "kinds": [
+    "恒等式"
+   ],
+   "properties": [
+    "条件しだい"
    ]
   }
  },
