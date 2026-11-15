@@ -175,6 +175,10 @@
   stroke-width: 1.5;
   stroke-dasharray: 4 3;
 }
+.legend {
+  font-size: 11px;
+  fill: var(--ink-2);
+}
 .base {
   stroke: var(--line-strong);
   stroke-width: 1;

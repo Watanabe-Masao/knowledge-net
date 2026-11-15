@@ -11,6 +11,8 @@ export type View =
       f: (x: number) => number;
       /** 重ねて比べる曲線（点線。中心極限定理の正規分布など）。縦の物差しは f と同じ */
       g?: (x: number) => number;
+      /** g があるときの凡例 [実線の名前, 点線の名前]（原則 7：線の形だけで意味を伝えない） */
+      legend?: [string, string];
       shade: [number, number][];
       marks?: { x: number; label: string }[];
       label: string;
@@ -64,6 +66,18 @@ function Density({ v }: { v: Extract<View, { kind: "density" }> }) {
           className={s.curve2}
           data-testid="scene-curve2"
         />
+      )}
+      {v.g && v.legend && (
+        <g data-testid="scene-legend">
+          <line x1={W - 150} x2={W - 134} y1={10} y2={10} className={s.curve} />
+          <text x={W - 130} y={14} className={s.legend}>
+            {v.legend[0]}
+          </text>
+          <line x1={W - 150} x2={W - 134} y1={26} y2={26} className={s.curve2} />
+          <text x={W - 130} y={30} className={s.legend}>
+            {v.legend[1]}
+          </text>
+        </g>
       )}
       <line x1={0} x2={W} y1={B} y2={B} className={s.base} />
       {(v.marks ?? []).map((m, i) => (

@@ -34,5 +34,10 @@ describe("中心極限定理（clt）", () => {
     const d = drawScene("clt", { shape: "expo", n: 30 }, undefined, 2)!;
     expect([val(d, "se"), val(d, "skew")]).toEqual(["0.91分", "0.37"]);
     expect(d.view.kind === "density" && typeof d.view.g).toBe("function");
+    expect(d.view.kind === "density" && d.view.legend).toEqual(["30人分の平均", "正規分布"]); // 線の名前（原則 7）
+  });
+  // 正確な密度を描けるのは待ち時間（expo）だけ。ほかの形の版が来たら、黙って待ち時間を描かずに止める
+  it("expo 以外の形は止める", () => {
+    expect(() => drawScene("clt", { shape: "unif", n: 5 }, undefined, 2)).toThrow(/expo/);
   });
 });

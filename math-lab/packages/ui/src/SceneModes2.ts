@@ -777,6 +777,8 @@ const clt: ModeDef = {
   extra: ["shape", "p"],
   fields: [{ key: "n", label: "平均する人数 n", min: 1, max: 100, step: 1 }],
   draw(st, { dec }) {
+    const shape = str(st, "shape", "expo");
+    if (shape !== "expo") throw new Error(`場面 clt は待ち時間（expo）だけを描く（${shape} は描けない）`);
     const n = Math.max(1, Math.round(num(st, "n", 1))),
       mu = CLT_MU,
       sd = CLT_MU,
@@ -790,6 +792,7 @@ const clt: ModeDef = {
         to: 25,
         f: (x) => xbarExpoDensity(x, n),
         g: (x) => normalDensity(x, mu, se),
+        legend: [n === 1 ? "1人分の値" : `${n}人分の平均`, "正規分布"],
         shade: [[mu - 1, mu + 1]],
         marks: [
           { x: 0, label: "0" },
@@ -799,9 +802,9 @@ const clt: ModeDef = {
         label: `待ち時間（平均${mu}分）の${n}人分の平均の分布（実線）と、正規分布 N(${mu}, ${fmt(se, 2)}²)（点線）。4〜6分を塗った`,
       },
       stats: [
-        { key: "se", label: "x̄ の標準偏差 σ÷√n", value: `${fmt(se, dec)}分` },
-        { key: "near", label: "x̄ が 4〜6分に入る確率", value: fmt(near, dec) },
-        { key: "skew", label: "x̄ の形の歪み（歪度 2÷√n）", value: fmt(skew, dec) },
+        { key: "se", label: "X̄ の標準偏差 σ÷√n", value: `${fmt(se, dec)}分` },
+        { key: "near", label: "X̄ が 4〜6分に入る確率", value: fmt(near, dec) },
+        { key: "skew", label: "X̄ の形の歪み（歪度 2÷√n）", value: fmt(skew, dec) },
       ],
       label: `${n}人分の平均待ち時間の分布`,
     };
