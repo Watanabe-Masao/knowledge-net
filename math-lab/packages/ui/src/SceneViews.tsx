@@ -9,6 +9,8 @@ export type View =
       from: number;
       to: number;
       f: (x: number) => number;
+      /** 重ねて比べる曲線（点線。中心極限定理の正規分布など）。縦の物差しは f と同じ */
+      g?: (x: number) => number;
       shade: [number, number][];
       marks?: { x: number; label: string }[];
       label: string;
@@ -38,7 +40,8 @@ function Density({ v }: { v: Extract<View, { kind: "density" }> }) {
     N = 160;
   const xs = Array.from({ length: N + 1 }, (_, i) => v.from + ((v.to - v.from) * i) / N);
   const ys = xs.map(v.f);
-  const top = Math.max(1e-9, ...ys) * 1.1;
+  const gs = v.g ? xs.map(v.g) : [];
+  const top = Math.max(1e-9, ...ys, ...gs) * 1.1;
   const X = (x: number) => ((x - v.from) / (v.to - v.from)) * (W - 8) + 4,
     Y = (y: number) => B - (y / top) * (B - 8);
   const line = xs.map((x, i) => `${i ? "L" : "M"}${fx(X(x))},${fx(Y(ys[i]!))}`).join("");
@@ -55,6 +58,13 @@ function Density({ v }: { v: Extract<View, { kind: "density" }> }) {
         <path key={i} d={area(r)} className={s.area} data-testid="scene-area" />
       ))}
       <path d={line} className={s.curve} />
+      {v.g && (
+        <path
+          d={xs.map((x, i) => `${i ? "L" : "M"}${fx(X(x))},${fx(Y(gs[i]!))}`).join("")}
+          className={s.curve2}
+          data-testid="scene-curve2"
+        />
+      )}
       <line x1={0} x2={W} y1={B} y2={B} className={s.base} />
       {(v.marks ?? []).map((m, i) => (
         <g key={i}>

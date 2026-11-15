@@ -168,6 +168,13 @@
   stroke-width: 2;
   stroke-linejoin: round;
 }
+/* 重ねて比べる曲線（正規分布など）。点線で、主の曲線と形で見分ける（原則 7：色だけで分けない） */
+.curve2 {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
 .base {
   stroke: var(--line-strong);
   stroke-width: 1;
