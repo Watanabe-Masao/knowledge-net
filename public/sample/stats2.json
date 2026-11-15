@@ -5054,7 +5054,13 @@
    "problems": [
     "stats2:Q-U18-011",
     "stats2:Q-U18-023",
-    "stats2:Q-U18-040"
+    "stats2:Q-U18-040",
+    "stats2:Q-U20-002",
+    "stats2:Q-U20-004",
+    "stats2:Q-U20-020",
+    "stats2:Q-U20-022",
+    "stats2:Q-U20-031",
+    "stats2:Q-U20-032"
    ],
    "en": "unbiased variance",
    "short": "偏差の2乗の和を n−1 で割った分散で、その期待値が母分散に一致する",
@@ -5350,7 +5356,8 @@
     "stats2:Q-U19-021",
     "stats2:Q-U19-030",
     "stats2:Q-U19-031",
-    "stats2:Q-U19-040"
+    "stats2:Q-U19-040",
+    "stats2:Q-U20-012"
    ],
    "en": "standardization",
    "category": "要約（代表値・ばらつき）",
@@ -5633,7 +5640,9 @@
     "stats2:Q-U18-012",
     "stats2:Q-U18-032",
     "stats2:Q-U19-005",
-    "stats2:Q-U19-040"
+    "stats2:Q-U19-040",
+    "stats2:Q-U20-005",
+    "stats2:Q-U20-012"
    ],
    "en": "normal distribution",
    "category": "確率分布",
@@ -10889,7 +10898,12 @@
     "stats2:Q-U19-011",
     "stats2:Q-U19-023",
     "stats2:Q-U19-031",
-    "stats2:Q-U19-032"
+    "stats2:Q-U19-032",
+    "stats2:Q-U20-001",
+    "stats2:Q-U20-003",
+    "stats2:Q-U20-010",
+    "stats2:Q-U20-012",
+    "stats2:Q-U20-030"
    ],
    "en": "standard error",
    "short": "推定量の標本分布の標準偏差で、推定値がくり返しでどれだけばらつくかの大きさ",
@@ -11295,18 +11309,80 @@
   {
    "id": "stats2:TERM-t",
    "name": "t 分布",
-   "status": "skeleton",
+   "status": "filled",
    "version": 1,
    "units": [
     "stats2:U20",
     "stats2:U22",
     "stats2:U25"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U20-001",
+    "stats2:Q-U20-003",
+    "stats2:Q-U20-005",
+    "stats2:Q-U20-010",
+    "stats2:Q-U20-012",
+    "stats2:Q-U20-021",
+    "stats2:Q-U20-023",
+    "stats2:Q-U20-030",
+    "stats2:Q-U20-040"
+   ],
    "en": "t distribution",
    "short": "母分散を不偏分散で置き換えて標準化した標本平均が従う分布で、自由度が大きいと標準正規分布に近づく",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-t.svg",
+   "definition": "標準正規分布に従う Z と、それと独立に χ²(k) に従う V から作る T＝Z÷√(V÷k) が従う分布 t(k)。正規母集団で σ を不偏分散の平方根 s で置き換えて標準化した標本平均 (X̄−μ)÷(s÷√n) は t(n−1) に従う。",
+   "principle": "σ を s で置き換えると、分母も標本ごとにばらつくので、標準化した値は正規分布より外まで出やすい（裾が厚い）。だから同じ両側5%でも、t の点は 1.96 より外になる（t(4) で 2.776）。自由度が大きいと s がほぼ σ になり、t 分布は標準正規分布に近づく。",
+   "conditions": {
+    "math": [
+     "Z と V は独立",
+     "k は1以上の整数",
+     "正規母集団からの無作為標本（n≧2・σ＞0）"
+    ],
+    "data": [
+     "n が小さいときは、データに外れ値や強い歪みがないかを確かめる。n が小さいとき、t の点が当てになるのは、母集団が正規分布に近いとき"
+    ]
+   },
+   "example": "両側5%の点は、t(4) で 2.776、t(15) で 2.131、t(120) で 1.980。自由度が大きいほど標準正規の 1.96 に近づく。",
+   "counterexample": "V を Z から作る（k＝1 で V＝Z²）と、Z と V は独立でない。T＝Z÷|Z| は +1 か −1 しかとらず、t(1) に従わない。",
+   "misconceptions": [
+    {
+     "misconception": "データが少ないときは t、多いときは z を使う",
+     "correction": "t と z を分けるのは、σ が分かっているか（s で置き換えたか）。正規母集団で σ を s で置き換えた統計量は、n の大小によらず t 分布に従う。n が大きいときに z の点を使うのは近似"
+    }
+   ],
+   "conditions_detail": [
+    {
+     "text": "Z と V は独立",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "Z÷√(V÷k) は t(k) に従うとは限らない"
+    },
+    {
+     "text": "k は1以上の整数",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "この作り方では t(k) を作れない（密度の式は正の実数の k でも使え、ウェルチの検定は整数でない自由度を使う）"
+    },
+    {
+     "text": "正規母集団からの無作為標本（n≧2・σ＞0）",
+     "scope": "math",
+     "kind": "仮定",
+     "claim": "CLM-28a",
+     "outside": "④-28a は保証されない（(X̄−μ)÷(s÷√n) は t(n−1) に従うとは限らない。n が大きければ中心極限定理で近くなるが、n が小さく歪んだ母集団ではずれる。似た値が続く〔正の相関〕と、s÷√n が X̄ のばらつきを小さく見積もり、|t| が大きく出やすい）"
+    },
+    {
+     "text": "n が小さいときは、データに外れ値や強い歪みがないかを確かめる。n が小さいとき、t の点が当てになるのは、母集団が正規分布に近いとき",
+     "scope": "data"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "標本分布（t 分布・カイ二乗分布・F 分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ],
    "basis": {
     "text": "Z が N(0, 1) に従い、V が χ²(k) に従い、Z と V が独立なとき、T＝Z/√(V/k) の分布を自由度 k の t 分布 t(k) とする（k は1以上の整数）",
     "terms": [
@@ -11320,7 +11396,7 @@
   {
    "id": "stats2:TERM-chi2",
    "name": "カイ二乗分布",
-   "status": "skeleton",
+   "status": "filled",
    "version": 1,
    "units": [
     "stats2:U20",
@@ -11328,11 +11404,69 @@
     "stats2:U26",
     "stats2:U27"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U20-002",
+    "stats2:Q-U20-011",
+    "stats2:Q-U20-022",
+    "stats2:Q-U20-023",
+    "stats2:Q-U20-031"
+   ],
    "en": "chi-squared distribution",
    "short": "独立な標準正規分布の確率変数を2乗して足した値が従う分布",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-chi2.svg",
+   "definition": "独立に標準正規分布に従う k 個の確率変数を2乗して足した値が従う分布 χ²(k)。k を自由度と呼ぶ。正規母集団の不偏分散 s² を使った (n−1)s²÷σ² が χ²(n−1) に従うので、分散の推測に使う。",
+   "principle": "2乗の和なので値は0以上で、右に長い裾をもつ。1つの Z² の期待値は1・分散は2なので、χ²(k) の期待値は k、分散は 2k。自由度が大きいと、和なので中心極限定理で正規分布に近づく。",
+   "conditions": {
+    "math": [
+     "Z₁, …, Z_k は独立で、どれも標準正規分布に従う",
+     "k は1以上の整数",
+     "正規母集団からの独立な標本（n≧2・σ＞0）"
+    ],
+    "data": [
+     "分散の推測に使うときは、母集団が正規分布に近いか（外れ値・裾の重さ）を確かめる。平均の推測より、正規分布からのずれに弱い"
+    ]
+   },
+   "example": "χ²(4) の期待値は 4、分散は 8。上側5%の点は約 9.49 で、4つの Z² の和が 9.49 を超えるのは 5%。",
+   "counterexample": "Z₂ を Z₁ と同じ値にする（Z₂＝Z₁）と、Z₁²＋Z₂²＝2Z₁² で、独立でない。2Z₁² が χ²(2) の上側5%の点 5.99 を超える確率は約 0.083 で、5% にならない。",
+   "misconceptions": [
+    {
+     "misconception": "カイ二乗分布の下側の点は、平均をはさんで上側の点と同じだけ離れている",
+     "correction": "右に長い裾があり、左右対称ではない。χ²(9) の下側2.5%点は 2.700、上側2.5%点は 19.023 で、平均9からの距離は 6.3 と約10。下側と上側の点は別々に引く"
+    }
+   ],
+   "conditions_detail": [
+    {
+     "text": "Z₁, …, Z_k は独立で、どれも標準正規分布に従う",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "2乗の和は χ²(k) に従うとは限らない（独立でない、またはどれかが N(0, 1) でない〔例：N(0, 4)〕と、裾の確率が変わる）"
+    },
+    {
+     "text": "k は1以上の整数",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "この作り方（k 個の Z² の和）では χ²(k) を作れない"
+    },
+    {
+     "text": "正規母集団からの独立な標本（n≧2・σ＞0）",
+     "scope": "math",
+     "kind": "仮定",
+     "claim": "CLM-10",
+     "outside": "④-10 は保証されない（(n−1)s²÷σ² は χ²(n−1) に従うとは限らない。裾の重い母集団では、分散の推測が大きくずれる。似た値が続く〔正の相関〕と、s² は σ² を小さく見積もりやすい）"
+    },
+    {
+     "text": "分散の推測に使うときは、母集団が正規分布に近いか（外れ値・裾の重さ）を確かめる。平均の推測より、正規分布からのずれに弱い",
+     "scope": "data"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "標本分布（t 分布・カイ二乗分布・F 分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ],
    "basis": {
     "text": "Z₁, …, Z_k が独立に N(0, 1) に従うとき、Z₁²＋…＋Z_k² の分布を自由度 k のカイ二乗分布 χ²(k) とする（k は1以上の整数。独立は定義の要件）",
     "terms": [
@@ -11347,7 +11481,7 @@
   {
    "id": "stats2:TERM-f",
    "name": "F 分布",
-   "status": "skeleton",
+   "status": "filled",
    "version": 1,
    "units": [
     "stats2:U20",
@@ -11355,11 +11489,69 @@
     "stats2:U26",
     "stats2:U32"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U20-004",
+    "stats2:Q-U20-020",
+    "stats2:Q-U20-023",
+    "stats2:Q-U20-032",
+    "stats2:Q-U20-040"
+   ],
    "en": "F distribution",
    "short": "独立な2つのカイ二乗分布の確率変数を、それぞれ自由度で割った比が従う分布",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-f.svg",
+   "definition": "独立な χ²(m)・χ²(n) の確率変数を、それぞれ自由度で割った比が従う分布 F(m, n)。2つの正規母集団の分散が等しく、2つの標本が独立なら、2つの不偏分散の比 s₁²÷s₂² は F(n₁−1, n₂−1) に従うので、分散の比べに使う。",
+   "principle": "比なので値は0以上で、右に長い裾をもつ。分子と分母を入れ替えると F(n, m) に従うので、F(m, n) の下側の点は F(n, m) の上側の点の逆数になる。t(k) に従う量の2乗は F(1, k) に従う（④-9）。",
+   "conditions": {
+    "math": [
+     "分子と分母のカイ二乗の確率変数は独立",
+     "m・n は1以上の整数",
+     "2つの標本は互いに独立で、それぞれ正規母集団からの無作為標本、母分散が等しい"
+    ],
+    "data": [
+     "分散の比を比べるときは、2つの母集団が正規分布に近いかを確かめる。外れ値が1つあると不偏分散が大きく動き、比も大きく動く"
+    ]
+   },
+   "example": "2店の売上の不偏分散が s₁²＝4（11日）、s₂²＝2（11日）なら F＝2。s₁² のほうが大きいかを片側で調べるなら、F(10, 10) の上側5%の点は約 2.98 なので、この比は基準の内側。",
+   "counterexample": "分子と分母に同じカイ二乗の確率変数を使う（U＝V、m＝n）と、独立でなく、比はいつも1になる。F(m, m) に従わない。",
+   "misconceptions": [
+    {
+     "misconception": "F(m, n) と F(n, m) は同じ分布",
+     "correction": "自由度の順番は分子・分母の順で、入れ替えると別の分布。F(m, n) の点の逆数が F(n, m) の反対側の点になる"
+    }
+   ],
+   "conditions_detail": [
+    {
+     "text": "分子と分母のカイ二乗の確率変数は独立",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "比は F(m, n) に従うとは限らない"
+    },
+    {
+     "text": "m・n は1以上の整数",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "この作り方では F(m, n) を作れない"
+    },
+    {
+     "text": "2つの標本は互いに独立で、それぞれ正規母集団からの無作為標本、母分散が等しい",
+     "scope": "math",
+     "kind": "仮定",
+     "claim": "CLM-42",
+     "outside": "④-42 は保証されない（裾の重い母集団では F の点が当てにならない。同じ店の前後のような対のデータで独立でないと、比の分布が変わる）"
+    },
+    {
+     "text": "分散の比を比べるときは、2つの母集団が正規分布に近いかを確かめる。外れ値が1つあると不偏分散が大きく動き、比も大きく動く",
+     "scope": "data"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "標本分布（t 分布・カイ二乗分布・F 分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ],
    "basis": {
     "text": "U が χ²(m)、V が χ²(n) に従い、U と V が独立なとき、(U/m)/(V/n) の分布を自由度 (m, n) の F 分布 F(m, n) とする（m・n は1以上の整数）",
     "terms": [
@@ -11373,7 +11565,7 @@
   {
    "id": "stats2:TERM-df",
    "name": "自由度",
-   "status": "skeleton",
+   "status": "filled",
    "version": 1,
    "units": [
     "stats2:U20",
@@ -11382,11 +11574,62 @@
     "stats2:U27",
     "stats2:U32"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U20-001",
+    "stats2:Q-U20-002",
+    "stats2:Q-U20-003",
+    "stats2:Q-U20-004",
+    "stats2:Q-U20-005",
+    "stats2:Q-U20-010",
+    "stats2:Q-U20-011",
+    "stats2:Q-U20-020",
+    "stats2:Q-U20-022",
+    "stats2:Q-U20-023",
+    "stats2:Q-U20-030",
+    "stats2:Q-U20-031",
+    "stats2:Q-U20-032"
+   ],
    "en": "degrees of freedom",
    "short": "統計量を計算するときに自由に動ける値の個数で、t・カイ二乗・F 分布の形を決める",
    "category": "標本分布・極限",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-df.svg",
+   "definition": "統計量を計算するときに、自由に動ける値の個数。n 個の偏差は和が0になるので、自由に動けるのは n−1 個。t・カイ二乗・F 分布では、分布の形を決める母数も同じ名前で呼ぶ。",
+   "principle": "標本平均 x̄ を計算に使うと「偏差の和が0」という制約が1つ入り、n−1 個の偏差が決まれば残りの1個は決まる。制約が増えるほど自由度は減る。自由度が小さいほど、s のばらつきが大きく、t 分布の裾は厚い。",
+   "conditions": {
+    "math": [
+     "数える制約は1次の制約で、互いに独立（ほかの制約から導けない）"
+    ],
+    "data": [
+     "何を推定に使ったかを書き出して数える（1群の平均は n−1、2群の平均は n₁＋n₂−2、回帰の直線は n−2）"
+    ]
+   },
+   "example": "5店の値 3・5・7・9・11（平均7）の偏差は −4・−2・0・2・4 で、和は0。4つの偏差が決まれば最後の1つは決まるので、自由度は4。",
+   "counterexample": "平均 x̄ と合計 Σx の両方を計算に使ったので制約は2つ、と数えて5個の値の自由度を3とするのは誤り。合計は n×平均で、平均から導けるので、制約は1つで、自由度は4。",
+   "misconceptions": [
+    {
+     "misconception": "自由度はいつも n−1",
+     "correction": "推定に使った量の数で決まる。2群の平均を使えば n₁＋n₂−2、回帰の直線（切片と傾き）を使えば n−2"
+    }
+   ],
+   "conditions_detail": [
+    {
+     "text": "数える制約は1次の制約で、互いに独立（ほかの制約から導けない）",
+     "scope": "math",
+     "kind": "要件",
+     "outside": "自由度は n−（制約の数）にならない（同じ制約を2回数えると、自由度を小さく見積もる）"
+    },
+    {
+     "text": "何を推定に使ったかを書き出して数える（1群の平均は n−1、2群の平均は n₁＋n₂−2、回帰の直線は n−2）",
+     "scope": "data"
+    }
+   ],
+   "sources": [
+    {
+     "title": "公式2級範囲表",
+     "locator": "標本分布（t 分布・カイ二乗分布・F 分布）",
+     "url": "https://www.toukei-kentei.jp/hubfs/files/grade_range/grade2_hani_20181214.pdf"
+    }
+   ],
    "basis": {
     "text": "n 個の値に k 個の互いに独立な1次の制約（例：偏差の和が0）があるとき、自由に動ける値の個数 n−k。t・カイ二乗・F 分布では、族を区別する正の整数の母数を同じ名前で呼ぶ",
     "terms": []
@@ -15970,9 +16213,101 @@
     "stats2:U22"
    ],
    "mode": "limit",
-   "gist": "データが多いと、不偏分散で σ を置き換えたばらつきがほとんど消える。だから t 分布の裾は細くなり、正規分布と見分けがつかなくなる。",
+   "gist": "データが多いと、σ を s で置き換えたことで加わるばらつきが小さくなる。だから t 分布の裾は細くなり、正規分布に近づく（等しくはならない）。",
+   "stages": {
+    "origin": "自由度5の t 分布。山が低く裾が厚く、両側5%の点は 2.571（正規は 1.96）。",
+    "operation": "自由度を増やす（データを増やし、s が σ に近づく）。15 で 2.131、120 で 1.98。",
+    "result": "自由度が限りなく大きいとき、t 分布は標準正規分布に近づく（極限。有限の自由度では、両側5%の点はいつも 1.96 より少し外）。"
+   },
    "claim": "stats2:CLM-7",
-   "operation": "自由度 k→∞ とする"
+   "operation": "自由度 k→∞ とする",
+   "labs": [
+    {
+     "id": "LAB-tcf",
+     "url": "https://watanabe-masao.github.io/stats2-labs/tchif/?p=rel-t-normal-tour",
+     "title": "t・χ²・F ラボ",
+     "kind": "tour",
+     "preset": "rel-t-normal-tour",
+     "purpose": "自由度を 5・15・120 と増やし、両側5%の点が 1.96 に近づくのを段ごとに見る",
+     "play": {
+      "mode": "t",
+      "steps": [
+       {
+        "title": "元の形",
+        "text": "自由度5の t 分布（実線）は、標準正規分布（点線）より山が低く、裾が厚い。両側5%の点は **2.571** で、正規の 1.96 より外。",
+        "states": [
+         {
+          "df": 5,
+          "side": "two",
+          "alpha": 0.05,
+          "t": 1
+         }
+        ]
+       },
+       {
+        "title": "自由度を増やす",
+        "text": "自由度15では、両側5%の点は **2.131**。s が σ に近くなり、裾が細くなる。",
+        "states": [
+         {
+          "df": 15,
+          "side": "two",
+          "alpha": 0.05,
+          "t": 1
+         }
+        ]
+       },
+       {
+        "title": "行き着く形",
+        "text": "自由度120では **1.98** で、正規の 1.96 との差は **0.02** ほど。図では見分けにくいが、等しくはならない（自由度を限りなく大きくした極限で標準正規分布になる）。",
+        "states": [
+         {
+          "df": 120,
+          "side": "two",
+          "alpha": 0.05,
+          "t": 1
+         }
+        ]
+       },
+       {
+        "title": "つまり",
+        "text": "💡 データが多いと、σ を s で置き換えたことで加わるばらつきが小さくなる。だから t 分布の裾は細くなり、正規分布に近づく（等しくはならない）。",
+        "states": [],
+        "gist": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "LAB-tcf",
+     "url": "https://watanabe-masao.github.io/stats2-labs/tchif/?p=rel-t-normal-free",
+     "title": "t・χ²・F ラボ",
+     "kind": "check",
+     "preset": "rel-t-normal-free",
+     "purpose": "自由度を自分で動かし、t の点と正規の点の差の縮み方を確かめる",
+     "play": {
+      "mode": "t",
+      "set": {
+       "df": 5,
+       "side": "two",
+       "alpha": 0.05,
+       "t": 1
+      },
+      "task": "自由度を動かし、t の点と標準正規の点の差がどう縮むかを見る。片側・有意水準を替えても、同じように縮むかを確かめる。"
+     }
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-tcf-rel-t-normal-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-tcf-rel-t-normal-tour-1.svg",
+     "caption": "自由度5の t 分布（実線）は、標準正規分布（点線）より山が低く、裾が厚い。両側5%の点は 2.571 で、正規の 1.96 より外。"
+    },
+    {
+     "id": "FIG-LAB-tcf-rel-t-normal-tour-3",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-tcf-rel-t-normal-tour-3.svg",
+     "caption": "自由度120では 1.98 で、正規の 1.96 との差は 0.02 ほど。図では見分けにくいが、等しくはならない（自由度を限りなく大きくした極限で標準正規分布になる）。"
+    }
+   ]
   },
   {
    "id": "stats2:REL-estimator-statistic",
@@ -17110,8 +17445,107 @@
    ],
    "mode": "exact",
    "gist": "t 分布に従う量を2乗すると、F 分布（分子の自由度1）に従う。だから、F 統計量が t 統計量の2乗になる場面（2群の一元配置分散分析とプールした t 検定など）では、両側の t 検定と F 検定は同じ判定になる。",
+   "stages": {
+    "origin": "自由度9の t 分布。|T| が両側5%の点 2.262 を超える確率は 5%。",
+    "operation": "T を2乗する。T＝Z÷√(V÷9) なので T²＝(Z²÷1)÷(V÷9)。Z² は χ²(1) に従い V と独立なので、F 分布の定義の形になる。",
+    "result": "T² は F(1, 9) に従う。その帰結として、|T|＞2.262 と T²＞2.262² は同じ出来事なので、F(1, 9) の上側5%の点は 5.117＝2.262²。"
+   },
    "claim": "stats2:CLM-9",
-   "operation": "t(ν) に従う確率変数を2乗する"
+   "operation": "t(ν) に従う確率変数を2乗する",
+   "labs": [
+    {
+     "id": "LAB-tcf",
+     "url": "https://watanabe-masao.github.io/stats2-labs/tchif/?p=rel-t-f-tour",
+     "title": "t・χ²・F ラボ",
+     "kind": "tour",
+     "preset": "rel-t-f-tour",
+     "purpose": "t(9) の両側5%の点を2乗すると、F(1, 9) の上側5%の点になるのを段ごとに見る",
+     "play": {
+      "mode": "t",
+      "steps": [
+       {
+        "title": "元の形",
+        "text": "自由度9の t 分布で、両側5%の点は **2.262**。|T| が 2.262 を超える確率が 5%。",
+        "states": [
+         {
+          "mode": "t",
+          "df": 9,
+          "side": "two",
+          "alpha": 0.05,
+          "t": 1
+         }
+        ]
+       },
+       {
+        "title": "2乗する",
+        "text": "T＝Z÷√(V÷9) を2乗すると T²＝(Z²÷1)÷(V÷9)。Z² は χ²(1) なので、T² は F(1, 9)（分子の自由度1：n₁＝2、分母の自由度9：n₂＝10）に従う。",
+        "states": [
+         {
+          "mode": "f",
+          "s1": 5,
+          "n1": 2,
+          "s2": 1,
+          "n2": 10
+         }
+        ]
+       },
+       {
+        "title": "行き着く形",
+        "text": "F(1, 9) の上側5%の点は **5.117**（＝2.262²）。T² がこの点を超える確率は5%で、両側の t の判定と F の判定は同じになる。",
+        "states": [
+         {
+          "mode": "f",
+          "s1": 5,
+          "n1": 2,
+          "s2": 1,
+          "n2": 10
+         }
+        ]
+       },
+       {
+        "title": "つまり",
+        "text": "💡 t 分布に従う量を2乗すると、F 分布（分子の自由度1）に従う。だから、F 統計量が t 統計量の2乗になる場面（2群の一元配置分散分析とプールした t 検定など）では、両側の t 検定と F 検定は同じ判定になる。",
+        "states": [],
+        "gist": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "LAB-tcf",
+     "url": "https://watanabe-masao.github.io/stats2-labs/tchif/?p=rel-t-f-free",
+     "title": "t・χ²・F ラボ",
+     "kind": "check",
+     "preset": "rel-t-f-free",
+     "purpose": "自由度を変えても、t の両側の点の2乗と F(1, k) の上側の点が同じになるかを確かめる",
+     "play": {
+      "mode": "t",
+      "modes": [
+       "t",
+       "f"
+      ],
+      "set": {
+       "df": 9,
+       "side": "two",
+       "alpha": 0.05,
+       "t": 1
+      },
+      "task": "「t 分布の点」で自由度 k の両側5%の点を読み、2乗する。「F 分布」で n₁＝2・n₂＝k＋1 にして上側5%の点と比べる。k を変えても同じになるかを確かめる。"
+     }
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-tcf-rel-t-f-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-tcf-rel-t-f-tour-1.svg",
+     "caption": "自由度9の t 分布で、両側5%の点は 2.262。|T| が 2.262 を超える確率が 5%。"
+    },
+    {
+     "id": "FIG-LAB-tcf-rel-t-f-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-tcf-rel-t-f-tour-2.svg",
+     "caption": "T＝Z÷√(V÷9) を2乗すると T²＝(Z²÷1)÷(V÷9)。Z² は χ²(1) なので、T² は F(1, 9)（分子の自由度1：n₁＝2、分母の自由度9：n₂＝10）に従う。"
+    }
+   ]
   },
   {
    "id": "stats2:REL-lln-clt-contrast",
@@ -25519,6 +25953,82 @@
     {
      "source": {
       "title": "独立なら分散は足せるので V(X₁＋…＋Xₙ)＝nσ²。X̄ は合計の 1/n 倍なので V(X̄)＝nσ²/n²＝σ²/n（根拠で使うのは、各 Xᵢ の分散が σ² で互いに無相関なこと）"
+     }
+    }
+   ]
+  },
+  {
+   "id": "stats2:CLM-42",
+   "label": "④-42",
+   "kind": "従う",
+   "statement": {
+    "text": "2つの標本が互いに独立で、それぞれ N(μ₁, σ²)・N(μ₂, σ²)（同じ σ²＞0）からの大きさ n₁・n₂（どちらも2以上）の無作為標本のとき、不偏分散の比 s₁²/s₂² は F(n₁−1, n₂−1) に従う"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "扱う"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "Y",
+      "date": "2026-11-16",
+      "version": "5ee32a8"
+     }
+    ],
+    "external": "なし"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-unbvar"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-unbvar"
+    ],
+    "predicates": [
+     "stats2:TERM-f"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "2つの標本は互いに独立",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep"
+     ],
+     "outside": "F(n₁−1, n₂−1) に従うとは保証できない",
+     "target": "claim"
+    },
+    {
+     "text": "各標本はそれぞれ独立に同じ正規分布に従う",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-normal"
+     ],
+     "outside": "F(n₁−1, n₂−1) に従うとは保証できない（正規でないと、分布の形そのものが変わる）",
+     "target": "claim"
+    },
+    {
+     "text": "2つの母分散が等しい",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-var"
+     ],
+     "outside": "F(n₁−1, n₂−1) に従うとは保証できない（母分散が違えば、比は σ₁²/σ₂² 倍にずれる）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "claim": "stats2:CLM-10"
+    },
+    {
+     "source": {
+      "title": "CLM-10 で (nᵢ−1)sᵢ²/σ² は χ²(nᵢ−1) に従い、2つの標本が独立なのでこの2つも独立。F 分布の定義の比 {(n₁−1)s₁²/σ²/(n₁−1)}÷{(n₂−1)s₂²/σ²/(n₂−1)}＝s₁²/s₂²（等分散なので σ² が約分される）"
      }
     }
    ]
