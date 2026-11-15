@@ -371,11 +371,15 @@ test("戻ると離れたときのまま：フルから戻っても、ライブ�
   await still(page);
   expect(await at("binom"), "フルから戻ると位置が変わる").toEqual(p0);
   // 選びを外し、地図を指で動かしてからライブラリへ出て、ブラウザで戻る
-  const b = await blank(page);
-  await page.mouse.click(b.x, Math.min(b.y, (await det.boundingBox())!.y - 30));
+  // 選びを外す2回は、まとまり・語・線のどれにも当たらない所を毎回探して押す（決め打ちの右端だと、WebKit で線や語の当たりに
+  // 掛かって別の物を開き、地図が消えて次の blank が時間切れになった。stats2-course #418 の3回目、2026-11-15）
+  const b = await outside(page);
+  await page.mouse.click(b.x, b.y);
   await expect(det).toHaveAttribute("data-detent", "peek");
-  await page.mouse.click(b.x, Math.min(b.y, (await det.boundingBox())!.y - 30));
+  const b1 = await outside(page);
+  await page.mouse.click(b1.x, b1.y);
   await expect(det).toHaveCount(0);
+  await expect(page.getByTestId("relation-map"), "選びを外したのに地図が消えた（別の物を押した）").toBeVisible();
   await expect.poll(() => bars(page)).toBe("shown");
   await page.waitForTimeout(500);
   const b2 = await blank(page);
