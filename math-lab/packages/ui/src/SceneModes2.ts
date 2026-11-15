@@ -835,12 +835,13 @@ const tmode: ModeDef = {
       alpha = num(st, "alpha", 0.05),
       q = two ? 1 - alpha / 2 : 1 - alpha;
     const tc = tQuantile(q, df),
-      zc = normalQuantile(q);
+      zc = normalQuantile(q),
+      span = Math.max(5, Math.ceil(tc * 1.15)); // 自由度が小さいと点が外に出る（t(1) の両側5%は 12.706）。点が横軸の中に入るように広げる
     return {
       view: {
         kind: "density",
-        from: -5,
-        to: 5,
+        from: -span,
+        to: span,
         f: (x) => tDensity(x, df),
         g: (x) => normalDensity(x, 0, 1),
         legend: [`t(${df})`, "標準正規分布"],
@@ -864,7 +865,7 @@ const tmode: ModeDef = {
 };
 
 /** F 分布（教材の t・χ²・F ラボの f）：2つの不偏分散 s₁²・s₂² の比 F＝s₁²÷s₂² と、F(n₁−1, n₂−1) の上側5%の点。
- *  分子の自由度が 1・2 のときは 0 の近くで密度が限りなく大きいので、縦の上限を決めて切る */
+ *  分子の自由度1は 0 の近くで密度が限りなく大きく、2 は 0 で最大なので、縦の上限を決めて切る */
 const fmode: ModeDef = {
   name: "F 分布",
   defaults: { s1: 4, n1: 11, s2: 2, n2: 11 },

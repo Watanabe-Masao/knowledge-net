@@ -36,6 +36,17 @@ describe("t・カイ二乗・F 分布", () => {
     expect(tQuantile(0.975, 15)).toBeCloseTo(2.1314, 4);
     expect(chi2Quantile(0.95, 1)).toBeCloseTo(1.959964 ** 2, 4);
   });
+  // F そのものを t と別の道で：数表の値（F(10, 10) と F(3, 10) の上側5%、χ²(4) の上側5%）
+  it("数表の値：F(10, 10)・F(3, 10)・χ²(4) の0.95点", () => {
+    expect(fQuantile(0.95, 10, 10)).toBeCloseTo(2.978, 3);
+    expect(fQuantile(0.95, 3, 10)).toBeCloseTo(3.708, 3);
+    expect(chi2Quantile(0.95, 4)).toBeCloseTo(9.488, 3);
+  });
+  it("自由度が 0 以下・確率が 0〜1 の外なら止める", () => {
+    expect(() => tCdf(1, 0)).toThrow(/自由度/);
+    expect(() => fQuantile(1.2, 1, 1)).toThrow(/0 と 1/);
+    expect(fQuantile(0.999, 1, 1)).toBeGreaterThan(1e5); // 二分法の上限（1e4）を超える点も出る
+  });
   it("χ²(2) の分布関数は 1−e^{−x/2}", () => {
     for (const x of [0.1, 1, 3, 8]) expect(chi2Cdf(x, 2)).toBeCloseTo(1 - Math.exp(-x / 2), 10);
   });

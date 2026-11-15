@@ -89,7 +89,13 @@ export function incGamma(a: number, x: number): number {
   return 1 - Math.exp(-x + a * Math.log(x) - lnGamma(a)) * h;
 }
 
+/** 自由度は正の数（0 以下・NaN は分布が定まらない。math-lab の守ること 3） */
+const needDf = (...dfs: number[]) => {
+  for (const d of dfs) if (!(d > 0)) throw new Error(`自由度は正の数（${d}）`);
+};
 const bisect = (cdf: (x: number) => number, p: number, lo: number, hi: number) => {
+  if (!(p > 0 && p < 1)) throw new Error(`確率点の p は 0 と 1 の間（${p}）`);
+  while (cdf(hi) < p && hi < 1e12) hi *= 10; // 上限を超える点（F(1, 1) の 0.999 点など）は上限を広げる
   for (let i = 0; i < 200; i++) {
     const m = (lo + hi) / 2;
     if (cdf(m) < p) lo = m;
@@ -107,6 +113,7 @@ export const tDensity = (t: number, df: number) =>
       ((df + 1) / 2) * Math.log(1 + (t * t) / df),
   );
 export function tCdf(t: number, df: number): number {
+  needDf(df);
   const tail = 0.5 * incBeta(df / 2, 0.5, df / (df + t * t));
   return t > 0 ? 1 - tail : tail;
 }
@@ -116,7 +123,7 @@ export const tQuantile = (p: number, df: number) =>
 /** カイ二乗分布 χ²(df) */
 export const chi2Density = (x: number, df: number) =>
   x <= 0 ? 0 : Math.exp((df / 2 - 1) * Math.log(x) - x / 2 - (df / 2) * Math.log(2) - lnGamma(df / 2));
-export const chi2Cdf = (x: number, df: number) => incGamma(df / 2, x / 2);
+export const chi2Cdf = (x: number, df: number) => (needDf(df), incGamma(df / 2, x / 2));
 export const chi2Quantile = (p: number, df: number) =>
   bisect((q) => chi2Cdf(q, df), p, 0, df + 200 * Math.sqrt(2 * df) + 100);
 
