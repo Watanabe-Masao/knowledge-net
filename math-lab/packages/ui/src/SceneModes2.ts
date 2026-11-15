@@ -906,6 +906,82 @@ const fmode: ModeDef = {
   },
 };
 
+/** 推定量を比べる（教材の推定ラボの comp。stats2-course #47 の U21）：正規母集団（μ＝50・σ）から n 個を取るとき、
+ *  標本平均・最初の1個・標本平均＋b の偏りと標準誤差を、理論の値で並べる（ラボは2000回の取り直しの分布も描くが、場面は理論の値だけ。
+ *  中央値はラボでも取り直しから出す値なので、場面では扱わない） */
+const comp: ModeDef = {
+  name: "推定量を比べる",
+  defaults: { sigma: 10, n: 5, b: 2 },
+  fields: [
+    { key: "sigma", label: "σ", min: 1, max: 30, step: 1 },
+    { key: "n", label: "n", min: 1, max: 200, step: 1 },
+    { key: "b", label: "ずらす b", min: 0, max: 10, step: 0.5 },
+  ],
+  draw(st, { dec }) {
+    const sig = num(st, "sigma", 10),
+      n = Math.max(1, Math.round(num(st, "n", 5))),
+      b = num(st, "b", 2),
+      se = sig / Math.sqrt(n);
+    return {
+      view: {
+        kind: "lengths",
+        rows: [
+          { label: "標本平均 x̄ の標準誤差（偏り0）", value: se, text: fmt(se, dec) },
+          { label: "最初の1個 x₁ の標準誤差（偏り0）", value: sig, text: fmt(sig, dec) },
+          { label: "x̄＋b の偏り", value: b, text: fmt(b, dec) },
+        ],
+        label: `n＝${n}。標本平均の標準誤差 ${fmt(se, dec)}、最初の1個は ${fmt(sig, dec)} のまま、x̄＋b の偏りは ${fmt(b, dec)} のまま`,
+      },
+      stats: [
+        { key: "seMean", label: "標本平均の標準誤差 σ÷√n", value: fmt(se, dec) },
+        { key: "seFirst", label: "最初の1個の標準誤差 σ", value: fmt(sig, dec) },
+        { key: "biasShift", label: "x̄＋b の偏り", value: fmt(b, dec) },
+        { key: "mseShift", label: "x̄＋b の MSE（分散＋偏り²）", value: fmt(se * se + b * b, dec) },
+      ],
+      label: `推定量を比べる（n＝${n}）`,
+    };
+  },
+};
+
+/** 分散の推定量（推定ラボの var）：正規母集団（σ²）から n 個を取るとき、n−1 で割る s² と n で割る v の偏りと MSE（理論の値）。
+ *  mode の名前 var は検定ラボ・2群のラボにもあり意味が違うので、検定ラボ（v0）・2群のラボ（level）の状態が来たら止める */
+const vmode: ModeDef = {
+  name: "分散の推定量",
+  defaults: { sigma2: 4, n: 5 },
+  fields: [
+    { key: "sigma2", label: "σ²", min: 0.5, max: 50, step: 0.5 },
+    { key: "n", label: "n", min: 2, max: 200, step: 1 },
+  ],
+  draw(st, { dec }) {
+    if (st.v0 !== undefined || st.level !== undefined)
+      throw new Error("場面 var は推定ラボの分散の推定量（sigma2・n）だけを描く");
+    const s2 = num(st, "sigma2", 4),
+      n = Math.max(2, Math.round(num(st, "n", 5)));
+    const biasV = -s2 / n,
+      varS2 = (2 * s2 * s2) / (n - 1),
+      varV = (2 * (n - 1) * s2 * s2) / (n * n),
+      mseV = varV + biasV * biasV;
+    return {
+      view: {
+        kind: "lengths",
+        rows: [
+          { label: "s²（n−1 で割る）の偏り", value: 0, text: fmt(0, dec) },
+          { label: "v（n で割る）の偏りの大きさ σ²÷n", value: -biasV, text: fmt(-biasV, dec) },
+          { label: "s² の標準誤差", value: Math.sqrt(varS2), text: fmt(Math.sqrt(varS2), dec) },
+          { label: "v の標準誤差", value: Math.sqrt(varV), text: fmt(Math.sqrt(varV), dec) },
+        ],
+        label: `n＝${n}。v の偏りは −${fmt(-biasV, dec)}、s² は偏り0`,
+      },
+      stats: [
+        { key: "biasV", label: "v の偏り −σ²÷n", value: fmt(biasV, dec) },
+        { key: "mseS2", label: "s² の MSE 2σ⁴÷(n−1)", value: fmt(varS2, dec) },
+        { key: "mseV", label: "v の MSE（分散＋偏り²）", value: fmt(mseV, dec) },
+      ],
+      label: `分散の推定量（n＝${n}）`,
+    };
+  },
+};
+
 export const MODES2: Record<string, ModeDef> = {
   dist,
   total,
@@ -925,4 +1001,6 @@ export const MODES2: Record<string, ModeDef> = {
   clt,
   t: tmode,
   f: fmode,
+  comp,
+  var: vmode,
 };
