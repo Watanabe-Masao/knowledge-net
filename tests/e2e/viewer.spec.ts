@@ -1254,10 +1254,17 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   // 一覧に戻る
   await sel.selectOption("");
   await expect(lib).toBeVisible();
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-bayes");
+  // 骨格の概念（#105・P1）：定義1文と分類と「定義だけ」。どの語が骨格かは見本から選ぶ（W で説明を書くたびに骨格の語が減る。
+  // TERM-bayes を名指ししていたら W1 の U12 で説明ありになり落ちた。stats2-course #45）
+  const sk = await page.evaluate(async () => {
+    const d = await (await fetch("sample/stats2.json")).json();
+    const c = d.concepts.find((c: { status?: string }) => c.status === "skeleton");
+    return { id: c.id as string, short: c.short as string, category: c.category as string };
+  });
+  await page.goto(`./?src=sample/stats2.json&c=${sk.id}`);
   const det = page.getByTestId("detail");
-  await expect(det).toContainText("条件付き確率を逆向きにして"); // 骨格の概念（#105・P1）：定義1文と分類と「定義だけ」
-  await expect(det).toContainText("確率");
+  await expect(det).toContainText(sk.short);
+  await expect(det).toContainText(sk.category);
   await expect(det.getByTestId("skeleton-note")).toContainText("定義だけ");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
