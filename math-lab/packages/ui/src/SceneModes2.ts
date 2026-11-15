@@ -590,6 +590,80 @@ const bern: ModeDef = {
   },
 };
 
+/** 並べて数える（教材の数え方ラボの list。stats2-course #45 の U09）：n 人から r 人。役割（順番）を区別すると順列、しないと組合せ。
+ *  同じ組（色の帯1本）の中に r! 通りの並べ方がある。旧版のラボと同じ範囲（n は 2〜10、r は 1〜4 かつ n まで） */
+const NAMES = "ABCDEFGHIJ";
+/** 添え字の数字（₆P₂。記号の字 n・r を画面に出さない：教材の概念は ₙPₖ、単元は ₙPᵣ と字が違うので、数で書く。stats2-course #45） */
+const sub = (v: number) => String(v).replace(/\d/g, (d) => "₀₁₂₃₄₅₆₇₈₉"[Number(d)]!);
+const list: ModeDef = {
+  name: "並べて数える",
+  defaults: { n: 5, r: 2, role: "なし" },
+  toggles: [
+    {
+      key: "role",
+      name: "役割",
+      items: [
+        ["あり", "区別する"],
+        ["なし", "区別しない"],
+      ],
+    },
+  ],
+  fields: [
+    { key: "n", label: "人数", min: 2, max: 10, step: 1 },
+    { key: "r", label: "選ぶ人数", min: 1, max: (st) => Math.min(4, Math.round(num(st, "n", 2))), step: 1 },
+  ],
+  draw(st) {
+    const n = Math.max(2, Math.min(10, Math.round(num(st, "n", 5)))),
+      r = Math.max(1, Math.min(4, n, Math.round(num(st, "r", 2)))),
+      role = str(st, "role", "なし") === "あり";
+    let perm = 1;
+    for (let i = 0; i < r; i++) perm *= n - i;
+    let rf = 1;
+    for (let i = 2; i <= r; i++) rf *= i;
+    const comb = perm / rf;
+    // 組（小さい順）と、その中の並べ方。数が多いときは書き出さない（旧版と同じ 2000 まで）
+    const groups: { set: string[]; rows: string[][] }[] = [];
+    if (perm <= 2000) {
+      const names = NAMES.slice(0, n).split("");
+      const pick = (from: number, cur: string[]) => {
+        if (cur.length === r) {
+          const rows: string[][] = [];
+          const per = (rest: string[], acc: string[]) => {
+            if (!rest.length) rows.push(acc);
+            rest.forEach((x, i) => per([...rest.slice(0, i), ...rest.slice(i + 1)], [...acc, x]));
+          };
+          per(cur, []);
+          groups.push({ set: cur, rows });
+          return;
+        }
+        for (let i = from; i < n; i++) pick(i + 1, [...cur, names[i]!]);
+      };
+      pick(0, []);
+    }
+    const MAX = role ? 6 : 18;
+    return {
+      view: {
+        kind: "arrange",
+        role,
+        groups: groups.slice(0, MAX),
+        more: Math.max(0, groups.length - MAX),
+        total: role ? perm : comb,
+      },
+      stats: [
+        { key: "perm", label: `順列 ${sub(n)}P${sub(r)}`, value: String(perm) },
+        { key: "rf", label: `1つの組の中の並べ方 ${r}!`, value: String(rf) },
+        { key: "comb", label: `組合せ ${sub(n)}C${sub(r)}＝${sub(n)}P${sub(r)}÷${r}!`, value: String(comb) },
+        {
+          key: "count",
+          label: role ? "数える数（役割あり）" : "数える数（役割なし）",
+          value: String(role ? perm : comb),
+        },
+      ],
+      label: `${n} 人から ${r} 人。役割を${role ? "区別する" : "区別しない"}と ${role ? perm : comb} 通り`,
+    };
+  },
+};
+
 export const MODES2: Record<string, ModeDef> = {
   dist,
   total,
@@ -604,4 +678,5 @@ export const MODES2: Record<string, ModeDef> = {
   dens,
   path,
   bern,
+  list,
 };

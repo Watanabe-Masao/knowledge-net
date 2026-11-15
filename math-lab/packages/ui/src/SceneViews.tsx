@@ -16,6 +16,7 @@ export type View =
   | { kind: "joint"; p11: number; p10: number; p01: number; p00: number; nameX: string; nameY: string }
   | { kind: "zlines"; groups: { name: string; m: number; s: number; x: number; z: number }[] }
   | { kind: "paths"; n: number; k: number; seqs: boolean[][]; more: number }
+  | { kind: "arrange"; role: boolean; groups: { set: string[]; rows: string[][] }[]; more: number; total: number }
   | { kind: "lengths"; rows: { label: string; value: number; text: string; wrong?: boolean }[]; label: string };
 
 const W = 340;
@@ -161,6 +162,27 @@ function Paths({ v }: { v: Extract<View, { kind: "paths" }> }) {
   );
 }
 
+/** 並べて数える：組（色の帯1本）ごとに、役割ありならその中の並べ方を並べ、なしなら組を1つの札にする */
+function Arrange({ v }: { v: Extract<View, { kind: "arrange" }> }) {
+  const label = `${v.role ? "役割を区別して" : "役割を区別せず"} ${v.total} 通り`;
+  if (!v.groups.length)
+    return (
+      <p className={s.seqMore} role="img" aria-label={label} data-testid="scene-arrange">
+        数が多いので書き出さない（{v.total} 通り）
+      </p>
+    );
+  return (
+    <div className={s.paths} role="img" aria-label={label} data-testid="scene-arrange">
+      {v.groups.map((g) => (
+        <span key={g.set.join("")} className={`${s.seq} ${s.group}`} data-testid="scene-arrange-group">
+          {v.role ? g.rows.map((row) => <i key={row.join("")}>{row.join("→")}</i>) : <i>{`{${g.set.join(",")}}`}</i>}
+        </span>
+      ))}
+      {v.more > 0 && <span className={s.seqMore}>ほか {v.more} 組</span>}
+    </div>
+  );
+}
+
 /** 2つの量の長さを比べる（合計の標準偏差：正しい √n 倍と、誤りの n 倍） */
 function Lengths({ v }: { v: Extract<View, { kind: "lengths" }> }) {
   const max = Math.max(1e-9, ...v.rows.map((r) => r.value));
@@ -189,6 +211,8 @@ export function SceneView({ view }: { view: View }) {
       return <ZLines v={view} />;
     case "paths":
       return <Paths v={view} />;
+    case "arrange":
+      return <Arrange v={view} />;
     case "lengths":
       return <Lengths v={view} />;
   }
