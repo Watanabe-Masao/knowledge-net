@@ -256,6 +256,10 @@
 .seq i {
   font-style: normal;
 }
+/* 並べて数える：同じ組の中の並べ方を、帯1本の中で離して並べる */
+.group {
+  gap: 8px;
+}
 .win,
 .lose {
   display: inline-block;
