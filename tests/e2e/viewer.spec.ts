@@ -1388,7 +1388,7 @@ test("詳しく：見出しは名前と切り替えだけ、ほかは「…」",
 });
 
 // 確かめる対象：学ぶ行動を下のタブに動的に入れる（渡辺さん 2026-11-01）。想定する故障：選んだ概念の目印がタブに出ない・数が詳しくの数とずれる・
-// 押しても全部の一覧のまま（絞れていない）・絞りを外せない・探索をもう一度押しても地図が出ない。見つけ方：二項分布（問題 17・単元 U14・実験室 1）で各タブを開いて数を数える
+// 押しても全部の一覧のまま（絞れていない）・絞りを外せない・探索をもう一度押しても地図が出ない。見つけ方：二項分布（問題は見本の数・単元 U14・実験室 1）で各タブを開いて数を数える
 test("下のタブ：選んだ概念の分を目印で出し、押すとその分に絞って開く。探索をもう一度押すと地図に戻る", async ({
   page,
 }) => {
@@ -1397,7 +1397,13 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const bar = page.getByTestId("tabbar");
   await expect(bar.getByTestId("badge-learn")).toHaveText("U14");
-  await expect(bar.getByTestId("badge-problems")).toHaveText("17");
+  // 問題の数は見本の概念の problems から数える（W1 で単元の問題に概念を付けるたびに増える。stats2-course #45）。画面がそれと同じ数を出すか
+  const nProblems = await page.evaluate(async () => {
+    const d = await (await fetch("sample/stats2.json")).json();
+    return d.concepts.find((c: { id: string }) => c.id === "stats2:TERM-binom").problems.length as number;
+  });
+  expect(nProblems).toBeGreaterThan(1);
+  await expect(bar.getByTestId("badge-problems")).toHaveText(String(nProblems));
   await expect(bar.getByTestId("badge-lab")).toHaveText("1");
   await page.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click(); // 段2でつまりが出る
   await expect(page.getByTestId("concept-gist")).toContainText("成功確率が毎回同じで"); // 概念のページの一言（定義の前。つまり）
@@ -1410,7 +1416,7 @@ test("下のタブ：選んだ概念の分を目印で出し、押すとその�
     if ((await u.getAttribute("aria-expanded")) !== "true") await u.click();
     n += await pp.locator("[data-testid^=problems-] li").count();
   }
-  expect(n).toBe(17);
+  expect(n).toBe(nProblems);
   await pp.getByTestId("focus-chip").click();
   expect(await pp.locator("[data-testid^=unit-]").count()).toBeGreaterThan(3);
   // 実験室：二項分布の実験室だけ
