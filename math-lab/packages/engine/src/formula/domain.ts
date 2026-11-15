@@ -95,8 +95,8 @@ export function stopReason(node: FormulaNode, env: Env = {}): string | undefined
     case "fn":
       return node.name === "log"
         ? "0以下の数の対数になる"
-        : node.name === "comb" || node.name === "fact"
-          ? "組合せ・階乗は0以上の整数だけ"
+        : node.name === "comb" || node.name === "fact" || node.name === "perm"
+          ? "順列・組合せ・階乗は0以上の整数だけ"
           : `${node.name} が計算できない`;
     default:
       return "値が有限にならない";

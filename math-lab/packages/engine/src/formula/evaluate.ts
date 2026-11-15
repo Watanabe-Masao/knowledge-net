@@ -28,8 +28,18 @@ export function comb(n: number, k: number): number {
   return Math.round(r);
 }
 
+/** 順列の数 ₙPₖ＝n!/(n−k)!（k＞n は 0。並べられない。stats2-course #45 の U09） */
+export function perm(n: number, k: number): number {
+  if (!Number.isInteger(n) || !Number.isInteger(k) || n < 0) return Number.NaN;
+  if (k < 0 || k > n) return 0;
+  let r = 1;
+  for (let i = 0; i < k; i++) r *= n - i;
+  return r;
+}
+
 const BUILTIN: Record<string, (...a: number[]) => number> = {
   comb,
+  perm,
   fact: factorial,
   exp: Math.exp,
   log: Math.log,

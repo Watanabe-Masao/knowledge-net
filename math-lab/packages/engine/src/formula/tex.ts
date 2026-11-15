@@ -180,6 +180,8 @@ export function toTex(node: FormulaNode, opt: TexOptions = {}): string {
     switch (name) {
       case "comb":
         return { t: `{}_{${a[0]!.t}}\\mathrm{C}_{${a[1]!.t}}`, p: ATOM, fn: true };
+      case "perm":
+        return { t: `{}_{${a[0]!.t}}\\mathrm{P}_{${a[1]!.t}}`, p: ATOM, fn: true };
       case "fact":
         return { t: `${paren(a[0]!, a[0]!.p < ATOM || !!a[0]!.neg)}!`, p: ATOM };
       case "gt":
