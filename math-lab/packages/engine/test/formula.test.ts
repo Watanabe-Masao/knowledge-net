@@ -33,6 +33,21 @@ describe("教材の式（stats2-course の35式）", () => {
   });
 });
 
+// 確かめる対象：順列 ₙPₖ（fn perm）の値・TeX・定義域（stats2-course #45 の U09 で順列の式を木で書くために足した）。
+// 想定する故障：(n−k)! で割らず n!／k! で割る（組合せと取り違える）・k＞n で負の数の階乗になり NaN・TeX が C のまま。
+// 見つけ方：手で数えた値（₅P₂＝5×4＝20・₅P₀＝1・₅P₅＝5!＝120・₃P₄＝0〔並べられない〕）と、₅P₂＝₅C₂×2! の関係。小数の n は止まる。
+// 既存との違い：組合せ・階乗は教材の式の見本で確かめている。順列は見本に入る前の部品だけをここで見る。
+// 検出の確かめ（2026-11-15）：perm を n!/k! にすると ₅P₂ が 60 になって落ちることを見た
+describe("順列 ₙPₖ", () => {
+  const P = (n: number, k: number): FormulaNode => ({ op: "fn", name: "perm", args: [{ num: n }, { num: k }] });
+  it("値と TeX と定義域", () => {
+    expect([evaluate(P(5, 2)), evaluate(P(5, 0)), evaluate(P(5, 5)), evaluate(P(3, 4))]).toEqual([20, 1, 120, 0]);
+    expect(evaluate(P(5, 2))).toBe(evaluate({ op: "fn", name: "comb", args: [{ num: 5 }, { num: 2 }] })! * 2);
+    expect(toTex({ op: "fn", name: "perm", args: [{ sym: "n" }, { sym: "k" }] })).toBe("{}_{n}\\mathrm{P}_{k}");
+    expect(Number.isNaN(evaluate(P(2.5, 1)))).toBe(true);
+  });
+});
+
 describe("1段ずつ展開する", () => {
   const tex = (n: FormulaNode) => toTex(n);
   it("E(X)＝np（n＝10・p＝0.3）：np → 10×0.3 → 3", () => {
