@@ -3285,7 +3285,8 @@
     "stats2:Q-U09-030",
     "stats2:Q-U09-031",
     "stats2:Q-U09-032",
-    "stats2:Q-U09-040"
+    "stats2:Q-U09-040",
+    "stats2:Q-U10-012"
    ],
    "en": "combination",
    "category": "数学の道具",
@@ -3751,7 +3752,11 @@
     "stats2:U10",
     "stats2:U11"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U10-002",
+    "stats2:Q-U10-004",
+    "stats2:Q-U10-020"
+   ],
    "en": "event",
    "short": "標本空間の中で、注目する結果を集めた部分集合",
    "category": "確率",
@@ -5878,7 +5883,16 @@
    "units": [
     "stats2:U10"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U10-001",
+    "stats2:Q-U10-005",
+    "stats2:Q-U10-010",
+    "stats2:Q-U10-011",
+    "stats2:Q-U10-022",
+    "stats2:Q-U10-030",
+    "stats2:Q-U10-031",
+    "stats2:Q-U10-032"
+   ],
    "en": "complement",
    "short": "ある事象が起こらないという事象で、標本空間からその事象を除いた残り",
    "category": "確率",
@@ -5940,7 +5954,9 @@
     "stats2:U10",
     "stats2:U11"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U10-023"
+   ],
    "en": "mutually exclusive",
    "short": "2つの事象が同時には起こらないこと（共通部分がない）",
    "category": "確率",
@@ -6004,6 +6020,12 @@
     "stats2:U14"
    ],
    "problems": [
+    "stats2:Q-U10-005",
+    "stats2:Q-U10-011",
+    "stats2:Q-U10-022",
+    "stats2:Q-U10-023",
+    "stats2:Q-U10-031",
+    "stats2:Q-U10-032",
     "stats2:Q-U13-021",
     "stats2:Q-U13-022",
     "stats2:Q-U13-023",
@@ -11295,7 +11317,12 @@
    "units": [
     "stats2:U10"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U10-003",
+    "stats2:Q-U10-021",
+    "stats2:Q-U10-023",
+    "stats2:Q-U10-040"
+   ],
    "en": "probability (axioms)",
    "short": "事象の起こりやすさを0〜1の数で表したもので、全体は1、排反な事象では確率を足せる",
    "category": "確率",
@@ -11427,7 +11454,17 @@
    "units": [
     "stats2:U10"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U10-001",
+    "stats2:Q-U10-002",
+    "stats2:Q-U10-004",
+    "stats2:Q-U10-010",
+    "stats2:Q-U10-012",
+    "stats2:Q-U10-020",
+    "stats2:Q-U10-021",
+    "stats2:Q-U10-030",
+    "stats2:Q-U10-040"
+   ],
    "en": "addition rule",
    "short": "2つの事象のどちらかが起こる確率は、それぞれの確率の和から両方が起こる確率を引いたもの",
    "category": "確率",
@@ -13574,8 +13611,109 @@
    ],
    "axis": "2つの事象の関わりを、集合の重なりで言うか、確率の掛け算で言うか",
    "gist": "「同時に起きない」と「影響しない」は別のこと。むしろ排反なら、一方が起きたと分かれば他方は起きないと分かるので、強く影響し合っている。",
+   "stages": {
+    "same": "どちらも、同じ標本空間の2つの事象 A・B がどう関わるかを言う（P(A)＝30%・P(B)＝20% のような同じ2つで比べられる）。",
+    "differ": "排反は A∩B が空（集合で決まる。だから両方の確率は 0）、独立は両方の確率が積 30%×20%＝6%（確率で決まる）。",
+    "so": "どちらの確率も0でない2つの事象は、排反なら両方が 0 で積は 0 より大きいので、独立にはなれない。"
+   },
    "same": "どちらも、2つの事象の組について、その2つがどう関わるかを言う性質",
-   "differ": "排反は A∩B＝∅ で、確率によらず集合だけで決まる。独立は P(A∩B)＝P(A)P(B) で、確率で決まる。どちらの確率も0でない2つの事象が排反なら、P(A∩B)＝0 だが P(A)P(B)＞0 なので、独立ではない"
+   "differ": "排反は A∩B＝∅ で、確率によらず集合だけで決まる。独立は P(A∩B)＝P(A)P(B) で、確率で決まる。どちらの確率も0でない2つの事象が排反なら、P(A∩B)＝0 だが P(A)P(B)＞0 なので、独立ではない",
+   "labs": [
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=rel-excl-indep-tour",
+     "title": "期待値ラボ",
+     "kind": "tour",
+     "preset": "rel-excl-indep-tour",
+     "purpose": "P(A)・P(B) を同じまま、両方の確率を積（独立）から 0（排反）へ変えるのを段ごとに見る",
+     "play": {
+      "mode": "joint",
+      "decimals": 3,
+      "steps": [
+       {
+        "title": "独立",
+        "text": "P(A)＝30%・P(B)＝20%。両方 **6%＝30%×20%** で**独立**。",
+        "states": [
+         {
+          "p11": 6,
+          "p10": 24,
+          "p01": 14,
+          "nameX": "A",
+          "nameY": "B",
+          "events": 1
+         }
+        ]
+       },
+       {
+        "title": "排反",
+        "text": "両方を **0%** に。A∩B が空で**排反**。積 6% と違うので**独立でない**。",
+        "states": [
+         {
+          "p11": 0,
+          "p10": 30,
+          "p01": 20,
+          "nameX": "A",
+          "nameY": "B",
+          "events": 1
+         }
+        ]
+       },
+       {
+        "title": "だから",
+        "text": "排反は**重なりが空**か、独立は**両方＝積**か。別のことを見ている。",
+        "states": [
+         {
+          "p11": 0,
+          "p10": 30,
+          "p01": 20,
+          "nameX": "A",
+          "nameY": "B",
+          "events": 1
+         }
+        ]
+       },
+       {
+        "title": "つまり",
+        "text": "💡 「同時に起きない」と「影響しない」は別のこと。むしろ排反なら、一方が起きたと分かれば他方は起きないと分かるので、強く影響し合っている。",
+        "states": [],
+        "gist": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "LAB-expect",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=rel-excl-free",
+     "title": "期待値ラボ",
+     "kind": "check",
+     "preset": "rel-excl-free",
+     "purpose": "両方の確率を自分で動かし、排反（0%）と独立（積）が別の所にあるのを確かめる",
+     "play": {
+      "mode": "joint",
+      "set": {
+       "p11": 6,
+       "p10": 24,
+       "p01": 14,
+       "nameX": "A",
+       "nameY": "B",
+       "events": 1
+      },
+      "task": "表の確率を動かし、両方が 0% になる所（排反）と、両方が P(A)×P(B) に等しくなる所（独立）を探す。P(A) か P(B) を 0% にすると、排反と独立が両方成り立つことも見る。"
+     }
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-expect-rel-excl-indep-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-expect-rel-excl-indep-tour-1.svg",
+     "caption": "P(A)＝30%・P(B)＝20%。両方 6%＝30%×20% で独立。"
+    },
+    {
+     "id": "FIG-LAB-expect-rel-excl-indep-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-expect-rel-excl-indep-tour-2.svg",
+     "caption": "両方を 0% に。A∩B が空で排反。積 6% と違うので独立でない。"
+    }
+   ]
   },
   {
    "id": "stats2:REL-multiplication-total",
