@@ -13,7 +13,16 @@ export type View =
       marks?: { x: number; label: string }[];
       label: string;
     }
-  | { kind: "joint"; p11: number; p10: number; p01: number; p00: number; nameX: string; nameY: string }
+  | {
+      kind: "joint";
+      p11: number;
+      p10: number;
+      p01: number;
+      p00: number;
+      nameX: string;
+      nameY: string;
+      events?: boolean;
+    }
   | { kind: "zlines"; groups: { name: string; m: number; s: number; x: number; z: number }[] }
   | { kind: "paths"; n: number; k: number; seqs: boolean[][]; more: number }
   | { kind: "arrange"; role: boolean; groups: { set: string[]; rows: string[][] }[]; more: number; total: number }
@@ -70,6 +79,8 @@ function Joint({ v }: { v: Extract<View, { kind: "joint" }> }) {
   );
   const px = v.p11 + v.p10,
     py = v.p11 + v.p01;
+  // 事象として見るときは「起きる・起きない」（量の「する・しない」と言い分ける）
+  const [yes, no] = v.events ? ["が起きる", "起きない"] : ["する", "しない"];
   return (
     <div
       className={s.joint}
@@ -77,14 +88,20 @@ function Joint({ v }: { v: Extract<View, { kind: "joint" }> }) {
       aria-label={`${v.nameX}と${v.nameY}の同時分布。両方 ${fx(v.p11 * 100)}%・${v.nameX}だけ ${fx(v.p10 * 100)}%・${v.nameY}だけ ${fx(v.p01 * 100)}%・どちらもしない ${fx(v.p00 * 100)}%`}
     >
       <span />
-      <span className={s.jhead}>{v.nameY}する</span>
-      <span className={s.jhead}>しない</span>
+      <span className={s.jhead}>
+        {v.nameY}
+        {yes}
+      </span>
+      <span className={s.jhead}>{no}</span>
       <span className={s.jhead}>計</span>
-      <span className={s.jhead}>{v.nameX}する</span>
+      <span className={s.jhead}>
+        {v.nameX}
+        {yes}
+      </span>
       {cell(v.p11, "両方", "11")}
       {cell(v.p10, `${v.nameX}だけ`, "10")}
       <span className={s.jsum}>{fx(px * 100)}%</span>
-      <span className={s.jhead}>しない</span>
+      <span className={s.jhead}>{no}</span>
       {cell(v.p01, `${v.nameY}だけ`, "01")}
       {cell(v.p00, "どちらも", "00")}
       <span className={s.jsum}>{fx((1 - px) * 100)}%</span>

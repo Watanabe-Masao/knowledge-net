@@ -103,11 +103,27 @@ const total: ModeDef = {
 const joint: ModeDef = {
   name: "同時分布",
   defaults: { p11: 20, p10: 30, p01: 20, nameX: "X", nameY: "Y" },
-  extra: ["nameX", "nameY"],
-  fields: [
-    { key: "p11", label: "両方 %", min: 0, max: (st) => 100 - num(st, "p10") - num(st, "p01"), step: 1, show: pc },
-    { key: "p10", label: "Xだけ %", min: 0, max: (st) => 100 - num(st, "p11") - num(st, "p01"), step: 1, show: pc },
-    { key: "p01", label: "Yだけ %", min: 0, max: (st) => 100 - num(st, "p11") - num(st, "p10"), step: 1, show: pc },
+  /** events：2つの事象として見る（教材の版が 1 を渡す。U10 の排反と独立。stats2-course #45）。共分散などの確率変数の数を出さず、両方・積・独立か・排反か だけにする */
+  extra: ["nameX", "nameY", "events"],
+  // つまみの名前は量の名前で（「弁当だけ %」）。静止図・旧版のラボと同じ呼び名にする（画面の原則 4）
+  fields: (st) => [
+    { key: "p11", label: "両方 %", min: 0, max: (s2) => 100 - num(s2, "p10") - num(s2, "p01"), step: 1, show: pc },
+    {
+      key: "p10",
+      label: `${str(st, "nameX", "X")}だけ %`,
+      min: 0,
+      max: (s2) => 100 - num(s2, "p11") - num(s2, "p01"),
+      step: 1,
+      show: pc,
+    },
+    {
+      key: "p01",
+      label: `${str(st, "nameY", "Y")}だけ %`,
+      min: 0,
+      max: (s2) => 100 - num(s2, "p11") - num(s2, "p10"),
+      step: 1,
+      show: pc,
+    },
   ],
   draw(st, { dec }) {
     const p11 = num(st, "p11") / 100,
@@ -121,14 +137,27 @@ const joint: ModeDef = {
       vy = py * (1 - py);
     const corr = vx > 0 && vy > 0 ? cov / Math.sqrt(vx * vy) : NaN;
     const nameX = str(st, "nameX", "X"),
-      nameY = str(st, "nameY", "Y");
+      nameY = str(st, "nameY", "Y"),
+      events = str(st, "events") === "1";
+    const indep = Math.abs(cov) < 1e-12 ? "独立" : "独立でない";
+    if (events)
+      return {
+        view: { kind: "joint", p11, p10, p01, p00, nameX, nameY, events },
+        stats: [
+          { key: "both", label: `両方 P(${nameX}∩${nameY})`, value: fmt(p11, dec) },
+          { key: "prod", label: `積 P(${nameX})P(${nameY})`, value: fmt(px * py, dec) },
+          { key: "indep", label: "独立か（両方＝積）", value: indep },
+          { key: "excl", label: "排反か（両方＝0）", value: p11 < 1e-12 ? "排反" : "排反でない" },
+        ],
+        label: `${nameX}と${nameY}の2つの事象。両方 ${fmt(p11, dec)}・積 ${fmt(px * py, dec)}`,
+      };
     return {
       view: { kind: "joint", p11, p10, p01, p00, nameX, nameY },
       stats: [
         { key: "exy", label: "E(XY)＝P(両方)", value: fmt(p11, dec) },
         { key: "cov", label: "共分散 E(XY)−E(X)E(Y)", value: fmt(Math.abs(cov) < 1e-12 ? 0 : cov, dec) },
         { key: "var", label: "V(X)＝P(X)(1−P(X))", value: fmt(vx, dec) },
-        { key: "indep", label: "独立か", value: Math.abs(cov) < 1e-12 ? "独立" : "独立でない" },
+        { key: "indep", label: "独立か", value: indep },
         ...(Number.isFinite(corr) ? [{ key: "corr", label: "相関係数", value: fmt(corr, dec) }] : []),
       ],
       label: `${nameX}と${nameY}の同時分布。共分散 ${fmt(cov, dec)}`,
