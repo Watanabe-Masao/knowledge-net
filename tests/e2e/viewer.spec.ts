@@ -2180,6 +2180,15 @@ test("応用の解き方を組み立てる：原本どおりに押すと最後�
             await expect(picker).toHaveCount(0);
           };
           const syms = [...new Set(WALK_FORMULAS[fu.ref]!.syms)]; // 記号の枠の順は engine から（書き写さない。stats2-course #208）
+          // 前の式の値を入れる枠は、その式の左辺と同じ字（式は SE、枠は S にしない。stats2-course #401 の型3）。故障：枠を engine の穴の名前のまま出す
+          for (const sym of syms) {
+            const from = w.formulas.find((g) => g.id === fu.bind[sym]);
+            if (from)
+              await expect(
+                sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).locator("i"),
+                `${key} の ${fu.id} の枠 ${sym}`,
+              ).toHaveText(WALK_FORMULAS[from.ref]!.out);
+          }
           const listOf = async (sym: string) => {
             await sh.getByTestId(`exp-walk-slot-${fu.id}-${sym}`).click();
             const ids = await picker

@@ -21,7 +21,7 @@ export type WalkFormulaDef = {
   tex: string;
   /** 穴の記号（式の中の順） */
   syms: string[];
-  /** 出てくる値の記号（呼び名は教材の walk_texts の word） */
+  /** 出てくる値の記号（呼び名は教材の walk_texts の word）。tex の左辺が記号なら同じ字にする（式は SE、出てきた値の札と次の式の枠は S、のようにずらさない。stats2-course #401 の型3） */
   out: string;
   value: (v: Record<string, number>) => number;
   rows: (v: Record<string, number>) => WalkRow[];
@@ -160,7 +160,7 @@ export const WALK_FORMULAS: Record<string, WalkFormulaDef> = {
   "share.se": {
     tex: "SE=\\sqrt{\\dfrac{@P(1-@P)}{@m}}",
     syms: ["P", "m"],
-    out: "S",
+    out: "SE",
     value: ({ P, m }) => Math.sqrt((P! * (1 - P!)) / m!),
     rows: ({ P, m }): WalkRow[] => {
       const v = P! * (1 - P!),
