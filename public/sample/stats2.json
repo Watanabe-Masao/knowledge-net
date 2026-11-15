@@ -938,7 +938,7 @@
      {
       "id": "stats2:Q-U09-040",
       "stage": "応用",
-      "prompt": "B(4, 0.25) の確率 0.3164, 0.4219, 0.2109, 0.0469, 0.0039 を足すと？"
+      "prompt": "二項分布 B(4, 0.25)（。成功確率 0.25 の試行を独立に4回したときの成功回数の分布）の確率 0.3164, 0.4219, 0.2109, 0.0469, 0.0039 を足すと？"
      }
     ]
    },
@@ -3104,7 +3104,15 @@
    "units": [
     "stats2:U09"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U09-001",
+    "stats2:Q-U09-002",
+    "stats2:Q-U09-003",
+    "stats2:Q-U09-005",
+    "stats2:Q-U09-010",
+    "stats2:Q-U09-012",
+    "stats2:Q-U09-024"
+   ],
    "en": "permutation",
    "short": "異なるものから順番を区別して並べる並べ方と、その数",
    "category": "数学の道具",
@@ -3227,7 +3235,7 @@
      "同じものを2回使わない（取り出したものは戻さない）"
     ],
     "data": [
-     "「順番を区別する」場面かを確かめる。役（委員長・副委員長）・順位・並ぶ位置があれば順列、選ぶだけなら組合せで数える",
+     "「順番を区別する」場面かを確かめる。役割（委員長・副委員長）・順位・並ぶ位置があれば順列、選ぶだけなら組合せで数える",
      "同じものを2回使える場面（暗証番号の数字など）かを確かめる"
     ]
    },
@@ -3262,7 +3270,23 @@
    "units": [
     "stats2:U09"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U09-001",
+    "stats2:Q-U09-002",
+    "stats2:Q-U09-004",
+    "stats2:Q-U09-010",
+    "stats2:Q-U09-011",
+    "stats2:Q-U09-012",
+    "stats2:Q-U09-020",
+    "stats2:Q-U09-021",
+    "stats2:Q-U09-023",
+    "stats2:Q-U09-024",
+    "stats2:Q-U09-025",
+    "stats2:Q-U09-030",
+    "stats2:Q-U09-031",
+    "stats2:Q-U09-032",
+    "stats2:Q-U09-040"
+   ],
    "en": "combination",
    "category": "数学の道具",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-comb.svg",
@@ -3408,7 +3432,7 @@
      "同じものを2回選ばない（選んだものは戻さない）"
     ],
     "data": [
-     "「順番を区別しない」選び方かを確かめる。役（委員長・副委員長）や順位があるなら順列で数える"
+     "「順番を区別しない」選び方かを確かめる。役割（委員長・副委員長）や順位があるなら順列で数える"
     ]
    },
    "example": "5人から2人の係を選ぶ選び方は ₅C₂＝5!÷(2!×3!)＝120÷12＝10 通り。",
@@ -3464,7 +3488,9 @@
     "stats2:U02",
     "stats2:U09"
    ],
-   "problems": [],
+   "problems": [
+    "stats2:Q-U09-022"
+   ],
    "en": "factorial",
    "category": "数学の道具",
    "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-fact.svg",
@@ -6764,6 +6790,7 @@
     "stats2:U19"
    ],
    "problems": [
+    "stats2:Q-U09-040",
     "stats2:Q-U14-001",
     "stats2:Q-U14-002",
     "stats2:Q-U14-003",
@@ -12990,14 +13017,102 @@
    "from": "stats2:TERM-perm",
    "to": "stats2:TERM-comb",
    "type": "比べる",
-   "description": "どちらも n 個から k 個を取り出す数。役や順位がある場面なら順列、選ぶだけの場面なら組合せで数える（数どうしのつながりは 順列 → 組合せ の移る）。",
+   "description": "どちらも n 個から k 個を取り出す数。役割や順位がある場面なら順列、選ぶだけの場面なら組合せで数える（数どうしのつながりは 順列 → 組合せ の移る）。",
    "units": [
     "stats2:U09"
    ],
-   "axis": "場面に役・順位があるか（順番を区別して数えるか）",
-   "gist": "順番が意味を持つ（1位・2位）なら順列、持たない（選ぶだけ）なら組合せ。場面に役や順位があるかで決める。",
+   "axis": "場面に役割・順位があるか（順番を区別して数えるか）",
+   "gist": "順番が意味を持つ（1位・2位）なら順列、持たない（選ぶだけ）なら組合せ。場面に役割や順位があるかで決める。",
+   "stages": {
+    "same": "どちらも、異なる n 個から k 個を取り出す数。取り出す組（6人から3人なら 20 組）は同じ。",
+    "differ": "順列は1つの組の中の並べ方 k! 通りを別々に数え、組合せは1通りと数える（6人から3人なら 120 通りと 20 通り）。",
+    "so": "同じ6人から3人でも、委員長・副委員長・書記を決めるなら 120 通り、委員を3人選ぶだけなら 20 通り。迷ったら、選んだ2人を入れ替えて別の結果になるかを見る。"
+   },
    "same": "どちらも、異なる n 個から k 個（0≦k≦n の整数）を取り出すときの場合の数で、同じ「何通りあるか」の問いに答える",
-   "differ": "順列は、役や順位がある場面（1位・2位、委員長・副委員長）で使い、同じ k 個でも並びが違えば別に数える。組合せは、選ぶだけの場面（委員を3人選ぶ、カードを2枚引く）で使い、同じ k 個の組を1通りと数える。どちらで数えるかは、場面に役・順位があるかで決める"
+   "differ": "順列は、役割や順位がある場面（1位・2位、委員長・副委員長）で使い、同じ k 個でも並びが違えば別に数える。組合せは、選ぶだけの場面（委員を3人選ぶ、カードを2枚引く）で使い、同じ k 個の組を1通りと数える。どちらで数えるかは、場面に役割・順位があるかで決める",
+   "labs": [
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-comb-contrast-tour",
+     "title": "数え方ラボ",
+     "kind": "tour",
+     "preset": "rel-perm-comb-contrast-tour",
+     "purpose": "6人から3人の同じ20組を、役割を区別しない・する で数え分けるのを段ごとに見る",
+     "play": {
+      "mode": "list",
+      "steps": [
+       {
+        "title": "同じ所",
+        "text": "どちらも **6人から3人を取り出す**数で、取り出す3人の組は同じ **20 組**。",
+        "states": [
+         {
+          "n": 6,
+          "r": 3,
+          "role": "なし"
+         }
+        ]
+       },
+       {
+        "title": "違う所",
+        "text": "役割（1番・2番・3番）を**区別する**と、1つの組の中の並べ方 3!＝6 通りを別々に数えるので、20×6＝**120 通り**。",
+        "states": [
+         {
+          "n": 6,
+          "r": 3,
+          "role": "あり"
+         }
+        ]
+       },
+       {
+        "title": "だから",
+        "text": "迷ったら、**選んだ2人を入れ替えて、別の結果になるか**を見る。委員長と副委員長を入れ替えると別の決め方（順列）、委員どうしを入れ替えても同じ（組合せ）。",
+        "states": [
+         {
+          "n": 6,
+          "r": 3,
+          "role": "あり"
+         }
+        ]
+       },
+       {
+        "title": "つまり",
+        "text": "💡 順番が意味を持つ（1位・2位）なら順列、持たない（選ぶだけ）なら組合せ。場面に役割や順位があるかで決める。",
+        "states": [],
+        "gist": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "title": "数え方ラボ",
+     "kind": "check",
+     "preset": "rel-perm-free",
+     "purpose": "役割の切り替えと n・r を自分で動かし、帯1本が r! 通りになるのを確かめる",
+     "play": {
+      "mode": "list",
+      "set": {
+       "n": 5,
+       "r": 3,
+       "role": "あり"
+      },
+      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+     }
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-count-rel-perm-comb-contrast-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-count-rel-perm-comb-contrast-tour-1.svg",
+     "caption": "どちらも 6人から3人を取り出す数で、取り出す3人の組は同じ 20 組。"
+    },
+    {
+     "id": "FIG-LAB-count-rel-perm-comb-contrast-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-count-rel-perm-comb-contrast-tour-2.svg",
+     "caption": "役割（1番・2番・3番）を区別すると、1つの組の中の並べ方 3!＝6 通りを別々に数えるので、20×6＝120 通り。"
+    }
+   ]
   },
   {
    "id": "stats2:REL-ss-event",
@@ -15083,9 +15198,112 @@
    ],
    "mode": "exact",
    "gist": "順列は並べ方まで数え、組合せは選ぶだけ。同じ k 個の組が順列では k! 通りに数えられるので、k! で割ると組合せになる。",
+   "stages": {
+    "origin": "役割を区別して並べた数 ₙPₖ（6人から2人なら 6×5＝30 通り）。",
+    "operation": "同じ k 人の組の中の並べ方 k! 通りを1通りにまとめる（k! で割る）。",
+    "result": "組合せ ₙCₖ（30÷2!＝15 通り）。"
+   },
    "claim": "stats2:CLM-38",
    "operation": "選んだ k 個の中の並べ替えの数 k! で割る（同じ k 個の組が順列では k! 通りに数えられるので）",
-   "reversible": true
+   "reversible": true,
+   "labs": [
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-comb-tour",
+     "title": "数え方ラボ",
+     "kind": "tour",
+     "preset": "rel-perm-comb-tour",
+     "purpose": "6人から2人・3人で、帯1本の r! 通りを1通りにまとめると組合せになるのを段ごとに見る",
+     "play": {
+      "mode": "list",
+      "steps": [
+       {
+        "title": "役割を区別して並べる",
+        "text": "6人から2人を、**役割を区別して**並べる。1人目は6通り、2人目は残りの5通りで、6×5＝**30 通り**。",
+        "states": [
+         {
+          "n": 6,
+          "r": 2,
+          "role": "あり"
+         }
+        ]
+       },
+       {
+        "title": "同じ組をまとめる",
+        "text": "区別したときの帯1本（A→B と B→A）が、役割を区別しないと **1つの組 {A,B}** になる。どの組も 2!＝2 回ずつ数えていたので、30÷2＝**15 通り**。",
+        "states": [
+         {
+          "n": 6,
+          "r": 2,
+          "role": "なし"
+         }
+        ]
+       },
+       {
+        "title": "3人なら 3! で割る",
+        "text": "3人を選ぶと、1つの組の中の並べ方は **3!＝6 通り**。順列 120 通りを 6 で割ると、組合せは **20 通り**。",
+        "states": [
+         {
+          "n": 6,
+          "r": 2,
+          "role": "なし"
+         },
+         {
+          "n": 6,
+          "r": 3,
+          "role": "あり"
+         },
+         {
+          "n": 6,
+          "r": 3,
+          "role": "なし"
+         }
+        ]
+       },
+       {
+        "title": "つまり",
+        "text": "💡 順列は並べ方まで数え、組合せは選ぶだけ。同じ k 個の組が順列では k! 通りに数えられるので、k! で割ると組合せになる。",
+        "states": [],
+        "gist": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "title": "数え方ラボ",
+     "kind": "check",
+     "preset": "rel-perm-free",
+     "purpose": "n・r と役割を自分で動かし、順列 ÷ r! が組合せになるのを確かめる",
+     "play": {
+      "mode": "list",
+      "set": {
+       "n": 5,
+       "r": 3,
+       "role": "あり"
+      },
+      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+     }
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-count-rel-perm-comb-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-count-rel-perm-comb-tour-1.svg",
+     "caption": "6人から2人を、役割を区別して並べる。1人目は6通り、2人目は残りの5通りで、6×5＝30 通り。"
+    },
+    {
+     "id": "FIG-LAB-count-rel-perm-comb-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-count-rel-perm-comb-tour-2.svg",
+     "caption": "区別したときの帯1本（A→B と B→A）が、役割を区別しないと 1つの組 {A,B} になる。どの組も 2!＝2 回ずつ数えていたので、30÷2＝15 通り。"
+    },
+    {
+     "id": "FIG-LAB-count-rel-perm-comb-tour-3",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-count-rel-perm-comb-tour-3.svg",
+     "caption": "3人を選ぶと、1つの組の中の並べ方は 3!＝6 通り。順列 120 通りを 6 で割ると、組合せは 20 通り。"
+    }
+   ]
   },
   {
    "id": "stats2:REL-perm-to-fact",
@@ -15099,8 +15317,100 @@
    ],
    "mode": "exact",
    "gist": "n 個を全部1列に並べる並べ方は、先頭が n 通り、次が n−1 通り……と掛けていくので n!。全部を並べる順列が階乗。",
+   "stages": {
+    "origin": "n 人から k 人を役割を区別して並べた数 ₙPₖ（4人から2人なら 12 通り）。",
+    "operation": "取り出す人数 k を n まで増やし、全員を並べる。",
+    "result": "ₙPₙ＝n×(n−1)×…×1＝n!（4人なら 24 通り）。"
+   },
    "claim": "stats2:CLM-39",
-   "operation": "取り出す個数 k を全体の個数 n と等しくする（k＝n）"
+   "operation": "取り出す個数 k を全体の個数 n と等しくする（k＝n）",
+   "labs": [
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-fact-tour",
+     "title": "数え方ラボ",
+     "kind": "tour",
+     "preset": "rel-perm-fact-tour",
+     "purpose": "4人から r 人を並べ、r を 4 まで増やすと 4! になるのを段ごとに見る",
+     "play": {
+      "mode": "list",
+      "steps": [
+       {
+        "title": "1人ずつ並べる",
+        "text": "4人から何人かを**役割を区別して**並べる。1人なら 4 通り、2人なら 4×3＝**12 通り**。",
+        "states": [
+         {
+          "n": 4,
+          "r": 1,
+          "role": "あり"
+         },
+         {
+          "n": 4,
+          "r": 2,
+          "role": "あり"
+         }
+        ]
+       },
+       {
+        "title": "全員を並べる",
+        "text": "選ぶ人数を増やす。3人で 4×3×2＝**24 通り**。4人目は残った1人に決まり、選ぶ余地がない（×1）ので、全員を並べても **24 通り**のまま。全員を並べる ₄P₄ は **4!**。",
+        "states": [
+         {
+          "n": 4,
+          "r": 2,
+          "role": "あり"
+         },
+         {
+          "n": 4,
+          "r": 3,
+          "role": "あり"
+         },
+         {
+          "n": 4,
+          "r": 4,
+          "role": "あり"
+         }
+        ]
+       },
+       {
+        "title": "つまり",
+        "text": "💡 n 個を全部1列に並べる並べ方は、先頭が n 通り、次が n−1 通り……と掛けていくので n!。全部を並べる順列が階乗。",
+        "states": [],
+        "gist": true
+       }
+      ]
+     }
+    },
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "title": "数え方ラボ",
+     "kind": "check",
+     "preset": "rel-perm-free",
+     "purpose": "r を n に合わせ、順列が n! になるのを自分で確かめる",
+     "play": {
+      "mode": "list",
+      "set": {
+       "n": 5,
+       "r": 3,
+       "role": "あり"
+      },
+      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+     }
+    }
+   ],
+   "figures": [
+    {
+     "id": "FIG-LAB-count-rel-perm-fact-tour-1",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-count-rel-perm-fact-tour-1.svg",
+     "caption": "4人から何人かを役割を区別して並べる。1人なら 4 通り、2人なら 4×3＝12 通り。"
+    },
+    {
+     "id": "FIG-LAB-count-rel-perm-fact-tour-2",
+     "url": "https://watanabe-masao.github.io/stats2-labs/fig/FIG-LAB-count-rel-perm-fact-tour-2.svg",
+     "caption": "選ぶ人数を増やす。3人で 4×3×2＝24 通り。4人目は残った1人に決まり、選ぶ余地がない（×1）ので、全員を並べても 24 通りのまま。全員を並べる ₄P₄ は 4!。"
+    }
+   ]
   }
  ],
  "derivations": [
