@@ -706,9 +706,10 @@ const bayes: ModeDef = {
     { key: "times", label: "検査の回数", min: 1, max: 2, step: 1 },
   ],
   draw(st, { dec }) {
-    const p = num(st, "prior") / 100,
-      se = num(st, "sens") / 100,
-      fp = num(st, "fpr") / 100,
+    // 項目のない状態（set のない解説の空の初期状態）でも、ほかのモードと同じく初期値で描く
+    const p = num(st, "prior", 2) / 100,
+      se = num(st, "sens", 90) / 100,
+      fp = num(st, "fpr", 5) / 100,
       t = Math.round(num(st, "times", 1)) === 2 ? 2 : 1;
     const name = str(st, "name", "不良"),
       other = str(st, "other", "良品"),
