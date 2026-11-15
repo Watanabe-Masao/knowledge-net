@@ -193,6 +193,11 @@
   fill: var(--ink-2);
   font-weight: 600;
 }
+.zero {
+  stroke: var(--ink-2);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 3;
+}
 .ibar {
   stroke: var(--data-1);
   stroke-width: 6;

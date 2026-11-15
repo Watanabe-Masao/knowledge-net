@@ -990,6 +990,30 @@ const niceStep = (raw: number) => {
     r = raw / p;
   return (r < 1.5 ? 1 : r < 3.5 ? 2 : r < 7.5 ? 5 : 10) * p;
 };
+
+/** 区間の横の棒の見せ方（場面 mean・diff・paired で同じ形。原則 4） */
+const intervalView = (center: number, m: number, se: number, centerLabel: string, label: string, zero = false) => {
+  const span = Math.max(m * 1.6, se, zero ? Math.abs(center) * 1.2 : 0);
+  const step = niceStep((2 * span) / 4);
+  const from = Math.floor((center - span) / step) * step,
+    to = Math.ceil((center + span) / step) * step;
+  const ticks: number[] = [];
+  for (let t = from; t <= to + 1e-9; t += step) ticks.push(Number(t.toFixed(10)));
+  return {
+    kind: "interval" as const,
+    from,
+    to,
+    ticks,
+    center,
+    centerLabel,
+    lo: center - m,
+    hi: center + m,
+    loLabel: fmt(center - m, 3),
+    hiLabel: fmt(center + m, 3),
+    zero,
+    label,
+  };
+};
 const ZTABLE: Record<string, number> = { "0.9": 1.645, "0.95": 1.96, "0.99": 2.576 };
 const cimean: ModeDef = {
   name: "平均の区間",
@@ -1032,26 +1056,14 @@ const cimean: ModeDef = {
       lo = xb - m,
       hi = xb + m;
     const pct = Math.round(Number(lv) * 100);
-    const span = Math.max(m * 1.6, se);
-    const step = niceStep((2 * span) / 4);
-    const from = Math.floor((xb - span) / step) * step,
-      to = Math.ceil((xb + span) / step) * step;
-    const ticks: number[] = [];
-    for (let t = from; t <= to + 1e-9; t += step) ticks.push(Number(t.toFixed(10)));
     return {
-      view: {
-        kind: "interval",
-        from,
-        to,
-        ticks,
-        center: xb,
-        centerLabel: `x̄ ${fmt(xb, 2)}`,
-        lo,
-        hi,
-        loLabel: fmt(lo, 3),
-        hiLabel: fmt(hi, 3),
-        label: `点推定 x̄＝${fmt(xb, dec)}。誤差幅 ${fmt(m, dec)} の${pct}%信頼区間 ${fmt(lo, dec)}〜${fmt(hi, dec)}`,
-      },
+      view: intervalView(
+        xb,
+        m,
+        se,
+        `x̄ ${fmt(xb, 2)}`,
+        `点推定 x̄＝${fmt(xb, dec)}。誤差幅 ${fmt(m, dec)} の${pct}%信頼区間 ${fmt(lo, dec)}〜${fmt(hi, dec)}`,
+      ),
       stats: [
         { key: "se", label: "標準誤差 σ÷√n", value: fmt(se, dec) },
         { key: "crit", label: kind === "t" ? `t(${n - 1}) の点` : "z の点", value: fmt(crit, dec) },
@@ -1060,6 +1072,107 @@ const cimean: ModeDef = {
         { key: "hi", label: "上の端", value: fmt(hi, dec) },
       ],
       label: `${pct}%信頼区間（n＝${n}）`,
+    };
+  },
+};
+
+/** 平均の差（2群のラボの diff。stats2-course #47 の U23）：独立2群の x̄₁−x̄₂ の95%区間。
+ *  ウェルチ（SE＝√(s₁²/n₁＋s₂²/n₂)、近似の自由度）と等分散（合わせた分散、自由度 n₁＋n₂−2）。ラボの dVals と同じ式 */
+const twodiff: ModeDef = {
+  name: "平均の差",
+  defaults: { method: "welch", x1: 52, s1: 8, n1: 16, x2: 48, s2: 6, n2: 16 },
+  toggles: [
+    {
+      key: "method",
+      name: "方法",
+      items: [
+        ["welch", "ウェルチ"],
+        ["pooled", "等分散"],
+      ],
+    },
+  ],
+  fields: [
+    { key: "x1", label: "x̄₁", min: 0, max: 2000, step: 0.1 },
+    { key: "s1", label: "s₁", min: 0.1, max: 500, step: 0.1 },
+    { key: "n1", label: "n₁", min: 2, max: 500, step: 1 },
+    { key: "x2", label: "x̄₂", min: 0, max: 2000, step: 0.1 },
+    { key: "s2", label: "s₂", min: 0.1, max: 500, step: 0.1 },
+    { key: "n2", label: "n₂", min: 2, max: 500, step: 1 },
+  ],
+  draw(st, { dec }) {
+    const x1 = num(st, "x1", 52),
+      s1 = num(st, "s1", 8),
+      n1 = Math.max(2, Math.round(num(st, "n1", 16))),
+      x2 = num(st, "x2", 48),
+      s2 = num(st, "s2", 6),
+      n2 = Math.max(2, Math.round(num(st, "n2", 16)));
+    const a = (s1 * s1) / n1,
+      b = (s2 * s2) / n2,
+      welch = str(st, "method", "welch") !== "pooled";
+    const sp2 = ((n1 - 1) * s1 * s1 + (n2 - 1) * s2 * s2) / (n1 + n2 - 2);
+    const se = welch ? Math.sqrt(a + b) : Math.sqrt(sp2 * (1 / n1 + 1 / n2)),
+      df = welch ? (a + b) ** 2 / ((a * a) / (n1 - 1) + (b * b) / (n2 - 1)) : n1 + n2 - 2,
+      tc = tQuantile(0.975, df),
+      d = x1 - x2,
+      m = tc * se;
+    const name = welch ? "ウェルチ" : "等分散";
+    return {
+      view: intervalView(
+        d,
+        m,
+        se,
+        `差 ${fmt(d, 2)}`,
+        `${name}の95%信頼区間 ${fmt(d - m, dec)}〜${fmt(d + m, dec)}（自由度 ${fmt(df, 1)}）`,
+        true,
+      ),
+      stats: [
+        { key: "diff", label: "差 x̄₁−x̄₂", value: fmt(d, dec) },
+        { key: "se", label: "標準誤差", value: fmt(se, dec) },
+        { key: "df", label: "自由度", value: fmt(df, dec) },
+        { key: "tcrit", label: "t の点", value: fmt(tc, dec) },
+        { key: "lo", label: "下の端", value: fmt(d - m, dec) },
+        { key: "hi", label: "上の端", value: fmt(d + m, dec) },
+      ],
+      label: `${name}の区間`,
+    };
+  },
+};
+
+/** 対応あり（2群のラボの paired）：差の平均の区間 D̄ ± t(n−1)×s_D÷√n。
+ *  名前 paired は t 検定ラボにもあり（検定。side・alpha を持つ）、意味が違うので、その状態が来たら止める */
+const twopaired: ModeDef = {
+  name: "対応あり",
+  defaults: { dbar: 3, sd: 4, n: 16 },
+  fields: [
+    { key: "dbar", label: "差の平均 D̄", min: -100, max: 100, step: 0.1 },
+    { key: "sd", label: "差の標準偏差", min: 0.1, max: 100, step: 0.1 },
+    { key: "n", label: "組の数 n", min: 2, max: 200, step: 1 },
+  ],
+  draw(st, { dec }) {
+    if (st.side !== undefined || st.alpha !== undefined)
+      throw new Error("場面 paired は2群のラボの区間（dbar・sd・n）だけを描く");
+    const d = num(st, "dbar", 3),
+      sd = num(st, "sd", 4),
+      n = Math.max(2, Math.round(num(st, "n", 16))),
+      se = sd / Math.sqrt(n),
+      tc = tQuantile(0.975, n - 1),
+      m = tc * se;
+    return {
+      view: intervalView(
+        d,
+        m,
+        se,
+        `D̄ ${fmt(d, 2)}`,
+        `対応ありの95%信頼区間 ${fmt(d - m, dec)}〜${fmt(d + m, dec)}（自由度 ${n - 1}）`,
+        true,
+      ),
+      stats: [
+        { key: "se", label: "標準誤差 s_D÷√n", value: fmt(se, dec) },
+        { key: "tcrit", label: `t(${n - 1}) の点`, value: fmt(tc, dec) },
+        { key: "lo", label: "下の端", value: fmt(d - m, dec) },
+        { key: "hi", label: "上の端", value: fmt(d + m, dec) },
+      ],
+      label: `対応あり（n＝${n}）`,
     };
   },
 };
@@ -1086,4 +1199,6 @@ export const MODES2: Record<string, ModeDef> = {
   comp,
   var: vmode,
   mean: cimean,
+  diff: twodiff,
+  paired: twopaired,
 };
