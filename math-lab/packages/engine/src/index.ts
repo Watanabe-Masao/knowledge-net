@@ -94,3 +94,17 @@ export {
   type WalkRow,
 } from "./walk";
 export { APPLY_TEXT_SPEC, APPLY_TEXT_WORDS } from "./applySteps";
+export {
+  lnGamma,
+  incBeta,
+  incGamma,
+  tDensity,
+  tCdf,
+  tQuantile,
+  chi2Density,
+  chi2Cdf,
+  chi2Quantile,
+  fDensity,
+  fCdf,
+  fQuantile,
+} from "./dists";
