@@ -50,8 +50,17 @@ export function symbolTex(key: string, symbols: FormulaSymbol[] = []): string {
   const s = symbols.find((x) => x.key === key && !/[()]/.test(x.symbol))?.symbol;
   if (s) {
     // 1字ずつ TeX に。命令（\mu など）のすぐあとに文字が続くときだけ空白を入れる（\mu X が \muX にならないように）
+    // 命令（\theta など）のすぐあとの結合文字（θ̂ の U+0302・θ̄ の U+0304）は、命令の上に付く印にする
+    // （KaTeX は命令のあとの結合文字を読めない。文字のあとの結合文字（X̄）はそのまま読めるので変えない。stats2-course #47 の U17・U21）
+    const ACCENT: Record<string, string> = { "\u0302": "\\hat", "\u0304": "\\bar" };
     let out = "";
     for (const c of s) {
+      const acc = ACCENT[c];
+      const cmd = /\\[A-Za-z]+$/.exec(out);
+      if (acc && cmd) {
+        out = out.slice(0, cmd.index) + `${acc}{${cmd[0]}}`;
+        continue;
+      }
       const t = GREEK[c] ?? c;
       out += /\\[A-Za-z]+$/.test(out) && /^[A-Za-z]/.test(t) ? ` ${t}` : t;
     }

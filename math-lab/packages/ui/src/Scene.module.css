@@ -193,6 +193,11 @@
   fill: var(--ink-2);
   font-weight: 600;
 }
+.ibar {
+  stroke: var(--data-1);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
 .dot1 {
   fill: var(--data-1);
   stroke: var(--surface);
