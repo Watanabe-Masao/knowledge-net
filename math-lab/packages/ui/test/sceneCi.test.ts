@@ -14,7 +14,9 @@ describe("平均の区間の場面", () => {
   it("z：x̄＝120・σ＝20・n＝25 で SE 4、95% は 112.16〜127.84、99% の誤差幅は 10.304", () => {
     const d = drawScene("mean", { kind: "z", level: 0.95, xbar: 120, s: 20, n: 25 }, undefined, 3);
     expect([val(d, "se"), val(d, "margin"), val(d, "lo"), val(d, "hi")]).toEqual(["4", "7.84", "112.16", "127.84"]);
-    expect(val(drawScene("mean", { kind: "z", level: 0.99, xbar: 120, s: 20, n: 25 }, undefined, 3), "margin")).toBe("10.304");
+    expect(val(drawScene("mean", { kind: "z", level: 0.99, xbar: 120, s: 20, n: 25 }, undefined, 3), "margin")).toBe(
+      "10.304",
+    );
   });
   it("t：n＝10 なら t(9) の点 2.262 を使う", () => {
     const d = drawScene("mean", { kind: "t", level: 0.95, xbar: 50, s: 10, n: 10 }, undefined, 3);

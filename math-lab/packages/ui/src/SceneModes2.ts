@@ -990,8 +990,23 @@ const cimean: ModeDef = {
   name: "平均の区間",
   defaults: { kind: "z", level: "0.95", xbar: 50, s: 10, n: 100 },
   toggles: [
-    { key: "kind", name: "確率点", items: [["z", "σ が分かる（z）"], ["t", "s と t"]] },
-    { key: "level", name: "信頼係数", items: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"]] },
+    {
+      key: "kind",
+      name: "確率点",
+      items: [
+        ["z", "σ が分かる（z）"],
+        ["t", "s と t"],
+      ],
+    },
+    {
+      key: "level",
+      name: "信頼係数",
+      items: [
+        ["0.9", "90%"],
+        ["0.95", "95%"],
+        ["0.99", "99%"],
+      ],
+    },
   ],
   fields: [
     { key: "xbar", label: "平均 x̄", min: 0, max: 2000, step: 0.1 },
