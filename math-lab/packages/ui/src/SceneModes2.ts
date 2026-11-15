@@ -1,6 +1,16 @@
 // 場面のモード（離散の分布の棒でないもの。stats2-course #188 04b・#192）。名前・状態の項目・意味は教材のラボの約束（tools/*_lab/tool.yaml の modes）に合わせる。
 // dist・total・joint（期待値のラボ）、z・normal・inv（標準化のラボ）、norm・q・unif・expo・dens（連続の分布のラボ）、path・bern（二項分布のラボ）。
-import { comb, normalCdf, normalDensity, normalQuantile } from "@math-lab/engine";
+import {
+  comb,
+  fCdf,
+  fDensity,
+  fQuantile,
+  normalCdf,
+  normalDensity,
+  normalQuantile,
+  tDensity,
+  tQuantile,
+} from "@math-lab/engine";
 import { fmt, num, pctS, str, type FieldDef, type ModeDef, type SceneState } from "./sceneCore";
 
 const pc = (v: number) => `${Number(v.toFixed(1))}%`;
@@ -811,6 +821,91 @@ const clt: ModeDef = {
   },
 };
 
+/** t 分布の点（教材の t・χ²・F ラボの t。stats2-course #47 の U20）：t(df) の密度（実線）と標準正規分布（点線）、
+ *  両側なら左右の、片側なら上側の有意水準の点より外を塗る。ラボと同じ engine の方法（不完全ベータ関数と二分法） */
+const tmode: ModeDef = {
+  name: "t 分布の点",
+  defaults: { df: 4, side: "two", alpha: 0.05, t: 1 },
+  extra: ["side", "alpha", "t"],
+  fields: [{ key: "df", label: "自由度", min: 1, max: 120, step: 1 }],
+  draw(st, { dec }) {
+    const df = Math.max(1, Math.round(num(st, "df", 4))),
+      two = str(st, "side", "two") !== "one",
+      alpha = num(st, "alpha", 0.05),
+      q = two ? 1 - alpha / 2 : 1 - alpha;
+    const tc = tQuantile(q, df),
+      zc = normalQuantile(q),
+      span = Math.max(5, Math.ceil(tc * 1.15)); // 自由度が小さいと点が外に出る（t(1) の両側5%は 12.706）。点が横軸の中に入るように広げる
+    return {
+      view: {
+        kind: "density",
+        from: -span,
+        to: span,
+        f: (x) => tDensity(x, df),
+        g: (x) => normalDensity(x, 0, 1),
+        legend: [`t(${df})`, "標準正規分布"],
+        shade: two
+          ? [
+              [-5, -tc],
+              [tc, 5],
+            ]
+          : [[tc, 5]],
+        marks: [...(two ? [{ x: -tc, label: fmt(-tc, 2) }] : []), { x: 0, label: "0" }, { x: tc, label: fmt(tc, 2) }],
+        label: `自由度 ${df} の t 分布（実線）と標準正規分布（点線）。${two ? "両側" : "上側"} ${alpha * 100}% の点 ${fmt(tc, 3)} より外を塗った`,
+      },
+      stats: [
+        { key: "tcrit", label: `t(${df}) の ${two ? "両側" : "上側"} ${alpha * 100}% の点`, value: fmt(tc, dec) },
+        { key: "zcrit", label: "標準正規分布の同じ点", value: fmt(zc, dec) },
+        { key: "diff", label: "t の点−正規の点", value: fmt(tc - zc, dec) },
+      ],
+      label: `t(${df}) の点`,
+    };
+  },
+};
+
+/** F 分布（教材の t・χ²・F ラボの f）：2つの不偏分散 s₁²・s₂² の比 F＝s₁²÷s₂² と、F(n₁−1, n₂−1) の上側5%の点。
+ *  分子の自由度1は 0 の近くで密度が限りなく大きく、2 は 0 で最大なので、縦の上限を決めて切る */
+const fmode: ModeDef = {
+  name: "F 分布",
+  defaults: { s1: 4, n1: 11, s2: 2, n2: 11 },
+  fields: [
+    { key: "s1", label: "s₁²", min: 0.1, max: 50, step: 0.1 },
+    { key: "n1", label: "n₁", min: 2, max: 60, step: 1 },
+    { key: "s2", label: "s₂²", min: 0.1, max: 50, step: 0.1 },
+    { key: "n2", label: "n₂", min: 2, max: 60, step: 1 },
+  ],
+  draw(st, { dec }) {
+    const d1 = Math.max(1, Math.round(num(st, "n1", 11)) - 1),
+      d2 = Math.max(1, Math.round(num(st, "n2", 11)) - 1),
+      F = num(st, "s1", 4) / num(st, "s2", 2);
+    const fc = fQuantile(0.95, d1, d2),
+      pUp = 1 - fCdf(F, d1, d2),
+      to = Math.max(4, fc * 1.4, Math.min(F * 1.2, 30));
+    return {
+      view: {
+        kind: "density",
+        from: 0,
+        to,
+        f: (x) => fDensity(x, d1, d2),
+        ...(d1 <= 2 ? { ymax: 2.5 * fDensity(0.5, d1, d2) } : {}),
+        shade: [[fc, to]],
+        marks: [
+          { x: 0, label: "0" },
+          { x: fc, label: fmt(fc, 2) },
+          ...(Math.abs(F - fc) > to * 0.08 && F <= to ? [{ x: F, label: `F ${fmt(F, 2)}` }] : []),
+        ],
+        label: `F(${d1}, ${d2}) の密度。上側5%の点 ${fmt(fc, 3)} より右を塗った`,
+      },
+      stats: [
+        { key: "F", label: "F＝s₁²÷s₂²", value: fmt(F, dec) },
+        { key: "fcrit", label: `F(${d1}, ${d2}) の上側5%の点`, value: fmt(fc, dec) },
+        { key: "pUp", label: "F 以上になる確率", value: fmt(pUp, dec) },
+      ],
+      label: `F(${d1}, ${d2})`,
+    };
+  },
+};
+
 export const MODES2: Record<string, ModeDef> = {
   dist,
   total,
@@ -828,4 +923,6 @@ export const MODES2: Record<string, ModeDef> = {
   list,
   bayes,
   clt,
+  t: tmode,
+  f: fmode,
 };

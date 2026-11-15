@@ -13,6 +13,8 @@ export type View =
       g?: (x: number) => number;
       /** g があるときの凡例 [実線の名前, 点線の名前]（原則 7：線の形だけで意味を伝えない） */
       legend?: [string, string];
+      /** 縦の上限（F(1, k) のように 0 の近くで密度が限りなく大きくなる分布で、山の形を読めるようにする。超えた所は上で切る） */
+      ymax?: number;
       shade: [number, number][];
       marks?: { x: number; label: string }[];
       label: string;
@@ -43,9 +45,9 @@ function Density({ v }: { v: Extract<View, { kind: "density" }> }) {
   const xs = Array.from({ length: N + 1 }, (_, i) => v.from + ((v.to - v.from) * i) / N);
   const ys = xs.map(v.f);
   const gs = v.g ? xs.map(v.g) : [];
-  const top = Math.max(1e-9, ...ys, ...gs) * 1.1;
+  const top = v.ymax ?? Math.max(1e-9, ...ys, ...gs) * 1.1;
   const X = (x: number) => ((x - v.from) / (v.to - v.from)) * (W - 8) + 4,
-    Y = (y: number) => B - (y / top) * (B - 8);
+    Y = (y: number) => B - (Math.min(y, top) / top) * (B - 8);
   const line = xs.map((x, i) => `${i ? "L" : "M"}${fx(X(x))},${fx(Y(ys[i]!))}`).join("");
   const area = ([a, b]: [number, number]) => {
     const lo = Math.max(v.from, a),
