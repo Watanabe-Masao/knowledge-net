@@ -693,6 +693,56 @@ const list: ModeDef = {
   },
 };
 
+/** ベイズ（教材の確率ラボの bayes。stats2-course #45 の U12）：1000 個で数える。元の割合（事前）・該当で結果が出る率・非該当で結果が出る率から、
+ *  結果が出る割合（全確率）と、結果が出たもののうち該当の割合（事後確率）。times＝2 は同じ検査を2回（誤りは独立）。旧版のラボの bVals と同じ計算 */
+const bayes: ModeDef = {
+  name: "ベイズ",
+  defaults: { prior: 2, sens: 90, fpr: 5, times: 1, name: "不良", other: "良品", event: "検出" },
+  extra: ["name", "other", "event"],
+  fields: [
+    { key: "prior", label: "元の割合 %", min: 0, max: 100, step: 0.5, show: pc },
+    { key: "sens", label: "該当で結果が出る %", min: 0, max: 100, step: 1, show: pc },
+    { key: "fpr", label: "該当しないのに結果が出る %", min: 0, max: 100, step: 1, show: pc },
+    { key: "times", label: "検査の回数", min: 1, max: 2, step: 1 },
+  ],
+  draw(st, { dec }) {
+    const p = num(st, "prior") / 100,
+      se = num(st, "sens") / 100,
+      fp = num(st, "fpr") / 100,
+      t = Math.round(num(st, "times", 1)) === 2 ? 2 : 1;
+    const name = str(st, "name", "不良"),
+      other = str(st, "other", "良品"),
+      ev = str(st, "event", "検出");
+    const tp = 1000 * p * se ** t,
+      fpn = 1000 * (1 - p) * fp ** t,
+      total = (p * se + (1 - p) * fp) * 100,
+      post = tp + fpn > 0 ? (tp / (tp + fpn)) * 100 : NaN;
+    const two = t === 2 ? "（2回とも）" : "";
+    const n1 = (v: number) => String(Number(v.toFixed(2)));
+    return {
+      view: {
+        kind: "lengths",
+        rows: [
+          { label: `${name}で${ev}あり${two}`, value: tp, text: `${n1(tp)}個` },
+          { label: `${other}で${ev}あり${two}`, value: fpn, text: `${n1(fpn)}個` },
+        ],
+        label: `1000個のうち、${name}で${ev}あり ${n1(tp)}個・${other}で${ev}あり ${n1(fpn)}個`,
+      },
+      stats: [
+        { key: "total", label: `${ev}が出る割合（全確率）`, value: `${fmt(total, dec)}%` },
+        {
+          key: "post",
+          label: `${ev}ありのうち${name}（事後確率）`,
+          value: Number.isFinite(post) ? `${fmt(post, dec)}%` : "—",
+        },
+        { key: "tpn", label: `${name}で${ev}あり${two}`, value: `${n1(tp)}個` },
+        { key: "fpn", label: `${other}で${ev}あり${two}`, value: `${n1(fpn)}個` },
+      ],
+      label: `1000個で数える。${ev}ありのうち${name}は ${Number.isFinite(post) ? fmt(post, dec) : "—"}%`,
+    };
+  },
+};
+
 export const MODES2: Record<string, ModeDef> = {
   dist,
   total,
@@ -708,4 +758,5 @@ export const MODES2: Record<string, ModeDef> = {
   path,
   bern,
   list,
+  bayes,
 };
