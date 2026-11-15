@@ -926,17 +926,17 @@ const comp: ModeDef = {
       view: {
         kind: "lengths",
         rows: [
-          { label: "標本平均 x̄ の標準誤差（偏り0）", value: se, text: fmt(se, dec) },
-          { label: "最初の1個 x₁ の標準誤差（偏り0）", value: sig, text: fmt(sig, dec) },
-          { label: "x̄＋b の偏り", value: b, text: fmt(b, dec) },
+          { label: "標本平均 X̄ の標準誤差（偏り0）", value: se, text: fmt(se, dec) },
+          { label: "最初の1個 X₁ の標準誤差（偏り0）", value: sig, text: fmt(sig, dec) },
+          { label: "X̄＋b の偏り", value: b, text: fmt(b, dec) },
         ],
-        label: `n＝${n}。標本平均の標準誤差 ${fmt(se, dec)}、最初の1個は ${fmt(sig, dec)} のまま、x̄＋b の偏りは ${fmt(b, dec)} のまま`,
+        label: `n＝${n}。標本平均の標準誤差 ${fmt(se, dec)}、最初の1個は ${fmt(sig, dec)} のまま、X̄＋b の偏りは ${fmt(b, dec)} のまま`,
       },
       stats: [
         { key: "seMean", label: "標本平均の標準誤差 σ÷√n", value: fmt(se, dec) },
         { key: "seFirst", label: "最初の1個の標準誤差 σ", value: fmt(sig, dec) },
-        { key: "biasShift", label: "x̄＋b の偏り", value: fmt(b, dec) },
-        { key: "mseShift", label: "x̄＋b の MSE（分散＋偏り²）", value: fmt(se * se + b * b, dec) },
+        { key: "biasShift", label: "X̄＋b の偏り", value: fmt(b, dec) },
+        { key: "mseShift", label: "X̄＋b の MSE（分散＋偏り²）", value: fmt(se * se + b * b, dec) },
       ],
       label: `推定量を比べる（n＝${n}）`,
     };
@@ -982,6 +982,62 @@ const vmode: ModeDef = {
   },
 };
 
+/** 平均の区間（教材の信頼区間ラボの mean。stats2-course #47 の U22）：x̄ ± 確率点 × σ÷√n。
+ *  確率点は z なら2級の数表の値（1.645・1.96・2.576。ラボと同じ）、t なら t(n−1) の点。
+ *  図は「x̄ を中心に標準誤差を標準偏差とする正規の形」に区間を塗る（区間がどこまで広がるかを見せるための形で、μ の分布ではない） */
+const ZTABLE: Record<string, number> = { "0.9": 1.645, "0.95": 1.96, "0.99": 2.576 };
+const cimean: ModeDef = {
+  name: "平均の区間",
+  defaults: { kind: "z", level: "0.95", xbar: 50, s: 10, n: 100 },
+  toggles: [
+    { key: "kind", name: "確率点", items: [["z", "σ が分かる（z）"], ["t", "s と t"]] },
+    { key: "level", name: "信頼係数", items: [["0.9", "90%"], ["0.95", "95%"], ["0.99", "99%"]] },
+  ],
+  fields: [
+    { key: "xbar", label: "平均 x̄", min: 0, max: 2000, step: 0.1 },
+    { key: "s", label: "σ または s", min: 0.1, max: 500, step: 0.1 },
+    { key: "n", label: "n", min: 2, max: 2000, step: 1 },
+  ],
+  draw(st, { dec }) {
+    const kind = str(st, "kind", "z"),
+      lv = String(Number(str(st, "level", "0.95")));
+    const z = ZTABLE[lv];
+    if (z === undefined) throw new Error(`場面 mean の信頼係数は 0.9・0.95・0.99 だけ（${lv}）`);
+    const xb = num(st, "xbar", 50),
+      s = num(st, "s", 10),
+      n = Math.max(2, Math.round(num(st, "n", 100))),
+      se = s / Math.sqrt(n),
+      crit = kind === "t" ? tQuantile(1 - (1 - Number(lv)) / 2, n - 1) : z,
+      m = crit * se,
+      lo = xb - m,
+      hi = xb + m;
+    const pct = Math.round(Number(lv) * 100);
+    return {
+      view: {
+        kind: "density",
+        from: xb - 4 * se * Math.max(1, crit / 2),
+        to: xb + 4 * se * Math.max(1, crit / 2),
+        f: (x) => normalDensity(x, xb, se),
+        shade: [[lo, hi]],
+        marks: [
+          { x: lo, label: fmt(lo, 2) },
+          { x: xb, label: `x̄ ${fmt(xb, 2)}` },
+          { x: hi, label: fmt(hi, 2) },
+        ],
+        label: `x̄＝${fmt(xb, dec)} を中心に、誤差幅 ${fmt(m, dec)} の${pct}%信頼区間 ${fmt(lo, dec)}〜${fmt(hi, dec)} を塗った（山は標準誤差の広がりの目安で、μ の分布ではない）`,
+      },
+      stats: [
+        { key: "se", label: "標準誤差 σ÷√n", value: fmt(se, dec) },
+        { key: "crit", label: kind === "t" ? `t(${n - 1}) の点` : "z の点", value: fmt(crit, dec) },
+        { key: "margin", label: "誤差幅＝点×標準誤差", value: fmt(m, dec) },
+        { key: "lo", label: "下の端", value: fmt(lo, dec) },
+        { key: "hi", label: "上の端", value: fmt(hi, dec) },
+      ],
+      label: `${pct}%信頼区間（n＝${n}）`,
+    };
+  },
+};
+
 export const MODES2: Record<string, ModeDef> = {
   dist,
   total,
@@ -1003,4 +1059,5 @@ export const MODES2: Record<string, ModeDef> = {
   f: fmode,
   comp,
   var: vmode,
+  mean: cimean,
 };
