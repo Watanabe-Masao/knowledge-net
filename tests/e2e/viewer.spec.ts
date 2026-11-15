@@ -625,18 +625,18 @@ test("式の記号を定義の式で開き、閉じると戻る", async ({ page 
 });
 
 // 式の正しさ（#109）：定義域の外は計算せず知らせる（k ≦ n も）、V(aX+b) は中の μ を E(X) にしてから開く、μ は μ＝E(X) で開く
-test("定義域の外の値は計算せず、理由を知らせる（k ≦ n・0 < p ≦ 1）", async ({ page }) => {
-  // 作業台のない概念の式で確かめる（組合せ ₙCₖ の k ≦ n、幾何分布の 0 < p ≦ 1。#156）
+test("定義域の外の値は計算せず、理由を知らせる（r ≦ n・0 < p ≦ 1）", async ({ page }) => {
+  // 作業台のない概念の式で確かめる（組合せ ₙCᵣ の r ≦ n、幾何分布の 0 < p ≦ 1。#156。字は stats2-course #416 で k → r）
   await page.goto(`./?${SRC}&c=stats2:TERM-comb`);
   await tab(page, /^式$/);
-  const f = page.getByTestId("detail").getByTestId("formula").first(); // ₙCₖ＝n!/(k!(n−k)!)
+  const f = page.getByTestId("detail").getByTestId("formula").first(); // ₙCᵣ＝n!/(r!(n−r)!)
   await f.getByRole("button", { name: "値を入れて計算する" }).click();
   await f.getByRole("spinbutton", { name: /^n/ }).fill("5");
-  await f.getByRole("spinbutton", { name: /^k/ }).fill("10");
+  await f.getByRole("spinbutton", { name: /^r/ }).fill("10");
   const out = f.getByTestId("outside");
-  await expect(out).toContainText("k は 0以上 n 以下の整数（今 10、n＝5）");
+  await expect(out).toContainText("r は 0以上 n 以下の整数（今 10、n＝5）");
   await expect(f.getByTestId("expansion")).toHaveCount(0);
-  await f.getByRole("spinbutton", { name: /^k/ }).fill("2");
+  await f.getByRole("spinbutton", { name: /^r/ }).fill("2");
   await expect(out).toHaveCount(0);
   await expect(f.getByTestId("expansion")).toBeVisible();
   await page.goto(`./?${SRC}&c=stats2:TERM-geom`);
