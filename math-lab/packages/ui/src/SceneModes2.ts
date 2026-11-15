@@ -744,6 +744,73 @@ const bayes: ModeDef = {
   },
 };
 
+/** 中心極限定理（教材の中心極限定理ラボの clt。stats2-course #47 の U19）：待ち時間（指数分布・平均5分）から n 人分の平均 X̄ の分布。
+ *  ラボは2000回の取り直し（固定の乱数）のヒストグラムだが、場面は X̄ の正確な密度（形 n・平均5 のガンマ分布）を描き、
+ *  N(5, 5²/n) の曲線を点線で重ねる。母集団の形はラボの shape のうち expo だけ（ほかの形は正確な密度を描けないので、ここでは扱わない） */
+const CLT_MU = 5;
+const lnFact = (n: number) => {
+  let s = 0;
+  for (let k = 2; k <= n; k++) s += Math.log(k);
+  return s;
+};
+export const xbarExpoDensity = (x: number, n: number, mu = CLT_MU) =>
+  x < 0
+    ? 0
+    : x === 0
+      ? n === 1
+        ? 1 / mu
+        : 0
+      : Math.exp(n * Math.log(n / mu) + (n - 1) * Math.log(x) - (n * x) / mu - lnFact(n - 1));
+/** a〜b の X̄ の確率（シンプソン則。被積分は滑らか） */
+export const xbarExpoProb = (a: number, b: number, n: number, mu = CLT_MU) => {
+  const lo = Math.max(0, a),
+    m = 400,
+    h = (b - lo) / m;
+  if (!(h > 0)) return 0;
+  let sum = 0;
+  for (let i = 0; i <= m; i++) sum += (i === 0 || i === m ? 1 : i % 2 ? 4 : 2) * xbarExpoDensity(lo + i * h, n, mu);
+  return (sum * h) / 3;
+};
+const clt: ModeDef = {
+  name: "中心極限定理",
+  defaults: { shape: "expo", n: 1, p: 0.3 },
+  extra: ["shape", "p"],
+  fields: [{ key: "n", label: "平均する人数 n", min: 1, max: 100, step: 1 }],
+  draw(st, { dec }) {
+    const shape = str(st, "shape", "expo");
+    if (shape !== "expo") throw new Error(`場面 clt は待ち時間（expo）だけを描く（${shape} は描けない）`);
+    const n = Math.max(1, Math.round(num(st, "n", 1))),
+      mu = CLT_MU,
+      sd = CLT_MU,
+      se = sd / Math.sqrt(n);
+    const near = xbarExpoProb(mu - 1, mu + 1, n),
+      skew = 2 / Math.sqrt(n);
+    return {
+      view: {
+        kind: "density",
+        from: 0,
+        to: 25,
+        f: (x) => xbarExpoDensity(x, n),
+        g: (x) => normalDensity(x, mu, se),
+        legend: [n === 1 ? "1人分の値" : `${n}人分の平均`, "正規分布"],
+        shade: [[mu - 1, mu + 1]],
+        marks: [
+          { x: 0, label: "0" },
+          { x: mu, label: `${mu}分` },
+          { x: 25, label: "25" },
+        ],
+        label: `待ち時間（平均${mu}分）の${n}人分の平均の分布（実線）と、正規分布 N(${mu}, ${fmt(se, 2)}²)（点線）。4〜6分を塗った`,
+      },
+      stats: [
+        { key: "se", label: "X̄ の標準偏差 σ÷√n", value: `${fmt(se, dec)}分` },
+        { key: "near", label: "X̄ が 4〜6分に入る確率", value: fmt(near, dec) },
+        { key: "skew", label: "X̄ の形の歪み（歪度 2÷√n）", value: fmt(skew, dec) },
+      ],
+      label: `${n}人分の平均待ち時間の分布`,
+    };
+  },
+};
+
 export const MODES2: Record<string, ModeDef> = {
   dist,
   total,
@@ -760,4 +827,5 @@ export const MODES2: Record<string, ModeDef> = {
   bern,
   list,
   bayes,
+  clt,
 };
