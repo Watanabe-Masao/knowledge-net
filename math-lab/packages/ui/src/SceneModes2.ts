@@ -8,7 +8,6 @@ import {
   normalCdf,
   normalDensity,
   normalQuantile,
-  tCdf,
   tDensity,
   tQuantile,
 } from "@math-lab/engine";
