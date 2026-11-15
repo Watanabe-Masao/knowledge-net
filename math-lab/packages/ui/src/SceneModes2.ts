@@ -754,7 +754,13 @@ const lnFact = (n: number) => {
   return s;
 };
 export const xbarExpoDensity = (x: number, n: number, mu = CLT_MU) =>
-  x < 0 ? 0 : x === 0 ? (n === 1 ? 1 / mu : 0) : Math.exp(n * Math.log(n / mu) + (n - 1) * Math.log(x) - (n * x) / mu - lnFact(n - 1));
+  x < 0
+    ? 0
+    : x === 0
+      ? n === 1
+        ? 1 / mu
+        : 0
+      : Math.exp(n * Math.log(n / mu) + (n - 1) * Math.log(x) - (n * x) / mu - lnFact(n - 1));
 /** a〜b の X̄ の確率（シンプソン則。被積分は滑らか） */
 export const xbarExpoProb = (a: number, b: number, n: number, mu = CLT_MU) => {
   const lo = Math.max(0, a),
