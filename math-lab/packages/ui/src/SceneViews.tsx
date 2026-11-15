@@ -32,7 +32,21 @@ export type View =
   | { kind: "zlines"; groups: { name: string; m: number; s: number; x: number; z: number }[] }
   | { kind: "paths"; n: number; k: number; seqs: boolean[][]; more: number }
   | { kind: "arrange"; role: boolean; groups: { set: string[]; rows: string[][] }[]; more: number; total: number }
-  | { kind: "lengths"; rows: { label: string; value: number; text: string; wrong?: boolean }[]; label: string };
+  | { kind: "lengths"; rows: { label: string; value: number; text: string; wrong?: boolean }[]; label: string }
+  | {
+      /** 区間を横の棒で（信頼区間。stats2-course #47 の U22）。曲線は描かない（区間の確率を μ の分布と読ませない） */
+      kind: "interval";
+      from: number;
+      to: number;
+      ticks: number[];
+      center: number;
+      centerLabel: string;
+      lo: number;
+      hi: number;
+      loLabel: string;
+      hiLabel: string;
+      label: string;
+    };
 
 const W = 340;
 const fx = (v: number) => Number(v.toFixed(1));
@@ -244,6 +258,36 @@ function Lengths({ v }: { v: Extract<View, { kind: "lengths" }> }) {
   );
 }
 
+function Interval({ v }: { v: Extract<View, { kind: "interval" }> }) {
+  const H = 92;
+  const X = (x: number) => ((Math.max(v.from, Math.min(v.to, x)) - v.from) / (v.to - v.from)) * (W - 24) + 12;
+  const y = 46;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className={s.svg} role="img" aria-label={v.label} data-testid="scene-interval">
+      <line x1={X(v.from)} x2={X(v.to)} y1={y + 22} y2={y + 22} className={s.base} />
+      {v.ticks.map((t) => (
+        <g key={t}>
+          <line x1={X(t)} x2={X(t)} y1={y + 18} y2={y + 26} className={s.base} />
+          <text x={X(t)} y={y + 40} textAnchor="middle" className={s.tickStrong}>
+            {fx(t)}
+          </text>
+        </g>
+      ))}
+      <line x1={X(v.lo)} x2={X(v.hi)} y1={y} y2={y} className={s.ibar} data-testid="interval-bar" />
+      <circle cx={X(v.center)} cy={y} r={6} className={s.dot1} />
+      <text x={X(v.center)} y={y - 12} textAnchor="middle" className={s.tickStrong}>
+        {v.centerLabel}
+      </text>
+      <text x={X(v.lo)} y={y - 12} textAnchor="start" className={s.tickStrong}>
+        {v.loLabel}
+      </text>
+      <text x={X(v.hi)} y={y - 12} textAnchor="end" className={s.tickStrong}>
+        {v.hiLabel}
+      </text>
+    </svg>
+  );
+}
+
 export function SceneView({ view }: { view: View }) {
   switch (view.kind) {
     case "density":
@@ -258,5 +302,7 @@ export function SceneView({ view }: { view: View }) {
       return <Arrange v={view} />;
     case "lengths":
       return <Lengths v={view} />;
+    case "interval":
+      return <Interval v={view} />;
   }
 }

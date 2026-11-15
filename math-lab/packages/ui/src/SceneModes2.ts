@@ -984,7 +984,12 @@ const vmode: ModeDef = {
 
 /** 平均の区間（教材の信頼区間ラボの mean。stats2-course #47 の U22）：x̄ ± 確率点 × σ÷√n。
  *  確率点は z なら2級の数表の値（1.645・1.96・2.576。ラボと同じ）、t なら t(n−1) の点。
- *  図は「x̄ を中心に標準誤差を標準偏差とする正規の形」に区間を塗る（区間がどこまで広がるかを見せるための形で、μ の分布ではない） */
+ *  図は区間の横の棒と点推定 x̄ の点（ラボと同じ見せ方。x̄ を中心にした曲線は「μ の分布」と読まれるので描かない） */
+const niceStep = (raw: number) => {
+  const p = 10 ** Math.floor(Math.log10(raw)),
+    r = raw / p;
+  return (r < 1.5 ? 1 : r < 3.5 ? 2 : r < 7.5 ? 5 : 10) * p;
+};
 const ZTABLE: Record<string, number> = { "0.9": 1.645, "0.95": 1.96, "0.99": 2.576 };
 const cimean: ModeDef = {
   name: "平均の区間",
@@ -1027,19 +1032,25 @@ const cimean: ModeDef = {
       lo = xb - m,
       hi = xb + m;
     const pct = Math.round(Number(lv) * 100);
+    const span = Math.max(m * 1.6, se);
+    const step = niceStep((2 * span) / 4);
+    const from = Math.floor((xb - span) / step) * step,
+      to = Math.ceil((xb + span) / step) * step;
+    const ticks: number[] = [];
+    for (let t = from; t <= to + 1e-9; t += step) ticks.push(Number(t.toFixed(10)));
     return {
       view: {
-        kind: "density",
-        from: xb - 4 * se * Math.max(1, crit / 2),
-        to: xb + 4 * se * Math.max(1, crit / 2),
-        f: (x) => normalDensity(x, xb, se),
-        shade: [[lo, hi]],
-        marks: [
-          { x: lo, label: fmt(lo, 2) },
-          { x: xb, label: `x̄ ${fmt(xb, 2)}` },
-          { x: hi, label: fmt(hi, 2) },
-        ],
-        label: `x̄＝${fmt(xb, dec)} を中心に、誤差幅 ${fmt(m, dec)} の${pct}%信頼区間 ${fmt(lo, dec)}〜${fmt(hi, dec)} を塗った（山は標準誤差の広がりの目安で、μ の分布ではない）`,
+        kind: "interval",
+        from,
+        to,
+        ticks,
+        center: xb,
+        centerLabel: `x̄ ${fmt(xb, 2)}`,
+        lo,
+        hi,
+        loLabel: fmt(lo, 3),
+        hiLabel: fmt(hi, 3),
+        label: `点推定 x̄＝${fmt(xb, dec)}。誤差幅 ${fmt(m, dec)} の${pct}%信頼区間 ${fmt(lo, dec)}〜${fmt(hi, dec)}`,
       },
       stats: [
         { key: "se", label: "標準誤差 σ÷√n", value: fmt(se, dec) },

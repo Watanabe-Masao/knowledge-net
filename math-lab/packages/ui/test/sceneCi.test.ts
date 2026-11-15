@@ -4,6 +4,7 @@
 // 見つけ方：手で出した値（x̄＝120・σ＝20・n＝25：SE 4、95% の誤差幅 7.84、端 112.16〜127.84。99% は 2.576×4＝10.304）。
 //   t は数表の値 t(9) の0.975点 2.262（engine の分位点とは別の出どころ）。
 // 既存との違い：ほかの場面は分布の形・推定量の性質。ここは区間の作り方。知らない信頼係数で黙って描かないことも見る。
+//   図が曲線（x̄ を中心にした密度）でなく区間の棒であることも見る（μ の分布と読ませない。docs/decisions.md）。
 // 検出の確かめ（2026-11-16）：t のときも z を使うようにすると、2つ目が落ちることを見た
 import { describe, expect, it } from "vitest";
 import { drawScene } from "../src";
@@ -14,6 +15,7 @@ describe("平均の区間の場面", () => {
   it("z：x̄＝120・σ＝20・n＝25 で SE 4、95% は 112.16〜127.84、99% の誤差幅は 10.304", () => {
     const d = drawScene("mean", { kind: "z", level: 0.95, xbar: 120, s: 20, n: 25 }, undefined, 3);
     expect([val(d, "se"), val(d, "margin"), val(d, "lo"), val(d, "hi")]).toEqual(["4", "7.84", "112.16", "127.84"]);
+    expect(d!.view).toMatchObject({ kind: "interval", lo: 112.16, hi: 127.84, center: 120 });
     expect(val(drawScene("mean", { kind: "z", level: 0.99, xbar: 120, s: 20, n: 25 }, undefined, 3), "margin")).toBe(
       "10.304",
     );
