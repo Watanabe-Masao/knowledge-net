@@ -45,6 +45,8 @@ export type View =
       hi: number;
       loLabel: string;
       hiLabel: string;
+      /** 0 の縦の点線（差の区間が 0 を含むかを読む。stats2-course #47 の U23） */
+      zero?: boolean;
       label: string;
     };
 
@@ -273,6 +275,9 @@ function Interval({ v }: { v: Extract<View, { kind: "interval" }> }) {
           </text>
         </g>
       ))}
+      {v.zero && v.from < 0 && v.to > 0 ? (
+        <line x1={X(0)} x2={X(0)} y1={y - 14} y2={y + 26} className={s.zero} data-testid="interval-zero" />
+      ) : null}
       <line x1={X(v.lo)} x2={X(v.hi)} y1={y} y2={y} className={s.ibar} data-testid="interval-bar" />
       <circle cx={X(v.center)} cy={y} r={6} className={s.dot1} />
       <text x={X(v.center)} y={y - 12} textAnchor="middle" className={s.tickStrong}>
