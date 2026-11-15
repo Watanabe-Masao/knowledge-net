@@ -1177,6 +1177,152 @@ const twopaired: ModeDef = {
   },
 };
 
+/** 検定ラボの数表の値（2級の数表。ラボの ZQ と同じ） */
+const ZQT: Record<string, Record<string, number>> = {
+  two: { "0.1": 1.645, "0.05": 1.96, "0.01": 2.576 },
+  one: { "0.1": 1.282, "0.05": 1.645, "0.01": 2.326 },
+};
+const zqOf = (side: string, a: string) => {
+  const c = ZQT[side === "two" ? "two" : "one"]![a];
+  if (c === undefined) throw new Error(`検定の場面の有意水準は 0.1・0.05・0.01 だけ（${a}）`);
+  return c;
+};
+const sideToggle = {
+  key: "side",
+  name: "向き",
+  items: [
+    ["two", "両側"],
+    ["upper", "右片側"],
+    ["lower", "左片側"],
+  ] as [string, string][],
+};
+const alphaToggle = {
+  key: "alpha",
+  name: "有意水準",
+  items: [
+    ["0.1", "10%"],
+    ["0.05", "5%"],
+    ["0.01", "1%"],
+  ] as [string, string][],
+};
+
+/** z 検定と p 値（検定ラボの z。stats2-course #48 の U24）。名前は教材の build が ztest に言い換える
+ *  （場面 z は z得点の比べで意味が違う）。H₀ のもとの z の分布（標準正規）に棄却域を塗り、観測した z に印 */
+const ztest: ModeDef = {
+  name: "z 検定と p 値",
+  defaults: { side: "two", alpha: "0.05", xbar: 104, mu0: 100, sigma: 10, n: 25 },
+  toggles: [sideToggle, alphaToggle],
+  fields: [
+    { key: "xbar", label: "標本平均 x̄", min: 0, max: 2000, step: 0.1 },
+    { key: "mu0", label: "基準 μ₀", min: 0, max: 2000, step: 0.1 },
+    { key: "sigma", label: "σ", min: 0.1, max: 500, step: 0.1 },
+    { key: "n", label: "n", min: 1, max: 5000, step: 1 },
+  ],
+  draw(st, { dec }) {
+    const side = str(st, "side", "two"),
+      a = String(Number(str(st, "alpha", "0.05")));
+    const se = num(st, "sigma", 10) / Math.sqrt(Math.max(1, Math.round(num(st, "n", 25)))),
+      z = (num(st, "xbar", 104) - num(st, "mu0", 100)) / se,
+      c = zqOf(side, a);
+    const p = side === "two" ? 2 * (1 - normalCdf(Math.abs(z))) : side === "upper" ? 1 - normalCdf(z) : normalCdf(z);
+    const rej = side === "two" ? Math.abs(z) > c : side === "upper" ? z > c : z < -c;
+    const zc = Math.max(-4.5, Math.min(4.5, z));
+    const shade: [number, number][] =
+      side === "two"
+        ? [
+            [-4.5, -c],
+            [c, 4.5],
+          ]
+        : side === "upper"
+          ? [[c, 4.5]]
+          : [[-4.5, -c]];
+    return {
+      view: {
+        kind: "density",
+        from: -4.5,
+        to: 4.5,
+        f: (x) => normalDensity(x, 0, 1),
+        shade,
+        marks: [{ x: zc, label: `z ${fmt(z, 2)}` }],
+        label: `H₀ のもとの z の分布（標準正規）。塗った所が棄却域（境目 ${fmt(c, 3)}）。観測した z は ${fmt(z, 2)}`,
+      },
+      stats: [
+        { key: "se", label: "標準誤差 σ÷√n", value: fmt(se, dec) },
+        { key: "z", label: "z＝(x̄−μ₀)÷標準誤差", value: fmt(z, dec) },
+        { key: "p", label: "p 値", value: fmt(p, dec) },
+        { key: "crit", label: "棄却域の境目", value: fmt(c, dec) },
+        { key: "decision", label: "判断", value: rej ? "棄却する" : "棄却しない" },
+      ],
+      label: `z 検定（有意水準 ${Number(a) * 100}%）`,
+    };
+  },
+};
+
+/** 検出力と過誤（検定ラボの power）：x̄ の目盛りで、μ₁ のときの分布（実線）と H₀ の分布（点線）を重ね、
+ *  棄却域に入る μ₁ の分布の面（検出力）を塗る */
+const power: ModeDef = {
+  name: "検出力と過誤",
+  defaults: { side: "two", alpha: "0.05", mu0: 100, mu1: 104, sigma: 10, n: 25 },
+  toggles: [
+    {
+      key: "side",
+      name: "向き",
+      items: [
+        ["two", "両側"],
+        ["upper", "右片側"],
+      ],
+    },
+    alphaToggle,
+  ],
+  fields: [
+    { key: "mu0", label: "μ₀", min: 0, max: 2000, step: 0.1 },
+    { key: "mu1", label: "μ₁", min: 0, max: 2000, step: 0.1 },
+    { key: "sigma", label: "σ", min: 0.1, max: 500, step: 0.1 },
+    { key: "n", label: "n", min: 1, max: 5000, step: 1 },
+  ],
+  draw(st, { dec }) {
+    const side = str(st, "side", "two") === "upper" ? "upper" : "two",
+      a = String(Number(str(st, "alpha", "0.05")));
+    const m0 = num(st, "mu0", 100),
+      m1 = num(st, "mu1", 104),
+      se = num(st, "sigma", 10) / Math.sqrt(Math.max(1, Math.round(num(st, "n", 25)))),
+      d = (m1 - m0) / se,
+      c = zqOf(side, a);
+    const pw = side === "two" ? 1 - normalCdf(c - d) + normalCdf(-c - d) : 1 - normalCdf(c - d);
+    const from = Math.min(m0, m1) - 4 * se,
+      to = Math.max(m0, m1) + 4 * se,
+      xc = m0 + c * se;
+    const shade: [number, number][] =
+      side === "two"
+        ? [
+            [from, m0 - c * se],
+            [xc, to],
+          ]
+        : [[xc, to]];
+    return {
+      view: {
+        kind: "density",
+        from,
+        to,
+        f: (x) => normalDensity(x, m1, se),
+        g: (x) => normalDensity(x, m0, se),
+        legend: [`μ₁＝${fmt(m1, 2)} のときの分布`, "H₀ の分布"],
+        shade,
+        marks: [{ x: xc, label: fmt(xc, 2) }],
+        label: `μ₁＝${fmt(m1, 2)} のときの x̄ の分布で、棄却域に入る面（検出力）を塗った。H₀ の分布を点線で重ねた`,
+      },
+      stats: [
+        { key: "se", label: "標準誤差", value: fmt(se, dec) },
+        { key: "shift", label: "ずれ÷標準誤差", value: fmt(d, dec) },
+        { key: "power", label: "検出力 1−β", value: fmt(pw, dec) },
+        { key: "beta", label: "第2種の過誤 β", value: fmt(1 - pw, dec) },
+        { key: "xcrit", label: "x̄ の棄却の境目", value: fmt(xc, dec) },
+      ],
+      label: `検出力（有意水準 ${Number(a) * 100}%・n＝${Math.round(num(st, "n", 25))}）`,
+    };
+  },
+};
+
 export const MODES2: Record<string, ModeDef> = {
   dist,
   total,
@@ -1201,4 +1347,6 @@ export const MODES2: Record<string, ModeDef> = {
   mean: cimean,
   diff: twodiff,
   paired: twopaired,
+  ztest,
+  power,
 };
