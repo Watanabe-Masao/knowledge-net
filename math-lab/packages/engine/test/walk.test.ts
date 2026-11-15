@@ -61,6 +61,18 @@ describe("式の形の穴", () => {
       expect(def.tex).not.toMatch(/\{[nkpE]\}/); // 古い形 {n} の穴が残っていない
     }
   });
+  // 確かめる対象：式の左辺の記号と、出てきた値の記号（out）が同じ字か（stats2-course #401 の型3）。
+  // 想定する故障：式は「SE＝…」なのに、出てきた値の札と、それを入れる次の式の枠が「S」になる（binom-C-01 で起きた）。
+  // 見つけ方：tex の左辺が記号だけ（SE= ・n\ge など）の公式で、その記号と out を照らす。左辺が P(X=…)・E(X) などの式は見ない。
+  // 既存との違い：上は穴の記号。ここは出てくる値の記号。
+  // 検出の確かめ（2026-11-15）：share.se の out を S に戻すと落ちることを見た
+  it("式の左辺が記号なら、出てきた値の記号は同じ字", async () => {
+    const { WALK_FORMULAS } = await import("../src");
+    for (const [ref, def] of Object.entries(WALK_FORMULAS)) {
+      const lhs = def.tex.match(/^([A-Za-z]+)(?:=|\\ge)/)?.[1];
+      if (lhs) expect(def.out, ref).toBe(lhs);
+    }
+  });
 });
 
 // 応用の全部の課題（stats2-course #181 の横展開）。確かめる対象：解き方の部品をつないで出した最後の値が、solveApply の答えと同じこと。

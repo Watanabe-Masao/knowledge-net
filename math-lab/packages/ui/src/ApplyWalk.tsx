@@ -291,7 +291,11 @@ export function ApplyWalk({
   const missHere = () => setMiss((m) => m.map((x, i) => (i === cur ? x + 1 : x)));
   const seg = (k: string) => walk.segments.find((g) => g.key === k);
   /** 式の穴と枠に出す記号：情報なら情報の記号（N 人など）、前の公式の値なら穴の記号（V − B が V − V にならないように） */
-  const holeSym = (src: string, sym: string) => walk.info[src]?.sym ?? sym;
+  /** 枠の記号：課題の情報ならその記号、前の式の値ならその式の出てくる値の記号（式の左辺と同じ字。stats2-course #401 の型3） */
+  const holeSym = (src: string, sym: string) => {
+    const from = walk.formulas.find((x) => x.id === src);
+    return walk.info[src]?.sym ?? (from ? WALK_FORMULAS[from.ref]!.out : sym);
+  };
   const slotKey = (f: number, sym: string) => `${walk.formulas[f]!.id}.${sym}`;
   const subDone = (c: number, i: number): boolean => {
     const x = subs[c]![i]!;
