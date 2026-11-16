@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import katex from "katex";
 import formulas from "./fixtures/stats2-formulas.json";
-import { evaluate, expand, symbolsIn, toTex, validateFormula, type Formula, type FormulaNode } from "../src";
+import { evaluate, expand, symbolTex, symbolsIn, toTex, validateFormula, type Formula, type FormulaNode } from "../src";
 
 const all = formulas as (Formula & { concept: string; index: number })[];
 const parses = (tex: string, trust = false) => katex.renderToString(tex, { throwOnError: true, trust, strict: false });
@@ -45,6 +45,17 @@ describe("順列 ₙPₖ", () => {
     expect(evaluate(P(5, 2))).toBe(evaluate({ op: "fn", name: "comb", args: [{ num: 5 }, { num: 2 }] })! * 2);
     expect(toTex({ op: "fn", name: "perm", args: [{ sym: "n" }, { sym: "k" }] })).toBe("{}_{n}\\mathrm{P}_{k}");
     expect(Number.isNaN(evaluate(P(2.5, 1)))).toBe(true);
+  });
+});
+
+// 確かめる対象：2字以上の添え字の記号（回帰の S_xy・S_xx。stats2-course #148）の TeX。想定する故障：S_xy をそのまま TeX にして x だけが添え字になる。
+// 見つけ方：symbolTex の結果を文字で見る。1字の添え字（μ_X）は今までどおり波かっこを足さない。既存との違い：今までの式に2字の添え字はなかった
+describe("記号の TeX：2字以上の添え字", () => {
+  it("S_xy は S_{xy}、μ_X は \\mu_X のまま", () => {
+    const sym = (symbol: string, key: string) => [{ symbol, key, meaning: "" }];
+    expect(symbolTex("Sxy", sym("S_xy", "Sxy"))).toBe("S_{xy}");
+    expect(symbolTex("muX", sym("μ_X", "muX"))).toBe("\\mu_X");
+    expect(katex.renderToString(symbolTex("Sxy", sym("S_xy", "Sxy")))).toContain("msub");
   });
 });
 
