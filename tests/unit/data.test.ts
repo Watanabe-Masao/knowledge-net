@@ -167,8 +167,10 @@ describe("数理ラボの参照と型の改訂", () => {
     expect(schemaErrors(f).length).toBeGreaterThan(0);
   });
   it("骨格（改訂11）：定義1文と分類があれば合い、どちらかがないと止める", () => {
+    // 見本の教材は全部の概念に説明がある（stats2-course #53。2026-11-17）ので、1つを骨格にして確かめる
     const d = sampleV2();
-    const c = d.concepts.find((x: { status: string }) => x.status === "skeleton");
+    const c = d.concepts.find((x: { status: string; short?: string; category?: string }) => x.short && x.category);
+    c.status = "skeleton";
     expect(schemaErrors(d)).toEqual([]);
     delete c.category;
     expect(schemaErrors(d).length).toBeGreaterThan(0);
