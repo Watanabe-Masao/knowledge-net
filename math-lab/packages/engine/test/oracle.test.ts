@@ -142,6 +142,58 @@ describe("標準化：教材の式は見本の z と一致する", () => {
   });
 });
 
+// 確かめる対象：単回帰の傾き b＝S_xy/S_xx・切片 a＝ȳ−b x̄・決定係数 R²＝1−SSE/SST（stats2-course #148）。
+// 想定する故障：x と y の取り違え（S_xy/S_yy）、切片で平均を取り違える、R² の分母分子の取り違え。
+// 見つけ方：見本は正規方程式を Fraction で解いた b0・b1 と、1−SSE/SST と r² の2通りで照らした r2（偏差の積和の式は使わない）。
+// ここではデータから S_xx・S_xy・平均を数え、教材の式の木で b → a → R²（SSE はその直線の残差）の順に計算して照らす。
+// 既存との違い：回帰の式は今まで原本になく、見本だけがあった。和を浮動小数で数えるので誤差の決まりは derived
+type OlsCase = {
+  id: string;
+  inputs: { x: number[]; y: number[] };
+  values: { b0: Num; b1: Num; r2: Num | null; mutants: { b1_swapped_xy: Num | null } };
+};
+const ols = cases.filter((c) => (c as { id: string }).id.startsWith("ols-")) as OlsCase[];
+const stats = ({ x, y }: { x: number[]; y: number[] }) => {
+  const n = x.length,
+    xbar = x.reduce((s, v) => s + v, 0) / n,
+    ybar = y.reduce((s, v) => s + v, 0) / n;
+  const dot = (u: number[], v: number[], mu: number, mv: number) =>
+    u.reduce((s, ui, i) => s + (ui - mu) * (v[i]! - mv), 0);
+  return { xbar, ybar, Sxx: dot(x, x, xbar, xbar), Sxy: dot(x, y, xbar, ybar), Syy: dot(y, y, ybar, ybar) };
+};
+function olsMismatches(slope: FormulaNode, intercept: FormulaNode, r2: FormulaNode): string[] {
+  const bad: string[] = [];
+  for (const c of ols) {
+    const st = stats(c.inputs);
+    const b = evaluate(slope, { values: st }),
+      a = b === undefined ? undefined : evaluate(intercept, { values: { ...st, b } });
+    if (!near(b, c.values.b1, "derived")) bad.push(`${c.id} b`);
+    if (!near(a, c.values.b0, "derived")) bad.push(`${c.id} a`);
+    if (a === undefined || b === undefined || !c.values.r2) continue;
+    const { x, y } = c.inputs;
+    const SSE = x.reduce((s, xi, i) => s + (y[i]! - (a + b * xi)) ** 2, 0),
+      SST = st.Syy;
+    if (!near(evaluate(r2, { values: { SSE, SST } }), c.values.r2, "derived")) bad.push(`${c.id} R²`);
+  }
+  return bad;
+}
+describe("単回帰：教材の式は、正規方程式の見本と一致する", () => {
+  const [slope, intercept, r2] = ["F-ols-slope", "F-ols-intercept", "F-r2-def"].map((id) => rhs(byId(id)));
+  it("傾き・切片・決定係数が全部の見本で一致する（ぴったり直線に乗る・負の傾きを含む）", () => {
+    expect(ols.length).toBeGreaterThanOrEqual(3);
+    expect(olsMismatches(slope!, intercept!, r2!)).toEqual([]);
+  });
+  it("わざと入れた誤り（x と y の取り違え：S_xx を S_yy に）は見本で見つかり、取り違えた傾きの見本と一致する", () => {
+    const swapped = mutate(slope!, same({ sym: "Sxx" }), { sym: "Syy" });
+    expect(olsMismatches(swapped, intercept!, r2!).length).toBeGreaterThan(0);
+    for (const c of ols)
+      if (c.values.mutants.b1_swapped_xy)
+        expect(near(evaluate(swapped, { values: stats(c.inputs) }), c.values.mutants.b1_swapped_xy, "derived")).toBe(
+          true,
+        );
+  });
+});
+
 // 確かめる対象：前提が崩れた入力で計算しないこと（定義域と記号どうしの条件）。想定する故障：σ＝0 を許す（M4：domain の minOpen を消す）・
 // 幾何の p＝0・一様の a＝b（#118 D5 で直した所）・超幾何の k＞M など1つの端で書けない条件（契約の conditions）を見落とす。
 // 見つけ方：見本の preconditions の入力を、その式の記号の domain と契約の conditions で checkDomain に通し、止まる理由が出るか。
@@ -154,6 +206,7 @@ describe("前提の崩れ：見本の入力は、式の定義域か記号どう�
       const x = (p.inputs.rows as { x: number }[])[0]!.x;
       return { X: x, mu: x, sigma: 0 };
     } // 1点の表：μ＝x・σ＝0
+    if (p.id === "ols-sxx-zero") return stats(p.inputs as { x: number[]; y: number[] }); // x が全部同じ：S_xx＝0
     return p.inputs as Record<string, number>;
   };
   const stops = (f: F, values: Record<string, number>, symbols: FormulaSymbol[] = f.symbols) =>
@@ -166,6 +219,8 @@ describe("前提の崩れ：見本の入力は、式の定義域か記号どう�
         "uniform-a-eq-b",
         "hyper-k-over-M",
         "hyper-k-too-small",
+        "ols-sxx-zero",
+        "r2-sst-zero",
       ]),
     );
     const silent = pres.flatMap((p) =>
