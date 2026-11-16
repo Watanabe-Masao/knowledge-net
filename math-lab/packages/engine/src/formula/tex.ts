@@ -64,7 +64,8 @@ export function symbolTex(key: string, symbols: FormulaSymbol[] = []): string {
       const t = GREEK[c] ?? c;
       out += /\\[A-Za-z]+$/.test(out) && /^[A-Za-z]/.test(t) ? ` ${t}` : t;
     }
-    return out;
+    // 2字以上の添え字（S_xy・S_xx）は波かっこで包む（S_xy のままだと TeX は x だけを添え字にする。stats2-course #148）
+    return out.replace(/_([A-Za-z0-9]{2,})/g, "_{$1}");
   }
   const m = /^([a-z]+)([A-Z0-9]*)$/.exec(key);
   if (m && NAMES[m[1]!]) return NAMES[m[1]!] + (m[2] ? `_{${m[2]}}` : "");
