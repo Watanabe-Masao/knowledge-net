@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 // 画面のテスト（見本のデータ public/sample/stats2.json：教材の公開データの写し。scripts/sync-sample.mjs で版を固定する。stats2-course #209）。スマホ幅・ライト／ダーク・Notion の埋め込み（360×320）。
 import { expect, test, type Page } from "@playwright/test";
 import { openTab } from "./sheet";
@@ -72,7 +73,7 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await page.goto(`./?${SRC}`);
   await page.getByLabel("概念を検索").fill("標準"); // 打つたびに候補が絞られる（動的なドロップダウン）
   await expect(page.getByRole("listbox", { name: "候補" })).toBeVisible();
-  await page.getByRole("option", { name: /標準化/ }).click();
+  await page.getByRole("option", { name: /^標準化 / }).click(); // 「データの標準化」も候補に出る（stats2-course #312）。確率変数の標準化を選ぶ
   await expect(page.getByRole("listbox", { name: "候補" })).toHaveCount(0);
   await page.getByRole("radio", { name: "たどる" }).click(); // 前提をさかのぼる＝見方の「経路」（学ぶ順の一覧も開く）
   const tr = page.getByTestId("trace");
@@ -182,7 +183,7 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
       await r.fulfill({ json: d });
     },
   );
-  await page.goto(`./?${SRC}&c=stats2:TERM-std`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-data-std`); // z得点のラボはデータの標準化に付く（stats2-course #312）
   const d = page.getByTestId("detail");
   await d.getByTestId("media-concept").getByRole("radio", { name: /操作/ }).click();
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
@@ -1156,6 +1157,17 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
       body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"/></svg>',
     });
   });
+  // 見本の教材は全部の語に説明がある（stats2-course #53。2026-11-17）ので、説明のある語を1つ骨格の印にして読み込む（説明の文だけ外す。式や関係が指している所は壊さない）
+  const sampleText = readFileSync("public/sample/stats2.json", "utf8"); // 何度読み込んでも同じ中身を返す（r.fetch はキャッシュの 304 で空になることがある）
+  await page.route(/\/sample\/stats2\.json(\?|$)/, async (r) => {
+    const d = JSON.parse(sampleText);
+    const c = d.concepts.find(
+      (x: { status?: string; short?: string; category?: string }) => x.status === "filled" && x.short && x.category,
+    );
+    c.status = "skeleton";
+    delete c.definition; // 骨格は定義1文（short）を出す。ほかの項目はどこからも指されないので残す
+    await r.fulfill({ json: d });
+  });
   await page.goto("./?src=sample/stats2.json");
   // 骨格の語の数は見本から数える（W1 で説明を書くたびに数が変わる。数を書き写すと、語を1つ埋めるごとにテストを直すことになる。stats2-course #45）
   const skel = await page.evaluate(async () => {
@@ -1237,7 +1249,12 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
         .filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
     }, selBox.y + selBox.height);
   await expect.poll(hidden, { timeout: 10000 }).toBe(0); // 文字の読み込み・枠の大きさが決まってから収め直すのを待つ
-  // 全部の語：語を分類の島に入れた地図。語は134すべて（標準正規分布・無相関を足した：stats2-course の issue 289。データの分散・データの標準偏差を足した：issue 310。データの共分散を足した：issue 317）
+  // 全部の語：語を分類の島に入れた地図。語は見本の全部（数は見本から数える。語を足すたびにテストを直さない。stats2-course #45）
+  const allTerms = await page.evaluate(async () => {
+    const d = await (await fetch("sample/stats2.json")).json();
+    return d.concepts.filter((c: { id: string }) => c.id.startsWith("stats2:TERM-")).length;
+  });
+  expect(allTerms).toBeGreaterThan(100);
   await sel.selectOption("*");
   await expect
     .poll(() =>
@@ -1249,7 +1266,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
             .filter((n: any) => n.id().startsWith("stats2:TERM-")).length,
       ),
     )
-    .toBe(134);
+    .toBe(allTerms);
   expect(await page.evaluate(() => (window as any).kn.nodes('[kind = "isle"]').length)).toBe(12);
   // 一覧に戻る
   await sel.selectOption("");
