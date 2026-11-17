@@ -165,19 +165,16 @@
     {
       "id": "t:TERM-mean",
       "name": "母平均",
-      "status": "filled",
+      "status": "heading",
       "units": [],
       "version": 1,
-      "definition": "母平均の定義",
-      "principle": "p",
-      "conditions": [],
-      "example": "e",
-      "counterexample": "c",
+      "category": "推定",
       "forms": [
         "number"
       ],
       "heading_of": {
         "concept": "t:TERM-expect",
+        "correspondence": "母集団の分布の期待値",
         "object_diff": "母集団について言う",
         "context_diff": "推測統計で知りたい数"
       }

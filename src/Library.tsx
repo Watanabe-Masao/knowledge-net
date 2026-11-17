@@ -4,7 +4,7 @@
 // 語の印は教材の公開データ（概念の icon）から読む。印のない語・読めない URL は分類の印。柱は教材の course.pillars（stats2-course #220）。
 import { labCountOf } from "./Shell";
 import { iconUri } from "./icons";
-import { type Network, bandOfCat, bandsOf } from "./data";
+import { type Network, bandOfCat, bandsOf, written, lead } from "./data";
 import s from "./Library.module.css";
 import { conceptIcon } from "./conceptIcons";
 
@@ -42,8 +42,7 @@ export default function Library({ net, onConcept, onGroup }: Props) {
                   .filter((c) => c.category === cat)
                   .sort(
                     (x, y) =>
-                      Number(y.status === "filled") - Number(x.status === "filled") ||
-                      (degree.get(y.id) ?? 0) - (degree.get(x.id) ?? 0),
+                      Number(written(y)) - Number(written(x)) || (degree.get(y.id) ?? 0) - (degree.get(x.id) ?? 0),
                   );
                 const top = cs.slice(0, 3),
                   rest = cs.length - top.length,
@@ -56,9 +55,9 @@ export default function Library({ net, onConcept, onGroup }: Props) {
                         <button
                           key={c.id}
                           type="button"
-                          className={`${s.cell}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
+                          className={`${s.cell}${written(c) ? "" : ` ${s.skeleton}`}`}
                           onClick={() => onConcept(c.id)}
-                          title={c.short ?? c.definition}
+                          title={lead(c)}
                         >
                           {/* アプリの印のように：語の特徴の絵を大きく、名前は小さく下に。固有の絵がない語は分類の印 */}
                           <span className={s.glyph}>

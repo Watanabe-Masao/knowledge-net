@@ -63,7 +63,8 @@ export type Concept = {
   id: string;
   name: string;
   en?: string;
-  status: "filled" | "skeleton" | "stub";
+  /** heading：文脈の見出し（型 v2 の改訂6。製本 ① の 2。stats2-course の issue 302）。自分の定義を持たず、heading_of で共有する概念を指す */
+  status: "filled" | "skeleton" | "stub" | "heading";
   version: number;
   /** 定義1文と分類（骨格の段から。#105） */ short?: string;
   category?: string;
@@ -93,6 +94,8 @@ export type Concept = {
   basis_formula?: string;
   /** v2 原本の基準の定義。定理の要件を関係から参照表示するためにも使う。 */
   basis?: { text: string; terms?: string[] };
+  /** 文脈の見出し（型 v2 の改訂6）：共有する概念の id・対応・対象の違い・文脈の違い */
+  heading_of?: { concept: string; correspondence: string; object_diff: string; context_diff: string };
   /** 姿が命題の概念（定理）が持つ主張の id（型 v2。stats2-course #287） */
   claims?: string[];
   example?: string;
@@ -372,6 +375,17 @@ export function toScreen(d: CourseData): CourseData {
  * about：その概念について言う主張（結論にその概念が出る・その概念が主張を持つ。例：独立なベルヌーイの和は二項分布に従う）
  * uses：その概念から言える主張（前提にその概念が出る。例：二項分布の正規近似）。両方に出る主張は about だけに置く
  */
+/** 中身を読める概念か：説明あり（filled）か、文脈の見出し（heading。意味は共有する概念から読む）。一覧で点線にしないものの判定（画面の原則 4：見出しも1つの概念として同じ見た目） */
+export const written = (c: Concept | undefined) => c?.status === "filled" || c?.status === "heading";
+
+/** 一覧・地図の札で名前に添える1文：定義1文、なければ定義、見出しなら共有する概念との対応 */
+export const lead = (c: Concept) => c.short ?? c.definition ?? c.heading_of?.correspondence;
+
+/** この概念を共有する概念とする文脈の見出し（製本 ① の 2。共有する概念のページから見出しへ） */
+export function headingsOf(net: Network, conceptId: string): Concept[] {
+  return [...net.concepts.values()].filter((c) => c.heading_of?.concept === conceptId);
+}
+
 export function claimsOf(net: Network, conceptId: string): { about: Claim[]; uses: Claim[] } {
   const own = new Set(net.concepts.get(conceptId)?.claims ?? []);
   const has = (side?: { subjects?: string[]; predicates?: string[] }) =>

@@ -28,6 +28,7 @@ import {
   MODES,
   around,
   claimsOf,
+  headingsOf,
   type Concept,
   type Formula as NetFormula,
   type Network,
@@ -338,6 +339,7 @@ export default function Detail({
   }, [c.chart]);
   const mainF = c.workspace ? c.formulas?.[c.workspace.formula] : c.formulas?.[0];
   const cl = useMemo(() => claimsOf(net, c.id), [net, c.id]);
+  const heads = useMemo(() => headingsOf(net, c.id), [net, c.id]);
   const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
   // 作業台に出している式（主役・期待値・変換）は、下の一覧に重ねて出さない（同じものを2か所に置かない。#156）
   const used = new Set(
@@ -479,6 +481,45 @@ export default function Detail({
                 label={`成功の回数ごとの確率（n＝${chart.m.n}・p＝${Math.round(chart.m.p * 100)}%）。いちばん高いのは ${chart.hi} 回`}
               />
               {c.chart?.note && <p className={st.note}>{c.chart.note}</p>}
+            </section>
+          )}
+          {/* 文脈の見出し（製本 ① の 2。stats2-course の issue 302）：自分の定義を持たないので、定義の代わりに共有する概念との対応と、対象・文脈の違いを出す。
+              定義・式・成立条件は共有する概念のページで読む（重ねて出さない。画面の原則 8） */}
+          {c.heading_of && (
+            <section className={st.block} data-testid="concept-heading">
+              <span className={st.lab}>文脈の見出し</span>
+              <p className={st.definition}>{c.heading_of.correspondence}</p>
+              <dl className={st.headingDiff}>
+                <dt>対象の違い</dt>
+                <dd>{c.heading_of.object_diff}</dd>
+                <dt>文脈の違い</dt>
+                <dd>{c.heading_of.context_diff}</dd>
+              </dl>
+              {net.concepts.has(c.heading_of.concept) && (
+                <Button
+                  variant="quiet"
+                  className={st.headingTo}
+                  onClick={() => onSelect(c.heading_of!.concept)}
+                  data-testid="heading-shared"
+                >
+                  定義・式・成立条件は「{name(net, c.heading_of.concept)}」で読む ›
+                </Button>
+              )}
+            </section>
+          )}
+          {heads.length > 0 && (
+            <section className={st.block} data-testid="concept-headings">
+              <span className={st.lab}>文脈の見出し</span>
+              <Muted as="p">同じ意味を、別の対象・文脈で呼ぶ名前。</Muted>
+              <ul className={st.headingList}>
+                {heads.map((h) => (
+                  <li key={h.id}>
+                    <Button variant="quiet" className={st.headingTo} onClick={() => onSelect(h.id)}>
+                      {h.name}：{h.heading_of!.correspondence} ›
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
           {(c.definition || c.short) && (

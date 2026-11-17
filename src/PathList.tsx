@@ -3,11 +3,16 @@
 // 行を押すとその場で概要を開き、「開く」でその概念をフォーカスで開く。最後の行は選んだ概念（ここ）。スマホでは地図に重なる下からの面
 import { useEffect, useState } from "react";
 import { BottomSheet, Card, type Detent } from "@math-lab/ui";
-import type { Network } from "./data";
+import { type Network, lead } from "./data";
 import st from "./PathList.module.css";
 
 // 画面の言葉（渡辺さん 2026-11-01「骨格の意味が伝わりにくい」）：データの状態 skeleton は「定義だけ」と出す
-const STATUS: Record<string, string> = { filled: "説明あり", skeleton: "定義だけ", stub: "まだ" };
+const STATUS: Record<string, string> = {
+  filled: "説明あり",
+  heading: "文脈の見出し",
+  skeleton: "定義だけ",
+  stub: "まだ",
+};
 
 type Props = {
   net: Network;
@@ -25,6 +30,7 @@ export default function PathList({ net, target, seq, onOpen, sheet }: Props) {
   const count = (k: string) => seq.filter((id) => net.concepts.get(id)?.status === k).length;
   const summary = [
     ["filled", count("filled")],
+    ["heading", count("heading")],
     ["skeleton", count("skeleton")],
     ["stub", count("stub")],
   ]
@@ -48,7 +54,7 @@ export default function PathList({ net, target, seq, onOpen, sheet }: Props) {
         const c = net.concepts.get(id)!,
           here = id === target,
           on = open === id;
-        const text = c.short ?? c.definition;
+        const text = lead(c);
         return (
           <li key={id}>
             <button

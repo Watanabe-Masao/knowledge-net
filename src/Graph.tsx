@@ -4,7 +4,7 @@
 import cytoscape, { type Core, type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { useEffect, useRef, useState } from "react";
-import { type Band, type Network, type Placed, TINTS, bandOfCat, bandsOf } from "./data";
+import { type Band, type Network, type Placed, TINTS, bandOfCat, bandsOf, lead } from "./data";
 import { Button, tokenMs } from "@math-lab/ui";
 import { iconUri } from "./icons";
 import { loadTermSvgs, termIconUri } from "./termIcons";
@@ -1063,14 +1063,18 @@ export default function Graph({
                 <span className={s.tipMeta}>
                   {[
                     cpt.category,
-                    cpt.status === "skeleton" ? "定義だけ" : cpt.status === "stub" ? "まだ説明がない" : "",
+                    cpt.status === "skeleton"
+                      ? "定義だけ"
+                      : cpt.status === "stub"
+                        ? "まだ説明がない"
+                        : cpt.status === "heading"
+                          ? "文脈の見出し"
+                          : "",
                   ]
                     .filter(Boolean)
                     .join("・")}
                 </span>
-                {(cpt.short ?? cpt.definition) ? (
-                  <span className={s.tipText}>{cpt.short ?? cpt.definition}</span>
-                ) : null}
+                {lead(cpt) ? <span className={s.tipText}>{lead(cpt)}</span> : null}
               </div>
             );
           })()

@@ -4,7 +4,7 @@
 // 語を押すと概念のページ。データは公開データにあるもの（語の印・名前・定義1文・前提の関係）だけで作る
 import { tokenMs } from "@math-lab/ui";
 import { useRef, useState } from "react";
-import { type Network, bandOfCat, bandsOf, learningOrder } from "./data";
+import { type Network, bandOfCat, bandsOf, learningOrder, written, lead } from "./data";
 import { conceptIcon } from "./conceptIcons";
 import { iconUri } from "./icons";
 import s from "./CategoryList.module.css";
@@ -134,7 +134,7 @@ export default function CategoryList({ net, category, layout, onConcept }: Props
                 <li key={c.id} className={s.cellWrap}>
                   <button
                     type="button"
-                    className={`${s.cell}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
+                    className={`${s.cell}${written(c) ? "" : ` ${s.skeleton}`}`}
                     aria-describedby={tip === c.id ? "cat-tip" : undefined}
                     data-testid={`cat-item-${c.id}`}
                     {...hold(c.id)}
@@ -142,10 +142,10 @@ export default function CategoryList({ net, category, layout, onConcept }: Props
                     <span className={s.glyph}>{glyph(c)}</span>
                     <span className={s.name}>{c.name}</span>
                   </button>
-                  {tip === c.id && (c.short ?? c.definition) ? (
+                  {tip === c.id && lead(c) ? (
                     <div id="cat-tip" role="tooltip" className={s.tip} data-testid="cat-tip">
                       <b>{c.name}</b>
-                      <span>{c.short ?? c.definition}</span>
+                      <span>{lead(c)}</span>
                     </div>
                   ) : null}
                 </li>
@@ -157,14 +157,14 @@ export default function CategoryList({ net, category, layout, onConcept }: Props
                 <li key={c.id}>
                   <button
                     type="button"
-                    className={`${s.row}${c.status === "filled" ? "" : ` ${s.skeleton}`}`}
+                    className={`${s.row}${written(c) ? "" : ` ${s.skeleton}`}`}
                     onClick={() => onConcept(c.id)}
                     data-testid={`cat-item-${c.id}`}
                   >
                     <span className={s.rowGlyph}>{glyph(c)}</span>
                     <span className={s.rowText}>
                       <b>{c.name}</b>
-                      {(c.short ?? c.definition) ? <small>{c.short ?? c.definition}</small> : null}
+                      {lead(c) ? <small>{lead(c)}</small> : null}
                     </span>
                     <span className={s.chev} aria-hidden="true">
                       ›

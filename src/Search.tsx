@@ -25,7 +25,7 @@ export default function Search({ concepts, onPick }: Props) {
   const [at, setAt] = useState(0);
   const list = useId();
   const input = useRef<HTMLInputElement>(null);
-  const rank = (s: string) => (s === "filled" ? 0 : s === "skeleton" ? 1 : 2); // 説明あり → 骨格 → 説明なし
+  const rank = (s: string) => (s === "filled" || s === "heading" ? 0 : s === "skeleton" ? 1 : 2); // 説明あり・文脈の見出し → 骨格 → 説明なし
   const hits = useMemo(() => {
     const k = q.trim().toLowerCase();
     const m = concepts.filter((c) => !k || (c.name + " " + (c.en ?? "")).toLowerCase().includes(k));
