@@ -124,8 +124,10 @@ select {
 }
 /* 長押しの手触りは1つ（渡辺さん 2026-11-07「沈んで光る」。knowledge-net の docs/decisions.md）：
    押さえている間（data-hold）、押した物が --dur-hold でゆっくり沈み、縁の光が強まる。満ちたところで長押しが決まる。
-   ふつうのタップでは見えないよう、押した返事（--dur-press）のあとから始める。見た目の物が子のときは、その子に data-hold-part */
-[data-hold]:not(:has([data-hold-part])),
+   ふつうのタップでは見えないよう、押した返事（--dur-press）のあとから始める。見た目の物が子のときは、その子に data-hold-part、
+   押す物に data-hold-on-part（押す物は沈まず、子だけが沈む）。子があるかを :has() で見ない：WebKit では :not(:has()) の
+   無効化の計算が重く、語の多い関係図で選ぶたびに DOM が変わる所でページが止まる疑いがある（stats2-course #285・#418） */
+[data-hold]:not([data-hold-on-part]),
 [data-hold] [data-hold-part] {
   transform: scale(0.92) !important;
   box-shadow:
@@ -166,7 +168,7 @@ path[data-hold] {
     animation: none !important;
   }
   /* 長押しは沈まず、満ちたときに一度だけ縁が灯る（動かさずに「決まった」を伝える） */
-  [data-hold]:not(:has([data-hold-part])),
+  [data-hold]:not([data-hold-on-part]),
   [data-hold] [data-hold-part],
   path[data-hold] {
     transform: none !important;
