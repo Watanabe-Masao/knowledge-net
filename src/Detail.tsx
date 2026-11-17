@@ -507,21 +507,6 @@ export default function Detail({
               )}
             </section>
           )}
-          {heads.length > 0 && (
-            <section className={st.block} data-testid="concept-headings">
-              <span className={st.lab}>文脈の見出し</span>
-              <Muted as="p">同じ意味を、別の対象・文脈で呼ぶ名前。</Muted>
-              <ul className={st.headingList}>
-                {heads.map((h) => (
-                  <li key={h.id}>
-                    <Button variant="quiet" className={st.headingTo} onClick={() => onSelect(h.id)}>
-                      {h.name}：{h.heading_of!.correspondence} ›
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
           {(c.definition || c.short) && (
             <section className={st.block}>
               <span className={st.lab}>定義</span>
@@ -541,6 +526,22 @@ export default function Detail({
                   定義だけ：今は定義1文と分類まで。原理・条件・例・式は、単元を進めるときに足す
                 </p>
               )}
+            </section>
+          )}
+          {/* 見出しは定義のあと（概要の情報階層 stats2-course の issue 188 02 を崩さない）。行は名前だけ（対応の文は見出しのページで読む） */}
+          {heads.length > 0 && (
+            <section className={st.block} data-testid="concept-headings">
+              <span className={st.lab}>文脈の見出し</span>
+              <Muted as="p">同じ意味を、別の対象・文脈で呼ぶ名前。</Muted>
+              <ul className={st.headingList}>
+                {heads.map((h) => (
+                  <li key={h.id}>
+                    <Button variant="quiet" className={st.headingTo} onClick={() => onSelect(h.id)}>
+                      {h.name} ›
+                    </Button>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
           <Media figures={c.figures} labs={c.labs} context="concept" open={false} />
