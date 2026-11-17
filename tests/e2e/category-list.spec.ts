@@ -1,11 +1,16 @@
 // 分類のページのリストビュー（stats2-course #228。渡辺さん 2026-11-05：ライブラリの次は、正方形と一覧を切り替えるリストビュー）
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
+
+// 検定の語の数は見本から数える（語を足すたびにテストを直さない。stats2-course #476）
+const sample = JSON.parse(readFileSync("public/sample/stats2.json", "utf8")) as { concepts: { category?: string }[] };
+const TESTS = sample.concepts.filter((c) => c.category === "検定").length;
 
 // 確かめる対象：ライブラリ → 分類のページ（正方形・一覧・地図の切り替え）→ 概念 の流れと、正方形の長押し。
 // 想定する故障：分類の語が全部出ない・ほかの分類の語が混ざる・学ぶ順でない（画面が並べ替えずに教材の並びのまま）・
 //   長押しで説明が出ない／長押しのあと離すと概念へ移ってしまう・切り替えが URL に残らず「戻る」で消える・
 //   並べ方の切り替えで地図へ行けない・押せる大きさが 44px 未満。
-// 見つけ方：検定（20語）で、枠の数・最初の語（仮説検定）・押せる大きさ、p値を長押し→説明→離しても移らない→押すと概念、
+// 見つけ方：検定（語の数は見本から数える）で、枠の数・最初の語（仮説検定）・押せる大きさ、p値を長押し→説明→離しても移らない→押すと概念、
 //   一覧に切り替えると定義1文、地図に切り替えると島の地図、「戻る」で一覧・正方形・ライブラリへ順に戻る。
 // 既存との違い：ライブラリのテストはタイルまで。学ぶ順そのものは単体テスト（order.test.ts）が全部の分類で見る
 test("ライブラリ → 分類のページ：正方形（長押しで説明）・一覧・地図を切り替え、語を押すと概念", async ({ page }) => {
@@ -15,7 +20,7 @@ test("ライブラリ → 分類のページ：正方形（長押しで説明）
   const list = page.getByTestId("category-list");
   await expect(list).toHaveAttribute("data-layout", "grid");
   const items = list.locator("[data-testid^=cat-item-]");
-  await expect(items).toHaveCount(20);
+  await expect(items).toHaveCount(TESTS);
   // 学ぶ順：定義に使う概念が先（帰無仮説 → … → 仮説検定 → 一種の対応のある t 検定 → … → 多重比較）。教材の並び（対応のある t 検定が先頭）ではない。
   // 検定を製本 ⑤ に移して（stats2-course #304）、仮説検定は帰無仮説・有意水準などを定義に使う側になった（前は仮説検定が先頭）
   const ids = await items.evaluateAll((es) =>
@@ -92,5 +97,7 @@ test("意味のまとまりがあれば、まとまりごとに区切り、ま�
   await expect(list.locator("h3")).toHaveText(["くり返して数える", "確率分布のしくみ", "そのほか"]);
   await expect(list.getByTestId("cat-section-stats2:GRP-count").locator("[data-testid^=cat-item-]")).toHaveCount(2);
   await expect(list.getByTestId("cat-section-stats2:GRP-count")).toContainText("n 回くり返して");
-  await expect(list.locator("[data-testid^=cat-item-]")).toHaveCount(15); // 標準正規分布・無相関を足した（stats2-course #289）
+  await expect(list.locator("[data-testid^=cat-item-]")).toHaveCount(
+    sample.concepts.filter((c) => c.category === "確率分布").length,
+  ); // 数は見本から（stats2-course #476）
 });
