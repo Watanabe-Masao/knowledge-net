@@ -2,7 +2,7 @@
 // 確かめる対象：長押しのある所（一覧の正方形・関係図の語・関係図の線・島の地図の点）で、押さえている間は同じ手触り（沈んで光る）が出て、
 //   離すと消えること。
 // 想定する故障：どこかの長押しだけ手触りが出ない（新しく足した長押しが data-hold を付け忘れる）・離しても沈んだまま光ったまま残る・
-//   ふつうのタップの間にも光る。
+//   ふつうのタップの間にも光る。見た目が子の所（関係図の語）で、押す物の印（data-hold-on-part）を付け忘れて二重に縮む。
 // 見つけ方：それぞれの所を押さえて、押した返事（--dur-press）より前は光らず、長押しが決まる前（約 300ms）には沈んで（倍率 < 1）光り
 //   （縁の影か線の光）、離すと元に戻る。島の地図の点は Cytoscape の絵なので、点の枠の太さで見る。
 // 既存との違い：ほかのテストは長押しで出る物（札・下見）だけを見ていて、押さえている間の手触りは見ていない
@@ -98,6 +98,15 @@ test("長押しの手触り：一覧・関係図の語と線は、押さえて�
     .getByTestId("rm-tip")
     .waitFor({ state: "detached" })
     .catch(() => undefined);
+  // 見た目が子の所は、子だけが沈む（押す物の印 data-hold-on-part を付け忘れると、押す物と子の両方が縮む。base.css。stats2-course #285）
+  const self = await term.evaluate(async (el) => {
+    el.setAttribute("data-hold", "");
+    await new Promise((r) => setTimeout(r, 700)); // 沈み終わるまで（--dur-hold を越える）
+    const t = getComputedStyle(el).transform;
+    el.removeAttribute("data-hold");
+    return t;
+  });
+  expect(self, "関係図の語：押す物まで沈む（二重に縮む）").toBe("none");
 
   // 関係図の線（沈まず、太くなりながら光る）。語を動かしたあとなので開き直す
   await page.goto(`${SRC}&lv=map&g=${encodeURIComponent("確率分布")}`);

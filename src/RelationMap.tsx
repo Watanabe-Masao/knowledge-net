@@ -1092,6 +1092,7 @@ export default function RelationMap({
                 data-state={end ? "near" : !pick ? undefined : on ? "sel" : k ? "near" : "dim"}
                 data-flash={flash?.id === t.id ? flash.n % 2 : undefined}
                 data-skeleton={filled(t.id) ? undefined : "1"}
+                data-hold-on-part /* 押さえている間に沈んで光るのは中のカード（data-hold-part）。base.css */
                 aria-pressed={on}
                 aria-label={nameOf(net, t.id)}
                 style={

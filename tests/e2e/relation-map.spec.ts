@@ -12,24 +12,44 @@ async function open(page: Page, w = 390, h = 844, extra = "") {
   await page.setViewportSize({ width: w, height: h });
   await page.goto(URL + encodeURIComponent("確率分布") + extra);
   await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
+  await painting(page, "開いた直後");
   return page.getByTestId("relation-map");
+}
+/** ページが答え、描画が進んでいる（2回の rAF が 5 秒以内に来る）。
+ *  CI の WebKit で、語を選んだ・← を押した直後にページが答えなくなり（クリックが「stable」を待ったまま・evaluate が返らない）、
+ *  30 秒の時間切れや Target crashed で落ちた（stats2-course #285・#418）。止まった所でテストの待ち方の問題（動きが終わらない・
+ *  地図が消えた）と見分けがつかなかったので、ここで 5 秒で止め、何が止まったかを名前で出す。待ち時間を延ばすためのものではない */
+async function painting(page: Page, where: string) {
+  const frames = page
+    .evaluate(() => new Promise<string>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r("描いた")))))
+    .catch((e: Error) => `落ちた：${e.message.split("\n")[0]}`);
+  const res = await Promise.race([frames, new Promise<string>((r) => setTimeout(() => r("答えない"), 5000))]);
+  expect(
+    res,
+    `${where}：ページが描画を進めない（${res}）。画面の動きが終わらないのではなく、ブラウザかページが止まった（stats2-course #285）`,
+  ).toBe("描いた");
 }
 /** 寄る動きが止まるまで待つ。寄る動き（data-moving）が終わり、キャンバスの画面の上の位置が2回続けて同じ。
  *  WebKit は動きの途中でも getComputedStyle の transform に終わりの値を返すので、変形の値ではなく画面の上の位置で見る */
 async function still(page: Page) {
   const canvas = page.getByTestId("rm-canvas");
   await page.waitForTimeout(350); // 選んでから寄り始めるまで（ダブルタップを待つ 0.2 秒と、下の面が出るまで）を越える
+  await painting(page, "寄る動きを待つ前");
   // 読むたびに、ページの時刻と動き始めた時刻も添える（落ちたとき、動きが本当に止まらないのか、ブラウザが止まって読めなかったのかを分ける。
   // WebKit で一度、確かめに入る前に 7 秒かかって落ちた。2026-11-07）
   await expect
     .poll(
       () =>
-        canvas.evaluate((el) => {
-          const since = el.getAttribute("data-moving");
-          return since
-            ? `動いている goes=${el.getAttribute("data-goes")} k=${el.getAttribute("data-k")} 始まり=${since} 今=${Math.round(performance.now())}`
-            : "止まった";
-        }),
+        canvas.evaluate(
+          (el) => {
+            const since = el.getAttribute("data-moving");
+            return since
+              ? `動いている goes=${el.getAttribute("data-goes")} k=${el.getAttribute("data-k")} 始まり=${since} 今=${Math.round(performance.now())}`
+              : "止まった";
+          },
+          undefined,
+          { timeout: 2000 }, // キャンバスがない・ページが答えないときは、poll の時間の中で理由を出して止まる
+        ),
       { timeout: 6000 },
     )
     .toBe("止まった");
@@ -52,7 +72,11 @@ const rectOf = (page: Page, id: string) =>
 const bars = (page: Page) => page.evaluate(() => document.documentElement.dataset.bars ?? "shown");
 /** 何もない所（まとまりの枠・語・線から離れた、地図の右の端の近く） */
 async function blank(page: Page) {
-  const m = (await page.getByTestId("relation-map").boundingBox())!;
+  // 地図がないと boundingBox はテストの時間切れまで待ち、「地図が消えた」と「ページが止まった」が見分けられない（stats2-course #418）
+  await expect(page.getByTestId("relation-map"), "地図がない（別の物を押して地図が消えた）").toBeVisible({
+    timeout: 3000,
+  });
+  const m = (await page.getByTestId("relation-map").boundingBox({ timeout: 3000 }))!;
   return { x: m.x + m.width - 6, y: m.y + 110 }; // 下の面（詳しく）にかからない高さ
 }
 /** まとまりの外の空いた所（まとまりの枠・語・線の当たり・ボタン・札のどれでもなく、ほかのまとまりの枠からも 24px 離れた点）。
