@@ -62,3 +62,51 @@ test("文脈の見出しは対応と2つの違いを出し、共有する概念�
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   expect(errs).toEqual([]);
 });
+
+// 確かめる対象：文脈ごとの構造（型 v2 の改訂7。stats2-course の issue 475）を持つ見出しが、取り方・H₀ を出し、この文脈の成立条件を開いて読めること。
+// 想定する故障：①context を型が拒んで教材ごと読めない ②取り方・H₀ を出さない（見出しが説明の文2つだけに戻る）③この文脈の条件の行が出ない・保証する主張が出ない。
+// 見つけ方：context を足した見出しのページで、取り方・H₀ の文と、開いた条件の段に仮定の行と保証する主張の文があることを見る。
+// 既存との違い：上のテストは context のない見出し（母平均の形）。ここは独立性検定・同質性の検定の形
+test("文脈ごとの構造を持つ見出しは、取り方・H₀・この文脈の成立条件を出す", async ({ page }) => {
+  const errs = noErrors(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route(/\/sample\/stats2\.json(\?|$)/, async (r) => {
+    const d = await (await r.fetch()).json();
+    const shared = d.concepts.find((c: { id: string }) => c.id === SHARED);
+    d.concepts.push({
+      id: HEAD,
+      name: "見出しのテスト",
+      status: "heading",
+      version: 1,
+      units: [],
+      problems: [],
+      category: shared.category,
+      forms: ["number"],
+      heading_of: {
+        concept: SHARED,
+        correspondence: "対応の文のテスト",
+        object_diff: "対象の違いのテスト",
+        context_diff: "文脈の違いのテスト",
+        context: {
+          sampling: "取り方のテスト",
+          null_hypothesis: { text: "H₀ のテスト" },
+          conditions: [
+            { text: "条件の行のテスト", kind: "仮定", claim: "保証する主張のテスト", outside: "外れたときのテスト" },
+          ],
+        },
+      },
+    });
+    await r.fulfill({ json: d });
+  });
+  await page.goto(`./?${SRC}&c=${encodeURIComponent(HEAD)}`);
+  const d = page.getByTestId("detail");
+  await openTab(page, "概要");
+  await expect(d.getByTestId("heading-sampling")).toHaveText("取り方のテスト");
+  await expect(d.getByTestId("heading-h0")).toHaveText("H₀ のテスト");
+  await d.locator("summary", { hasText: "この文脈の成立条件" }).click();
+  const conds = d.getByTestId("heading-conditions");
+  await expect(conds).toContainText("条件の行のテスト");
+  await expect(conds).toContainText("保証する主張のテスト");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  expect(errs).toEqual([]);
+});

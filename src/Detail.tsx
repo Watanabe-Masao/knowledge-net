@@ -494,6 +494,15 @@ export default function Detail({
                 <dd>{c.heading_of.object_diff}</dd>
                 <dt>文脈の違い</dt>
                 <dd>{c.heading_of.context_diff}</dd>
+                {/* 文脈ごとの構造（型 v2 の改訂7。stats2-course の issue 475）：取り方と H₀ を文と同じ段に。成立条件は下の開いて読む段 */}
+                {c.heading_of.context && (
+                  <>
+                    <dt>取り方</dt>
+                    <dd data-testid="heading-sampling">{c.heading_of.context.sampling}</dd>
+                    <dt>帰無仮説 H₀</dt>
+                    <dd data-testid="heading-h0">{c.heading_of.context.null_hypothesis.text}</dd>
+                  </>
+                )}
               </dl>
               {net.concepts.has(c.heading_of.concept) && (
                 <Button
@@ -502,11 +511,31 @@ export default function Detail({
                   onClick={() => onSelect(c.heading_of!.concept)}
                   data-testid="heading-shared"
                 >
-                  定義・式・成立条件は「{name(net, c.heading_of.concept)}」で読む ›
+                  定義・式・{c.heading_of.context ? "共通の" : ""}成立条件は「{name(net, c.heading_of.concept)}」で読む
+                  ›
                 </Button>
               )}
             </section>
           )}
+          {c.heading_of?.context?.conditions?.length ? (
+            <More
+              title={
+                <>
+                  この文脈の成立条件 <span className={st.n}>{c.heading_of.context.conditions.length}</span>
+                </>
+              }
+              onOpen={reading}
+            >
+              <Conditions
+                net={net}
+                detail={c.heading_of.context.conditions}
+                math={[]}
+                onTerm={onSelect}
+                plainClass={st.conds}
+                testId="heading-conditions"
+              />
+            </More>
+          ) : null}
           {(c.definition || c.short) && (
             <section className={st.block}>
               <span className={st.lab}>定義</span>

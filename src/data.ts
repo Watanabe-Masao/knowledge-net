@@ -95,7 +95,18 @@ export type Concept = {
   /** v2 原本の基準の定義。定理の要件を関係から参照表示するためにも使う。 */
   basis?: { text: string; terms?: string[] };
   /** 文脈の見出し（型 v2 の改訂6）：共有する概念の id・対応・対象の違い・文脈の違い */
-  heading_of?: { concept: string; correspondence: string; object_diff: string; context_diff: string };
+  heading_of?: {
+    concept: string;
+    correspondence: string;
+    object_diff: string;
+    context_diff: string;
+    /** 文脈ごとの構造（型 v2 の改訂7）：取り方・H₀・この文脈の成立条件の行 */
+    context?: {
+      sampling: string;
+      null_hypothesis: { text: string; terms?: string[] };
+      conditions?: ConditionDetail[];
+    };
+  };
   /** 姿が命題の概念（定理）が持つ主張の id（型 v2。stats2-course #287） */
   claims?: string[];
   example?: string;

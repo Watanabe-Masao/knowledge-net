@@ -64,6 +64,8 @@ describe("型 v2", () => {
     // 改訂6（stats2-course #302）：文脈の見出しは自分の定義を持たず、heading_of（対応つき）を持つ。heading_of を書く概念は見出しにする
     ["見出しが定義を持つ", (d) => (heading(d).definition = "母平均の定義")],
     ["見出しに heading_of がない", (d) => delete heading(d).heading_of],
+    // 改訂7（stats2-course #475）：文脈ごとの構造は取り方と H₀ を持つ
+    ["見出しの文脈に H₀ がない", (d) => ((heading(d).heading_of as Row).context = { sampling: "s" })],
     ["見出しに対応の文がない", (d) => delete (heading(d).heading_of as Row).correspondence],
     [
       "heading_of を書いた概念が見出しでない（骨格）",
