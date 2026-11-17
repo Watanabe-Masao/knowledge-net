@@ -1,7 +1,7 @@
 {
  "schema": "kn-schema",
  "version": 2,
- "schema_revision": 5,
+ "schema_revision": 6,
  "experiment_revision": 14,
  "course": {
   "id": "stats2",
@@ -13481,6 +13481,46 @@
    ]
   },
   {
+   "id": "stats2:TERM-pop-mean",
+   "name": "母平均",
+   "status": "heading",
+   "version": 1,
+   "units": [],
+   "problems": [],
+   "en": "population mean",
+   "category": "推定",
+   "heading_of": {
+    "concept": "stats2:TERM-expect",
+    "correspondence": "母集団の分布の期待値（μ＝E(X)。X は母集団から無作為に〔どの要素も同じ確率で〕1つ取り出した要素の値で、その分布が母集団の分布）",
+    "object_diff": "期待値は確率分布（確率変数）について言う。母平均は母集団について言う",
+    "context_diff": "母平均は推測統計の中で、標本から知りたい、決まっているが分からない数として出る。期待値は確率の計算の中で、分布から決まる数として出る"
+   },
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-pop-mean.svg",
+   "forms": [
+    "number"
+   ]
+  },
+  {
+   "id": "stats2:TERM-pop-var",
+   "name": "母分散",
+   "status": "heading",
+   "version": 1,
+   "units": [],
+   "problems": [],
+   "en": "population variance",
+   "category": "推定",
+   "heading_of": {
+    "concept": "stats2:TERM-var",
+    "correspondence": "母集団の分布の分散（σ²＝V(X)。X は母集団から無作為に1つ取り出した要素の値。有限母集団なら全 N 個の値の、N で割ったデータの分散と同じ値）",
+    "object_diff": "分散（確率変数の分散）は確率分布について言う。母分散は母集団について言う",
+    "context_diff": "母分散は推測統計の中で、標本から知りたい、決まっているが分からない数として出る。確率変数の分散は確率の計算の中で、分布から決まる数として出る"
+   },
+   "icon": "https://watanabe-masao.github.io/stats2-labs/icons/TERM-pop-var.svg",
+   "forms": [
+    "number"
+   ]
+  },
+  {
    "id": "stats2:TERM-point-est",
    "name": "点推定",
    "status": "filled",
@@ -15200,12 +15240,12 @@
      "どのセルも期待度数が5以上"
     ],
     "data": [
-     "行の合計を先に決めて取ったとき（各店100人ずつに聞く）も同じ Σ(O−E)²÷E と自由度を使う。この取り方での極限の主張は、まだ ④ にない（#439）",
+     "行の合計を先に決めて取ったとき（各店100人ずつに聞く）も同じ Σ(O−E)²÷E と自由度を使う。このときの H₀ は「どの行でも列の割合が等しい」（同質性）で、近づく根拠は ④-28c（行の合計を先に決めた取り方の極限）。この取り方を独立性検定の成立条件の行に並べるか、同質性の検定を別の概念にするかは未決（① の 6 の 20）",
      "棄却しても「関連がある」まで。どちらが原因か、ほかの変数（店・曜日）が両方に効いているかは、この検定では分からない",
      "χ² は総数が大きいと、小さな関連でも大きくなる。関連の強さは、行ごとの割合（帯グラフ）で見る"
     ]
    },
-   "example": "チラシA・Bを各100人に配り、A は60人、B は40人が買った。期待度数はどのセルも 100×100÷200＝50、χ²＝4×(10²÷50)＝8、自由度1 で、上側5%の点3.841 を超えるので独立の仮説を棄却する。",
+   "example": "チラシA・Bを各100人に配り、A は60人、B は40人が買った。期待度数はどのセルも 100×100÷200＝50、χ²＝4×(10²÷50)＝8、自由度1 で、上側5%の点3.841 を超えるので、「どちらのチラシでも買う割合が等しい」（独立と同じ表の形）という仮説を棄却する。",
    "counterexample": "同じ200人に試食の前と後で「買いたいか」を聞き、「前」「後」を行に、「買いたい・買いたくない」を列にした2×2の表（合計 2×200＝400件）を作って独立性検定をする。1人を2回数えているので、個体が1つのセルにだけ入るという要件を外している。",
    "misconceptions": [
     {
@@ -15254,7 +15294,7 @@
      }
     },
     {
-     "text": "行の合計を先に決めて取ったとき（各店100人ずつに聞く）も同じ Σ(O−E)²÷E と自由度を使う。この取り方での極限の主張は、まだ ④ にない（#439）",
+     "text": "行の合計を先に決めて取ったとき（各店100人ずつに聞く）も同じ Σ(O−E)²÷E と自由度を使う。このときの H₀ は「どの行でも列の割合が等しい」（同質性）で、近づく根拠は ④-28c（行の合計を先に決めた取り方の極限）。この取り方を独立性検定の成立条件の行に並べるか、同質性の検定を別の概念にするかは未決（① の 6 の 20）",
      "scope": "data"
     },
     {
@@ -24395,6 +24435,77 @@
    "from_form": "random_set"
   },
   {
+   "id": "stats2:REL-xbar-popmean",
+   "version": 1,
+   "from": "stats2:TERM-sample-mean",
+   "to": "stats2:TERM-pop-mean",
+   "type": "推定する",
+   "description": "標本平均 X̄ で、母平均 μ を推し量る。各 Xᵢ を母集団から無作為に取り出せば、各 Xᵢ の期待値が μ なので E(X̄)＝μ（④-20a）。これがどの μ でも成り立つので不偏。さらに独立に取り出し、母分散が有限なら、n を大きくすると X̄ は μ に確率収束する（④-20b。一致）。",
+   "units": [
+    "stats2:U18",
+    "stats2:U19"
+   ],
+   "conditions": [
+    "X₁, …, Xₙ は母集団から無作為に（どの要素も同じ確率で）取り出した値（各 Xᵢ の分布が母集団の分布）",
+    "一致には、X₁, …, Xₙ が独立（有限母集団からは戻して選ぶ）で、母分散が有限"
+   ],
+   "properties": [
+    "stats2:CLM-20a",
+    "stats2:CLM-20b"
+   ],
+   "conditions_detail": [
+    {
+     "text": "X₁, …, Xₙ は母集団から無作為に（どの要素も同じ確率で）取り出した値（各 Xᵢ の分布が母集団の分布）",
+     "kind": "仮定",
+     "claim": "CLM-20a",
+     "outside": "E(X̄) は母平均とは限らない（抽出枠のずれや、大きさに比例して選ぶなどの偏った取り方では、X̄ が近づく先も母平均でない）",
+     "terms": [
+      "stats2:TERM-population",
+      "stats2:TERM-random-sampling"
+     ]
+    },
+    {
+     "text": "一致には、X₁, …, Xₙ が独立（有限母集団からは戻して選ぶ）で、母分散が有限",
+     "kind": "仮定",
+     "claim": "CLM-20b",
+     "outside": "④-20b による一致の保証は使えない（不偏の ④-20a は独立を使わないので、戻さずに選んでも E(X̄)＝μ）",
+     "terms": [
+      "stats2:TERM-indep"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "stats2:REL-unbvar-popvar",
+   "version": 1,
+   "from": "stats2:TERM-unbvar",
+   "to": "stats2:TERM-pop-var",
+   "type": "推定する",
+   "description": "不偏分散 s² で、母分散 σ² を推し量る。n≧2 で、各 Xᵢ を母集団から無作為に、独立に取り出し、母分散が有限なら、どの母数の値でも E(s²)＝σ²（④-11。不偏）。",
+   "units": [
+    "stats2:U18"
+   ],
+   "conditions": [
+    "X₁, …, Xₙ は母集団から無作為に（どの要素も同じ確率で）、独立に取り出した値（有限母集団からは戻して選ぶ）"
+   ],
+   "properties": [
+    "stats2:CLM-11"
+   ],
+   "conditions_detail": [
+    {
+     "text": "X₁, …, Xₙ は母集団から無作為に（どの要素も同じ確率で）、独立に取り出した値（有限母集団からは戻して選ぶ）",
+     "kind": "仮定",
+     "claim": "CLM-11",
+     "outside": "E(s²)＝σ² とは保証できない（偏った取り方では近づく先が母分散でない。有限母集団から戻さずに選ぶと E(s²)＝Nσ²/(N−1) で大きい側にずれる）",
+     "terms": [
+      "stats2:TERM-population",
+      "stats2:TERM-random-sampling",
+      "stats2:TERM-indep"
+     ]
+    }
+   ]
+  },
+  {
    "id": "stats2:REL-datavar-acf",
    "version": 1,
    "from": "stats2:TERM-data-var",
@@ -31311,6 +31422,88 @@
    ]
   },
   {
+   "id": "stats2:CLM-28c",
+   "label": "④-28c",
+   "kind": "極限",
+   "statement": {
+    "text": "行の合計 n₁, …, n_r（r≧2）をデータを取る前に決めた r 個の独立な多項の標本（列の区分は c≧2 個）で、H₀：どの行でも列の区分の確率が等しい（p₁ⱼ＝…＝p_rⱼ、j＝1, …, c）が正しいとき、どの nᵢ も→∞ で、共通の確率を列の合計の割合 n・ⱼ÷n（H₀ のもとでの最尤推定）で推定した期待度数 Eᵢⱼ＝nᵢ×n・ⱼ÷n による Σ(O−E)²/E の分布は、自由度 (r−1)(c−1) のカイ二乗分布 χ²((r−1)(c−1)) に近づく（同質性の検定。1つの集団から総数を取る ④-28b と同じ統計量・同じ自由度だが、取り方と H₀ が違う）"
+   },
+   "teaching": {
+    "conclusion": true,
+    "proof": "範囲外"
+   },
+   "verification": {
+    "math": [
+     {
+      "method": "独立な確かめ",
+      "by": "AC",
+      "date": "2026-11-17",
+      "version": "a83d3c6"
+     }
+    ],
+    "external": "2次資料"
+   },
+   "version": 1,
+   "premises": {
+    "subjects": [
+     "stats2:TERM-expected"
+    ]
+   },
+   "conclusion": {
+    "subjects": [
+     "stats2:TERM-test-stat"
+    ],
+    "predicates": [
+     "stats2:TERM-chi2"
+    ]
+   },
+   "conditions": [
+    {
+     "text": "各行の中の観測が独立に同じ確率で列の区分に入り、行どうしも独立",
+     "kind": "仮定",
+     "terms": [
+      "stats2:TERM-indep"
+     ],
+     "outside": "カイ二乗分布に近づくとは保証できない（同じ家族・同じ日にまとまって答える客を数えると、度数のばらつきが多項分布より大きくなる）",
+     "target": "claim"
+    },
+    {
+     "text": "列の区分はデータを見る前に決め、どの区分の確率も正",
+     "kind": "仮定",
+     "outside": "近づくとは保証できない（区分をデータを見て選ぶと、ずれが大きく見える切り方を選べる。確率0の区分があると、その列の期待度数が0になる）",
+     "target": "claim"
+    },
+    {
+     "text": "H₀（どの行でも列の区分の確率が等しい）が正しい",
+     "kind": "仮定",
+     "outside": "0 を中心とした（ずれのない）カイ二乗分布に近づくとは言えない（行ごとに割合が違えば、n とともに χ² は大きくなる）",
+     "target": "claim"
+    }
+   ],
+   "grounds": [
+    {
+     "source": {
+      "title": "独立な多項の標本（積多項）での Pearson のカイ二乗統計量の極限（原典は未照合。2次資料で、取り方・H₀・期待度数 nᵢ・n・ⱼ÷n・自由度 (r−1)(c−1) と「H₀ のもとで χ² に従う」という結論まで確かめた。極限の条件はその資料に書かれていない）",
+      "locator": "照合した2次資料：UC Berkeley Stat 135（2026年春）Lecture 32「Chi-square Test of Homogeneity」https://stat135.berkeley.edu/spring-2026/lectures/lecture-32.html"
+     },
+     "external": true
+    },
+    {
+     "source": {
+      "title": "残差 Wᵢⱼ＝(Oᵢⱼ−nᵢpⱼ)/√(nᵢpⱼ) の行は独立に N(0, I−vv′)（v＝(√pⱼ)ⱼ）に近づき、統計量は W を行の重みの方向 u＝(√(nᵢ/n))ᵢ と v に直交する部分へ射影した長さの2乗に近づく。残る次元は (r−1)(c−1) で、極限は u によらないので、行の合計の比 nᵢ÷n の条件は要らない"
+     }
+    },
+    {
+     "source": {
+      "title": "有限の n で列の合計 n・ⱼ＝0 となり E＝0 で統計量が定まらない事象は、列 j では確率 (1−pⱼ)^n（H₀ のもとで、n 個の観測がどれも列 j に入らない確率）で、どれかの列で起きる確率は Σⱼ(1−pⱼ)^n 以下になり0に近づくので、この事象を除いても分布の極限は変わらない（どの区分の確率も正の仮定から）"
+     }
+    },
+    {
+     "claim": "stats2:CLM-45"
+    }
+   ]
+  },
+  {
    "id": "stats2:CLM-29",
    "label": "④-29",
    "kind": "手続きの保証",
@@ -32690,6 +32883,52 @@
    ]
   },
   {
+   "id": "stats2:LRN-expect-popmean",
+   "op": "add",
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-pop-mean",
+   "reason": "母平均は期待値の文脈の見出しで、自分の定義を持たず、母集団の分布の期待値として読む（① の 2）。期待値の意味を先に持つ（#302）。",
+   "version": 1,
+   "units": [
+    "stats2:U18"
+   ]
+  },
+  {
+   "id": "stats2:LRN-var-popvar",
+   "op": "add",
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-pop-var",
+   "reason": "母分散は確率変数の分散の文脈の見出しで、自分の定義を持たず、母集団の分布の分散として読む（① の 2）。分散の意味を先に持つ（#302）。",
+   "version": 1,
+   "units": [
+    "stats2:U18"
+   ]
+  },
+  {
+   "id": "stats2:LRN-population-popmean",
+   "op": "add",
+   "from": "stats2:TERM-population",
+   "to": "stats2:TERM-pop-mean",
+   "reason": "母平均の対応の文は、母集団から無作為に1つ取り出した要素の値の期待値として読む（⑥ の 5 の 4：説明が実際に使う概念。#302）。",
+   "version": 1,
+   "units": [
+    "stats2:U17",
+    "stats2:U18"
+   ]
+  },
+  {
+   "id": "stats2:LRN-population-popvar",
+   "op": "add",
+   "from": "stats2:TERM-population",
+   "to": "stats2:TERM-pop-var",
+   "reason": "母分散の対応の文は、母集団から無作為に1つ取り出した要素の値の分散として読む（⑥ の 5 の 4：説明が実際に使う概念。#302）。",
+   "version": 1,
+   "units": [
+    "stats2:U17",
+    "stats2:U18"
+   ]
+  },
+  {
    "id": "stats2:LRN-var-cov",
    "op": "add",
    "from": "stats2:TERM-var",
@@ -33800,6 +34039,18 @@
    "via": "stats2:REL-statistic-rv"
   },
   {
+   "from": "stats2:TERM-pop-mean",
+   "to": "stats2:TERM-sample-mean",
+   "source": "candidate",
+   "via": "stats2:REL-xbar-popmean"
+  },
+  {
+   "from": "stats2:TERM-pop-var",
+   "to": "stats2:TERM-unbvar",
+   "source": "candidate",
+   "via": "stats2:REL-unbvar-popvar"
+  },
+  {
    "from": "stats2:TERM-data-var",
    "to": "stats2:TERM-acf",
    "source": "candidate",
@@ -34014,6 +34265,30 @@
    "to": "stats2:TERM-rv",
    "source": "add",
    "via": "stats2:LRN-function-rv"
+  },
+  {
+   "from": "stats2:TERM-expect",
+   "to": "stats2:TERM-pop-mean",
+   "source": "add",
+   "via": "stats2:LRN-expect-popmean"
+  },
+  {
+   "from": "stats2:TERM-var",
+   "to": "stats2:TERM-pop-var",
+   "source": "add",
+   "via": "stats2:LRN-var-popvar"
+  },
+  {
+   "from": "stats2:TERM-population",
+   "to": "stats2:TERM-pop-mean",
+   "source": "add",
+   "via": "stats2:LRN-population-popmean"
+  },
+  {
+   "from": "stats2:TERM-population",
+   "to": "stats2:TERM-pop-var",
+   "source": "add",
+   "via": "stats2:LRN-population-popvar"
   },
   {
    "from": "stats2:TERM-var",
