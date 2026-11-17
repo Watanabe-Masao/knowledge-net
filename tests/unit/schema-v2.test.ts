@@ -65,7 +65,10 @@ describe("型 v2", () => {
     ["見出しが定義を持つ", (d) => (heading(d).definition = "母平均の定義")],
     ["見出しに heading_of がない", (d) => delete heading(d).heading_of],
     ["見出しに対応の文がない", (d) => delete (heading(d).heading_of as Row).correspondence],
-    ["heading_of を書いた概念が見出しでない（骨格）", (d) => Object.assign(heading(d), { status: "skeleton", short: "s" })],
+    [
+      "heading_of を書いた概念が見出しでない（骨格）",
+      (d) => Object.assign(heading(d), { status: "skeleton", short: "s" }),
+    ],
   ];
   it("移るの通す操作と、条件の行の主語は、概念の id でも文でも書ける（改訂3。oneOf の重なりで id が止まっていた）", () => {
     const d = fixture();
