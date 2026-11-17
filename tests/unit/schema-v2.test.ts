@@ -19,6 +19,7 @@ const ok = (d: unknown) => validate(d) === true;
 const fixture = () => j("tests/fixtures/v2-sample.json");
 type Row = Record<string, unknown>;
 const rel = (d: { relations: Row[] }, type: string) => d.relations.find((r) => r.type === type)!;
+const heading = (d: { concepts: Row[] }) => d.concepts.find((c) => c.status === "heading")!;
 
 describe("型 v2", () => {
   it("手で書いた v2 の見本（⑤ の種類・主張・学ぶ順・条件の行）は型に合う", () => {
@@ -60,6 +61,14 @@ describe("型 v2", () => {
       (d) => delete (d as unknown as { course: { group_relations: Row[] } }).course.group_relations[0].claims,
     ],
     ["外す理由の文がない", (d) => delete ((d.concepts[1].basis as Row).excludes as Row[])[0].text],
+    // 改訂6（stats2-course #302）：文脈の見出しは自分の定義を持たず、heading_of（対応つき）を持つ。heading_of を書く概念は見出しにする
+    ["見出しが定義を持つ", (d) => (heading(d).definition = "母平均の定義")],
+    ["見出しに heading_of がない", (d) => delete heading(d).heading_of],
+    ["見出しに対応の文がない", (d) => delete (heading(d).heading_of as Row).correspondence],
+    [
+      "heading_of を書いた概念が見出しでない（骨格）",
+      (d) => Object.assign(heading(d), { status: "skeleton", short: "s" }),
+    ],
   ];
   it("移るの通す操作と、条件の行の主語は、概念の id でも文でも書ける（改訂3。oneOf の重なりで id が止まっていた）", () => {
     const d = fixture();

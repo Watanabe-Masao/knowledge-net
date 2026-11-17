@@ -10,7 +10,7 @@ import Redraw from "./Redraw";
 import { createPortal } from "react-dom";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { tokenMs } from "@math-lab/ui";
-import { type Network, bandOfCat, bandsOf } from "./data";
+import { type Network, bandOfCat, bandsOf, written } from "./data";
 import {
   type View,
   crossings,
@@ -709,7 +709,7 @@ export default function RelationMap({
   // 全体の見え方（設計書 3）：名前が読めないほど引いたら、語を薄くし、まとまりの名前・1文・数を大きく、まとまりの間は動詞付きの1本の矢印
   const far = !!v && v.k < FAR_K;
   const garrows = useMemo(() => groupArrows(net, L), [net, L]);
-  const filled = (id: string) => net.concepts.get(id)?.status === "filled";
+  const filled = (id: string) => written(net.concepts.get(id));
   const peekEdge = peek ? L.edges.find((e) => e.id === peek.edge) : undefined;
   // まとまりの「使う語」・見出しの共通の印：印だけでは分かりにくいので、押すと名前の一覧を浮かせて見せる（渡辺さん 2026-11-07）
   const [fold, setFold] = useState<{ ids: string[]; title: string; x: number; y: number } | null>(null);
