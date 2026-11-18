@@ -347,7 +347,13 @@ export function ApplyWalk({
     if (!t || !same(t, state)) return;
     const nx = check.targets.map((_, i) => i <= j);
     setSeen(nx);
-    onFit?.(t, check.mark);
+    // 2つを比べる課題は、色を付ける棒も合わせた先の k にする（A の棒のまま B に色を付けない。stats2-course #200）
+    onFit?.(
+      t,
+      check.probe === "compare" && t.k !== undefined && check.mark.bar !== undefined
+        ? { ...check.mark, bar: t.k }
+        : check.mark,
+    );
     const d = stepDir();
     say(
       nx.every(Boolean)

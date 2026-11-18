@@ -12,6 +12,7 @@ import {
   ScaleChoice,
   Seg,
   TheoryRows,
+  fmtCount,
   fmtN,
   oneIn,
   pc,
@@ -256,7 +257,7 @@ function ProbRun(
                 exp: hits[i]!,
                 th: N * Ps[i]!,
                 se: 2 * Math.sqrt(N * Ps[i]! * (1 - Ps[i]!)),
-                fmt: fmtN,
+                fmt: fmtCount,
               },
             ])}
           />
@@ -371,7 +372,8 @@ function ProbRun(
     );
   } else {
     const fa = pmfOf(app),
-      e: Ev = { op: free ? app.op : "ge", k: Math.min(app.k, app.n) },
+      // 自由でない課題は、問いの数え方に合わせる：「ちょうど と 以上」を比べる問い（B-02）は以上、ちょうどだけの問い（B-01）はちょうど（stats2-course #200）
+      e: Ev = { op: free ? app.op : rel ? "ge" : "eq", k: Math.min(app.k, app.n) },
       P = probOf(fa, e);
     const ks = fa.map((_, k) => k);
     const cut =
@@ -423,6 +425,21 @@ function ProbRun(
                 ? `ちょうど k 回の確率は、n が大きいほどどの k でも小さくなる（今はいちばん高い棒でも ${pctSig(Math.max(...fa))}）。だから珍しさは「以上」「以下」のように、それより極端な結果をまとめて測る。`
                 : `${P < 0.05 ? "この結果は 5% より起きにくい。" : "この結果は 5% 以上の確率で起きる。"}5% の境目は、検定で「偶然とは言いにくい」と判断する目安になる。`}
             </p>
+          </Card>
+        ) : !rel ? (
+          <Card title={evText(e)} sub={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">
+            <div className={s.tiles}>
+              <div {...MK(mkS.read === "eq")}>
+                ちょうど {e.k} 回<b data-testid="exp-app-eq">{pctSig(eq)}</b>
+                <i>棒1本</i>
+              </div>
+              <div>
+                成功割合<b>{pctSig(app.n ? e.k / app.n : 0)}</b>
+                <i>
+                  {e.k} 回 ÷ {app.n} 回
+                </i>
+              </div>
+            </div>
           </Card>
         ) : (
           <Card title={`ちょうど ${e.k} 回と ${e.k} 回以上`} sub={`n＝${app.n}・p＝${pc(app.p)}`} testid="exp-app">

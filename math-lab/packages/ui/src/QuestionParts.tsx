@@ -30,6 +30,8 @@ export const oneIn = (v: number) => {
   return `約 ${t} セットに1回`;
 };
 export const r2 = (v: number | undefined) => (v === undefined ? "—" : formatApply(v, NUM2));
+/** 回数の照らし：実験の回数は整数、理論の回数とずれは小数1桁（見えている数どうしの引き算が合う。29 − 26.7 ＝ ＋2.3。stats2-course #200 の ⑥） */
+export const fmtCount = (x: number) => (Number.isInteger(x) ? String(x) : x.toFixed(1));
 export const fmtN = (x: number) =>
   x >= 10 ? String(Math.round(x)) : x >= 0.1 ? String(Number(x.toPrecision(2))) : String(Number(x.toPrecision(1)));
 export const pc = (p: number) => formatApply(p, PCT0);

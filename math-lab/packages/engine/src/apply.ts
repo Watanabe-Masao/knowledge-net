@@ -469,6 +469,16 @@ export function applyCheck(s: ApplySolve): ApplyCheck {
       ],
       probe: "compare",
     };
+  // 「ちょうど k 回」を2つ比べる課題（B-01）も、確かめる段は A と B の両方に合わせる（片方だけだと比べられない。stats2-course #200）
+  if (s.method === "compare-eq")
+    return {
+      ...c,
+      targets: [
+        { n: s.a.n, p: s.a.p, k: s.a.k, op: OPS.eq },
+        { n: s.b.n, p: s.b.p, k: s.b.k, op: OPS.eq },
+      ],
+      probe: "compare",
+    };
   const g = c.goal,
     v = c.vars[0];
   if (g && v && (g.kind === "min" || g.kind === "max")) {
