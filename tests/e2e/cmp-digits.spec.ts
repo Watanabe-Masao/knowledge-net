@@ -71,3 +71,25 @@ test("観察の照らし：1つの行の数は同じ桁で、見えている 実
   expect(cmp.length).toBeGreaterThan(0);
   for (const r of cmp) check(`照らしの ${r.label}`, r.exp, r.th, r.d, r.se);
 });
+
+// 確かめる対象：観察の段に移ったら、起こしている途中の実験を起こし終え、そのあと触っていない間は表の数が変わらない（画面の原則 1。stats2-course #507）。
+// 想定する故障：▶ 1,000 セットの途中で観察へ移ると、観察の段で数が増え続ける（150 → 1,000 セット）・移った時点で止めて 1,000 に届かない。
+// 見つけ方：起こし始めてすぐ観察へ移り、すぐの表と 1.5 秒後の表を1回で読んで比べ、セット数が 1,000 であることを見る。
+// 既存との違い：上のテストは桁だけを見て、時間で数が動くかは見ない
+// 検出の確かめ（2026-11-18）：段が替わったときの起こし終えを外すと、観察の段で数が変わって落ちることを見た
+test("観察の段に移ったら実験を起こし終え、触っていない間は数が変わらない", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`./?${SRC}&x=stats2:EXP-binom-p&q=stats2:binom-B-01`);
+  const x = page.getByTestId("experiment");
+  await expect(x.getByRole("radiogroup").first()).toBeVisible();
+  for (const g of await x.getByRole("radiogroup").all()) await g.getByRole("radio").first().click();
+  await x.getByRole("button", { name: "この予測で実験する" }).click();
+  await x.getByTestId("exp-run-big").click();
+  await expect(x.getByTestId("exp-to-observe")).toBeEnabled({ timeout: 15000 });
+  await x.getByTestId("exp-to-observe").click();
+  const read = () => x.evaluate((el) => el.textContent ?? ""); // 観察の段の全体（表・セット数・判定）を1回で読む
+  const a = await read();
+  await page.waitForTimeout(1500);
+  expect(await read(), "観察の段で、触っていないのに数が変わった").toBe(a);
+  expect(a, "移った時点で 1,000 セットを起こし終えていない").toContain("1,000 セットでの見込み");
+});
