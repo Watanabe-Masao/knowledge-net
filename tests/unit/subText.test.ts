@@ -8,7 +8,7 @@
 import { describe, expect, it } from "vitest";
 import { createElement, Fragment } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { subText } from "../../math-lab/packages/ui/src/subText";
+import { subPlain, subText } from "../../math-lab/packages/ui/src/subText";
 import { sampleV2 } from "../support/sample";
 
 const html = (t: string) => renderToStaticMarkup(createElement(Fragment, null, subText(t)));
@@ -64,5 +64,10 @@ describe("文の中の下付き", () => {
           .replace(/_(?=[A-Za-z0-9\u4e00-\u9fff])/g, ""),
       ); // 字の続かない「_」（切り詰めた文の「b_…」）は残す
     }
+  });
+
+  it("読み上げの文：下付きの「_」と波かっこを外し、字は落とさない（画面の字と同じ並び）", () => {
+    for (const t of ["r_xy・z（偏相関）", "b_kx_k の和", "Σ_{i=1}^{n} xᵢ", "https://x.jp/grade_range と S_xy"])
+      expect(subPlain(t)).toBe(html(t).replace(/<\/?su[bp]>/g, ""));
   });
 });
