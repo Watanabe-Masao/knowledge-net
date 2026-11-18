@@ -35,6 +35,17 @@ export const fmtCount = (x: number) => (Number.isInteger(x) ? String(x) : x.toFi
 export const fmtN = (x: number) =>
   x >= 10 ? String(Math.round(x)) : x >= 0.1 ? String(Number(x.toPrecision(2))) : String(Number(x.toPrecision(1)));
 export const pc = (p: number) => formatApply(p, PCT0);
+/** 照らし（実験・理論・ずれ・ずれの目安）の小数の桁：目安が有効数字2桁で読める桁（少なくとも base 桁、多くて4桁）。
+ * 1つの行の数は同じ桁で、末尾の 0 も残して出す（見えている 実験−理論 が ずれ になる。27.0% − 26.7% ＝ ＋0.3。stats2-course #200） */
+export const cmpDigits = (se: number | undefined, base: number) =>
+  se !== undefined && se > 0 && Number.isFinite(se)
+    ? Math.min(4, Math.max(base, 1 - Math.floor(Math.log10(se))))
+    : base;
+/** ずれの符号：丸めて 0 になるずれには符号を付けない（「−0」と出さない） */
+export const signed = (d: number, dp: number) => {
+  const t = Math.abs(d).toFixed(dp);
+  return Number(t) === 0 ? t : `${d > 0 ? "＋" : "−"}${t}`;
+};
 
 /** 成功の回数ごとのセット数と割合（数つきの横棒）。inEvent の行は色を変える */
 export function DistRows({
@@ -251,11 +262,11 @@ export function CompareRows({
                 <i style={{ width: `${(e / max) * 100}%` }} />
                 <u style={{ left: `calc(${Math.min(99.5, (v / max) * 100)}% - 1px)` }} />
               </span>
-              <span>{pShort(e)}</span>
-              <span>{pShort(v)}</span>
+              {/* 実験・理論・ずれは小数1桁にそろえる（理論の 0.05% 未満だけは「<0.1%」。丸めて 0 に見せない） */}
+              <span>{`${(e * 100).toFixed(1)}%`}</span>
+              <span>{v > 0 && v < 0.0005 ? "<0.1%" : `${(v * 100).toFixed(1)}%`}</span>
               <span className={out ? s.bigD : undefined} data-out={out ? "true" : undefined}>
-                {d >= 0 ? "＋" : "−"}
-                {Number((Math.abs(d) * 100).toFixed(1))}
+                {signed(d * 100, 1)}
               </span>
             </div>
           );
@@ -299,9 +310,29 @@ export function CompareTable({ rows, independent = false }: { rows: CmpRow[]; in
         </thead>
         <tbody>
           {rows.map((r) => {
-            const f = r.fmt ?? r2,
-              df = r.fmt === pShort ? ptShort : f,
+            // 割合（%・差はポイント）・回数・平均などの数は、行ごとに同じ桁で出す（cmpDigits）。それ以外の書き方の行は渡された fmt のまま
+            const kind =
+                r.fmt === pShort
+                  ? "pct"
+                  : r.fmt === fmtCount
+                    ? "count"
+                    : r.fmt === undefined || r.fmt === r2
+                      ? "num"
+                      : undefined,
+              sc = kind === "pct" ? 100 : 1,
+              dp = cmpDigits(r.se === undefined ? undefined : r.se * sc, kind === "num" ? 2 : 1),
+              f =
+                kind === undefined
+                  ? r.fmt!
+                  : (v: number) =>
+                      kind === "count" && Number.isInteger(v)
+                        ? String(v)
+                        : `${(v * sc).toFixed(dp)}${kind === "pct" ? "%" : ""}`,
               d = r.exp === undefined ? undefined : r.exp - r.th,
+              unit = kind === "pct" ? " ポイント" : "",
+              dTxt = (x: number) =>
+                kind === undefined ? `${x >= 0 ? "＋" : "−"}${r.fmt!(Math.abs(x))}` : signed(x * sc, dp) + unit,
+              seTxt = (x: number) => (kind === undefined ? r.fmt!(x) : (x * sc).toFixed(dp) + unit),
               inside = r.se === undefined || d === undefined ? undefined : Math.abs(d) <= r.se;
             return (
               <tr
@@ -314,10 +345,10 @@ export function CompareTable({ rows, independent = false }: { rows: CmpRow[]; in
                 <td>{f(r.th)}</td>
                 {hasSe && (
                   <td>
-                    {d === undefined ? "—" : `${d >= 0 ? "＋" : "−"}${df(Math.abs(d))}`}
+                    {d === undefined ? "—" : dTxt(d)}
                     {r.se !== undefined && (
                       <small>
-                        ±{df(r.se)} <b className={inside ? s.inside : s.outside}>{inside ? "中" : "外"}</b>
+                        ±{seTxt(r.se)} <b className={inside ? s.inside : s.outside}>{inside ? "中" : "外"}</b>
                       </small>
                     )}
                   </td>
