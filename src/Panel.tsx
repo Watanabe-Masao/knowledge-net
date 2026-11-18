@@ -4,7 +4,7 @@
 // 関係のない組も同じページで、「まだ関係が書かれていない」と並べて見るを出す（空でも次の1手。画面の原則 9）
 import { RelationOpen, relationParts } from "./Relation";
 import s from "./Relation.module.css";
-import { Button, Disclosure, Muted, Row, Sheet } from "@math-lab/ui";
+import { Button, Disclosure, Muted, Row, Sheet, subText } from "@math-lab/ui";
 import { name } from "./Detail";
 import { compare, parsePair, type Network } from "./data";
 
@@ -162,7 +162,7 @@ export default function Panel({ net, edgeId, onClose, onSelect, page, onQuestion
         </>
       ) : (
         <>
-          <h4>{found.der!.statement}</h4>
+          <h4>{subText(found.der!.statement)}</h4>
           <Muted>前提：{found.der!.premises.map((p) => name(net, p)).join("・")}</Muted>
           <ol>
             {found.der!.steps.map((x) => (

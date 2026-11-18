@@ -2,7 +2,7 @@
 // 上＝前に知っておく（相手 → 中へ）、右＝姿を変える（中 → 外へ。近似・極限は破線）、下＝比べる（点線・矢印なし）、左＝この先で使う（中 → 外へ）。
 // 点を押すと、そのつながりを選ぶ（色と太さだけで示す。線を描き直す・点を流す・弾ませる動きは使わない：渡辺さん 2026-11-04「アニメーションが大袈裟」）。
 // 選んだつながりは、下に「問い → 段（解説）」で出す（RelDig）。
-import { Tour, sceneSupported } from "@math-lab/ui";
+import { Tour, sceneSupported, subText } from "@math-lab/ui";
 import { nodeAt, toTex, type FormulaNode } from "@math-lab/engine";
 import katex from "katex";
 import { RelationOpen, Badges, relationParts } from "./Relation";
@@ -245,7 +245,7 @@ export function RelDig({
     const d = net.derivations.find((x) => x.id === id);
     return d ? (
       <section className={st.dig} data-testid="rel-dig">
-        <b className={st.digTitle}>{d.statement}</b>
+        <b className={st.digTitle}>{subText(d.statement)}</b>
         <ol className={st.digSteps}>
           {d.steps.map((s) => (
             <li key={s}>{s}</li>
@@ -272,7 +272,7 @@ export function RelDig({
       ) : r.stages || r.chart ? (
         <RelationOpen net={net} r={r} context={`dig-${r.id}`} titled={false} />
       ) : (
-        <p className={st.digText}>{r.gist ?? r.description}</p>
+        <p className={st.digText}>{subText(r.gist ?? r.description)}</p>
       )}
       <button type="button" className={st.digOpen} onClick={() => onOpen(r.id)} data-testid="rel-dig-open">
         全画面で開く ›

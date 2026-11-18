@@ -16,6 +16,7 @@ import {
   TableWorkspace,
   haptic,
   type Detent,
+  subText,
 } from "@math-lab/ui";
 import { modelPmf, modelMoments } from "@math-lab/engine";
 import katex from "katex";
@@ -438,12 +439,12 @@ export default function Detail({
       {c.gist && (
         <section className={st.block} data-testid="concept-gist">
           <span className={st.lab}>つまり</span>
-          <p className={st.gist}>{c.gist}</p>
+          <p className={st.gist}>{subText(c.gist)}</p>
         </section>
       )}
       {!c.gist && c.short && c.definition ? (
         <p className={st.short} data-testid="concept-short">
-          {c.short}
+          {subText(c.short)}
         </p>
       ) : null}
     </div>
@@ -488,7 +489,7 @@ export default function Detail({
           {c.heading_of && (
             <section className={st.block} data-testid="concept-heading">
               <span className={st.lab}>文脈の見出し</span>
-              <p className={st.definition}>{c.heading_of.correspondence}</p>
+              <p className={st.definition}>{subText(c.heading_of.correspondence)}</p>
               <dl className={st.headingDiff}>
                 <dt>対象の違い</dt>
                 <dd>{c.heading_of.object_diff}</dd>
@@ -500,7 +501,7 @@ export default function Detail({
                     <dt>取り方</dt>
                     <dd data-testid="heading-sampling">{c.heading_of.context.sampling}</dd>
                     <dt>帰無仮説 H₀</dt>
-                    <dd data-testid="heading-h0">{c.heading_of.context.null_hypothesis.text}</dd>
+                    <dd data-testid="heading-h0">{subText(c.heading_of.context.null_hypothesis.text)}</dd>
                   </>
                 )}
               </dl>
@@ -539,7 +540,7 @@ export default function Detail({
           {(c.definition || c.short) && (
             <section className={st.block}>
               <span className={st.lab}>定義</span>
-              <p className={st.definition}>{c.definition ?? c.short}</p>
+              <p className={st.definition}>{subText(c.definition ?? c.short)}</p>
               {/* 定義の段では式を見せるだけ（記号を押して開くのは「式」の切り替えの作業台で） */}
               {mainF?.tex && (
                 <div
@@ -576,7 +577,7 @@ export default function Detail({
           <Media figures={c.figures} labs={c.labs} context="concept" open={false} />
           {c.principle && (
             <More title="なぜその形か（原理）" onOpen={reading}>
-              <p>{c.principle}</p>
+              <p>{subText(c.principle)}</p>
             </More>
           )}
           {c.conditions && (
@@ -620,13 +621,13 @@ export default function Detail({
                   {c.example && (
                     <div>
                       <b className={st.ok}>例</b>
-                      <p>{c.example}</p>
+                      <p>{subText(c.example)}</p>
                     </div>
                   )}
                   {c.counterexample && (
                     <div>
                       <b className={st.ng}>反例</b>
-                      <p>{c.counterexample}</p>
+                      <p>{subText(c.counterexample)}</p>
                       <Media labs={c.counterexample_labs} context="counterexample" />
                     </div>
                   )}
@@ -739,7 +740,7 @@ export default function Detail({
                               {r.other}
                               {r.tag && <span className={st.relTag}>{r.tag}</span>}
                             </span>
-                            <span className={st.relGist}>{r.text}</span>
+                            <span className={st.relGist}>{subText(r.text)}</span>
                             <span className={st.relChev} aria-hidden="true">
                               ›
                             </span>

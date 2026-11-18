@@ -13,7 +13,7 @@ import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import PathList from "./PathList";
 import Search from "./Search";
-import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent } from "@math-lab/ui";
+import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent, subText } from "@math-lab/ui";
 import st from "./App.module.css";
 import { KINDS_V2, MODES, experimentsFor, learnOrder, load, neighborhood, pairOpen, trace, type Network } from "./data";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
@@ -352,7 +352,7 @@ export default function App() {
         />
         <div className={st.embedCard} data-testid="embed-card">
           <b>{concept ? concept.name : "知識ネットワーク"}</b>
-          <Muted className={st.clamp}>{concept?.definition ?? "概念を押すと説明が出る"}</Muted>
+          <Muted className={st.clamp}>{subText(concept?.definition ?? "概念を押すと説明が出る")}</Muted>
           <a href={full} target="_blank" rel="noreferrer">
             拡大表示 ↗
           </a>
@@ -683,7 +683,7 @@ export default function App() {
                   <span className={st.swatch} style={{ background: `var(${TYPE_COLOR[t]})` }} /> <b>{t}</b>　
                   {k.reading.replace("□", "A").replace("■", "B")}
                 </label>
-                <Muted as="div">{k.definition}</Muted>
+                <Muted as="div">{subText(k.definition)}</Muted>
               </li>
             ))}
           </ul>

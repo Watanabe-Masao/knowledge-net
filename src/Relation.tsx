@@ -15,6 +15,7 @@ import {
   Tour,
   change,
   sceneSupported,
+  subText,
 } from "@math-lab/ui";
 import { modelPmf, normalDensity, poissonPmf } from "@math-lab/engine";
 import s from "./Relation.module.css";
@@ -261,19 +262,19 @@ export default function RelationCard({ net, r, onTitle, context, open = false, a
         <Badges net={net} r={r} />
         {onTitle ? (
           <Button variant="link" className={s.title} onClick={onTitle}>
-            {p.text}
+            {subText(p.text)}
           </Button>
         ) : (
-          <b className={s.title}>{p.text}</b>
+          <b className={s.title}>{subText(p.text)}</b>
         )}
       </div>
       {r.gist && (
         <p className={s.gist} data-testid="gist">
           <b>つまり</b>
-          {r.gist}
+          {subText(r.gist)}
         </p>
       )}
-      <p className={s.desc}>{r.description}</p>
+      <p className={s.desc}>{subText(r.description)}</p>
       {r.conditions?.length ? (
         <ul className={s.conds} aria-label="条件">
           {r.conditions.map((c) => (
@@ -426,12 +427,12 @@ export function RelationOpen({
     <article className={s.open} data-testid={`rel-${r.id}`}>
       <div className={s.head}>
         <Badges net={net} r={r} />
-        {titled && <b className={s.title}>{p.text}</b>}
+        {titled && <b className={s.title}>{subText(p.text)}</b>}
       </div>
       {r.gist && (
         <section className={s.block} data-testid="gist">
           <span className={s.lab}>つまり</span>
-          <p className={s.gistText}>{r.gist}</p>
+          <p className={s.gistText}>{subText(r.gist)}</p>
         </section>
       )}
       {rows.length ? (
@@ -439,21 +440,21 @@ export function RelationOpen({
           {rows.map(([k, label]) => (
             <div key={k} className={s.stage}>
               <dt>{label}</dt>
-              <dd>{r.stages![k as keyof NonNullable<Relation["stages"]>]}</dd>
+              <dd>{subText(r.stages![k as keyof NonNullable<Relation["stages"]>])}</dd>
             </div>
           ))}
         </dl>
       ) : (
         <section className={s.block}>
           {ALONE_LABEL[r.type] && <span className={s.lab}>{ALONE_LABEL[r.type]}</span>}
-          <p className={s.desc0}>{r.description}</p>
+          <p className={s.desc0}>{subText(r.description)}</p>
         </section>
       )}
       {r.chart && <RelChart r={r} />}
       {theoremBasis && (
         <section className={s.block} data-testid="rel-theorem-basis">
           <span className={s.lab}>通す定理（{theorem!.name}）</span>
-          <p className={s.desc0}>{theoremBasis}</p>
+          <p className={s.desc0}>{subText(theoremBasis)}</p>
         </section>
       )}
       {r.conditions?.length || r.conditions_detail?.length ? (
@@ -471,7 +472,7 @@ export function RelationOpen({
       {rows.length ? (
         <details className={s.moreDesc}>
           <summary>関係の説明</summary>
-          <p className={s.desc}>{r.description}</p>
+          <p className={s.desc}>{subText(r.description)}</p>
         </details>
       ) : null}
       {/* 図をその場で描く関係は、画像の図を重ねて出さない（同じことを2か所に出さない） */}

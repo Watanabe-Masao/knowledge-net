@@ -2,7 +2,7 @@
 // タブは URL の ?t= に持つ（探索は付けない）。一覧は教材の JSON だけから作る（教材の原本は読まない）。
 // 個人の記録（解いた・お気に入り）は持たない。単元と問題は Notion のページへのリンク。
 import { useState, type ReactNode } from "react";
-import { Button, Muted, Sheet } from "@math-lab/ui";
+import { Button, Muted, Sheet, subText } from "@math-lab/ui";
 import type { ExperimentData, Network } from "./data";
 import s from "./Shell.module.css";
 
@@ -641,7 +641,7 @@ export function ProblemsPage({ net, focus = null }: { net: Network; focus?: Focu
                           <small>
                             {p.id.replace(/^[\w-]+:/, "")}・{p.stage}
                           </small>
-                          {p.prompt}
+                          {subText(p.prompt)}
                         </a>
                       </li>
                     ))}
