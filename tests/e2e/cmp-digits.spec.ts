@@ -1,5 +1,5 @@
 // 観察の照らし（実験・理論・ずれ）の桁（stats2-course #200。渡辺さんの iPhone の画面 2026-11-18）。
-import { test, expect, type Locator } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const SRC = "src=sample/stats2.json";
 const num = (t: string) => {
@@ -39,20 +39,32 @@ test("観察の照らし：1つの行の数は同じ桁で、見えている 実
       10 ** -dp + 1e-9,
     );
   };
-  const rows: Locator = x.getByTestId("q-cmprows").getByRole("listitem");
-  expect(await rows.count()).toBeGreaterThan(0);
-  for (const r of await rows.all()) {
-    const c = await r.locator(":scope > span").allTextContents();
-    check(`分布の ${c[0]}`, c[2]!, c[3]!, c[4]!);
-  }
-  const trs = x.getByTestId("q-cmp").locator("tbody tr");
-  expect(await trs.count()).toBeGreaterThan(0);
-  for (const tr of await trs.all()) {
-    const td = tr.locator("td");
-    const [label, exp, th] = await Promise.all([0, 1, 2].map((i) => td.nth(i).innerText()));
-    const last = td.nth(3),
-      se = (await last.locator("small").innerText()).replace(/\s*[中外]$/, "").replace("±", ""),
-      d = (await last.innerText()).split("\n")[0]!;
-    check(`照らしの ${label}`, exp!, th!, d, se);
-  }
+  // 表は1回で読む（セルを1つずつ読むと、その間に数が動いた行を食い違いと見誤る）
+  const dist = await x
+    .getByTestId("q-cmprows")
+    .evaluate((el) =>
+      [...el.querySelectorAll("[role=listitem]")].map((li) =>
+        [...li.querySelectorAll(":scope > span")].map((e) => e.textContent ?? ""),
+      ),
+    );
+  expect(dist.length).toBeGreaterThan(0);
+  for (const c of dist) check(`分布の ${c[0]}`, c[2]!, c[3]!, c[4]!);
+  const cmp = await x.getByTestId("q-cmp").evaluate((el) =>
+    [...el.querySelectorAll("tbody tr")].map((tr) => {
+      const td = [...tr.querySelectorAll("td")],
+        small = td[3]?.querySelector("small");
+      return {
+        label: td[0]?.textContent ?? "",
+        exp: td[1]?.textContent ?? "",
+        th: td[2]?.textContent ?? "",
+        d: (td[3]?.firstChild?.textContent ?? "").trim(),
+        se: (small?.textContent ?? "")
+          .replace(/\s*[中外]\s*$/, "")
+          .replace("±", "")
+          .trim(),
+      };
+    }),
+  );
+  expect(cmp.length).toBeGreaterThan(0);
+  for (const r of cmp) check(`照らしの ${r.label}`, r.exp, r.th, r.d, r.se);
 });
