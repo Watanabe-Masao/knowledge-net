@@ -41,6 +41,8 @@ export const cmpDigits = (se: number | undefined, base: number) =>
   se !== undefined && se > 0 && Number.isFinite(se)
     ? Math.min(4, Math.max(base, 1 - Math.floor(Math.log10(se))))
     : base;
+/** 見えている桁に丸めた値（ずれは丸めた 実験 − 丸めた 理論 で出す。3.4% − 2.8% を ＋0.5 と出さない。stats2-course #200） */
+export const shown = (x: number, dp: number) => Number(x.toFixed(dp));
 /** ずれの符号：丸めて 0 になるずれには符号を付けない（「−0」と出さない） */
 export const signed = (d: number, dp: number) => {
   const t = Math.abs(d).toFixed(dp);
@@ -266,7 +268,7 @@ export function CompareRows({
               <span>{`${(e * 100).toFixed(1)}%`}</span>
               <span>{v > 0 && v < 0.0005 ? "<0.1%" : `${(v * 100).toFixed(1)}%`}</span>
               <span className={out ? s.bigD : undefined} data-out={out ? "true" : undefined}>
-                {signed(d * 100, 1)}
+                {signed(shown(e * 100, 1) - shown(v * 100, 1), 1)}
               </span>
             </div>
           );
@@ -330,10 +332,17 @@ export function CompareTable({ rows, independent = false }: { rows: CmpRow[]; in
                         : `${(v * sc).toFixed(dp)}${kind === "pct" ? "%" : ""}`,
               d = r.exp === undefined ? undefined : r.exp - r.th,
               unit = kind === "pct" ? " ポイント" : "",
+              // ずれは見えている 実験 と 理論 の差、中・外は見えている ずれ と 目安 で決める（表の数どうしで食い違わせない）
+              dS = d === undefined || kind === undefined ? d : shown(r.exp! * sc, dp) - shown(r.th * sc, dp),
               dTxt = (x: number) =>
-                kind === undefined ? `${x >= 0 ? "＋" : "−"}${r.fmt!(Math.abs(x))}` : signed(x * sc, dp) + unit,
+                kind === undefined ? `${x >= 0 ? "＋" : "−"}${r.fmt!(Math.abs(x))}` : signed(x, dp) + unit,
               seTxt = (x: number) => (kind === undefined ? r.fmt!(x) : (x * sc).toFixed(dp) + unit),
-              inside = r.se === undefined || d === undefined ? undefined : Math.abs(d) <= r.se;
+              inside =
+                r.se === undefined || dS === undefined
+                  ? undefined
+                  : kind === undefined
+                    ? Math.abs(dS) <= r.se
+                    : Math.abs(shown(dS, dp)) <= shown(r.se * sc, dp);
             return (
               <tr
                 key={r.label}
@@ -345,7 +354,7 @@ export function CompareTable({ rows, independent = false }: { rows: CmpRow[]; in
                 <td>{f(r.th)}</td>
                 {hasSe && (
                   <td>
-                    {d === undefined ? "—" : dTxt(d)}
+                    {dS === undefined ? "—" : dTxt(dS)}
                     {r.se !== undefined && (
                       <small>
                         ±{seTxt(r.se)} <b className={inside ? s.inside : s.outside}>{inside ? "中" : "外"}</b>
