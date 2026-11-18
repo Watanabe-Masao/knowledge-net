@@ -9,7 +9,7 @@
 import Redraw from "./Redraw";
 import { createPortal } from "react-dom";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { tokenMs } from "@math-lab/ui";
+import { tokenMs, subText } from "@math-lab/ui";
 import { type Network, bandOfCat, bandsOf, written } from "./data";
 import {
   type View,
@@ -1287,7 +1287,7 @@ export default function RelationMap({
                     {nameOf(net, peekRel?.from ?? peekEdge.from)} → {nameOf(net, peekRel?.to ?? peekEdge.to)}
                   </span>
                 </span>
-                {peekRel?.gist ? <p>{peekRel.gist}</p> : null}
+                {peekRel?.gist ? <p>{subText(peekRel.gist)}</p> : null}
               </div>
               <div className={s.peekMenu} role="menu">
                 {peekRel ? (

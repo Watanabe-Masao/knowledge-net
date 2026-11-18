@@ -3,6 +3,7 @@
 // 文に出る用語は、文の下に押せる札（44px）で並べる。押す先がない所（onTerm なし）では札にせず文字だけ（画面の原則 12）。
 // 区分のない教材（まだ移していない分類）は、今までどおり式の条件・データの条件の2つの一覧。
 import type { ConditionDetail, Network } from "./data";
+import { subText } from "@math-lab/ui";
 import s from "./Conditions.module.css";
 
 type Kind = "要件" | "仮定" | "目安" | "手掛かり";
@@ -75,7 +76,7 @@ export default function Conditions({
         {data !== undefined && <h4>式の条件</h4>}
         <ul className={plainClass}>
           {math.map((x) => (
-            <li key={x}>{x}</li>
+            <li key={x}>{subText(x)}</li>
           ))}
         </ul>
         {data?.length ? (
@@ -83,7 +84,7 @@ export default function Conditions({
             <h4>データの条件</h4>
             <ul>
               {data.map((x) => (
-                <li key={x}>{x}</li>
+                <li key={x}>{subText(x)}</li>
               ))}
             </ul>
           </>
@@ -105,33 +106,33 @@ export default function Conditions({
               {merge(rows).map(({ d, texts, terms }) => (
                 <li key={texts.join("\n")} className={s.item} data-testid="cond-item">
                   {texts.length === 1 ? (
-                    <p className={s.text}>{texts[0]}</p>
+                    <p className={s.text}>{subText(texts[0])}</p>
                   ) : (
                     <ul className={s.texts}>
                       {texts.map((t) => (
-                        <li key={t}>{t}</li>
+                        <li key={t}>{subText(t)}</li>
                       ))}
                     </ul>
                   )}
                   {d.claim && (
                     <p className={s.sub}>
                       <span className={s.subLab}>保証すること</span>
-                      {d.claim}
+                      {subText(d.claim)}
                     </p>
                   )}
                   {d.outside && (
                     <p className={s.sub}>
                       <span className={s.subLab}>外れたとき</span>
-                      {d.outside}
+                      {subText(d.outside)}
                     </p>
                   )}
                   {d.target && (
                     <p className={s.sub}>
                       <span className={s.subLab}>対象</span>
-                      {d.target}
+                      {subText(d.target)}
                       {d.source && (
                         <span className={s.src}>
-                          （{d.source.title}
+                          （{subText(d.source.title)}
                           {d.source.locator ? `　${d.source.locator}` : ""}）
                         </span>
                       )}

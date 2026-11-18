@@ -424,3 +424,17 @@ test("解説・触るは全画面のページで開き、← で閉じる", asyn
   await page.getByTestId("media-back").click();
   await expect(pg).toHaveCount(0);
 });
+
+// 確かめる対象：原本の文の「_」の下付き（r_xy・z）を、概念のページで下付きの字として描く（stats2-course #483 の B）。
+// 想定する故障：部品の読み方（subText）はあっても、画面の文の所で呼んでいない（下線のまま出る）。
+// 見つけ方：偏相関係数の定義の段に <sub> があり、文に「_」が残らないことを見る。既存との違い：tests/unit/subText.test は読み方だけを見て、画面の配線は見ない。
+// 検出の確かめ（2026-11-18）：定義の段の subText を外すと落ちることを見た
+test("文の中の下付きは、画面では下付きの字で出る（r_xy・z）", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-partial-corr");
+  const d = page.getByTestId("detail");
+  await openTab(page, "概要");
+  const def = d.locator("section", { hasText: "定義" }).locator("p").first();
+  await expect(def.locator("sub").first()).toHaveText("xy・z");
+  await expect(def).not.toContainText("_");
+});

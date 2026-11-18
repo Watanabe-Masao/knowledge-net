@@ -2,7 +2,7 @@
 // 経路の見方では、詳しくの代わりに、選んだ概念までの前提を学ぶ順（地図の番号と同じ）に並べる。
 // 行を押すとその場で概要を開き、「開く」でその概念をフォーカスで開く。最後の行は選んだ概念（ここ）。スマホでは地図に重なる下からの面
 import { useEffect, useState } from "react";
-import { BottomSheet, Card, type Detent } from "@math-lab/ui";
+import { BottomSheet, Card, type Detent, subText } from "@math-lab/ui";
 import { type Network, lead } from "./data";
 import st from "./PathList.module.css";
 
@@ -84,7 +84,7 @@ export default function PathList({ net, target, seq, onOpen, sheet }: Props) {
                   </span>
                 ) : null}
                 {text ? <p>{text}</p> : <p className={st.meta}>まだ説明がない。</p>}
-                {c.principle ? <p className={st.sub}>{c.principle}</p> : null}
+                {c.principle ? <p className={st.sub}>{subText(c.principle)}</p> : null}
                 <button type="button" className={st.go} onClick={() => onOpen(id)}>
                   {c.name} を開く<span aria-hidden="true">›</span>
                 </button>
