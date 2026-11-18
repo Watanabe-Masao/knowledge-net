@@ -13,7 +13,7 @@ import {
 } from "react";
 import { createRandom, emptySetRecord, runSets, type Mechanism, type SetRecord } from "@math-lab/engine";
 import { haptic, reduced, useTween } from "./motion";
-import { useRunner } from "./runner";
+import { STAGE_EVENT, useRunner } from "./runner";
 import s from "./Experiment.module.css";
 
 export const STAGES = ["予測", "実験", "観察", "考察", "応用", "比較"] as const;
@@ -398,6 +398,7 @@ export function useStages(initial = 0) {
   const [reached, setReached] = useState(initial);
   const go = (i: number) => {
     haptic();
+    window.dispatchEvent(new Event(STAGE_EVENT)); // 起こしている途中の実験を起こし終えてから段を替える（runner.ts）
     setStage(i);
     setReached((r) => Math.max(r, i));
     document.getElementById("exp-top")?.scrollIntoView?.({ block: "start", behavior: reduced() ? "auto" : "smooth" });
