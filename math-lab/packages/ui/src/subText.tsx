@@ -35,3 +35,23 @@ export function subText(text: string | undefined | null): ReactNode {
     ? parts[0]
     : parts.map((p, k) => <Fragment key={k}>{p}</Fragment>);
 }
+
+/** 読み上げの文（aria-label・title）：下付きの「_」と波かっこを外した文（r_xy・z → rxy・z）。字は落とさない */
+export function subPlain(text: string): string {
+  if (!text.includes("_")) return text;
+  return text
+    .split(URL)
+    .map((seg, i) =>
+      i % 2
+        ? seg
+        : seg
+            .replace(/_([A-Za-z0-9])([A-Za-z])_/g, "_$1\u0000$2_")
+            .replace(
+              SUBSCRIPT,
+              (_m, b: string, sub: string, sup?: string) =>
+                b + sub.replace(/^\{|\}$/g, "") + (sup ? sup.replace(/^\^\{?|\}$/g, "") : ""),
+            )
+            .replace(/\u0000/g, ""),
+    )
+    .join("");
+}

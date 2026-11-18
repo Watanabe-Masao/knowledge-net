@@ -28,4 +28,4 @@ export {
   type SceneState,
   type TourStep,
 } from "./Scene";
-export { subText } from "./subText";
+export { subPlain, subText } from "./subText";

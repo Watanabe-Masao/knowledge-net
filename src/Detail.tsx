@@ -16,6 +16,7 @@ import {
   TableWorkspace,
   haptic,
   type Detent,
+  subPlain,
   subText,
 } from "@math-lab/ui";
 import { modelPmf, modelMoments } from "@math-lab/engine";
@@ -734,7 +735,7 @@ export default function Detail({
                             className={st.rel}
                             aria-pressed={edgeSel === r.id}
                             onClick={() => onEdge(r.id)}
-                            aria-label={`${r.label}。${r.text}`}
+                            aria-label={`${r.label}。${subPlain(r.text)}`}
                           >
                             <span className={st.relText}>
                               {r.other}
