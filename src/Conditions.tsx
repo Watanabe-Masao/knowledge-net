@@ -43,7 +43,9 @@ function merge(rows: ConditionDetail[]): { d: ConditionDetail; texts: string[]; 
 /** 見出しの横の数（区分があれば区分ごと、なければ式・データ） */
 export function conditionCount(detail: ConditionDetail[] | undefined, math: string[], data: string[] = []): string {
   if (!detail?.length)
-    return [`式 ${math.length}`, data.length ? `データ ${data.length}` : ""].filter(Boolean).join("・");
+    return [math.length ? `式 ${math.length}` : "", data.length ? `データ ${data.length}` : ""]
+      .filter(Boolean)
+      .join("・");
   return ORDER.map((k) => [k, detail.filter((d) => kindOf(d) === k).length] as const)
     .filter(([, n]) => n)
     .map(([k, n]) => `${k} ${n}`)
