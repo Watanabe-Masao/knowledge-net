@@ -581,28 +581,32 @@ export default function Detail({
               <p>{subText(c.principle)}</p>
             </More>
           )}
-          {c.conditions && (
-            <More
-              title={
-                <>
-                  成立条件{" "}
-                  <span className={st.n}>
-                    {conditionCount(c.conditions_detail, c.conditions.math, c.conditions.data)}
-                  </span>
-                </>
-              }
-              onOpen={reading}
-            >
-              <Conditions
-                net={net}
-                detail={c.conditions_detail}
-                math={c.conditions.math}
-                data={c.conditions.data ?? []}
-                onTerm={onSelect}
-                plainClass={st.conds}
-              />
-            </More>
-          )}
+          {/* 要件の行がなく（math が空。仮定は主張の側。stats2-course #532）手掛かりもない概念には、空の段を置かない */}
+          {c.conditions &&
+            (c.conditions.math.length > 0 ||
+              (c.conditions.data?.length ?? 0) > 0 ||
+              (c.conditions_detail?.length ?? 0) > 0) && (
+              <More
+                title={
+                  <>
+                    成立条件{" "}
+                    <span className={st.n}>
+                      {conditionCount(c.conditions_detail, c.conditions.math, c.conditions.data)}
+                    </span>
+                  </>
+                }
+                onOpen={reading}
+              >
+                <Conditions
+                  net={net}
+                  detail={c.conditions_detail}
+                  math={c.conditions.math}
+                  data={c.conditions.data ?? []}
+                  onTerm={onSelect}
+                  plainClass={st.conds}
+                />
+              </More>
+            )}
           {(cl.about.length > 0 || cl.uses.length > 0) && (
             <More
               title={

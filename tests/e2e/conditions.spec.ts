@@ -118,3 +118,51 @@ test("関係の成立条件も同じ区分で出し、目安に対象と出典�
   await expect(g).toContainText("NIST統計ハンドブック");
   expect(errs).toEqual([]);
 });
+
+/** 標準正規分布の仮定の行を主張 ④-2 の条件へ移した教材（要件の行がなく math が空。stats2-course #532 の A）。noData なら手掛かりもない */
+async function emptyMath(page: Page, noData = false) {
+  await page.route("**/sample/stats2.json", async (r) => {
+    const d = await (await r.fetch()).json();
+    const c = d.concepts.find((x: { id: string }) => x.id === "stats2:TERM-std-normal");
+    const row = c.conditions_detail.find((x: { scope: string }) => x.scope === "math");
+    c.conditions = noData ? { math: [] } : { math: [], data: c.conditions.data };
+    c.conditions_detail = noData ? undefined : c.conditions_detail.filter((x: { scope: string }) => x.scope !== "math");
+    const cl = d.claims.find((x: { id: string }) => x.id === "stats2:CLM-2");
+    cl.conditions = [{ text: row.text, kind: "仮定", terms: ["stats2:TERM-normal"], outside: row.outside }];
+    await r.fulfill({ json: d });
+  });
+}
+
+// 確かめる対象：要件の行がない概念（math が空）を、画面が教材ごと外さずに読み、成立条件の段に手掛かりだけを出し、
+//   移した仮定を主張の条件として出すこと。手掛かりもないときは、成立条件の段を出さないこと（空の段を置かない）。
+// 想定する故障：型の math の最小件数が残り、教材ごと読まなくなる（2026-11-20 に今の画面で起きることを見た）・
+//   「成立条件 式 0」の空の段が出る・仮定が概念のページから消える（主張の側に出ない）。
+// 見つけ方：見本の読み込みを書き換え、標準正規分布の見出し・成立条件の段の数の文字・手掛かりの文・主張 ④-2 の条件の文を見る。
+// 既存との違い：上の2つは行のある概念と関係。ここは行が0の概念。claims.spec.ts は主張の条件の写し方（二項分布）。
+// 検出の確かめ（2026-11-20）：型の math に minItems 1 を戻すと見出しが出ず、Detail の空の段の止めを外すと「成立条件」の段が残って落ちることを見た
+test("要件の行がない概念は、成立条件に手掛かりだけを出し、仮定は主張の側に出す。手掛かりもなければ段を出さない", async ({
+  page,
+}) => {
+  const errs = noErrors(page);
+  await emptyMath(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-std-normal");
+  const d = page.getByTestId("detail");
+  await expect(d.locator("h2")).toHaveText("標準正規分布");
+  await openTab(d, "概要");
+  const cond = d.locator("summary", { hasText: "成立条件" });
+  await expect(cond).toContainText("手掛かり 1");
+  await cond.click();
+  await expect(d).toContainText("標準正規分布表で確率を読むのは");
+  await d.locator("summary", { hasText: "主張" }).click();
+  await expect(d.getByTestId("claim-stats2:CLM-2")).toContainText("X が正規分布 N(μ, σ²)（σ＞0）に従う");
+  expect(errs).toEqual([]);
+
+  await page.unrouteAll();
+  await emptyMath(page, true);
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-std-normal");
+  await expect(d.locator("h2")).toHaveText("標準正規分布");
+  await openTab(d, "概要");
+  await expect(d.locator("summary", { hasText: "主張" })).toHaveCount(1);
+  await expect(d.locator("summary", { hasText: "成立条件" })).toHaveCount(0);
+});
