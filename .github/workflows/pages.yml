@@ -1,36 +1,72 @@
 name: pages
-# main に入ったら、テストを通してから GitHub Pages に公開する（Settings → Pages の Source を「GitHub Actions」に）。
+# 公開（Settings → Pages の Source を「GitHub Actions」に）。
+# main への取り込みで check（型・単体テスト・build・画面のテスト。WebKit を含む）が通ったら、その実行が残した build（site-dist）を
+# そのまま公開する。作り直さず、テストも走らせ直さない：確かめた成果物と公開する成果物を同じにし、同じコミットで2回テストしない
+# （stats2-course #285 の決定 2026-11-19。前は main に入るたびに check と pages が同じコミットで全部のテストを走らせていた）。
+# 手で走らせたとき（workflow_dispatch）だけは、その場で全部のテストを通して作った build を公開する（前の形。検証は弱めない）。
 on:
-  push:
+  workflow_run:
+    workflows: [check]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 concurrency: {group: pages, cancel-in-progress: true}
 jobs:
   build:
     runs-on: ubuntu-latest
+    # check が main への push で成功したときだけ（PR の検証の結果は公開に使わない）
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    outputs:
+      go: ${{ steps.latest.outputs.go }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      # check の build を使うとき：そのコミットが今の main の先頭かを確かめる。先頭でなければ公開しない
+      # （後から入ったコミットの check が、新しい方を公開する。古い build で新しい公開を上書きしない）
+      - id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          head=$(gh api "repos/${{ github.repository }}/commits/main" --jq .sha)
+          echo "check のコミット ${SHA} ／ main の先頭 ${head}"
+          if [ "$head" = "$SHA" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "go=false" >> "$GITHUB_OUTPUT"; echo "::notice::main の先頭ではないので公開しない（新しいコミットの check が公開する）"; fi
+      - if: steps.latest.outputs.go == 'true' && github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v5
+        with:
+          name: site-dist
+          path: dist
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      # 手で走らせたとき：前と同じく、全部のテストを通してから作る
+      - if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v5
+      - if: github.event_name == 'workflow_dispatch'
+        uses: actions/setup-node@v5
         with: {node-version: "22"}
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run check
-      # 公開の前のテストが落ちたら、check.yml と同じく Playwright の記録（WebKit の trace・error-context）を残す。
-      # 公開を止めた失敗の原因を後から見られるように（2026-11-15 に WebKit の「たどった道」で公開が止まり、記録が残らなかった。stats2-course #285）
-      - if: failure()
+      - if: github.event_name == 'workflow_dispatch'
+        run: npm ci && npx playwright install --with-deps chromium webkit && npm run check
+      # 公開の前のテストが落ちたら、Playwright の記録（WebKit の trace・error-context）を残す（stats2-course #285）
+      - if: failure() && github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v5
         with:
           name: test-results
           path: test-results/
           retention-days: 7
-      - uses: actions/upload-pages-artifact@v5
+      - if: steps.latest.outputs.go == 'true'
+        run: test -f dist/index.html
+      - if: steps.latest.outputs.go == 'true'
+        uses: actions/upload-pages-artifact@v5
         with: {path: dist}
   deploy:
     needs: build
+    if: needs.build.outputs.go == 'true'
     runs-on: ubuntu-latest
     environment: {name: github-pages, url: "${{ steps.d.outputs.page_url }}"}
     steps:
