@@ -53,7 +53,10 @@ async function still(page: Page) {
       { timeout: 6000 },
     )
     .toBe("止まった");
+  // 位置が2回続けて同じになるまで（最大30回・約3秒）。止まらなければ、ここで最後の位置の並びを出して落とす。
+  // 黙って抜けると、次の操作が動いている地図に当たり、別の所（クリックの「stable」待ち・30秒の時間切れ）で落ちて原因が見えなくなる（stats2-course #285）
   let prev = "";
+  const seen: string[] = [];
   for (let i = 0; i < 30; i++) {
     const cur = await canvas.evaluate((el) => {
       const r = el.getBoundingClientRect();
@@ -61,8 +64,12 @@ async function still(page: Page) {
     });
     if (cur === prev) return;
     prev = cur;
+    seen.push(cur);
     await page.waitForTimeout(100);
   }
+  throw new Error(
+    `寄る動きが終わった（data-moving なし）のに、キャンバスの位置が約3秒止まらない。最後の位置：${seen.slice(-5).join(" → ")}（stats2-course #285）`,
+  );
 }
 const rectOf = (page: Page, id: string) =>
   page.getByTestId(`rm-term-${id}`).evaluate((el) => {
