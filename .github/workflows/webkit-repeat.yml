@@ -1,0 +1,55 @@
+name: webkit-repeat
+# 関係図の WebKit の画面のテスト（relation-map.spec.ts）を、同じコミットで何回も走らせて、ゆれの頻度と落ちる所を数える
+# （stats2-course #285。2026-11-30 を判断日にした：再発するか、するならどの型か）。
+# 公開や PR の止めには使わない。flake-repeat/ で始まるブランチへの push か、手で走らせたときだけ動く。
+# 再試行はしない（retries: 0 のまま）。落ちた回の記録（trace・error-context）は test-results に残す。
+on:
+  push:
+    branches: ["flake-repeat/**"]
+  workflow_dispatch:
+    inputs:
+      repeat: {description: "繰り返す回数", default: "20"}
+permissions:
+  contents: read
+jobs:
+  repeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: {node-version: "22"}
+      - run: npm ci
+      - run: npx playwright install --with-deps webkit
+      - run: npm run build
+      - name: WebKit の関係図のテストを繰り返す
+        env:
+          CI: "1"
+          REPEAT: ${{ github.event.inputs.repeat || '20' }}
+        run: |
+          set +e
+          npx playwright test --project=webkit --repeat-each="$REPEAT" --reporter=list > repeat.log 2>&1
+          code=$?
+          tail -40 repeat.log
+          {
+            echo "## WebKit の繰り返し（${REPEAT} 回 × relation-map.spec.ts）"
+            echo
+            echo '```'
+            grep -E '^\s+[0-9]+ (passed|failed|flaky|skipped)' repeat.log
+            echo '```'
+            echo
+            echo "落ちたテスト（spec の行と回数）："
+            echo
+            echo '```'
+            grep '✘' repeat.log | grep -oE 'relation-map.spec.ts:[0-9]+:[0-9]+ › [^(─]*' | sort | uniq -c | sort -rn | head -20
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
+      - if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: webkit-repeat
+          path: |
+            repeat.log
+            test-results/
+          retention-days: 14
