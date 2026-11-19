@@ -119,16 +119,20 @@ test("関係の成立条件も同じ区分で出し、目安に対象と出典�
   expect(errs).toEqual([]);
 });
 
-/** 標準正規分布の仮定の行を主張 ④-2 の条件へ移した教材（要件の行がなく math が空。stats2-course #532 の A）。noData なら手掛かりもない */
+/** 標準正規分布の仮定の行を主張 ④-2 の条件へ移した教材（要件の行がなく math が空。stats2-course #532 の A）。noData なら手掛かりもない。
+ *  見本がまだ移す前の形なら移し、教材の build の生成物（screen の段。すでに移した形）ならそのまま使う */
 async function emptyMath(page: Page, noData = false) {
   await page.route("**/sample/stats2.json", async (r) => {
     const d = await (await r.fetch()).json();
     const c = d.concepts.find((x: { id: string }) => x.id === "stats2:TERM-std-normal");
-    const row = c.conditions_detail.find((x: { scope: string }) => x.scope === "math");
-    c.conditions = noData ? { math: [] } : { math: [], data: c.conditions.data };
-    c.conditions_detail = noData ? undefined : c.conditions_detail.filter((x: { scope: string }) => x.scope !== "math");
     const cl = d.claims.find((x: { id: string }) => x.id === "stats2:CLM-2");
-    cl.conditions = [{ text: row.text, kind: "仮定", terms: ["stats2:TERM-normal"], outside: row.outside }];
+    const detail: { scope?: string; text: string; outside?: string }[] = c.conditions_detail ?? [];
+    const row = detail.find((x) => x.scope === "math");
+    if (row) cl.conditions = [{ text: row.text, kind: "仮定", terms: ["stats2:TERM-normal"], outside: row.outside }];
+    const data: string[] = c.conditions?.data ?? [];
+    c.conditions = noData ? { math: [] } : { math: [], data };
+    const rest = detail.filter((x) => x.scope !== "math");
+    c.conditions_detail = noData || !rest.length ? undefined : rest;
     await r.fulfill({ json: d });
   });
 }
@@ -151,7 +155,9 @@ test("要件の行がない概念は、成立条件に手掛かりだけを出�
   await expect(d.locator("h2")).toHaveText("標準正規分布");
   await openTab(d, "概要");
   const cond = d.locator("summary", { hasText: "成立条件" });
-  await expect(cond).toContainText("手掛かり 1");
+  // 区分の行（conditions_detail）があれば「手掛かり」、なければ「データ」。どちらでも「式 0」は出さない
+  await expect(cond).toContainText(/手掛かり 1|データ 1/);
+  await expect(cond).not.toContainText("式 0");
   await cond.click();
   await expect(d).toContainText("標準正規分布表で確率を読むのは");
   await d.locator("summary", { hasText: "主張" }).click();
