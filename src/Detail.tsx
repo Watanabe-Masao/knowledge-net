@@ -253,13 +253,17 @@ export default function Detail({
   onLab,
   sheet,
 }: Props) {
+  (window as unknown as { __diag?: (s: string) => void }).__diag?.(`render detail ${c?.id}`);
   // 「少し」の段の高さ：見出し・定義・学ぶ行動がちょうど見える高さ（中身の量で変わるので測る）
   const headRef = useRef<HTMLDivElement>(null);
   const [peekH, setPeekH] = useState(240);
   useEffect(() => {
     const el = headRef.current;
     if (!el || typeof ResizeObserver !== "function") return;
-    const ro = new ResizeObserver(() => setPeekH(el.offsetHeight));
+    const ro = new ResizeObserver(() => {
+      (window as unknown as { __diag?: (s: string) => void }).__diag?.(`ro peekH ${el.offsetHeight}`);
+      setPeekH(el.offsetHeight);
+    });
     ro.observe(el);
     return () => ro.disconnect();
   }, [sheet !== undefined]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -548,7 +552,11 @@ export default function Detail({
                   className={st.defTex}
                   data-testid="concept-def-tex"
                   dangerouslySetInnerHTML={{
-                    __html: katex.renderToString(mainF.tex, { throwOnError: false, displayMode: true }),
+                    __html:
+                      ((window as unknown as { __diag?: (s: string) => void }).__diag?.(
+                        `katex ${mainF.tex.slice(0, 40)}`,
+                      ),
+                      katex.renderToString(mainF.tex, { throwOnError: false, displayMode: true })),
                   }}
                 />
               )}
@@ -840,6 +848,7 @@ export default function Detail({
   const peek = peekOut;
   const from = leaveFrom.current; // 面が出た次の描画で消す（下の effect）
   // スマホ：地図の上に重なる下からの面。見出し・切り替え・定義が「少し」の段で見え、広げると面の残り全部で中身を送る（#42）
+  (window as unknown as { __diag?: (s: string) => void }).__diag?.(`render detail body done ${c?.id}`);
   return (
     <BottomSheet
       label={`${c.name} の詳しく`}

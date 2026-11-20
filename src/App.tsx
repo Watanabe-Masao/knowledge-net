@@ -145,6 +145,7 @@ function useNarrow() {
 const SHEET_MIN = 84;
 
 export default function App() {
+  (window as unknown as { __diag?: (s: string) => void }).__diag?.("render app");
   const narrow = useNarrow();
   // 詳しくの段（少し・半分・全部）。別の概念を選ぶと「少し」から
   const [detent, setDetent] = useState<Detent>("peek");
@@ -201,6 +202,9 @@ export default function App() {
       const top = aboveMap.current?.getBoundingClientRect().bottom;
       if (top === undefined || !peek) return;
       const sheet = detent === "min" ? SHEET_MIN : peek; // 半分・全部のときは面が地図に重なるので、少しの高さで決めたままにする
+      (window as unknown as { __diag?: (s: string) => void }).__diag?.(
+        `fit mapH top=${Math.round(top)} sheet=${sheet} tabH=${tabH}`,
+      );
       setMapH(Math.max(200, Math.round(innerHeight - (top + scrollY) - 24 - sheet - tabH)));
     };
     fit();
@@ -231,7 +235,10 @@ export default function App() {
     // 下のタブの高さ（詳しくの面はその上に乗る）
     const el = document.querySelector<HTMLElement>('[data-testid="tabbar"]');
     if (!el || typeof ResizeObserver !== "function") return;
-    const ro = new ResizeObserver(() => setTabH(el.offsetHeight));
+    const ro = new ResizeObserver(() => {
+      (window as unknown as { __diag?: (s: string) => void }).__diag?.(`ro tabH ${el.offsetHeight}`);
+      setTabH(el.offsetHeight);
+    });
     ro.observe(el);
     return () => ro.disconnect();
   });
