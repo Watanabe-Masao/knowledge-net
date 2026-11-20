@@ -697,6 +697,19 @@ test("たどった道：← で1つ前へ、長押しで新しい順のメニュ
       last = now;
     }, 250);
     window.addEventListener("popstate", () => d("popstate " + location.search));
+    // 押す前に見える所へ寄せる操作で動く入れ物（scroll）を記録する（3回目の診断）
+    window.addEventListener(
+      "scroll",
+      (e) => {
+        const el = e.target as Element | Document;
+        const node = el instanceof Document ? document.scrollingElement : (el as Element);
+        const tid =
+          (node as Element | null)?.closest?.("[data-testid]")?.getAttribute("data-testid") ??
+          (node as Element | null)?.tagName;
+        d(`scroll ${tid} ${Math.round((node as Element).scrollLeft)},${Math.round((node as Element).scrollTop)}`);
+      },
+      true,
+    );
   });
   const pickT = async (id: string) => {
     const el = m.getByTestId(`rm-term-${T(id)}`);
