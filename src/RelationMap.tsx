@@ -129,6 +129,7 @@ export default function RelationMap({
   const inMap = (id: string | null) => (id && L.terms.some((t) => t.id === id) ? id : null);
   /** この地図の中の選び（押した瞬間に変わる）。App の選びには、ダブルタップを待ってから渡す */
   const [pick, setPickRaw] = useState<string | null>(() => inMap(selected));
+  (window as unknown as { __diag?: (s: string) => void }).__diag?.(`render map pick=${pick}`);
   // 下の札で線の種類を絞る（いくつでも。語を選んでも続く。渡辺さん 2026-11-07）
   const [types, setTypes] = useState<Set<string>>(() => new Set());
   const toggleType = (k: string) =>
@@ -146,10 +147,16 @@ export default function RelationMap({
   const reduce = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   const commitT = useRef(0);
   const setPick = (id: string | null, now = false) => {
+    (window as unknown as { __diag?: (s: string) => void }).__diag?.(`setPick ${id} now=${now}`);
     setPickRaw(id);
     clearTimeout(commitT.current);
     if (now) onSelect(id);
-    else commitT.current = window.setTimeout(() => onSelect(id), dblMs());
+    else
+      commitT.current = window.setTimeout(() => {
+        (window as unknown as { __diag?: (s: string) => void }).__diag?.(`commit ${id}`);
+        onSelect(id);
+        (window as unknown as { __diag?: (s: string) => void }).__diag?.(`committed ${id}`);
+      }, dblMs());
   };
   // ---- たどった道（設計書 3：見てきた道は置かず、← の長押しでたどった道）----
   const [trail, setTrail] = useState<string[]>(() => trails.get(category) ?? []);
@@ -224,6 +231,9 @@ export default function RelationMap({
     animT.current = window.setTimeout(() => setAnim(false), ms);
   };
   const go = (nv: View, slow = false) => {
+    (window as unknown as { __diag?: (s: string) => void }).__diag?.(
+      `go k=${nv.k.toFixed(3)} x=${Math.round(nv.x)} y=${Math.round(nv.y)} slow=${slow}`,
+    );
     goes.current += 1;
     movingSince.current = Math.round(performance.now());
     setAnim(
@@ -1149,6 +1159,7 @@ export default function RelationMap({
                   } catch {
                     /* 振動できない端末 */
                   }
+                  (window as unknown as { __diag?: (s: string) => void }).__diag?.(`termclick ${t.id}`);
                   setPick(on ? null : t.id);
                 }}
               >

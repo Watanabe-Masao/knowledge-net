@@ -82,8 +82,10 @@ function useUrlState() {
     const p = toUrl({ sel, view, exp, q, cards, group, layout, tab }, new URLSearchParams(location.search));
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
+    (window as unknown as { __diag?: (s: string) => void }).__diag?.(`url write push=${push.current}`);
     if (push.current) history.pushState(null, "", url);
     else history.replaceState(null, "", url);
+    (window as unknown as { __diag?: (s: string) => void }).__diag?.("url written");
     push.current = false;
   }, [sel, view, exp, q, cards, group, layout, tab]);
   useEffect(() => {

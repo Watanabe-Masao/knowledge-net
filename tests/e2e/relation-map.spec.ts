@@ -697,6 +697,14 @@ test("たどった道：← で1つ前へ、長押しで新しい順のメニュ
       last = now;
     }, 250);
     window.addEventListener("popstate", () => d("popstate " + location.search));
+    // 描画の心拍（requestAnimationFrame）：JS は動くのに描画だけ止まる、を分けて見る
+    let lastF = performance.now();
+    const frame = (now: number) => {
+      if (now - lastF > 600) d(`frame gap ${Math.round(now - lastF)}ms`);
+      lastF = now;
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
     // 押す前に見える所へ寄せる操作で動く入れ物（scroll）を記録する（3回目の診断）
     window.addEventListener(
       "scroll",
@@ -730,7 +738,13 @@ test("たどった道：← で1つ前へ、長押しで新しい順のメニュ
       console.log("DIAG285 " + JSON.stringify(log));
       throw err;
     }
-    await still(page);
+    try {
+      await still(page);
+    } catch (err) {
+      mark("still failed");
+      console.log("DIAG285 " + JSON.stringify(log));
+      throw err;
+    }
     mark(`still ${id}`);
   };
   const back = page.getByTestId("rm-trail-back");
