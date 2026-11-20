@@ -719,8 +719,10 @@ test("たどった道：← で1つ前へ、長押しで新しい順のメニュ
       [(before?.x ?? 0) + 20, (before?.y ?? 0) + 12],
     );
     mark(`pick ${id} box=${JSON.stringify(before)} hit=${hit}`);
-    await el.click({ position: { x: 20, y: 12 } });
-    mark(`clicked ${id}`);
+    // 4回目の診断：画面の外に出ている語は、見えている端（x＝5）を押す（Playwright が入れ物をずらさないように）
+    const x = before && before.x + 20 > (page.viewportSize()?.width ?? 390) ? 5 : 20;
+    await el.click({ position: { x, y: 12 } });
+    mark(`clicked ${id} at x=${x}`);
     try {
       await expect(page).toHaveURL(new RegExp(`c=stats2%3ATERM-${id}(&|$)`));
     } catch (err) {
