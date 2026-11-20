@@ -25,6 +25,9 @@ jobs:
       - name: WebKit の関係図のテストを繰り返す
         env:
           CI: "1"
+          # 7回目の診断（#285）：JavaScriptCore の最適化の段（DFG・FTL）を切る。止まる回が消えれば、最適化の段の問題が強く疑われる
+          JSC_useDFGJIT: "0"
+          JSC_useFTLJIT: "0"
           REPEAT: ${{ github.event.inputs.repeat || '150' }}
         run: |
           set +e
