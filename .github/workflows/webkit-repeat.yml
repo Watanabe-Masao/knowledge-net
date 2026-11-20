@@ -8,7 +8,7 @@ on:
     branches: ["flake-repeat/**"]
   workflow_dispatch:
     inputs:
-      repeat: {description: "繰り返す回数", default: "20"}
+      repeat: {description: "繰り返す回数", default: "200"}
 permissions:
   contents: read
 jobs:
@@ -25,12 +25,13 @@ jobs:
       - name: WebKit の関係図のテストを繰り返す
         env:
           CI: "1"
-          REPEAT: ${{ github.event.inputs.repeat || '20' }}
+          REPEAT: ${{ github.event.inputs.repeat || '200' }}
         run: |
           set +e
-          npx playwright test --project=webkit --repeat-each="$REPEAT" --reporter=list > repeat.log 2>&1
+          npx playwright test --project=webkit --repeat-each="$REPEAT" -g "たどった道" --reporter=list > repeat.log 2>&1
           code=$?
           tail -40 repeat.log
+          grep DIAG285 repeat.log || echo 'DIAG285 なし'
           {
             echo "## WebKit の繰り返し（${REPEAT} 回 × relation-map.spec.ts）"
             echo

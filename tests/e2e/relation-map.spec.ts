@@ -663,9 +663,58 @@ test("全体の見え方：引くとまとまりの名前と1本の矢印。矢�
 // 検出の確かめ（2026-11-08）：戻ったときに道を縮める処理（backTo の slice）を外すと「戻ったのに道に積み直す」で落ちることを見た
 test("たどった道：← で1つ前へ、長押しで新しい順のメニューから戻る", async ({ page }) => {
   const m = await open(page);
+  // 診断（flake-repeat のブランチだけ。stats2-course #285）：押した瞬間の当たる要素・重なり・届いたイベントを記録し、落ちたときにログへ出す
+  await page.evaluate(() => {
+    const w = window as unknown as { __ev: unknown[] };
+    w.__ev = [];
+    for (const t of ["pointerdown", "pointerup", "click", "touchstart", "touchend"])
+      window.addEventListener(
+        t,
+        (e) => {
+          const el = e.target as Element | null;
+          const tid = el?.closest?.("[data-testid]")?.getAttribute("data-testid");
+          w.__ev.push({
+            t,
+            tid,
+            x: Math.round((e as MouseEvent).clientX ?? -1),
+            y: Math.round((e as MouseEvent).clientY ?? -1),
+            ms: Math.round(performance.now()),
+          });
+        },
+        true,
+      );
+  });
   const pickT = async (id: string) => {
-    await m.getByTestId(`rm-term-${T(id)}`).click({ position: { x: 20, y: 12 } });
-    await expect(page).toHaveURL(new RegExp(`c=stats2%3ATERM-${id}(&|$)`));
+    const el = m.getByTestId(`rm-term-${T(id)}`);
+    const before = await el.boundingBox();
+    const hit = await page.evaluate(
+      ([x, y]) => {
+        const h = document.elementFromPoint(x, y);
+        return {
+          tag: h?.tagName,
+          tid: h?.closest("[data-testid]")?.getAttribute("data-testid"),
+          cls: (h as HTMLElement | null)?.className?.toString().slice(0, 60),
+        };
+      },
+      [(before?.x ?? 0) + 20, (before?.y ?? 0) + 12],
+    );
+    await page.evaluate(() => ((window as unknown as { __ev: unknown[] }).__ev = []));
+    const t0 = Date.now();
+    await el.click({ position: { x: 20, y: 12 } });
+    try {
+      await expect(page).toHaveURL(new RegExp(`c=stats2%3ATERM-${id}(&|$)`));
+    } catch (err) {
+      const after = await el.boundingBox();
+      const ev = await page.evaluate(() => (window as unknown as { __ev: unknown[] }).__ev);
+      const hit2 = await page.evaluate(
+        ([x, y]) => document.elementFromPoint(x, y)?.closest("[data-testid]")?.getAttribute("data-testid"),
+        [(before?.x ?? 0) + 20, (before?.y ?? 0) + 12],
+      );
+      console.log(
+        "DIAG285 " + JSON.stringify({ id, url: page.url(), before, after, hit, hit2, ev, waitedMs: Date.now() - t0 }),
+      );
+      throw err;
+    }
     await still(page);
   };
   const back = page.getByTestId("rm-trail-back");
