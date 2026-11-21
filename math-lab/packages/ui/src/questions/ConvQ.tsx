@@ -201,7 +201,7 @@ export function ConvQ(props: QProps & { q: Extract<BinomQuestion, { form: "conv"
         </table>
         <p className={qs.note}>
           1セットごとに「当てはまる・当てはまらない」の 0 か 1。割合はその平均なので、分散は P(1−P)÷N、ずれの目安は √N
-          に反比例する（試行回数を増やす問いの「割合の標準偏差」と同じ形）。
+          に反比例する（1セットの回数を増やす問いの「割合の標準偏差」と同じ形）。
         </p>
         <p className={qs.note}>「どんな分布でも同じように近づくか？」は、大数の法則の実験室で確かめる。</p>
       </Card>
