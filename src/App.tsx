@@ -18,6 +18,8 @@ import st from "./App.module.css";
 import { KINDS_V2, MODES, experimentsFor, learnOrder, load, neighborhood, pairOpen, trace, type Network } from "./data";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
+// 診断（stats2-course #285。2026-11-22）：詳しく欄（Detail）を描かない。main には入れない
+const NO_DETAIL = true as boolean;
 
 const params = new URLSearchParams(location.search);
 const EMBED = params.get("embed") === "1";
@@ -648,7 +650,7 @@ export default function App() {
           }}
           sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined}
         />
-      ) : concept ? (
+      ) : concept && !NO_DETAIL ? (
         <Detail
           net={net}
           concept={concept}

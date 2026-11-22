@@ -25,10 +25,10 @@ jobs:
       - name: WebKit の関係図のテストを繰り返す
         env:
           CI: "1"
-          REPEAT: ${{ github.event.inputs.repeat || '20' }}
+          REPEAT: ${{ github.event.inputs.repeat || '150' }}
         run: |
           set +e
-          npx playwright test --project=webkit --repeat-each="$REPEAT" --reporter=list > repeat.log 2>&1
+          npx playwright test --project=webkit --repeat-each="$REPEAT" -g "たどった道" --reporter=list > repeat.log 2>&1
           code=$?
           tail -40 repeat.log
           {
