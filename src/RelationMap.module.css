@@ -1017,3 +1017,8 @@
   font-size: 12px;
   color: var(--ink-2);
 }
+
+/* 診断（stats2-course #285。2026-11-22）：地図を語のボタンだけにする（線・矢印・枠・印を描かない）。main には入れない */
+.lines, .garrows { display: none !important; }
+.frame { background: none !important; box-shadow: none !important; }
+:global([data-testid="concept-icon"]), :global(.concept-icon) { display: none !important; }
