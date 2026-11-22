@@ -767,7 +767,7 @@ export default function RelationMap({
             width: L.w,
             height: L.h,
             transform: `translate(${v.x}px,${v.y}px) scale(${v.k})`,
-            transition: anim || "none",
+            transition: "none", // 診断（#285。2026-11-22）：寄る動きのアニメーションを外す。main には入れない
           }}
           data-testid="rm-canvas"
           data-k={v.k.toFixed(3)}
