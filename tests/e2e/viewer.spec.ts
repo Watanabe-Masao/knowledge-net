@@ -110,7 +110,7 @@ test("つながりから別の概念へ移る・教材へのリンク", async ({
     .getByTestId("rel-stats2:REL-binom-poisson")
     .getByRole("button", { name: /二項分布 を移すと ポアソン分布/ })
     .click();
-  await page.getByTestId("edge-panel").getByRole("button", { name: "ポアソン分布 へ" }).click();
+  await page.getByTestId("edge-ends").getByRole("button", { name: "ポアソン分布" }).click(); // 概念のページから開いたつながりは全画面のページ
   await expect(d.getByRole("heading", { name: "ポアソン分布", exact: true })).toBeVisible();
   // 教材へは下のタブ「学習」から（選んだ概念の単元に絞って開く）
   await page.getByTestId("tabbar").getByRole("link", { name: /^学習/ }).click();
@@ -227,7 +227,7 @@ test("つながり一覧からも同じ説明を開ける", async ({ page }) => 
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toContainText("集団 N を大きく");
   await expect(panel.getByRole("radio", { name: /操作/ })).toBeVisible();
-  await panel.getByRole("button", { name: "超幾何分布 へ" }).click();
+  await page.getByTestId("edge-ends").getByRole("button", { name: "超幾何分布" }).click(); // 概念のページから開いたつながりは全画面のページ
   await expect(page.getByTestId("detail").getByRole("heading", { name: "超幾何分布", exact: true })).toBeVisible();
 });
 
@@ -254,6 +254,7 @@ test("つながりの説明を開くと下に余白", async ({ page }) => {
 test("概念の図：詳細に出て、押すと図を別の画面で大きく見る", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
+  await tab(page, /概要/); // 概念を選ぶと関係図が画面いっぱいになり、詳しくは下からの面（stats2-course #588）
   await page.getByTestId("media-concept").getByRole("radio", { name: /図/ }).click(); // 作業台のある概念では図は閉じておく
   const figs = page.getByTestId("figures-concept");
   await expect(figs.locator("img")).toHaveAttribute("src", /\/fig\/FIG-U14-concept\.svg$/);
@@ -1121,6 +1122,8 @@ test("下のタブでさがす・学習・実験室・問題集を切り替え�
   // ライブラリ → 分類 → 語 の3段（UI レビュー 16。故障：入口へ戻る所がない）。ライブラリを押すと入口に戻る
   await expect(crumbs.getByRole("button")).toHaveText(["ライブラリ", "確率分布"]);
   await expect(crumbs).toContainText("二項分布");
+  // 語を選んでいる間は上の帯（パンくず）が引っ込む（関係図の決定。渡辺さん 2026-11-07）。押すのは分類のページで
+  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布"));
   await crumbs.getByRole("button", { name: "ライブラリ" }).click();
   await expect(page.getByTestId("library")).toBeVisible();
   await expect(page.getByTestId("crumbs")).toHaveCount(0);
@@ -1155,7 +1158,7 @@ test("下のタブでさがす・学習・実験室・問題集を切り替え�
   // 探索へ戻り、パンくずの分類を押すとその分類の地図
   await bar.getByRole("link", { name: "さがす" }).click();
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
-  await page.getByTestId("crumbs").getByRole("button", { name: "確率分布" }).click();
+  await page.getByTestId("crumbs").getByRole("button", { name: "確率分布" }).dispatchEvent("click"); // 引っ込んだ帯の中のボタン
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
   await expect(page).not.toHaveURL(/c=stats2/);
   // タブは 380px で横にはみ出さず、押す所は 44px 以上
@@ -1457,12 +1460,12 @@ test("スマホで概念を選んでいる間は、ページが縦に送れず�
 // 確かめる対象：ブラウザの「戻る」で URL に持つ状態が全部戻る（stats2-course #142）。想定する故障：popstate で分類（g）・並べ方（lv）を戻さず、
 // 戻ったページが前の分類のページにならない。見つけ方：分類のページ（地図）で語を選び（履歴に積む）、戻ると、同じ分類の地図で語の選びがない
 test("戻ると、分類のページも URL のとおりに戻る", async ({ page }) => {
-  await page.setViewportSize({ width: 1024, height: 800 });
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布"));
   const m = page.getByTestId("relation-map");
   await expect(m).toHaveAttribute("aria-label", "確率分布の関係図");
-  await m.getByTestId("rm-term-stats2:TERM-binom").click();
-  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
+  await m.getByTestId("rm-term-stats2:TERM-rv").click(); // 上のまとまりの語（下の札の帯に重ならない所）
+  await expect(page).toHaveURL(/c=stats2%3ATERM-rv/);
   await page.goBack();
   await expect(page).not.toHaveURL(/c=stats2/);
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
