@@ -1,19 +1,18 @@
-/* 経路の「順に読む」。番号は地図の番号と同じ（中立の色）。選んだ概念の行だけ主の色 */
-.head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-2);
-  padding: 4px 0 8px;
+/* 前提をさかのぼる（全画面のページ）。番号は中立の色。選んだ概念の行だけ主の色の輪（画面の原則 18） */
+.page {
+  display: grid;
+  gap: var(--sp-3, 12px);
+  padding: 12px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
-.head b {
-  font-size: var(--fs-head);
-  font-weight: 600;
-  color: var(--ink);
-}
-.head span {
-  font-size: var(--fs-tag);
-  color: var(--ink-3);
+.lead {
+  margin: 0;
+  font-size: var(--fs-body, 15px);
+  line-height: 1.7;
+  color: var(--ink-2);
 }
 .list {
   list-style: none;
@@ -27,11 +26,11 @@
   all: unset;
   box-sizing: border-box;
   width: 100%;
-  min-height: 48px;
+  min-height: var(--tap);
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 0;
+  padding: 10px 0;
   cursor: pointer;
 }
 .row:focus-visible {
@@ -44,8 +43,8 @@
 }
 .no {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   display: inline-flex;
@@ -55,96 +54,38 @@
   color: var(--ink-2);
   font-variant-numeric: tabular-nums;
 }
-.name {
+.row[aria-current] .no {
+  border: 2px solid var(--accent);
+}
+.body {
   flex: 1;
   min-width: 0;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: grid;
+  gap: 2px;
 }
-.status {
-  flex: none;
+.name {
+  color: var(--ink);
+  font-weight: 600;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+}
+.me,
+.meta {
   font-size: var(--fs-tag);
+  font-weight: 400;
   color: var(--ink-3);
 }
-.row[aria-current] .no {
-  border-color: var(--accent);
+.me {
   color: var(--accent);
 }
-.row[aria-current] .name {
-  font-weight: 600;
+.text {
+  font-size: var(--fs-tag);
+  line-height: 1.55;
+  color: var(--ink-2);
 }
 .chev {
   flex: none;
-  width: 16px;
   color: var(--ink-3);
-  transition: transform var(--dur) var(--ease);
-}
-.chevOn {
-  transform: rotate(90deg);
-}
-/* その場で開く概要 */
-.panel {
-  display: grid;
-  gap: 6px;
-  padding: 0 0 12px 42px;
-  animation: panelIn var(--dur) var(--ease);
-}
-.panel p {
-  margin: 0;
-  font-size: var(--fs-small);
-  line-height: 1.7;
-  color: var(--ink-2);
-}
-.panel .sub {
-  color: var(--ink-3);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.meta {
-  font-size: var(--fs-tag);
-  color: var(--ink-3);
-}
-.go {
-  all: unset;
-  box-sizing: border-box;
-  justify-self: start;
-  min-height: 44px;
-  padding: 0 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  border-radius: var(--r-m);
-  border: 1px solid var(--line-strong);
-  font-size: var(--fs-small);
-  font-weight: 600;
-  color: var(--ink);
-}
-.go span {
-  color: var(--ink-3);
-}
-.go:active {
-  transform: scale(var(--press-scale));
-}
-.go:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-@keyframes panelIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .panel {
-    animation: none;
-  }
-  .chev {
-    transition: none;
-  }
 }

@@ -70,6 +70,9 @@ type Props = {
   onQuestion?: (experiment: string, question: string) => void;
   /** この概念で絞った実験室の一覧を開く（概念のページから実験室への入口は下の主ボタン1つ。渡辺さん 2026-11-04） */
   onLab?: () => void;
+  /** 前提をさかのぼる（全画面の一覧）を開く。数は分類をまたぐ学ぶ順でたどれる前提の数（stats2-course #588 B2） */
+  onTrace?: () => void;
+  traceCount?: number;
   /** スマホでは下からの面にする（段と、下のタブの高さ） */
   sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
 };
@@ -251,6 +254,8 @@ export default function Detail({
   edgeSel,
   onQuestion,
   onLab,
+  onTrace,
+  traceCount,
   sheet,
 }: Props) {
   // 「少し」の段の高さ：見出し・定義・学ぶ行動がちょうど見える高さ（中身の量で変わるので測る）
@@ -263,7 +268,7 @@ export default function Detail({
     ro.observe(el);
     return () => ro.disconnect();
   }, [sheet !== undefined]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 面の段（src/steps.ts）：段1＝名前の1行の右に札 → 段2＝つまりと選んだ札の中身 → フル＝ふだんの形。島の地図・一覧でも同じ面なので同じ段
+  // 面の段（src/steps.ts）：段1＝名前の1行の右に札 → 段2＝つまりと選んだ札の中身 → フル＝ふだんの形。関係図・一覧でも同じ面なので同じ段
   const compact = !!sheet && sheet.detent !== "full";
   const showLead = !compact || sheet?.detent === "half";
   const peekOut = sheet ? Math.max(64, peekH + 32) : 0; // 段1：つまみ・名前と札の行の下まで
@@ -710,6 +715,20 @@ export default function Detail({
       )}
       {tab === "rel" && (
         <div className={st.pane} data-testid="tab-rel">
+          {/* 前提をさかのぼる（stats2-course #588 B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧 */}
+          {onTrace && traceCount ? (
+            <ul className={st.rels}>
+              <li>
+                <button type="button" className={st.rel} onClick={onTrace} data-testid="trace-open">
+                  <span className={st.relText}>前提をさかのぼる</span>
+                  <span className={st.relGist}>{`学ぶ前に読む ${traceCount} の概念を、学ぶ順に並べる`}</span>
+                  <span className={st.relChev} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+              </li>
+            </ul>
+          ) : null}
           {groups.length ? (
             <>
               {/* つながりの地図（#188 07c）：点を押すと、そのつながりを下に「問い → 段」で掘る。一覧の行を押すと全画面で開く */}

@@ -53,7 +53,7 @@ W0a：U13〜U16 の8概念（確率変数・期待値・分散・独立・二項
 | 用途 | 採用 | 理由 |
 | --- | --- | --- |
 | 画面 | React＋TypeScript＋Vite | KSLP の残りの画面（概念比較・再構築演習）まで同じ土台で作れる |
-| ネットワーク | Cytoscape.js | 点と線の配置、拡大・移動、前提をさかのぼる表示 |
+| ネットワーク | 関係図（SVG と HTML の自前の部品。src/RelationMap.tsx） | 分類ごとの関係図。前提をさかのぼるは全画面の一覧。Cytoscape.js は島の地図を外したとき（2026-11-24。stats2-course #588）に外した |
 | 数式 | KaTeX | 概念の式の表示 |
 | データの検査 | 画面側は Ajv、教材側は build（Python） | どちらも同じ JSON Schema をそのまま使う（Zod で書き写すと型が2か所になるので、計画の Zod から変えた） |
 | テスト | Vitest＋Playwright | |

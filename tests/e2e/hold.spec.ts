@@ -131,33 +131,3 @@ test("長押しの手触り：一覧・関係図の語と線は、押さえて�
   const lr = await holdAt(page, pt!.x, pt!.y, look(page, "[data-testid=rm-lines] path[data-probe]"));
   expectHoldFeel("関係図の線", lr, false);
 });
-
-test("長押しの手触り：島の地図の点も、押さえている間に縁が光る", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.route("**/sample/stats2.json", async (r) => {
-    const d = await (await r.fetch()).json();
-    delete d.course.relation_map_ready; // 島の地図で開く
-    await r.fulfill({ json: d });
-  });
-  await page.goto(`${SRC}&lv=map&g=${encodeURIComponent("確率分布")}`);
-  await expect
-    .poll(() => page.evaluate(() => (window as any).kn?.getElementById("stats2:TERM-binom").length ?? 0))
-    .toBe(1);
-  const p = await page.evaluate(() => {
-    const n = (window as any).kn.getElementById("stats2:TERM-binom");
-    const r = (window as any).kn.container().getBoundingClientRect();
-    const q = n.renderedPosition();
-    return { x: r.left + q.x, y: r.top + q.y };
-  });
-  const border = () =>
-    page.evaluate(() => {
-      const w = parseFloat((window as any).kn.getElementById("stats2:TERM-binom").style("border-width"));
-      return { sunk: false, lit: w >= 2 };
-    });
-  const before = await border();
-  expectHoldFeel(
-    "島の地図の点",
-    await holdAt(page, p.x, p.y, async () => ({ ...(await border()), lit: (await border()).lit && !before.lit }), true),
-    false,
-  );
-});

@@ -2,7 +2,7 @@
 .root {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 55; /* 概念のページ（40）・つながりのページ（45）・図の面（50）の上。概念のページの上の帯（← 地図へ）が閉じるボタンに重なっていた（stats2-course #588） */
   display: grid;
   place-items: center;
   padding: 56px var(--sp-3) calc(var(--sp-4) + env(safe-area-inset-bottom));

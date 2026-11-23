@@ -1,21 +1,21 @@
-// 画面全体。状態は URL に持つ（?t=タブ&c=選んだ概念&view=around|all&trace=1&x=実験室&embed=1&src=データ）。
+// 画面全体。状態は URL に持つ（?t=タブ&c=選んだ概念&view=path（前提をさかのぼる）&x=実験室&g=分類&lv=並べ方&embed=1&src=データ）。
 // 下のタブは4つ（探索・学習・実験室・問題集。stats2-course #130）。埋め込みではタブとヘッダーを出さない。
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
-// c を付けて開いたとき（Notion の 🕸 リンク）は、その概念の周辺図から始める。
-// Notion の埋め込み（高さ約320px）では embed=1：選んだ概念の周辺図と、短い説明と「大きく開く ↗」。
+// 概念の地図は関係図の1つ（stats2-course #587・#588。渡辺さん 2026-11-23「こちらに一本化」）：どの入口（検索・ライブラリ・一覧・Notion の 🕸 リンク）から
+// 概念を開いても、その概念の分類の関係図で開く。分類をまたぐ学ぶ順は「前提をさかのぼる」（全画面の一覧）で読む。
+// Notion の埋め込み（高さ約320px）では embed=1：概念の名前と短い説明と「拡大表示 ↗」。
 import { STEPS, stepDown } from "./steps";
 import Library from "./Library";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
 import RelationMap from "./RelationMap";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Detail, { name } from "./Detail";
-import Graph, { TYPE_COLOR } from "./Graph";
 import Panel from "./Panel";
 import PathList from "./PathList";
 import Search from "./Search";
-import { Button, ErrorText, Experiment, FullView, Muted, Segmented, Sheet, type Detent, subText } from "@math-lab/ui";
+import { Button, ErrorText, Experiment, FullView, Muted, Sheet, type Detent, subText } from "@math-lab/ui";
 import st from "./App.module.css";
-import { KINDS_V2, MODES, experimentsFor, learnOrder, load, neighborhood, pairOpen, trace, type Network } from "./data";
+import { experimentsFor, learnOrder, load, pairOpen, trace, type Network } from "./data";
 import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
@@ -139,23 +139,14 @@ function useNarrow() {
   return n;
 }
 
-/** 詳しくの面をしまったときの高さ（つまみと名前の1行） */
-const SHEET_MIN = 84;
-
 export default function App() {
   const narrow = useNarrow();
   // 詳しくの段（少し・半分・全部）。別の概念を選ぶと「少し」から
   const [detent, setDetent] = useState<Detent>("peek");
-  const [recenter, setRecenter] = useState(0); // 探索のタブをもう一度押すと、面をしまい地図を選んだ概念に合わせて収め直す
   const [tabH, setTabH] = useState(58);
-  // スマホで概念を選んでいるとき：上を詰め（探すは印に）、地図の高さを上の欄と詳しくの面（少し）の間の空きに合わせる（#42）
-  const [peek, setPeek] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
-  const aboveMap = useRef<HTMLDivElement>(null);
-  const [mapH, setMapH] = useState<number | undefined>(undefined);
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
-  const [hidden, setHidden] = useState<Set<string>>(new Set());
   const {
     sel,
     setSel,
@@ -175,7 +166,10 @@ export default function App() {
     setTab,
   } = useUrlState();
   // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
-  const locked = narrow && !!sel && tab === "explore" && !exp;
+  // 概念を選んでいる間は、どの幅でも関係図が画面いっぱいになり、詳しくは下からの面で出す（関係図に一本化。stats2-course #588。
+  // 広い画面で面にしないと、詳しくが画面いっぱいの関係図の後ろに隠れた）
+  const sheeted = narrow || !!sel;
+  const locked = sheeted && !!sel && tab === "explore" && !exp;
   useEffect(() => {
     if (!locked) return;
     scrollTo(0, 0);
@@ -190,24 +184,9 @@ export default function App() {
       r.style.overscrollBehavior = "";
     };
   }, [locked]);
-  useLayoutEffect(() => {
-    if (!narrow || !sel || tab !== "explore" || exp) {
-      setMapH(undefined);
-      return;
-    }
-    const fit = () => {
-      const top = aboveMap.current?.getBoundingClientRect().bottom;
-      if (top === undefined || !peek) return;
-      const sheet = detent === "min" ? SHEET_MIN : peek; // 半分・全部のときは面が地図に重なるので、少しの高さで決めたままにする
-      setMapH(Math.max(200, Math.round(innerHeight - (top + scrollY) - 24 - sheet - tabH)));
-    };
-    fit();
-    addEventListener("resize", fit);
-    return () => removeEventListener("resize", fit);
-  }, [narrow, sel, tab, exp, peek, tabH, detent, view, searchOpen]);
-  // 下から開く面は1つだけ：2つの概念のページ（edge。関係と比べる）か、線の見方（kinds）・比べる相手を選ぶ（pick）
+  // 下から開く面は1つだけ：2つの概念のページ（edge。関係と比べる）か、比べる相手を選ぶ（pick）
   const [edgeSel, setEdgeRaw] = useState<string | null>(null);
-  const [modal, setModalRaw] = useState<"kinds" | "pick" | null>(null);
+  const [modal, setModalRaw] = useState<"pick" | null>(null);
   const setEdgeSel = (id: string | null) => {
     setEdgeRaw(id);
     if (id) setModalRaw(null);
@@ -265,63 +244,11 @@ export default function App() {
     });
   }, []);
 
-  // 経路：選んだ概念の前提をさかのぼった点だけを、学ぶ順（遠い前提から）に番号を付けて上から並べる
-  const tracing = view === "path" && !!sel;
-  const tr = useMemo(() => (net && sel && tracing ? trace(net, sel) : null), [net, sel, tracing]);
-  const path = useMemo(() => {
-    if (!tr || !sel || !net) return undefined;
-    const only = new Set<string>([sel, ...tr.order]);
-    for (const st of tr.steps) if (net.derivations.some((d) => d.id === st.via)) only.add(st.via); // 導出の点
-    const seq = learnOrder(tr);
-    const numbers = new Map(seq.map((id, i) => [id, i + 1] as const));
-    return { only, numbers, seq };
-  }, [tr, sel, net]);
-  const highlight = useMemo(() => new Set<string>(), []);
-  const [isleFocus, setIsleFocus] = useState<string | null>(null); // ライブラリで押した分類（島の地図をその島から開く。試作）
-  // ライブラリから分類を開いたとき：その分類の語と、その中の導出だけ（ほかの分類の点と線は出さない。試作）
-  const catOnly = useMemo(() => {
-    if (!net || !group || group === "*") return undefined;
-    const core = new Set([...net.concepts.values()].filter((c) => c.category === group).map((c) => c.id));
-    for (const d of net.derivations) if (core.has(d.conclusion)) core.add(d.id);
-    return core.size ? core : undefined;
-  }, [net, group]);
-  // 分類（データに出てくる順）と、絞ったときに出す点：分類の概念 ＋ 1本の線でつながる点（薄く）＋ その間の導出
-  const groups = useMemo(
-    () => (net ? [...new Set([...net.concepts.values()].map((c) => c.category).filter((x): x is string => !!x))] : []),
-    [net],
-  );
-  // 選んだ概念があって分類を決めていないときは、その概念の分類で絞る（全体図でも迷わないように）
-  const eff = group ?? (sel ? (net?.concepts.get(sel)?.category ?? null) : null);
-  const grouped = useMemo(() => {
-    if (!net || !eff) return { only: undefined, outer: undefined };
-    const core = new Set([...net.concepts.values()].filter((c) => c.category === eff).map((c) => c.id));
-    if (!core.size) return { only: undefined, outer: undefined };
-    const only = new Set(core),
-      outer = new Set<string>();
-    for (const r of net.relations) {
-      if (core.has(r.from) && !core.has(r.to)) {
-        only.add(r.to);
-        outer.add(r.to);
-      }
-      if (core.has(r.to) && !core.has(r.from)) {
-        only.add(r.from);
-        outer.add(r.from);
-      }
-    }
-    for (const d of net.derivations)
-      if ([d.conclusion, ...d.premises].some((p) => core.has(p))) {
-        only.add(d.id);
-        for (const p of [d.conclusion, ...d.premises])
-          if (!core.has(p)) {
-            only.add(p);
-            outer.add(p);
-          }
-      }
-    return { only, outer };
-  }, [net, eff]);
-  const positions = useMemo(
-    () => (net && sel && (view === "around" || EMBED) && net.concepts.has(sel) ? neighborhood(net, sel) : undefined),
-    [net, sel, view],
+  // 前提をさかのぼる（view=path）：選んだ概念の前提を学ぶ順（遠い前提から）に並べた全画面の一覧（stats2-course #588 B2）
+  const tr = useMemo(() => (net && sel && net.concepts.has(sel) ? trace(net, sel) : null), [net, sel]);
+  const seq = useMemo(
+    () => (tr ? learnOrder(tr).filter((id) => id !== sel && net?.concepts.has(id)) : []),
+    [tr, sel, net],
   );
   if (!net)
     return (
@@ -333,26 +260,20 @@ export default function App() {
       </main>
     );
   const concept = sel ? net.concepts.get(sel) : undefined;
-  // 関係図（stats2-course #235・#239）：移した分類の地図。語を選んでも関係図のまま、下の面に島の地図と同じ詳しく（Detail）を出す
-  const relmap =
-    !!group && group !== "*" && layout === "map" && net.mapReady.has(group) && (!concept || concept.category === group);
+  const tracing = view === "path" && !!concept;
+  // 地図は関係図（stats2-course #588）：概念を選んでいればその概念の分類、選んでいなければ分類のページの「地図」で開いた分類
+  const mapCat = concept ? concept.category : group && group !== "*" && layout === "map" ? group : undefined;
 
   if (EMBED) {
+    // 埋め込み（Notion の 360×320）は入口：名前・短い説明・拡大表示（地図は大きく開いた先の関係図で見る。stats2-course #588）
     const full = `${location.pathname}?${new URLSearchParams({ ...(sel ? { c: sel } : {}), ...(SRC ? { src: SRC } : {}) }).toString()}`;
     return (
       <main className={st.embed}>
-        <Graph
-          net={net}
-          selected={sel}
-          highlight={highlight}
-          hidden={hidden}
-          positions={positions}
-          onSelect={setSel}
-          fill
-        />
         <div className={st.embedCard} data-testid="embed-card">
           <b>{concept ? concept.name : "知識ネットワーク"}</b>
-          <Muted className={st.clamp}>{subText(concept?.definition ?? "概念を押すと説明が出る")}</Muted>
+          <Muted className={st.clamp}>
+            {subText(concept?.gist ?? concept?.definition ?? "概念を開くと、関係図と説明が出る")}
+          </Muted>
           <a href={full} target="_blank" rel="noreferrer">
             拡大表示 ↗
           </a>
@@ -445,7 +366,7 @@ export default function App() {
         <TabBar tab={tab} onTab={setTab} badges={badges} focusName={focus?.name} />
       </main>
     );
-  const compact = narrow && !!concept;
+  const compact = sheeted && !!concept;
   return (
     <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <div className={st.top} data-edge="top">
@@ -491,7 +412,7 @@ export default function App() {
         <Crumbs
           items={[
             // いちばん上はライブラリ（入口）。ライブラリ → 分類 → 語 の3段をパンくずで示す（UI レビュー「地図の変更で見直した点」1）
-            ...(concept || eff
+            ...(concept || group
               ? [
                   {
                     label: "ライブラリ",
@@ -515,11 +436,10 @@ export default function App() {
                         },
                       ]
                     : []),
-                  { label: concept.name, ...(path ? { onClick: () => setView("around") } : {}) },
-                  ...(path ? [{ label: "前提をさかのぼる" }] : []),
+                  { label: concept.name },
                 ]
-              : eff
-                ? [{ label: eff === "*" ? "全部の概念" : eff }]
+              : group && group !== "*"
+                ? [{ label: group }]
                 : []),
           ]}
         />
@@ -527,45 +447,23 @@ export default function App() {
       {errors.map((e) => (
         <ErrorText key={e}>{e}</ErrorText>
       ))}
-      {concept && !relmap ? (
-        <div className={st.views} ref={aboveMap}>
-          <Segmented
-            label="見方"
-            value={view}
-            onChange={(v) => {
-              if (v) setView(v as View);
-            }}
-            items={[
-              { value: "around", label: "まわり" },
-              { value: "path", label: "たどる" },
-              { value: "all", label: "全体" },
-            ]}
-          />
-        </div>
-      ) : null}
-      {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ（試作）。分類を押すとその分類の地図、語を押すと概念 */}
-      {/* 分類のページ（ライブラリでタイルを押したあと）：並べ方の切り替え。正方形・一覧はリストビュー、地図は島の地図（stats2-course #228） */}
-      {(!sel || relmap) && group && group !== "*" ? (
+      {/* 分類のページ（ライブラリでタイルを押したあと）：並べ方の切り替え。正方形・一覧はリストビュー、地図は関係図（stats2-course #228） */}
+      {!sel && group && group !== "*" ? (
         <div className={st.catBar} data-edge="top">
           <LayoutSwitch value={layout} onChange={setLayout} />
         </div>
       ) : null}
-      {!sel && !group ? (
-        <Library
-          net={net}
-          onConcept={setSel}
-          onGroup={(cat) => {
-            setIsleFocus(cat);
-            openGroup(cat);
-          }}
-        />
-      ) : !sel && group && group !== "*" && layout !== "map" ? (
-        <CategoryList net={net} category={group} layout={layout} onConcept={setSel} />
-      ) : relmap ? (
-        // 関係図に移した分類の地図は、まとまりの関係図（stats2-course #235。移していない分類は今の島の地図）
+      {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ。分類を押すとその分類のページ、語を押すと概念 */}
+      {!sel && (!group || group === "*") ? (
+        <Library net={net} onConcept={setSel} onGroup={openGroup} />
+      ) : !sel && layout !== "map" ? (
+        <CategoryList net={net} category={group!} layout={layout} onConcept={setSel} />
+      ) : mapCat ? (
+        // 関係図（stats2-course #235・#588）：語を選んでも関係図のまま、下の面に詳しく（Detail）を出す
         <RelationMap
+          key={mapCat}
           net={net}
-          category={group!}
+          category={mapCat}
           selected={sel}
           onSelect={setSel}
           onOpen={(id) => {
@@ -574,125 +472,45 @@ export default function App() {
             else setSel(id);
           }}
           onRelation={setEdgeSel}
-          onOut={() => setGroup(null)}
+          onOut={() => {
+            setSel(null);
+            setGroup(null, true);
+          }}
           onBlank={() => {
-            const d = narrow ? stepDown(detent) : null;
+            const d = sheeted ? stepDown(detent) : null;
             if (d) setDetent(d);
             return !!d;
           }}
           step={detent}
         />
-      ) : (
-        <>
-          <Graph
-            net={net}
-            selected={sel}
-            highlight={highlight}
-            hidden={hidden}
-            positions={positions}
-            numbers={path?.numbers}
-            height={mapH}
-            recenter={recenter}
-            onFocus={(id) => {
-              setView("around");
-              setSel(id);
-            }}
-            onSelect={(id) => setSel(id)}
-            onEdge={(id) => {
-              if (!id.startsWith("ge:")) setEdgeSel(id);
-            }}
-            edgeSel={edgeSel}
-            only={positions ? undefined : path ? path.only : (catOnly ?? grouped.only)}
-            outer={positions || path || catOnly ? undefined : grouped.outer}
-            isles={(eff === "*" || !!catOnly) && !positions && !path}
-            isleFocus={isleFocus}
-            topLeft={
-              <>
-                {!positions && !path && groups.length > 1 ? (
-                  <select
-                    className={st.groupSel}
-                    value={eff ?? ""}
-                    onChange={(e) => setGroup(e.target.value || null)}
-                    aria-label="分類で絞る"
-                    data-testid="group-select"
-                  >
-                    <option value="">分類の一覧に戻る</option>
-                    <option value="*">全部の概念（{[...net.concepts.values()].length}）</option>
-                    {groups.map((g) => (
-                      <option key={g} value={g}>
-                        {g}（{[...net.concepts.values()].filter((c) => c.category === g).length}）
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
-              </>
-            }
-            bottomLeft={
-              <>
-                <button type="button" className={st.chipBtn} onClick={() => setModal("kinds")}>
-                  線の見方{hidden.size ? `（${hidden.size} 種類を非表示中）` : ""}
-                </button>
-              </>
-            }
-          />
-        </>
-      )}
-      {concept && path ? (
-        <PathList
-          net={net}
-          target={concept.id}
-          seq={path.seq}
-          onOpen={(id) => {
-            setView("around");
-            setSel(id);
-          }}
-          sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined}
-        />
-      ) : concept ? (
+      ) : null}
+      {concept ? (
         <Detail
           net={net}
           concept={concept}
-          sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH, onPeek: setPeek } : undefined}
+          sheet={sheeted ? { detent, onDetent: setDetent, bottom: tabH } : undefined}
           onCompare={() => setModal("pick")}
           onSelect={setSel}
           onEdge={setEdgeSel}
           edgeSel={edgeSel}
           onQuestion={(x, q) => setExp(x, q)}
           onLab={() => setTab("lab")}
+          onTrace={() => setView("path")}
+          traceCount={seq.length}
         />
       ) : null}
-      {modal === "kinds" && (
-        <Sheet label="線の見方" title="線の見方" onClose={() => setModal(null)} data-testid="kinds">
-          <Muted>
-            矢印の向きは A → B。線の名前は、概念を選ぶとその線にだけ出る。チェックを外すと、その種類の線を非表示にする。
-          </Muted>
-          <ul className={st.kinds}>
-            {Object.entries(KINDS_V2).map(([t, k]) => (
-              <li key={t}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={!hidden.has(t)}
-                    onChange={() => {
-                      const h = new Set(hidden);
-                      if (h.has(t)) h.delete(t);
-                      else h.add(t);
-                      setHidden(h);
-                    }}
-                  />
-                  <span className={st.swatch} style={{ background: `var(${TYPE_COLOR[t]})` }} /> <b>{t}</b>　
-                  {k.reading.replace("□", "A").replace("■", "B")}
-                </label>
-                <Muted as="div">{subText(k.definition)}</Muted>
-              </li>
-            ))}
-          </ul>
-          <Muted>
-            移るの線：実線＝{MODES.exact}、破線＝{MODES.approximation}、点線＝{MODES.limit}
-            。点線の枠＝定義だけの概念（説明はこれから）。
-          </Muted>
-        </Sheet>
-      )}
+      {tracing ? (
+        <PathList
+          net={net}
+          target={concept!.id}
+          seq={seq}
+          onOpen={(id) => {
+            setView("around");
+            setSel(id);
+          }}
+          onClose={() => setView("around")}
+        />
+      ) : null}
       {modal === "pick" && concept ? (
         // 比べる相手を選ぶ（2つの概念のページへ）。関係のある相手は関係のタブ・地図の線から開くので、ここは探すだけ
         <Sheet
@@ -731,22 +549,20 @@ export default function App() {
           edgeId={edgeSel}
           onClose={() => setEdgeSel(null)}
           onSelect={(id) => setSel(id)}
-          page={narrow && !!concept && !path && detent === "full"}
+          page={sheeted && !!concept && !tracing && detent === "full"}
           onQuestion={(x, q) => setExp(x, q)}
         />
       ) : null}
-      {(narrow && concept) || catOnly ? null : (
+      {(sheeted && concept) || group ? null : (
         <Muted as="div" className={st.footer}>
-          データ：各教材の公開した JSON（型 kn-schema v1）。教材の原本は各教材のリポジトリ。
+          データ：各教材の公開した JSON（型 kn-schema v2）。教材の原本は各教材のリポジトリ。
         </Muted>
       )}
       <TabBar
         tab="explore"
         onTab={(t) => {
-          if (t === "explore" && sel) {
-            setDetent(STEPS[0]!);
-            setRecenter((n) => n + 1);
-          } else setTab(t);
+          if (t === "explore" && sel) setDetent(STEPS[0]!);
+          else setTab(t);
         }}
         badges={badges}
         focusName={focus?.name}

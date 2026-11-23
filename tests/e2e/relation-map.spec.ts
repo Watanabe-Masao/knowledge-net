@@ -3,13 +3,10 @@
 // 見本は、教材が確率分布を関係図に移して公開したデータの写し（public/sample/stats2.json）をそのまま読む。
 // iPhone の Safari で崩れないかを見るため、この spec は WebKit でも走らせる（playwright.config.ts の webkit）
 import { test, expect, type Page } from "@playwright/test";
-import { readFileSync } from "node:fs";
 
 const T = (x: string) => `stats2:TERM-${x}`;
 const G = (x: string) => `stats2:GRP-dist-${x}`;
 const URL = "./?src=sample/stats2.json&lv=map&g=";
-// 関係図に移した分類（教材の relation_map_ready）。全部を移すと「移していない分類」はなくなる（stats2-course #588）
-const READY: string[] = JSON.parse(readFileSync("public/sample/stats2.json", "utf8")).course?.relation_map_ready ?? [];
 
 async function open(page: Page, w = 390, h = 844, extra = "") {
   await page.setViewportSize({ width: w, height: h });
@@ -165,13 +162,11 @@ const canvasAt = (page: Page) =>
 // 確かめる対象：指の物理（画面の原則 2。UX レビュー A1・B10・B11）。
 
 // 確かめる対象：移した分類だけを関係図で開くこと（D5）と、地図に文章を置かないこと。
-// 想定する故障：移していない分類まで関係図になる／移した分類が島の地図のまま。地図の上に説明文や関係の文が出る。
+// 想定する故障：分類の地図が関係図でない。地図の上に説明文や関係の文が出る。
 // 見つけ方：確率分布の地図が関係図（まとまり4つの枠）で、島の地図（graph）がないこと。語を押しても関係図のまま（島の地図に替わらない）で、
-//   キャンバスの中に関係の文（「比べる」「変換すると」など）が出ないこと。検定の地図は今の島の地図のままであること。
+//   キャンバスの中に関係の文（「比べる」「変換すると」など）が出ないこと。検定の地図も関係図であること。
 // 既存との違い：単体テストは計算。ここは画面の出し分けと、文章を置かないこと
-test("移した分類（確率分布）の地図は関係図で、語を選んでも関係図のまま。文章を置かない。移していない分類は島の地図", async ({
-  page,
-}) => {
+test("分類の地図は関係図で、語を選んでも関係図のまま。文章を置かない。ほかの分類も関係図", async ({ page }) => {
   const m = await open(page);
   await expect(page.getByTestId("graph")).toHaveCount(0);
   for (const g of ["base", "count", "wait", "cont"]) await expect(m.getByTestId(`rm-group-${G(g)}`)).toBeVisible();
@@ -182,15 +177,9 @@ test("移した分類（確率分布）の地図は関係図で、語を選ん�
   for (const ng of ["比べる", "を移すと", "の特別な場合", "定義に使われる"])
     expect(text, `地図に文章「${ng}」`).not.toContain(ng);
 
+  // 島の地図は外した（stats2-course #588）：ほかの分類（検定）も関係図で開く
   await page.goto(URL + encodeURIComponent("検定"));
-  if (READY.includes("検定")) {
-    // 検定も移した（#588）：関係図で開き、島の地図は出ない
-    await expect(page.getByTestId("relation-map")).toBeVisible();
-    await expect(page.getByTestId("graph")).toHaveCount(0);
-  } else {
-    await expect(page.getByTestId("graph")).toBeVisible();
-    await expect(page.getByTestId("relation-map")).toHaveCount(0);
-  }
+  await expect(page.getByTestId("relation-map")).toHaveAttribute("aria-label", "検定の関係図");
 });
 
 // 確かめる対象：語を押したときの見せ方と寄り方、下の面（島の地図と同じ詳しく。画面の原則 4）、線の端（Safari で崩れないか）、字の実寸。

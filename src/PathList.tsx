@@ -1,14 +1,13 @@
-// 経路の「順に読む」（stats2-course #42：渡辺さん 2026-10-31「経路が前提になってます」）。
-// 経路の見方では、詳しくの代わりに、選んだ概念までの前提を学ぶ順（地図の番号と同じ）に並べる。
-// 行を押すとその場で概要を開き、「開く」でその概念をフォーカスで開く。最後の行は選んだ概念（ここ）。スマホでは地図に重なる下からの面
-import { useEffect, useState } from "react";
-import { BottomSheet, Card, type Detent, subText } from "@math-lab/ui";
+// 前提をさかのぼる（stats2-course #587・#588 B2。渡辺さん 2026-11-23）：選んだ概念を学ぶ前に、何をどの順に学べばよいか。
+// 関係図は1つの分類の中の横のつながり（製本 ⑤）、ここは分類をまたぐ学ぶ順（製本 ⑥。教材の learning_order）。
+// 読むものなので全画面のページ（画面の原則 20）。遠い前提から学ぶ順に並べ、行ごとに分類を添える。最後の行は選んだ概念。
+// 行を押すと、その概念を関係図と概念のページで開く。← で閉じると、来た概念に戻る。
+import { FullView, subText } from "@math-lab/ui";
 import { type Network, lead } from "./data";
 import st from "./PathList.module.css";
 
 // 画面の言葉（渡辺さん 2026-11-01「骨格の意味が伝わりにくい」）：データの状態 skeleton は「定義だけ」と出す
 const STATUS: Record<string, string> = {
-  filled: "説明あり",
   heading: "文脈の見出し",
   skeleton: "定義だけ",
   stub: "まだ",
@@ -17,103 +16,61 @@ const STATUS: Record<string, string> = {
 type Props = {
   net: Network;
   target: string;
+  /** 学ぶ順（遠い前提から）。選んだ概念は含まない */
   seq: string[];
   onOpen: (id: string) => void;
-  sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
+  onClose: () => void;
 };
 
-/** 「少し」の段：見出しと最初の2行が見える高さ */
-export const PATH_PEEK = 200;
-
-export default function PathList({ net, target, seq, onOpen, sheet }: Props) {
+export default function PathList({ net, target, seq, onOpen, onClose }: Props) {
+  const here = net.concepts.get(target)!;
   const rows = [...seq, target].filter((id) => net.concepts.has(id));
-  const count = (k: string) => seq.filter((id) => net.concepts.get(id)?.status === k).length;
-  const summary = [
-    ["filled", count("filled")],
-    ["heading", count("heading")],
-    ["skeleton", count("skeleton")],
-    ["stub", count("stub")],
-  ]
-    .filter(([, n]) => n)
-    .map(([k, n]) => `${STATUS[k as string]} ${n}`)
-    .join("・");
-  useEffect(() => {
-    sheet?.onPeek?.(PATH_PEEK);
-  }, [sheet !== undefined]); // eslint-disable-line react-hooks/exhaustive-deps
-  const head = (
-    <div className={st.head}>
-      <b>順に読む</b>
-      <span>{seq.length ? summary : "たどれる前提はない"}</span>
-    </div>
-  );
-  // 行を押すと、その場で概要を開く（アコーディオン。1つずつ）。画面を移らないので順に追える。詳しく見たいときは「開く」で移る（渡辺さん 2026-11-01）
-  const [open, setOpen] = useState<string | null>(null);
-  const list = (
-    <ol className={st.list} aria-label="学ぶ順">
-      {rows.map((id, i) => {
-        const c = net.concepts.get(id)!,
-          here = id === target,
-          on = open === id;
-        const text = lead(c);
-        return (
-          <li key={id}>
-            <button
-              type="button"
-              className={st.row}
-              data-testid={`path-row-${id}`}
-              onClick={() => setOpen(on ? null : id)}
-              aria-expanded={on}
-              aria-controls={`path-${i}`}
-              aria-current={here ? "step" : undefined}
-            >
-              <span className={st.no} aria-hidden="true">
-                {here ? "★" : i + 1}
-              </span>
-              <span className={st.name}>{c.name}</span>
-              <span className={st.status}>{here ? "ここ" : STATUS[c.status]}</span>
-              <span className={`${st.chev}${on ? ` ${st.chevOn}` : ""}`} aria-hidden="true">
-                ›
-              </span>
-            </button>
-            {on ? (
-              <div className={st.panel} id={`path-${i}`} data-testid={`path-panel-${id}`}>
-                {c.category ? (
-                  <span className={st.meta}>
-                    {c.category}
-                    {c.en ? `・${c.en}` : ""}
-                  </span>
-                ) : null}
-                {text ? <p>{text}</p> : <p className={st.meta}>まだ説明がない。</p>}
-                {c.principle ? <p className={st.sub}>{subText(c.principle)}</p> : null}
-                <button type="button" className={st.go} onClick={() => onOpen(id)}>
-                  {c.name} を開く<span aria-hidden="true">›</span>
-                </button>
-              </div>
-            ) : null}
-          </li>
-        );
-      })}
-    </ol>
-  );
-  if (!sheet)
-    return (
-      <Card data-testid="trace">
-        {head}
-        {list}
-      </Card>
-    );
+  const cats = new Set(seq.map((id) => net.concepts.get(id)?.category).filter(Boolean));
+  let no = 0;
   return (
-    <BottomSheet
-      label="順に読む"
-      data-testid="trace"
-      detent={sheet.detent}
-      onDetent={sheet.onDetent}
-      bottom={sheet.bottom}
-      peek={PATH_PEEK}
-      min={84}
-      header={head}
-    >
-      {list}
-    </BottomSheet>
+    <FullView label="前提をさかのぼる" title={`${here.name}の前提`} onClose={onClose}>
+      <div className={st.page} data-testid="trace">
+        <p className={st.lead}>
+          {seq.length
+            ? `${here.name}を学ぶ前に読む ${seq.length} の概念（${cats.size} の分類）。遠い前提から学ぶ順に並べた。`
+            : `${here.name}には、たどれる前提がない。`}
+        </p>
+        {/* 学ぶ順は分類をまたいで行き来するので、分類で区切らず行ごとに分類を添える（区切ると見出しがほぼ1行ごとに並んだ） */}
+        <ol className={st.list} aria-label="学ぶ順">
+          {rows.map((id) => {
+            const c = net.concepts.get(id)!,
+              me = id === target;
+            if (!me) no += 1;
+            const text = c.gist ?? lead(c);
+            return (
+              <li key={id}>
+                <button
+                  type="button"
+                  className={st.row}
+                  data-testid={`path-row-${id}`}
+                  aria-current={me ? "step" : undefined}
+                  onClick={() => onOpen(id)}
+                >
+                  <span className={st.no} aria-hidden="true">
+                    {me ? "" : no}
+                  </span>
+                  <span className={st.body}>
+                    <span className={st.name}>
+                      {c.name}
+                      {me ? <span className={st.me}>この概念</span> : null}
+                    </span>
+                    <span className={st.meta}>{[c.category, STATUS[c.status]].filter(Boolean).join("・")}</span>
+                    {text ? <span className={st.text}>{subText(text)}</span> : null}
+                  </span>
+                  <span className={st.chev} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </FullView>
   );
 }
