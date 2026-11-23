@@ -515,12 +515,12 @@ function Frame({
           dangerouslySetInnerHTML={{ __html: html }}
           data-testid="ws-formula"
         />
-        {/* 開ける：選んだかたまりの右上に、開けるときだけ ＋。押すとその場で開く（形が2つ以上なら帯で選ぶ）。印は小さく、押せる所は 44px（画面の原則 6） */}
+        {/* 開ける：選んだかたまりの右上に、開けるときだけ ＋。押すとその場で開く（形が2つ以上なら帯で選ぶ）。印は 16px の中立の色、押せる所は 44px（画面の原則 6・18） */}
         {stg.selBox && sel?.part !== undefined && openings.length > 0 && (
           <button
             type="button"
             className={s.opener}
-            style={{ left: stg.selBox.x + stg.selBox.w - 44, top: Math.max(stg.selBox.y - 22, 0) }}
+            style={{ left: stg.selBox.x + stg.selBox.w - 44, top: Math.max(stg.selBox.y - 18, 0) }}
             aria-label={
               openings.length === 1 ? `${crumbName(openings[0]!.key)}を${openings[0]!.label}形に開く` : "開く形を選ぶ"
             }
