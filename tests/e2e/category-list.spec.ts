@@ -6,7 +6,9 @@ import { readFileSync } from "node:fs";
 const sample = JSON.parse(readFileSync("public/sample/stats2.json", "utf8")) as { concepts: { category?: string }[] };
 const TESTS = sample.concepts.filter((c) => c.category === "検定").length;
 // 検定を関係図に移したか（教材の relation_map_ready。移すと地図は関係図、一覧はまとまりごとの区切りになる。stats2-course #588）
-const MAP_READY = ((sample as { course?: { relation_map_ready?: string[] } }).course?.relation_map_ready ?? []).includes("検定");
+const MAP_READY = (
+  (sample as { course?: { relation_map_ready?: string[] } }).course?.relation_map_ready ?? []
+).includes("検定");
 
 // 確かめる対象：ライブラリ → 分類のページ（正方形・一覧・地図の切り替え）→ 概念 の流れと、正方形の長押し。
 // 想定する故障：分類の語が全部出ない・ほかの分類の語が混ざる・学ぶ順でない（画面が並べ替えずに教材の並びのまま）・
