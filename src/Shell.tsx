@@ -289,7 +289,7 @@ const groupRange = (x: ExperimentData) => {
   return ids.length > 1 ? `${ids[0]}〜${ids[ids.length - 1]}` : (ids[0] ?? "");
 };
 const itemsOf = (x: ExperimentData): Item[] => (x.catalog ?? []).flatMap((g) => g.items).filter((it) => !it.retired); // 使わない印の問いは数えない（値の表の実験室もテーマ体系を持てる。改訂5）
-/** 分類ごとの実験の問いの数（ライブラリ・島の地図の「実験 N」）。実験室のタブと同じ数え方（itemsOf：使わない印の問いを除く）。
+/** 分類ごとの実験の問いの数（ライブラリの「実験 N」）。実験室のタブと同じ数え方（itemsOf：使わない印の問いを除く）。
  *  問いの一覧のない実験室は 1 と数える。どの分類かは実験室のつなぐ概念の1つ目で決める */
 export function labCountOf(net: Network, category: string): number {
   return [...net.experiments.values()]

@@ -804,7 +804,7 @@
   min-width: 56px;
 }
 
-/* 語の長押しの概要（島の地図・一覧の長押しと同じ中身） */
+/* 語の長押しの概要（一覧の長押しと同じ中身） */
 .tipName {
   font-size: 17px !important;
   color: var(--ink) !important;

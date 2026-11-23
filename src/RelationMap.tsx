@@ -2,7 +2,7 @@
 // 関係図に移した分類（教材の relation_map_ready）の地図。1枚のキャンバスに、まとまりを学ぶ順に縦に積み、語を3列に置く。
 //   線は横の関係だけ（直線と直角。まとまりの間は幹に束ねる）。線の上に種類の印。材料はカードの下の小さな印。
 //   語を押すと、その語の線を濃くし、相手の枠を種類の色に、関係のない語を灰色に少し小さく。押した語を真ん中に寄せる（読める倍率より引かない）。
-//   選んだ語の説明は、島の地図と同じ下の面（App の Detail）に出す（同じものはどの入口からも同じ見た目。画面の原則 4）。
+//   選んだ語の説明は、下の面（App の Detail）に出す（同じものはどの入口からも同じ見た目。画面の原則 4）。
 //   線を押すとその関係の面（App の Panel）。線を長押ししている間は、向こうの端を見せる（A/B：引いて見せる／カードを浮かせる）。
 //   空いた所の1回のタップは1段戻す（帯が引っ込んでいれば戻す → 選んでいれば外す → 何もなければ帯を引っ込める）。地図を指で動かすと帯が引っ込む。
 // 並びと線の計算は src/relationMap.ts（layoutCategory・lineBadges・fitPick）。ここは見せ方と指の操作だけ
@@ -594,7 +594,7 @@ export default function RelationMap({
   const [ginfo, setGinfo] = useState<string | null>(null); // まとまりの名前を押したとき：そのまとまりの1文（説明） // 全体の見え方で、まとまりの間の矢印を開いたとき
   const [pressLine, setPressLine] = useState<string | null>(null); // 押した瞬間に線を太くする（押した手応え）
   const [holdLine, setHoldLine] = useState<string | null>(null); // 押さえている間は、その線が太くなりながら光る（長押しの手触り）
-  // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。島の地図・一覧の長押しと同じ働き（画面の原則 10）
+  // 語の長押し：選ばずに、その語の概要（名前・分類と状態・定義1文）を浮かせて見せる。一覧の長押しと同じ働き（画面の原則 10）
   const [tip, setTip] = useState<{ id: string; x: number; y: number } | null>(null);
   const tipT = useRef(0),
     tipHeld = useRef(false);
