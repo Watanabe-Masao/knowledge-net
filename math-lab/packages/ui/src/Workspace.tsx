@@ -11,7 +11,7 @@
 // 手本：渡辺さんの「FormulaNode 計算ツリー」（式の真下の帯・その場で展開・結果の二重線）。ここに実験（#102）と予想を足していく。
 // 欄ごとの部品は workspace/ にある（stats2-course #212）：状態は workspace/state.ts の reducer 1つ、式の舞台は useFormulaStage、実験は useExperimentRun。
 // ここ（Frame）は値を求めて欄に渡し、欄を決まった順に並べるだけ。
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useState, type CSSProperties } from "react";
 import {
   applyOpens,
   checkMechanism,
@@ -515,12 +515,18 @@ function Frame({
           dangerouslySetInnerHTML={{ __html: html }}
           data-testid="ws-formula"
         />
-        {/* 開ける：選んだかたまりの右上に、開けるときだけ ＋。押すとその場で開く（形が2つ以上なら帯で選ぶ）。印は線の ＋（中立の色）、押せる所は 44px（画面の原則 6・18） */}
+        {/* 開ける：選んだかたまりの右上の角を、開けるときだけ小さく折り返す（中にもう1枚ある、の見立て。渡辺さん 2026-11-24 の案 A）。押すとその場で開く（形が2つ以上なら帯で選ぶ）。押せる所は 44px で、角を中心に上へ出し、隣のかたまりにかけない（画面の原則 6・8） */}
         {stg.selBox && sel?.part !== undefined && openings.length > 0 && (
           <button
             type="button"
             className={s.opener}
-            style={{ left: stg.selBox.x + stg.selBox.w - 44, top: Math.max(stg.selBox.y - 18, 0) }}
+            style={
+              {
+                left: stg.selBox.x + stg.selBox.w - 36,
+                top: Math.max(stg.selBox.y - 22, 0),
+                "--fold-top": `${stg.selBox.y - Math.max(stg.selBox.y - 22, 0)}px`,
+              } as CSSProperties
+            }
             aria-label={
               openings.length === 1 ? `${crumbName(openings[0]!.key)}を${openings[0]!.label}形に開く` : "開く形を選ぶ"
             }
@@ -528,10 +534,7 @@ function Frame({
             data-testid={openings.length === 1 ? `ws-break-${openings[0]!.key}` : "ws-open-menu"}
             onClick={() => (openings.length === 1 ? open(openings[0]!.d, openings[0]!.key) : setMenu((m) => !m))}
           >
-            {/* 線の印（下のタブ・Weather Note と同じ形：線 1.6・丸い端・塗りなし・文字の色）。渡辺さん 2026-11-24 */}
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <span aria-hidden="true" />
           </button>
         )}
       </div>

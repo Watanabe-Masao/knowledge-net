@@ -34,7 +34,7 @@ export function Strip({ w }: { w: WsCtx }) {
     );
   const p = sel.part !== undefined ? parts[sel.part] : undefined;
   const node = p ? nodeAt(tree, p.path) : undefined;
-  // この中の記号：値の記号（n・k・p）と、意味のある関数（ₙCₖ・k!）。関数は式の上の ＋ で定義の式に開ける（stats2-course #590）
+  // この中の記号：値の記号（n・k・p）と、意味のある関数（ₙCₖ・k!）。関数は右上の折り返しで定義の式に開ける（stats2-course #590）
   const fns = node ? fnsIn(node).filter((k) => symOf(k, symbols)) : [];
   const inside = node ? [...fns, ...symbolsIn(node).filter((k) => symOf(k, symbols))] : [];
   const v = selSym ? values[selSym.key] : undefined;
@@ -50,10 +50,10 @@ export function Strip({ w }: { w: WsCtx }) {
           <Tween className={s.ctxVal} data-testid="ws-part-value" v={evaluate(node, env)} show={(x) => fmt(x)} />
           <b className={s.ctxName}>{p.name}</b>
           {!selSym && <p className={s.ctxText}>{p.meaning}</p>}
-          {/* 開ける入口の1行（画面の原則 13）。開く操作そのものは式の上の ＋ の1か所（原則 8）。形が2つ以上で ＋ を押したときだけ、ここで選ぶ */}
+          {/* 開ける入口の1行（画面の原則 13）。開く操作そのものは式の右上の折り返しの1か所（原則 8）。形が2つ以上で折り返しを押したときだけ、ここで選ぶ */}
           {openings.length === 1 && (
             <p className={s.ctxHint} data-testid="ws-open-hint">
-              右上の ＋ で「{openings[0]!.label}」の形に開ける
+              右上の折り返しで「{openings[0]!.label}」に開く
             </p>
           )}
           {openings.length > 1 &&
@@ -73,7 +73,7 @@ export function Strip({ w }: { w: WsCtx }) {
               </div>
             ) : (
               <p className={s.ctxHint} data-testid="ws-open-hint">
-                右上の ＋ で開ける（{openings.length} 通りの形）
+                右上の折り返しで開く（{openings.length} 通りの形）
               </p>
             ))}
         </div>
