@@ -1232,35 +1232,21 @@
   cursor: pointer;
   z-index: 1;
 }
-/* 印は控えめに（渡辺さん 2026-11-24「目立ちすぎ」。画面の原則 18：ふつうの操作は中立の色）。色は選んだかたまりの囲みに任せ、＋ は面の色の小さな丸と細い線 */
-.opener > span {
-  position: relative;
+/* 印は線だけ（渡辺さん 2026-11-24「目立ちすぎ」→「天気アプリのアイコンから」。画面の原則 18：ふつうの操作は中立の色）。
+   形は下のタブの印・Weather Note と同じ：線 1.6・丸い端・塗りなし。色は選んだかたまりの囲みに任せる */
+.opener > svg {
   width: 16px;
   height: 16px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.6;
+  stroke-linecap: round;
   transition: transform var(--dur-press) var(--ease);
 }
-.opener > span::before,
-.opener > span::after {
-  content: "";
-  position: absolute;
-  left: 3.5px;
-  top: 6.25px;
-  width: 7px;
-  height: 1.5px;
-  background: var(--ink-2);
-  border-radius: 1px;
-}
-.opener > span::after {
-  transform: rotate(90deg);
-}
-.opener:active > span {
+.opener:active > svg {
   transform: scale(var(--press-scale));
 }
-.opener:focus-visible > span {
+.opener:focus-visible > svg {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

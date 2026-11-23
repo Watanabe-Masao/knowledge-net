@@ -515,7 +515,7 @@ function Frame({
           dangerouslySetInnerHTML={{ __html: html }}
           data-testid="ws-formula"
         />
-        {/* 開ける：選んだかたまりの右上に、開けるときだけ ＋。押すとその場で開く（形が2つ以上なら帯で選ぶ）。印は 16px の中立の色、押せる所は 44px（画面の原則 6・18） */}
+        {/* 開ける：選んだかたまりの右上に、開けるときだけ ＋。押すとその場で開く（形が2つ以上なら帯で選ぶ）。印は線の ＋（中立の色）、押せる所は 44px（画面の原則 6・18） */}
         {stg.selBox && sel?.part !== undefined && openings.length > 0 && (
           <button
             type="button"
@@ -528,7 +528,10 @@ function Frame({
             data-testid={openings.length === 1 ? `ws-break-${openings[0]!.key}` : "ws-open-menu"}
             onClick={() => (openings.length === 1 ? open(openings[0]!.d, openings[0]!.key) : setMenu((m) => !m))}
           >
-            <span aria-hidden="true" />
+            {/* 線の印（下のタブ・Weather Note と同じ形：線 1.6・丸い端・塗りなし・文字の色）。渡辺さん 2026-11-24 */}
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
           </button>
         )}
       </div>
