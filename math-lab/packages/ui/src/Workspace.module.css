@@ -42,7 +42,7 @@
   position: relative;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 20px 0 8px; /* 上は、選んだかたまりの右上の ＋ の印を、式の字に重ねず囲みの上に置く分（#590） */
+  padding: 22px 0 8px; /* 上は、選んだかたまりの右上の折り返しの押せる所（角から上へ 22px）が欠けない分（#590） */
 }
 .stage {
   position: relative;
@@ -1221,34 +1221,35 @@
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--data-2) 40%, transparent);
 }
 
-/* 開ける ＋（stats2-course #590）：選んだかたまりの右上。印は 22px、押せる所は 44px（画面の原則 6）。式の欄の中で一緒に横に送られる */
+/* 開ける印（stats2-course #590。渡辺さん 2026-11-24 の案 A）：選んだかたまりの右上の角を小さく折り返す。記号を足さず、囲みの形で「中にもう1枚ある」を伝える。
+   押せる所は 44px：角を中心に上へ出し、横は角から 8px までにして隣のかたまりにかけない（画面の原則 6）。色は選んだ所の主の色（原則 18） */
 .opener {
   all: unset;
   position: absolute;
   width: var(--tap);
   height: var(--tap);
-  display: grid;
-  place-items: start end; /* 印は押せる所の右上：かたまりの囲みの右上の角の上に出し、字に重ねない。押せる所はかたまりの中に下ろし、隣のかたまりにはかけない */
   cursor: pointer;
   z-index: 1;
 }
-/* 印は線だけ（渡辺さん 2026-11-24「目立ちすぎ」→「天気アプリのアイコンから」。画面の原則 18：ふつうの操作は中立の色）。
-   形は下のタブの印・Weather Note と同じ：線 1.6・丸い端・塗りなし。色は選んだかたまりの囲みに任せる */
-.opener > svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: var(--ink-2);
-  stroke-width: 1.6;
-  stroke-linecap: round;
+.opener > span {
+  position: absolute;
+  right: 8px;
+  top: var(--fold-top, 22px);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 11px 11px 0;
+  border-color: transparent var(--accent) transparent transparent;
+  border-top-right-radius: 6px; /* 囲み（.boxSel）の角の丸みと同じ */
   transition: transform var(--dur-press) var(--ease);
+  transform-origin: 100% 0;
 }
-.opener:active > svg {
-  transform: scale(var(--press-scale));
+.opener:active > span {
+  transform: scale(1.25);
 }
-.opener:focus-visible > svg {
+.opener:focus-visible > span {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 /* 開いた道：式のすぐ上。一段戻るは右端の同じ位置（開いた数・式の高さで動かない） */
 .trail {
