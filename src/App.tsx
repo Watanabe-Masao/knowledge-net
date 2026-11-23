@@ -166,7 +166,10 @@ export default function App() {
     setTab,
   } = useUrlState();
   // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
-  const locked = narrow && !!sel && tab === "explore" && !exp;
+  // 概念を選んでいる間は、どの幅でも関係図が画面いっぱいになり、詳しくは下からの面で出す（関係図に一本化。stats2-course #588。
+  // 広い画面で面にしないと、詳しくが画面いっぱいの関係図の後ろに隠れた）
+  const sheeted = narrow || !!sel;
+  const locked = sheeted && !!sel && tab === "explore" && !exp;
   useEffect(() => {
     if (!locked) return;
     scrollTo(0, 0);
@@ -363,7 +366,7 @@ export default function App() {
         <TabBar tab={tab} onTab={setTab} badges={badges} focusName={focus?.name} />
       </main>
     );
-  const compact = narrow && !!concept;
+  const compact = sheeted && !!concept;
   return (
     <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
       <div className={st.top} data-edge="top">
@@ -474,7 +477,7 @@ export default function App() {
             setGroup(null, true);
           }}
           onBlank={() => {
-            const d = narrow ? stepDown(detent) : null;
+            const d = sheeted ? stepDown(detent) : null;
             if (d) setDetent(d);
             return !!d;
           }}
@@ -485,7 +488,7 @@ export default function App() {
         <Detail
           net={net}
           concept={concept}
-          sheet={narrow ? { detent, onDetent: setDetent, bottom: tabH } : undefined}
+          sheet={sheeted ? { detent, onDetent: setDetent, bottom: tabH } : undefined}
           onCompare={() => setModal("pick")}
           onSelect={setSel}
           onEdge={setEdgeSel}
@@ -546,11 +549,11 @@ export default function App() {
           edgeId={edgeSel}
           onClose={() => setEdgeSel(null)}
           onSelect={(id) => setSel(id)}
-          page={narrow && !!concept && !tracing && detent === "full"}
+          page={sheeted && !!concept && !tracing && detent === "full"}
           onQuestion={(x, q) => setExp(x, q)}
         />
       ) : null}
-      {(narrow && concept) || group ? null : (
+      {(sheeted && concept) || group ? null : (
         <Muted as="div" className={st.footer}>
           データ：各教材の公開した JSON（型 kn-schema v2）。教材の原本は各教材のリポジトリ。
         </Muted>
