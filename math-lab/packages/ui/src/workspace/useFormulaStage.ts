@@ -130,6 +130,22 @@ export function useFormulaStage(html: string, sel: Sel, setSel: (s: Sel) => void
       }
     });
     if (b.key) stage.current.querySelectorAll(`[data-open="${b.key}"]`).forEach((el) => flash(el));
+    // 開いた中身が式の欄からはみ出したら、その中身が見える所まで式の欄だけを横に寄せる（縦は動かさない。stats2-course #590）
+    const outer = wrap.current;
+    if (b.key && outer) {
+      const fresh = [...stage.current.querySelectorAll<HTMLElement>(`[data-open="${b.key}"]`)].map((el) =>
+        el.getBoundingClientRect(),
+      );
+      if (fresh.length) {
+        const o = outer.getBoundingClientRect();
+        const l = Math.min(...fresh.map((r) => r.left)),
+          r = Math.max(...fresh.map((r) => r.right));
+        const pad = 16;
+        const dx =
+          l < o.left + pad ? l - o.left - pad : r > o.right - pad ? Math.min(r - o.right + pad, l - o.left - pad) : 0;
+        if (dx) outer.scrollTo({ left: outer.scrollLeft + dx, behavior: reduced() ? "auto" : "smooth" });
+      }
+    }
   }, [html]);
 
   const onStage = (e: React.MouseEvent) => {

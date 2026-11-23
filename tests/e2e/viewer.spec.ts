@@ -747,25 +747,59 @@ test("作業台で実験する：100回・1回・条件を変えると記録を�
 });
 
 // 式を分解する（#110）：ₙCₖ → n!/(k!(n−k)!) → 階乗を ∏ に。値は変わらず、計算の段も分解した式で進む
-test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分解しても値は変わらない", async ({ page }) => {
+// 開く・戻る（stats2-course #590）：開けるかたまりにだけ右上の ＋（押せる所 44px）。式のすぐ上に 元の式 › 組合せ › 階乗 と「一段戻る」。
+// 想定する故障：＋ が開けないかたまりにも出る・押せる所が 44px 未満・開いた中身が式の欄の外に残る（横に寄せない）・
+//   一段戻るが開いた数で動く（同じ指の位置で戻れない）・戻ると開いた逆の順にならない・帯に長い等式のボタンが残る。
+// 見つけ方：組合せを選ぶと ＋ が1つ・帯に入口の1行（「階乗で表す」）。押すと分数・道は「元の式 › 組合せ」。
+//   さらに ＋ で積へ、道は「… › 階乗」。一段戻るの位置を2回とも測り同じ。1回目で n! の形に、2回目で元の ₙCₖ に戻る。
+// 既存との違い：前は帯の「分解する」と「たたむ」を押していた（#110）。値が変わらないことはそのまま見る
+test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分解しても値は変わらず、同じ所から一段ずつ戻れる", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await fullSheet(page);
   await tab(page, /^式$/);
   const w = page.getByTestId("workspace");
+  // 成功の部分（pᵏ）には開ける関数がないので ＋ は出ない
+  await w.locator('[data-part="1"]').first().click();
+  await expect(w.locator('[data-testid^="ws-break-"]')).toHaveCount(0);
   await w.locator('[data-part="0"]').first().click();
-  await w.getByTestId("ws-break-comb").click();
+  await expect(w.getByTestId("ws-open-hint")).toContainText("階乗で表す");
+  const plus = w.getByTestId("ws-break-comb");
+  const pb = (await plus.boundingBox())!;
+  expect(Math.min(pb.width, pb.height)).toBeGreaterThanOrEqual(44);
+  await plus.click();
   await expect(w.getByTestId("ws-part-value")).toHaveText("120"); // かたまりは選んだまま、値は ₁₀C₃ と同じ
   await expect(w.getByTestId("ws-formula").locator(".katex")).toContainText("n!");
   await expect(w.getByTestId("ws-calc").locator(".katex")).toContainText("10!");
-  await w.getByTestId("ws-break-fact").first().click();
+  await expect(w.getByTestId("ws-trail")).toContainText("元の式›組合せ");
+  const back1 = (await w.getByTestId("ws-back").boundingBox())!;
+  await w.getByTestId("ws-break-fact").click();
   await expect(w.getByTestId("ws-part-value")).toHaveText("120");
   await expect(w.getByTestId("ws-result")).toContainText("26.68%");
-  // たたむは最後に開いたものから左に（同じ指の位置で、開いた逆の順に閉じられる。渡辺さん 2026-11-01）
-  await expect(w.locator('[data-testid^="ws-close-"]')).toHaveText([/n! をたたむ/, /をたたむ/]);
-  expect(await w.locator('[data-testid^="ws-close-"]').first().getAttribute("data-testid")).toBe("ws-close-fact");
-  await w.getByTestId("ws-close-comb").click(); // たたむと元の ₙCₖ に戻る
+  await expect(w.getByTestId("ws-trail")).toContainText("元の式›組合せ›階乗");
+  // 開いた中身は式の欄の中に見える（はみ出したら欄を横に寄せる）
+  await expect
+    .poll(() =>
+      w.evaluate((el) => {
+        const wrap = el.querySelector<HTMLElement>("[data-testid=ws-formula]")!.parentElement!.getBoundingClientRect();
+        const r = el.querySelector<HTMLElement>('[data-testid=ws-formula] [data-open="fact"]')!.getBoundingClientRect();
+        return r.left >= wrap.left - 1 && r.left <= wrap.right;
+      }),
+    )
+    .toBe(true);
+  // 一段戻るは同じ位置。1回目で n! の形、2回目で元の ₙCₖ
+  const back2 = (await w.getByTestId("ws-back").boundingBox())!;
+  expect(Math.abs(back2.x - back1.x) + Math.abs(back2.y - back1.y)).toBeLessThan(1);
+  await w.getByTestId("ws-back").click();
+  await expect(w.getByTestId("ws-trail")).not.toContainText("階乗");
+  await expect(w.getByTestId("ws-formula").locator(".katex")).toContainText("n!");
+  await w.getByTestId("ws-back").click();
+  await expect(w.getByTestId("ws-trail")).toHaveCount(0);
   await expect(w.getByTestId("ws-formula").locator(".katex")).not.toContainText("n!");
+  // 帯に長い等式のボタン・たたむは残さない（開く・戻るは式のまわりの1か所。画面の原則 8）
+  await expect(w.locator('[data-testid^="ws-close-"]')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });
 

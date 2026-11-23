@@ -41,6 +41,10 @@ export type WsCtx = {
   marksIn: (n: FormulaNode) => string[];
   open: (d: Definition, key?: string) => void;
   close: (k: string) => void;
+  /** 選んだかたまりを開く形（関数の記号・定義・定義の呼び名）。右上の ＋ で開く。stats2-course #590 */
+  openings: { key: string; d: Definition; label: string }[];
+  /** 開く形が2つ以上のとき、帯に選び肢を出しているか */
+  menu: boolean;
   defTex: (d: Definition) => string;
   pickSym: (k: string) => void;
   pickPart: (i: number) => void;

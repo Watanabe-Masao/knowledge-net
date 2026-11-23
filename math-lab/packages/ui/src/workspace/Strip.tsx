@@ -7,18 +7,16 @@ import s from "../Workspace.module.css";
 
 export function Strip({ w }: { w: WsCtx }) {
   const {
-    st: { sel, values, opens },
+    st: { sel, values },
     parts,
     tree,
     symbols,
     symOf,
     env,
-    choicesFor,
-    marksIn,
     selSym,
     open,
-    close,
-    defTex,
+    openings,
+    menu,
     pickSym,
     choices,
     onConcept,
@@ -36,13 +34,9 @@ export function Strip({ w }: { w: WsCtx }) {
     );
   const p = sel.part !== undefined ? parts[sel.part] : undefined;
   const node = p ? nodeAt(tree, p.path) : undefined;
-  // この中の記号：値の記号（n・k・p）と、意味のある関数（ₙCₖ・k!）。関数は「分解する」で定義の式に開ける
+  // この中の記号：値の記号（n・k・p）と、意味のある関数（ₙCₖ・k!）。関数は式の上の ＋ で定義の式に開ける（stats2-course #590）
   const fns = node ? fnsIn(node).filter((k) => symOf(k, symbols)) : [];
   const inside = node ? [...fns, ...symbolsIn(node).filter((k) => symOf(k, symbols))] : [];
-  const breakable = fns.map((k) => ({ key: k, defs: choicesFor(k) })).filter((x) => x.defs.length > 0);
-  // たたむは、最後に開いたものから左に並べる（渡辺さん 2026-11-01：同じ指の位置で順に開き、開き切ったら同じ位置で順に閉じられる）
-  const lastOpen = (k: string) => opens.map((o) => o.key).lastIndexOf(k);
-  const foldable = (node ? marksIn(node) : []).sort((a, b) => lastOpen(b) - lastOpen(a));
   const v = selSym ? values[selSym.key] : undefined;
   return (
     <div
@@ -56,10 +50,16 @@ export function Strip({ w }: { w: WsCtx }) {
           <Tween className={s.ctxVal} data-testid="ws-part-value" v={evaluate(node, env)} show={(x) => fmt(x)} />
           <b className={s.ctxName}>{p.name}</b>
           {!selSym && <p className={s.ctxText}>{p.meaning}</p>}
-          {(breakable.length > 0 || foldable.length > 0) && (
-            <div className={s.ctxActs}>
-              {breakable.map(({ key, defs }) =>
-                defs.map((d, i) => (
+          {/* 開ける入口の1行（画面の原則 13）。開く操作そのものは式の上の ＋ の1か所（原則 8）。形が2つ以上で ＋ を押したときだけ、ここで選ぶ */}
+          {openings.length === 1 && (
+            <p className={s.ctxHint} data-testid="ws-open-hint">
+              右上の ＋ で「{openings[0]!.label}」の形に開ける
+            </p>
+          )}
+          {openings.length > 1 &&
+            (menu ? (
+              <div className={s.ctxActs} role="group" aria-label="開く形">
+                {openings.map(({ key, d, label }, i) => (
                   <button
                     key={`${key}${i}`}
                     type="button"
@@ -67,24 +67,15 @@ export function Strip({ w }: { w: WsCtx }) {
                     onClick={() => open(d, key)}
                     data-testid={`ws-break-${key}`}
                   >
-                    分解する
-                    <span dangerouslySetInnerHTML={{ __html: render(defTex(d), false) }} />
+                    {label}
                   </button>
-                )),
-              )}
-              {foldable.map((k) => (
-                <button
-                  key={`f${k}`}
-                  type="button"
-                  className={s.tool}
-                  onClick={() => close(k)}
-                  data-testid={`ws-close-${k}`}
-                >
-                  {symOf(k, symbols)?.symbol ?? k} をたたむ
-                </button>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <p className={s.ctxHint} data-testid="ws-open-hint">
+                右上の ＋ で開ける（{openings.length} 通りの形）
+              </p>
+            ))}
         </div>
       )}
       {inside.length > 0 && (

@@ -22,6 +22,7 @@ import {
   distribution,
   evaluate,
   expand,
+  fnsIn,
   lhsOf,
   nodeAt,
   openSymbol,
@@ -284,11 +285,7 @@ function Frame({
     haptic();
     setSel((x) => ({ part: x?.part, sym: x?.sym === k ? undefined : k }));
   };
-  // 開いたものは、最後に開いたものから（たたむの並びを開いた順の逆にする）
-  const openKeys = [...new Set(opened.marks.values())].sort(
-    (a, b) => opens.map((o) => o.key).lastIndexOf(b) - opens.map((o) => o.key).lastIndexOf(a),
-  );
-  // 開いた所の印（marks）を、かたまりの中から集める。「たたむ」は開いた中身を選んでいる「分解する」の右に出す（渡辺さん 2026-10-31）
+  // 開いた所の印（marks）を、かたまりの中から集める
   const marksIn = (n: FormulaNode): string[] => {
     const out = new Set<string>();
     const walk = (x: unknown) => {
@@ -304,8 +301,25 @@ function Frame({
     return [...out];
   };
   const selPartNode = sel?.part !== undefined && parts[sel.part] ? nodeAt(tree, parts[sel.part]!.path) : undefined;
-  const shownFold = new Set(selPartNode ? marksIn(selPartNode) : []);
-  const restKeys = openKeys.filter((k) => !shownFold.has(k));
+  // 定義の式の呼び名（原本の label。「階乗で表す」など）。定義は教材の式そのもの（toEngine は木を写さない）なので、木で引く
+  const defLabel = (key: string, d: Definition) => {
+    const c = symOf(key, symbols)?.concept;
+    return (c && definitions?.(c).find((f) => f.tree === d.formula.tree)?.label) || "定義の式";
+  };
+  // 選んだかたまりを開く形（stats2-course #590）：かたまりの中の意味のある関数（ₙCₖ・k!）ごとに、今の式で開ける定義
+  const openings = selPartNode
+    ? fnsIn(selPartNode)
+        .filter((k, i, a) => a.indexOf(k) === i && symOf(k, symbols))
+        .flatMap((k) => choicesFor(k).map((d) => ({ key: k, d, label: defLabel(k, d) })))
+    : [];
+  const [menu, setMenu] = useState(false);
+  useEffect(() => setMenu(false), [sel?.part, opens.length]);
+  // 開いた順に戻る（stats2-course #590）：n 個目まで開いた形に戻す。開いた順に当て直すので、前の段はいつも開ける
+  const backTo = (n: number) => {
+    haptic();
+    stg.snapshot();
+    patch(({ opens: o }) => ({ opens: o.slice(0, n) }));
+  };
   const close = (k: string) => {
     stg.snapshot();
     patch(({ opens: o }) => {
@@ -320,6 +334,10 @@ function Frame({
       }
       return { opens: kept };
     });
+  };
+  const crumbName = (key: string) => {
+    const sym = symOf(key, symbols) ?? symOf(key, baseSymbols);
+    return (sym?.concept && conceptName?.(sym.concept)) || sym?.symbol || key;
   };
 
   // ---- 読み方（stats2-course #188 07b・03）：式を 意味（記号は何を表すか）・構造（部品に分ける）・計算（今の値を入れた部品ごとの値）で読む。
@@ -381,6 +399,8 @@ function Frame({
     marksIn,
     open,
     close,
+    openings,
+    menu,
     defTex,
     pickSym,
     pickPart,
@@ -435,6 +455,38 @@ function Frame({
           )}
         </>
       )}
+      {/* 開いた道（stats2-course #590）：式のすぐ上に、元の式 › 組合せ › 階乗 と「一段戻る」。一段戻るはいつも右端の同じ位置（式の下に置くと、開いて式の高さが変わるたびに動く） */}
+      {opens.length > 0 && (
+        <div className={s.trail} data-testid="ws-trail">
+          <nav aria-label="開いた順" className={s.crumbs}>
+            <button type="button" className={s.crumb} onClick={() => backTo(0)} data-testid="ws-crumb-0">
+              元の式
+            </button>
+            {opens.map((o, i) => (
+              <span key={i} className={s.crumbItem}>
+                <span aria-hidden="true">›</span>
+                {i === opens.length - 1 ? (
+                  <span aria-current="step" className={s.crumbHere}>
+                    {crumbName(o.key)}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className={s.crumb}
+                    onClick={() => backTo(i + 1)}
+                    data-testid={`ws-crumb-${i + 1}`}
+                  >
+                    {crumbName(o.key)}
+                  </button>
+                )}
+              </span>
+            ))}
+          </nav>
+          <button type="button" className={s.tool} onClick={() => backTo(opens.length - 1)} data-testid="ws-back">
+            一段戻る
+          </button>
+        </div>
+      )}
       {/* 2 主役の式：意味のかたまりの囲み（構造の段で効かない部品は薄く）と、選んだかたまりの囲み */}
       <div ref={stg.wrap} className={s.stageWrap}>
         <div className={s.boxes} aria-hidden="true">
@@ -463,30 +515,25 @@ function Frame({
           dangerouslySetInnerHTML={{ __html: html }}
           data-testid="ws-formula"
         />
+        {/* 開ける：選んだかたまりの右上に、開けるときだけ ＋。押すとその場で開く（形が2つ以上なら帯で選ぶ）。印は小さく、押せる所は 44px（画面の原則 6） */}
+        {stg.selBox && sel?.part !== undefined && openings.length > 0 && (
+          <button
+            type="button"
+            className={s.opener}
+            style={{ left: stg.selBox.x + stg.selBox.w - 44, top: Math.max(stg.selBox.y - 22, 0) }}
+            aria-label={
+              openings.length === 1 ? `${crumbName(openings[0]!.key)}を${openings[0]!.label}形に開く` : "開く形を選ぶ"
+            }
+            aria-expanded={openings.length > 1 ? menu : undefined}
+            data-testid={openings.length === 1 ? `ws-break-${openings[0]!.key}` : "ws-open-menu"}
+            onClick={() => (openings.length === 1 ? open(openings[0]!.d, openings[0]!.key) : setMenu((m) => !m))}
+          >
+            <span aria-hidden="true" />
+          </button>
+        )}
       </div>
       {/* 3 帯（式の読み方の中に置く。読み方がない式は帯だけ） */}
       {hasReading(w) ? <ReadPanel w={w} /> : <Strip w={w} />}
-      {(restKeys.length > 0 || opens.length > 1) && (
-        <div className={s.tools}>
-          {restKeys.map((k) => (
-            <button key={k} type="button" className={s.tool} onClick={() => close(k)} data-testid={`ws-close-${k}`}>
-              {symOf(k, symbols)?.symbol ?? k} をたたむ
-            </button>
-          ))}
-          {opens.length > 1 && (
-            <button
-              type="button"
-              className={s.tool}
-              onClick={() => {
-                stg.snapshot();
-                patch({ opens: [] });
-              }}
-            >
-              元の式に戻す
-            </button>
-          )}
-        </div>
-      )}
       {!only && (
         <>
           <CalcPanel w={w} />

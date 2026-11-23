@@ -42,7 +42,7 @@
   position: relative;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 8px 0;
+  padding: 28px 0 8px; /* 上は、選んだかたまりの右上の ＋ の印を、式の字に重ねず囲みの上に置く分（#590） */
 }
 .stage {
   position: relative;
@@ -1219,4 +1219,90 @@
 .strip.tint2 {
   background: color-mix(in srgb, var(--data-2) 12%, var(--surface));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--data-2) 40%, transparent);
+}
+
+/* 開ける ＋（stats2-course #590）：選んだかたまりの右上。印は 22px、押せる所は 44px（画面の原則 6）。式の欄の中で一緒に横に送られる */
+.opener {
+  all: unset;
+  position: absolute;
+  width: var(--tap);
+  height: var(--tap);
+  display: grid;
+  place-items: start end; /* 印は押せる所の右上：かたまりの囲みの右上の角の上に出し、字に重ねない。押せる所はかたまりの中に下ろし、隣のかたまりにはかけない */
+  cursor: pointer;
+  z-index: 1;
+}
+.opener > span {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface);
+  transition: transform var(--dur-press) var(--ease);
+}
+.opener > span::before,
+.opener > span::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 2px;
+  margin: 10px 0 0 6px;
+  background: var(--accent-ink);
+  border-radius: 1px;
+}
+.opener > span::after {
+  transform: rotate(90deg);
+}
+.opener:active > span {
+  transform: scale(var(--press-scale));
+}
+.opener:focus-visible > span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* 開いた道：式のすぐ上。一段戻るは右端の同じ位置（開いた数・式の高さで動かない） */
+.trail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+.crumbs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.crumbItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.crumb {
+  all: unset;
+  box-sizing: border-box;
+  min-height: var(--tap);
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  cursor: pointer;
+}
+.crumb:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.crumbHere {
+  color: var(--ink);
+  font-weight: 600;
+}
+.ctxHint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--ink-3);
 }
