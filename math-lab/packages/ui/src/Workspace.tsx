@@ -269,7 +269,11 @@ function Frame({
       (d) => openSymbol(tree, symbols, key, d, new Map(), { resolve }).count > 0,
     );
   };
-  const choices = useMemo(() => (selSym ? choicesFor(selSym.key) : []), [selSym, definitions, tree, symbols, resolve]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 記号の札で開けるのは記号の葉（μ など）だけ。関数（ₙCₖ・k!）はかたまりの右上の折り返しの1か所で開く（画面の原則 8。stats2-course #590。渡辺さん 2026-11-24）
+  const choices = useMemo(
+    () => (selSym && !fnsIn(tree).includes(selSym.key) ? choicesFor(selSym.key) : []),
+    [selSym, definitions, tree, symbols, resolve], // eslint-disable-line react-hooks/exhaustive-deps
+  );
   // 開いたあとも、かたまりは選んだまま（分解した中身がそのまま帯に出る。続けて k! なども分解できる）
   const open = (d: Definition, key = selSym!.key) => {
     haptic();

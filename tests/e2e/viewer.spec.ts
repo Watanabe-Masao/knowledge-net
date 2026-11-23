@@ -766,6 +766,12 @@ test("作業台で ₙCₖ を階乗に分解し、さらに階乗を積に分�
   await expect(w.locator('[data-testid^="ws-break-"]')).toHaveCount(0);
   await w.locator('[data-part="0"]').first().click();
   await expect(w.getByTestId("ws-open-hint")).toContainText("階乗で表す");
+  // 記号の札で ₙCₖ を選んでも「式の中で開く」は出さない（関数を開くのは折り返しの1か所。画面の原則 8）
+  const chips = w.getByRole("group", { name: "この中の記号" }).getByRole("button");
+  await chips.first().click();
+  await expect(w.getByTestId("ws-sym")).toBeVisible();
+  await expect(w.getByTestId("ws-open")).toHaveCount(0);
+  await chips.first().click();
   const plus = w.getByTestId("ws-break-comb");
   const pb = (await plus.boundingBox())!;
   expect(Math.min(pb.width, pb.height)).toBeGreaterThanOrEqual(44);
