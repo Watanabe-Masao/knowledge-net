@@ -5,6 +5,10 @@ import { readFileSync } from "node:fs";
 // 検定の語の数は見本から数える（語を足すたびにテストを直さない。stats2-course #476）
 const sample = JSON.parse(readFileSync("public/sample/stats2.json", "utf8")) as { concepts: { category?: string }[] };
 const TESTS = sample.concepts.filter((c) => c.category === "検定").length;
+// 検定を関係図に移したか（教材の relation_map_ready。移すと地図は関係図、一覧はまとまりごとの区切りになる。stats2-course #588）
+const MAP_READY = (
+  (sample as { course?: { relation_map_ready?: string[] } }).course?.relation_map_ready ?? []
+).includes("検定");
 
 // 確かめる対象：ライブラリ → 分類のページ（正方形・一覧・地図の切り替え）→ 概念 の流れと、正方形の長押し。
 // 想定する故障：分類の語が全部出ない・ほかの分類の語が混ざる・学ぶ順でない（画面が並べ替えずに教材の並びのまま）・
@@ -28,12 +32,14 @@ test("ライブラリ → 分類のページ：正方形（長押しで説明）
   );
   expect(ids.indexOf("h0")).toBeLessThan(ids.indexOf("test"));
   expect(ids.indexOf("test")).toBeLessThan(ids.indexOf("paired-t"));
-  expect(ids.at(-1)).toBe("multcomp");
+  // 最後の語は見ない：まとまりがあると、まとまりの順で区切ってから学ぶ順に並べるので、多重比較は最後のまとまりでなくなる（#588）
+  expect(ids.indexOf("anova")).toBeLessThan(ids.indexOf("multcomp"));
   const box = (await items.first().boundingBox())!;
   expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
 
   // 長押し：説明が出て、離しても概念へは移らない
   const pv = list.getByTestId("cat-item-stats2:TERM-pvalue");
+  await pv.scrollIntoViewIfNeeded(); // まとまりの見出しが入ると p値 が画面の下に出る（#588）
   const b = (await pv.boundingBox())!;
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await page.mouse.down();
@@ -47,11 +53,11 @@ test("ライブラリ → 分類のページ：正方形（長押しで説明）
   await expect(page).toHaveURL(/lv=list/);
   await expect(list).toHaveAttribute("data-layout", "list");
   await expect(list.getByTestId("cat-item-stats2:TERM-pvalue")).toContainText("極端な値");
-  // 地図：島の地図（検定の語だけ）
+  // 地図：関係図に移した分類は関係図、移していない分類は島の地図（検定の語だけ）
   await page.getByTestId("cat-layout-map").click();
   await expect(page).toHaveURL(/lv=map/);
   await expect(page.getByTestId("category-list")).toHaveCount(0);
-  await expect(page.getByTestId("graph")).toBeVisible();
+  await expect(page.getByTestId(MAP_READY ? "relation-map" : "graph")).toBeVisible();
   // 「戻る」：地図 → 一覧 → 正方形 → ライブラリ
   await page.goBack();
   await expect(page.getByTestId("category-list")).toHaveAttribute("data-layout", "list");

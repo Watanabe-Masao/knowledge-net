@@ -1216,39 +1216,52 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   await expect(page.getByTestId("category-list")).toHaveAttribute("data-layout", "grid");
   await page.getByTestId("cat-layout-map").click();
   await expect(page).toHaveURL(/lv=map/);
-  const sel = page.getByTestId("group-select");
-  await expect(sel).toHaveValue("確率");
-  const terms = () =>
-    page.evaluate(() => {
-      const ns = (window as any).kn.nodes().toArray();
-      return {
-        core: ns.filter((n: any) => n.id().startsWith("stats2:TERM-") && n.data("cat") === "確率").length,
-        other: ns.filter((n: any) => n.id().startsWith("stats2:TERM-") && n.data("cat") !== "確率").length,
-      };
-    });
-  await expect.poll(async () => (await terms()).core).toBe(14); // 確率の分類の14語（標本空間・事象・確率・ベイズの定理・事後確率など）
-  expect((await terms()).other).toBe(0); // ほかの分類の点は出さない
-  // 390px で：左上の選ぶ欄が「収める」ボタンに重ならず、点が左上の操作の下に隠れない
-  const fitBox = (await page.getByRole("button", { name: "全体に戻す" }).boundingBox())!;
-  const selBox = (await sel.boundingBox())!;
-  expect(selBox.x + selBox.width).toBeLessThanOrEqual(fitBox.x);
-  const hidden = () =>
-    page.evaluate((bottom) => {
-      const c = (
-        window as unknown as {
-          kn: {
-            container: () => HTMLElement;
-            nodes: (q?: string) => { toArray: () => { renderedBoundingBox: () => { y1: number } }[] };
-          };
-        }
-      ).kn;
-      const top = c.container().getBoundingClientRect().top;
-      return c
-        .nodes('[kind != "isle"][kind != "band"][kind != "isleCap"]')
-        .toArray()
-        .filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
-    }, selBox.y + selBox.height);
-  await expect.poll(hidden, { timeout: 10000 }).toBe(0); // 文字の読み込み・枠の大きさが決まってから収め直すのを待つ
+  // 確率を関係図に移したか（教材の relation_map_ready。stats2-course #588 で全分類を移した）
+  const ready: string[] = await page.evaluate(
+    async () => (await (await fetch("sample/stats2.json")).json()).course?.relation_map_ready ?? [],
+  );
+  let sel = page.getByTestId("group-select");
+  if (ready.includes("確率")) {
+    // 関係図：確率の14語だけを描く（ほかの分類の語は出さない）。全部の語の地図は g=* で開く
+    const rm = page.getByTestId("relation-map");
+    await expect(rm).toBeVisible();
+    await expect(rm.locator("[data-testid^=rm-term-]")).toHaveCount(14);
+    await page.goto("./?src=sample/stats2.json&g=*");
+    sel = page.getByTestId("group-select");
+  } else {
+    await expect(sel).toHaveValue("確率");
+    const terms = () =>
+      page.evaluate(() => {
+        const ns = (window as any).kn.nodes().toArray();
+        return {
+          core: ns.filter((n: any) => n.id().startsWith("stats2:TERM-") && n.data("cat") === "確率").length,
+          other: ns.filter((n: any) => n.id().startsWith("stats2:TERM-") && n.data("cat") !== "確率").length,
+        };
+      });
+    await expect.poll(async () => (await terms()).core).toBe(14); // 確率の分類の14語（標本空間・事象・確率・ベイズの定理・事後確率など）
+    expect((await terms()).other).toBe(0); // ほかの分類の点は出さない
+    // 390px で：左上の選ぶ欄が「収める」ボタンに重ならず、点が左上の操作の下に隠れない
+    const fitBox = (await page.getByRole("button", { name: "全体に戻す" }).boundingBox())!;
+    const selBox = (await sel.boundingBox())!;
+    expect(selBox.x + selBox.width).toBeLessThanOrEqual(fitBox.x);
+    const hidden = () =>
+      page.evaluate((bottom) => {
+        const c = (
+          window as unknown as {
+            kn: {
+              container: () => HTMLElement;
+              nodes: (q?: string) => { toArray: () => { renderedBoundingBox: () => { y1: number } }[] };
+            };
+          }
+        ).kn;
+        const top = c.container().getBoundingClientRect().top;
+        return c
+          .nodes('[kind != "isle"][kind != "band"][kind != "isleCap"]')
+          .toArray()
+          .filter((n) => top + n.renderedBoundingBox().y1 < bottom - 2).length;
+      }, selBox.y + selBox.height);
+    await expect.poll(hidden, { timeout: 10000 }).toBe(0); // 文字の読み込み・枠の大きさが決まってから収め直すのを待つ
+  }
   // 全部の語：語を分類の島に入れた地図。語は見本の全部（数は見本から数える。語を足すたびにテストを直さない。stats2-course #45）
   const allTerms = await page.evaluate(async () => {
     const d = await (await fetch("sample/stats2.json")).json();

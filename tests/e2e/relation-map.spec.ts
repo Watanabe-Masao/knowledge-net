@@ -3,10 +3,13 @@
 // 見本は、教材が確率分布を関係図に移して公開したデータの写し（public/sample/stats2.json）をそのまま読む。
 // iPhone の Safari で崩れないかを見るため、この spec は WebKit でも走らせる（playwright.config.ts の webkit）
 import { test, expect, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 
 const T = (x: string) => `stats2:TERM-${x}`;
 const G = (x: string) => `stats2:GRP-dist-${x}`;
 const URL = "./?src=sample/stats2.json&lv=map&g=";
+// 関係図に移した分類（教材の relation_map_ready）。全部を移すと「移していない分類」はなくなる（stats2-course #588）
+const READY: string[] = JSON.parse(readFileSync("public/sample/stats2.json", "utf8")).course?.relation_map_ready ?? [];
 
 async function open(page: Page, w = 390, h = 844, extra = "") {
   await page.setViewportSize({ width: w, height: h });
@@ -180,8 +183,14 @@ test("移した分類（確率分布）の地図は関係図で、語を選ん�
     expect(text, `地図に文章「${ng}」`).not.toContain(ng);
 
   await page.goto(URL + encodeURIComponent("検定"));
-  await expect(page.getByTestId("graph")).toBeVisible();
-  await expect(page.getByTestId("relation-map")).toHaveCount(0);
+  if (READY.includes("検定")) {
+    // 検定も移した（#588）：関係図で開き、島の地図は出ない
+    await expect(page.getByTestId("relation-map")).toBeVisible();
+    await expect(page.getByTestId("graph")).toHaveCount(0);
+  } else {
+    await expect(page.getByTestId("graph")).toBeVisible();
+    await expect(page.getByTestId("relation-map")).toHaveCount(0);
+  }
 });
 
 // 確かめる対象：語を押したときの見せ方と寄り方、下の面（島の地図と同じ詳しく。画面の原則 4）、線の端（Safari で崩れないか）、字の実寸。
