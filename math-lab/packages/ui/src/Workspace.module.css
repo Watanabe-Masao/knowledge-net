@@ -42,7 +42,7 @@
   position: relative;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 28px 0 8px; /* 上は、選んだかたまりの右上の ＋ の印を、式の字に重ねず囲みの上に置く分（#590） */
+  padding: 20px 0 8px; /* 上は、選んだかたまりの右上の ＋ の印を、式の字に重ねず囲みの上に置く分（#590） */
 }
 .stage {
   position: relative;
@@ -1232,23 +1232,26 @@
   cursor: pointer;
   z-index: 1;
 }
+/* 印は控えめに（渡辺さん 2026-11-24「目立ちすぎ」。画面の原則 18：ふつうの操作は中立の色）。色は選んだかたまりの囲みに任せ、＋ は面の色の小さな丸と細い線 */
 .opener > span {
   position: relative;
-  width: 22px;
-  height: 22px;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px var(--surface);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
   transition: transform var(--dur-press) var(--ease);
 }
 .opener > span::before,
 .opener > span::after {
   content: "";
   position: absolute;
-  width: 10px;
-  height: 2px;
-  margin: 10px 0 0 6px;
-  background: var(--accent-ink);
+  left: 3.5px;
+  top: 6.25px;
+  width: 7px;
+  height: 1.5px;
+  background: var(--ink-2);
   border-radius: 1px;
 }
 .opener > span::after {
