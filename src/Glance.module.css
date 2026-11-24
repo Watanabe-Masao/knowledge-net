@@ -1,0 +1,57 @@
+/* ひと目は、概念のページ（全画面）・実験室（FullView 47）・図の拡大（Lightbox 55）の上に出す */
+.layer {
+  position: relative;
+  z-index: 60;
+}
+.trail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.back {
+  all: unset;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--line-strong);
+  color: var(--ink-2);
+  font-size: 20px;
+  cursor: pointer;
+}
+.back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.crumbs {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-2);
+  font-size: var(--fs-tag);
+}
+.crumbs > span + span::before {
+  content: " › ";
+}
+.here {
+  color: var(--ink);
+  font-weight: 600;
+}
+.text {
+  margin: 4px 0 0;
+  font-size: var(--fs-body, 15px);
+  line-height: 1.7;
+}
+.tex {
+  overflow-x: auto;
+  margin: 8px 0 0;
+}
+.go {
+  margin-top: 16px;
+  width: 100%;
+}

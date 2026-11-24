@@ -91,7 +91,10 @@ test("概念の成立条件は要件・仮定・手掛かりに分かれ、外�
   const box = (await chip.boundingBox())!;
   expect(box.height, "用語の札が 44px より小さい").toBeGreaterThanOrEqual(44);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  // 用語の札はひと目を開き（ページは替えない。stats2-course #593）、「ページを開く」でその概念へ
   await chip.click();
+  await expect(page.getByTestId("glance")).toContainText("独立");
+  await page.getByTestId("glance-open").click();
   await expect(page.getByTestId("detail").locator("h2")).toHaveText("独立");
   expect(errs).toEqual([]);
 });
