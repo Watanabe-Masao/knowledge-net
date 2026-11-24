@@ -1,4 +1,5 @@
-// 全面で開く（ラボを広く使う・別の画面に出さない）。押した所から少し拡大して現れ、✕ か Esc で元の画面に戻る。
+// 全面で開く（ラボを広く使う・別の画面に出さない）。押した所から少し拡大して現れ、← か Esc で元の画面に戻る。
+// 左上は ←（ページを積む形で、どの全画面のページも戻るは ← 1つ。stats2-course の issue 599。前は ✕）。
 // 新しいタブに出すと iPhone では戻り方が分からなくなるので、同じ画面の上に重ねる。動きを減らす設定では、その場で出る。
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -40,8 +41,8 @@ export function FullView({ title, label, onClose, children, aside }: Props) {
       data-testid="fullview"
     >
       <header className={s.bar}>
-        <button type="button" className={s.close} onClick={close} aria-label="閉じて戻る">
-          ✕
+        <button type="button" className={s.close} onClick={close} aria-label="戻る">
+          ←
         </button>
         <div className={s.title}>{title}</div>
         <div className={s.aside}>{aside}</div>

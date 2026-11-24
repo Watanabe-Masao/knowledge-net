@@ -14,7 +14,6 @@ import {
   Segmented,
   Workspace,
   TableWorkspace,
-  haptic,
   type Detent,
   subPlain,
   subText,
@@ -284,15 +283,11 @@ export default function Detail({
   const peekOut = sheet ? Math.max(64, peekH + 32) : 0; // 段1：つまみ・名前と札の行の下まで
   // ← は来た段へ戻す（画面の原則 3・11）
   const lastStep = useRef<Detent>("peek");
-  const grabY = useRef<number | null>(null);
-  const grabT = useRef({ t: 0, y: 0, v: 0 });
-  // フルのページを指で下へ引く量（指に付いて下がる。画面の原則 2）と、面へ戻るときの出だしの高さ（画面の原則 11）
-  const [pageDy, setPageDy] = useState(0);
+  // 面へ戻るときの出だしの高さ（画面の原則 11）
   const leaveFrom = useRef<number | undefined>(undefined);
-  const leaveFull = (dy = 0) => {
+  const leaveFull = () => {
     if (!sheet) return;
-    leaveFrom.current = Math.max(0, window.innerHeight - (sheet.bottom ?? 0) - 44 - dy);
-    setPageDy(0);
+    leaveFrom.current = Math.max(0, window.innerHeight - (sheet.bottom ?? 0) - 44);
     sheet.onDetent(lastStep.current);
   };
   useEffect(() => {
@@ -883,51 +878,10 @@ export default function Detail({
         className={st.page}
         data-testid="detail"
         data-detent="full"
-        data-drag={pageDy > 0 ? "" : undefined}
-        style={pageDy > 0 ? { transform: `translateY(${pageDy}px)` } : undefined}
         role="region"
         aria-label={`${c.name} のページ`}
       >
-        {/* フルでも上につまみ（渡辺さん 2026-11-07）：押すか下へ引くと、来た段へ戻る（面のつまみと同じ働き。画面の原則 10） */}
-        <button
-          type="button"
-          className={st.pageGrab}
-          aria-label="来た段へ戻す"
-          data-testid="page-grab"
-          onPointerDown={(e) => {
-            grabY.current = e.clientY;
-            grabT.current = { t: e.timeStamp, y: e.clientY, v: 0 };
-            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-          }}
-          onPointerMove={(e) => {
-            if (grabY.current === null) return;
-            const g = grabT.current;
-            g.v = (e.clientY - g.y) / Math.max(1, e.timeStamp - g.t); // 下向きが＋（px/ms）
-            g.t = e.timeStamp;
-            g.y = e.clientY;
-            setPageDy(Math.max(0, e.clientY - grabY.current));
-          }}
-          onPointerUp={(e) => {
-            if (grabY.current === null) return;
-            const dy = Math.max(0, e.clientY - grabY.current);
-            if (dy <= 8) return; // 押しただけ：click で戻す
-            grabY.current = null;
-            if (dy > 80 || grabT.current.v > 0.5) {
-              haptic();
-              leaveFull(dy);
-            } else setPageDy(0); // 少しだけ引いた：上へ戻る
-          }}
-          onPointerCancel={() => {
-            grabY.current = null;
-            setPageDy(0);
-          }}
-          onClick={(e) => {
-            if (grabY.current === null && e.detail !== 0) return; // 引いて戻したあとの click は無視（キーボードは通す）
-            grabY.current = null;
-            haptic();
-            leaveFull();
-          }}
-        />
+        {/* 上のつまみは外した：戻るは見出しの ← 1つ（ページを積む形。stats2-course の issue 599） */}
         <div className={st.pageHead}>{head}</div>
         <div className={st.pageBody}>{rest}</div>
         {lab && (

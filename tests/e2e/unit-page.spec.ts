@@ -53,7 +53,7 @@ test("単元のページ：見出しから開き、概念を全画面で開い�
   await expect(d, "全画面で開かない").toHaveAttribute("data-detent", "full");
   await d.getByTestId("detail-to-map").click();
   await expect(page.getByTestId("unit-page"), "← で単元のページに戻らない").toBeVisible();
-  await page.getByRole("dialog", { name: "単元のページ" }).getByRole("button", { name: "閉じて戻る" }).click();
+  await page.getByRole("dialog", { name: "単元のページ" }).getByRole("button", { name: "戻る", exact: true }).click();
   await expect(page.getByTestId("unit-page")).toHaveCount(0);
   await expect(route).toBeVisible();
   await page.goBack();
@@ -87,7 +87,7 @@ test("単元のページ：教材の項目がなくても開き、直接の URL 
     return u.problems.filter((p: { stage: string }) => p.stage === "初学").length as number;
   });
   await expect(u.getByTestId("unit-stage-初学")).toContainText(`問題 ${n}`);
-  await page.getByRole("dialog", { name: "単元のページ" }).getByRole("button", { name: "閉じて戻る" }).click();
+  await page.getByRole("dialog", { name: "単元のページ" }).getByRole("button", { name: "戻る", exact: true }).click();
   await expect(page.getByTestId("route")).toBeVisible();
   await expect(page).not.toHaveURL(/u=/);
 });

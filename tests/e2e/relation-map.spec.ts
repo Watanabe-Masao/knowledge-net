@@ -350,12 +350,12 @@ test("関係図で語を押し直すと、ひと目はその語に替わり、�
 });
 
 // 確かめる対象：戻ると、離れたときのまま（画面の原則 3。#239 の入れる順 2）。
-// 想定する故障：概念のページへ進んで ← で戻ると、関係図が寄り直して選んだ語の位置が変わる・選び（?m=）が消える。路線図へ出て戻ると、
-//   初めの見え方に戻る（指で動かした所が消える）。
+// 想定する故障：概念のページへ進んで ← で戻ると、関係図が寄り直して選んだ語の位置が変わる・選び（?m=）が消える。
 // 見つけ方：二項分布を選び、指で少し動かしてから画面の上の位置を測る。ひと目の「ページを開く」→ ← で戻り、同じ位置で m=二項分布。
-//   選びを外して地図を指で動かし、路線図へ出てブラウザで戻ると、動かした後の位置か。既存との違い：ほかのテストは1つの画面の中の動き
+//   そのあと選びを外しても地図は残る。既存との違い：ほかのテストは1つの画面の中の動き
+//   （前は路線図のパンくずへ出て戻る形も見ていた。パンくずは issue 599 で外し、関係図の ← は来た所へ戻るので、その形はなくなった）
 // 検出の確かめ（2026-11-07）：分類ごとの見え方を覚える処理を外すと落ちることを見た（概念のページから戻る形は issue 599 で書き直した）
-test("戻ると離れたときのまま：概念のページから戻っても、路線図へ出て戻っても、地図の見え方は同じ", async ({ page }) => {
+test("戻ると離れたときのまま：概念のページから戻っても、地図の見え方と選びは同じ", async ({ page }) => {
   const m = await open(page);
   const at = async (id: string) => {
     const r = (await m.getByTestId(`rm-term-${T(id)}`).boundingBox())!;
@@ -389,24 +389,6 @@ test("戻ると離れたときのまま：概念のページから戻っても�
   await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByTestId("relation-map"), "選びを外したのに地図が消えた（別の物を押した）").toBeVisible();
   await expect.poll(() => bars(page)).toBe("shown");
-  await page.waitForTimeout(500);
-  const b2 = await blank(page);
-  await fingers(
-    page,
-    Array.from({ length: 6 }, (_, i) => ({ 1: [b2.x - 60, b2.y - 10 * i] as [number, number] })),
-    120,
-  );
-  await expect.poll(() => bars(page)).toBe("hidden");
-  await page.mouse.click(b2.x, b2.y); // 帯を戻す（路線図へのパンくずを押すため）
-  await expect.poll(() => bars(page)).toBe("shown");
-  await still(page);
-  const p1 = await at("binom");
-  await page.getByTestId("crumbs").getByRole("button", { name: "路線図" }).click();
-  await expect(m).toHaveCount(0);
-  await page.goBack();
-  await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
-  await still(page);
-  expect(await at("binom"), "路線図から戻ると初めの見え方に戻る").toEqual(p1);
 });
 
 // 確かめる対象：指の物理（画面の原則 2。UX レビュー A1・B10・B11）。

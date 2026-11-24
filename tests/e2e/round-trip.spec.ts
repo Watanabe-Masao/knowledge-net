@@ -74,14 +74,20 @@ test("一覧を閉じる：アプリの中で開いたものは戻るで開き�
   await d.getByRole("radio", { name: "関係" }).click(); // 概念のページはいつも全画面（issue 599）
   await d.getByTestId("trace-open").click();
   await expect(page).toHaveURL(/view=path/);
-  await page.getByRole("dialog", { name: "前提をさかのぼる" }).getByRole("button", { name: "閉じて戻る" }).click();
+  await page
+    .getByRole("dialog", { name: "前提をさかのぼる" })
+    .getByRole("button", { name: "戻る", exact: true })
+    .click();
   await expect(page.getByTestId("trace")).toHaveCount(0);
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
   await expect(page).not.toHaveURL(/view=path/);
   await page.goBack();
   await expect(page.getByTestId("trace"), "戻ると一覧が開き直す").toHaveCount(0);
   await page.goto(`./?${SRC}&c=stats2%3ATERM-binom&view=path`);
-  await page.getByRole("dialog", { name: "前提をさかのぼる" }).getByRole("button", { name: "閉じて戻る" }).click();
+  await page
+    .getByRole("dialog", { name: "前提をさかのぼる" })
+    .getByRole("button", { name: "戻る", exact: true })
+    .click();
   await expect(page.getByTestId("trace")).toHaveCount(0);
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
   await expect(page).not.toHaveURL(/view=path/);

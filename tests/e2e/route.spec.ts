@@ -44,7 +44,7 @@ test("路線図：駅 → 概念のページ（全画面）→ ← で路線図�
 });
 
 // 確かめる対象：単元の見出しの下に、その単元の問題（段ごと）と Notion の単元ページへの入口がある（学習・問題集のタブの代わり）。
-//   路線図の右上「分類で見る」で分類のライブラリ、パンくずの「路線図」で戻る。前の URL（?t=learn・problems）は路線図で開く。
+//   路線図の右上「分類で見る」で分類のライブラリ、「← 分類」の ← で戻る。前の URL（?t=learn・problems）は路線図で開く。
 // 想定する故障：問題の数が単元の問題と合わない・開いても一覧が出ない・Notion へ行けない・分類のライブラリに入れない・古い URL で空の画面。
 // 見つけ方：U14 の「問題 N 問」の N が見本の U14 の問題の数と同じ、押すと N 個のリンク（Notion）。分類で見る → ライブラリ → 路線図。
 // 既存との違い：上は駅と概念のページの行き来
@@ -65,7 +65,8 @@ test("路線図：単元の問題と Notion、分類で見る、前の URL", asy
   await expect(u.getByRole("link", { name: /Notion で読む/ })).toHaveAttribute("href", /notion\.com/);
   await page.getByTestId("route-groups").click();
   await expect(page.getByTestId("library")).toBeVisible();
-  await page.getByTestId("crumbs").getByRole("button", { name: "路線図" }).click();
+  await expect(page.getByTestId("page-back")).toContainText("分類");
+  await page.getByTestId("page-back-btn").click(); // ← は来た所（路線図）へ（issue 599。前はパンくず）
   await expect(page.getByTestId("route")).toBeVisible();
   for (const t of ["learn", "problems"]) {
     await page.goto(`./?${SRC}&t=${t}`);
