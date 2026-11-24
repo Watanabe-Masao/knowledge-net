@@ -695,8 +695,8 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   // 疲れて下がる n＝10・p＝0.5・d＝0.3 の分散 2.5−0.09×330/81＝2.13、戻さずに取る 40 個の箱の分散 10×0.25×30/39＝1.92）
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
-  await page.goto(`./?${SRC}&c=stats2:TERM-binom&t=lab`);
+  // 実験室は、概念のページの「試す」の段から開く（実験室の一覧のページはなくした。stats2-course の issue 599）
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await page.getByTestId("open-stats2:EXP-binom-p").click();
   const x = page.getByTestId("experiment");
   // テーマ体系（#163）：まとまりを上の選択で選ぶ。A は 4 問のうち 3 問が開け、1 問は作成中（押せない）。比べるはいつも下
@@ -877,8 +877,8 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   // この時刻の種では大当たりが出て線は約 100px 動く。縦の幅を揺れの目安で広げる故障では 2px ほどにつぶれる
   await page.clock.setFixedTime(new Date("2026-11-01T13:00:55.555Z"));
   await page.setViewportSize({ width: 390, height: 844 });
-  // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
-  await page.goto(`./?${SRC}&c=stats2:TERM-expect&t=lab`);
+  // 実験室は、概念のページの「試す」の段から開く（実験室の一覧のページはなくした。stats2-course の issue 599）
+  await page.goto(`./?${SRC}&c=stats2:TERM-expect`);
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   await page.getByTestId("experiment").getByTestId("exp-q-A-01").click(); // テーマ体系の入口から最初の問い（#119）
   const x = page.getByTestId("experiment");
@@ -1261,8 +1261,8 @@ test("値の表の実験室：横は値に比例し、▲（期待値）と予�
   // （38円の▲が 0 と 100 の間の 4 割に立ち、重心＝てんびんの支点に見えない）。見つけ方：棒の位置だけから値→位置の直線を作り、
   // ▲・予想の線がその直線の 38 円・予想の値に立つかを見る（画面の計算式は使わない）。既存のテストは ▲ の有無だけを見ていた
   await page.setViewportSize({ width: 390, height: 844 });
-  // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
-  await page.goto(`./?${SRC}&c=stats2:TERM-expect&t=lab`);
+  // 実験室は、概念のページの「試す」の段から開く（実験室の一覧のページはなくした。stats2-course の issue 599）
+  await page.goto(`./?${SRC}&c=stats2:TERM-expect`);
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   await page.getByTestId("experiment").getByTestId("exp-q-A-01").click(); // テーマ体系の入口から最初の問い（#119）
   const x = page.getByTestId("experiment");
@@ -1287,8 +1287,8 @@ test("実験室の基本の面は型どおり：式は記号を押せる・本�
     ["TERM-binom", "EXP-binom-p", "二項分布", ["期待値"]],
     ["TERM-expect", "EXP-expect-table", "期待値", []],
   ] as const) {
-    // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
-    await page.goto(`./?${SRC}&c=stats2:${cid}&t=lab`);
+    // 実験室は、概念のページの「試す」の段から開く（実験室の一覧のページはなくした。stats2-course の issue 599）
+    await page.goto(`./?${SRC}&c=stats2:${cid}`);
     await page.getByTestId(`open-stats2:${eid}`).click();
     await page.getByTestId("experiment").getByRole("button", { name: "基本と用語" }).click();
     const info = page.getByTestId("exp-info");

@@ -79,13 +79,14 @@ test("期待値の実験室：テーマ体系の入口から問いを選び、�
 // 確かめる対象：実験室のタブのカードが、その実験室のまとまりの範囲（A〜F・A〜D など）を出すこと。
 // 想定する故障：範囲を書き込みにして、まとまりの数が違う実験室（期待値は A〜E）でも A〜F と出す（stats2-course #188 の iPhone 確認 2026-11-12 で見つけた）。
 // 見つけ方：読み込みを書き換えた期待値（まとまり A と D）と、見本のままの二項分布（A〜F）のカードの文を見る。
-// 既存との違い：上のテストは実験室の中の入口。ここはサイトの実験室のタブのカード。
+// 既存との違い：上のテストは実験室の中の入口。ここは概念のページの「試す」の段のカード（前は実験室のタブ。issue 599）。
 // 検出の確かめ（2026-11-12）：groupRange を「A〜F」の書き込みに戻すと期待値のカードで落ちることを見た
-test("実験室のタブ：カードの問いの範囲は、その実験室のまとまりから作る", async ({ page }) => {
+test("概念のページの「試す」：カードの問いの範囲は、その実験室のまとまりから作る", async ({ page }) => {
   await withCatalog(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${SRC}&t=lab`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-expect`);
   await expect(page.getByTestId("open-stats2:EXP-expect-table")).toContainText("A〜D の問い");
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await expect(page.getByTestId("open-stats2:EXP-binom-p")).toContainText("A〜F の問い");
 });
 

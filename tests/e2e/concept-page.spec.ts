@@ -50,11 +50,9 @@ test("概要の図は engine の値から描き、棒の高さが二項分布の
 });
 
 // 確かめる対象：概念から実験室へ（05）・読むときは全画面（02）。概念のページから実験室への入口は下の主ボタン1つ（渡辺さん 2026-11-04：入口が重複）。
-// 想定する故障：主ボタンが実験室の一覧を開かない・一覧がこの概念で絞られていない・概要の中に問いの札（2つ目の入口）が戻る・面が上まで上がらず地図に戻れない。
-// 見つけ方：概要の中に実験室を開く札がないこと、主ボタンで実験室のタブ（この概念に絞った一覧）になること、開いて読む段を開くと「地図」に戻るボタンが出て、押すと面が下がるかを見る
-test("実験室への入口は下の主ボタン1つで、この概念に絞った一覧を開く。読むと面が上まで上がって「地図」で戻れる", async ({
-  page,
-}) => {
+// 想定する故障：主ボタンが「試す」の段へ送らない・段がこの概念の問いに絞られていない・概要の中に問いの札（2つ目の入口）が戻る。
+// 見つけ方：概要の中に実験室を開く札がないこと、主ボタンで同じページの「試す」の段（この概念が主の問い・関連の問い）が見えるかを見る（issue 599 で一覧のページを段にした）
+test("実験室への入口は下の主ボタン1つで、この概念の「試す」の段へ送る", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(URL);
   const d = page.getByTestId("detail");
@@ -65,9 +63,10 @@ test("実験室への入口は下の主ボタン1つで、この概念に絞っ�
   await expect(d.locator("details", { hasText: "なぜその形か" })).toHaveAttribute("open", "");
   await expect(d.getByTestId("page-cta")).toHaveText(/実験室で検証/);
   await d.getByTestId("page-cta").click();
-  await expect(page).toHaveURL(/t=lab/);
-  await expect(page.getByTestId("page-lab")).toBeVisible();
-  await expect(page.getByTestId("lab-sel-stats2:TERM-binom"), "一覧がこの概念で絞られていない").toBeVisible();
+  // 押すと同じページの「試す」の段へ送る（別のページを積まない。issue 599）。この概念が主の問いと関連の問いに分けて並ぶ
+  await expect(page).not.toHaveURL(/t=lab/);
+  await expect(d.getByTestId("page-lab")).toBeInViewport();
+  await expect(d.getByTestId("lab-q-stats2:EXP-binom-p-main-head")).toContainText("主となる問い");
 });
 
 // 確かめる対象：つながりは種類ごとのまとまり（04）と、新しい呼び名と向き（stats2-course #249 ④）。
@@ -101,8 +100,8 @@ test("つながりは 定義に使う概念・前提知識・変換・対比 に
 });
 
 // 確かめる対象：読むときの骨組みを実験室にそろえる（#188 07a・#194）。想定する故障：全画面にしても面が重なったまま（下のタブが押せる・地図が透ける）・
-// 次の1手が実験室の一覧を開かない・つながりを開くと面が重なり、戻ると地図まで戻ってしまう。
-// 見つけ方：下のタブの中心の点がページの中か・次の1手で実験室の一覧になるか・つながりのページの ← で概念のページ（全画面）に戻るか。
+// 試すの段から実験室を開いて戻ると概念のページでない・つながりを開くと面が重なり、戻ると地図まで戻ってしまう。
+// 見つけ方：下のタブの中心の点がページの中か・試すの段から実験室を開き、戻ると概念のページか・つながりのページの ← で概念のページ（全画面）に戻るか。
 // 既存との違い：上の「問いの札」のテストは札から開く。ここはページの骨組み（重ならない・次の1手・戻り先）
 test("読むときは全画面のページ：画面の下まで覆い、次の1手で実験室へ、つながりも全画面で ← で概念へ", async ({
   page,
@@ -129,15 +128,14 @@ test("読むときは全画面のページ：画面の下まで覆い、次の1�
   await rel.getByTestId("edge-back").click();
   await expect(rel).toHaveCount(0);
   await expect(d).toHaveAttribute("data-detent", "full"); // 地図ではなく概念のページへ戻る
+  // 試すの段から実験室を開き、戻ると概念のページ（ページを積む。issue 599）
   await d.getByTestId("page-cta").click();
-  await expect(page.getByTestId("page-lab")).toBeVisible();
-  // 実験室の一覧から、来た概念へ ← で戻れる（下のタブだけにしない。UI レビュー「動線設計」2）
-  await expect(page.getByTestId("tab-back")).toHaveText(/二項分布/);
-  await page.getByTestId("tab-back").click();
-  await expect(page.getByTestId("page-lab")).toHaveCount(0);
+  await d.getByTestId("open-stats2:EXP-binom-p").click();
+  await expect(page.getByTestId("experiment")).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId("experiment")).toHaveCount(0);
   await expect(d).toBeVisible();
   await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
-  await expect(page).not.toHaveURL(/t=lab/);
   expect(errs).toEqual([]);
 });
 
