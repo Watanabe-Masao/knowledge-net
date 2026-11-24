@@ -16,14 +16,11 @@
 }
 
 /* 一覧：印・名前・定義1文 */
+/* 一覧：分類の開いた中に置くので、枠を重ねず行の間の線だけ */
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-radius: var(--r-l);
-  background: var(--surface);
-  box-shadow: 0 0 0 1px var(--line);
-  overflow: hidden;
 }
 .list > li + li {
   border-top: 1px solid var(--line);
@@ -32,10 +29,10 @@
   all: unset;
   box-sizing: border-box;
   width: 100%;
-  min-height: 64px;
-  padding: var(--sp-2) var(--sp-3);
+  min-height: 52px;
+  padding: var(--sp-2) 0;
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 12px;
+  grid-template-columns: 28px minmax(0, 1fr) 12px;
   gap: var(--sp-3);
   align-items: center;
   cursor: pointer;
@@ -47,8 +44,8 @@
   outline: none;
 }
 .rowGlyph {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   color: var(--tint);
   display: grid;
 }
@@ -65,10 +62,15 @@
   font-size: var(--fs-body);
   color: var(--ink);
 }
+/* 定義1文は2行まで（長い文は … で切り、全文は概念のページで） */
 .rowText small {
   font-size: var(--fs-small);
   color: var(--ink-3);
   line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .chev {
   color: var(--ink-3);

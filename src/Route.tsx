@@ -4,7 +4,8 @@
 // 単元の見出しの下に、その単元の問題と Notion の単元ページ（読む・記録する入口）。
 import { useLayoutEffect, useMemo, useState } from "react";
 import { Muted, subText } from "@math-lab/ui";
-import { lead, routeOf, type Network } from "./data";
+import { bandOfCat, bandsOf, lead, routeOf, type Network } from "./data";
+import { conceptIcon } from "./conceptIcons";
 import { Icon } from "./Shell";
 import s from "./Route.module.css";
 
@@ -52,6 +53,8 @@ export default function Route({
     return () => scrollTo(0, 0);
   }, [here]);
   const name = (id: string) => net.concepts.get(id)!.name;
+  const bands = useMemo(() => bandsOf(net), [net]);
+  const tintOf = (cat?: string) => bands.find((b) => b.id === bandOfCat(bands, cat ?? ""))?.tint ?? "--ink-3";
   return (
     <section className={s.route} data-testid="route">
       <div className={s.head}>
@@ -114,7 +117,14 @@ export default function Route({
                         onClick={() => onOpen(id)}
                         data-testid={`route-st-${id}`}
                       >
-                        <span className={s.dot} aria-hidden="true" />
+                        {/* 駅の印：概念の印を柱の色で（印のない語は点。stats2-course の issue 601 の続き） */}
+                        <span
+                          className={s.dot}
+                          style={{ "--tint": `var(${tintOf(c.category)})` } as React.CSSProperties}
+                          aria-hidden="true"
+                        >
+                          {conceptIcon(c.icon, net.iconRoots)}
+                        </span>
                         <span className={s.stText}>
                           <span className={s.stName}>
                             {c.name}
