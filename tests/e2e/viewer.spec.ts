@@ -157,12 +157,12 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
     .getByTestId("media-concept")
     .getByRole("radio", { name: /確かめる/ })
     .click();
-  await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
+  await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=c-z&embed=1/);
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /host=kn/); // ラボの中の「大きく開く ↗」は親に知らせる
   // 大きく開く：新しいタブではなく同じ画面の全面に出し、✕ で元の画面に戻る
   await d.getByTestId("labs-concept").getByRole("button", { name: "拡大表示" }).click();
   const full = page.getByTestId("fullview");
-  await expect(full.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z$/);
+  await expect(full.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=c-z$/);
   await full.getByRole("button", { name: "戻る", exact: true }).click();
   await expect(full).toHaveCount(0);
   await expect(d.getByTestId("labs-concept")).toBeVisible();

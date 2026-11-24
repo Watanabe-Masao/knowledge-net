@@ -4900,19 +4900,19 @@
    "labs": [
     {
      "id": "LAB-count",
-     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=c-perm",
      "title": "数え方ラボ",
      "kind": "check",
-     "preset": "rel-perm-free",
-     "purpose": "人数と選ぶ人数を動かし、役割を区別して並べる数が、1人目・2人目…の選び方の掛け算になるのを確かめる",
+     "preset": "c-perm",
+     "purpose": "1位の選び方5通りのそれぞれに2位の選び方が4通りあり、5×4＝20 通り。AB と BA は別の並べ方として数える",
      "play": {
       "mode": "list",
       "set": {
        "n": 5,
-       "r": 3,
+       "r": 2,
        "role": "あり"
       },
-      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+      "task": "人数と選ぶ人数を動かし、役割を区別した並べ方の数を見る。"
      }
     }
    ],
@@ -5148,19 +5148,19 @@
    "labs": [
     {
      "id": "LAB-count",
-     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=c-comb",
      "title": "数え方ラボ",
      "kind": "check",
-     "preset": "rel-perm-free",
-     "purpose": "役割を区別しないに切り替え、順列を選んだ人数の階乗で割ると組合せになるのを、人数を動かして確かめる",
+     "preset": "c-comb",
+     "purpose": "順に取ると720通りだが、同じ3個の組を取る順番の違いで 3!＝6 回ずつ数えている。区別しないにすると 720÷6＝120 通り",
      "play": {
       "mode": "list",
       "set": {
-       "n": 5,
+       "n": 10,
        "r": 3,
        "role": "あり"
       },
-      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+      "task": "役割を区別する・しないを切り替え、同じ組の並べ方の数を見る。"
      }
     }
    ],
@@ -5383,19 +5383,19 @@
    "labs": [
     {
      "id": "LAB-count",
-     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=c-fact",
      "title": "数え方ラボ",
      "kind": "check",
-     "preset": "rel-perm-free",
-     "purpose": "選ぶ人数を全員に合わせると、並べ方の数が人数の階乗になるのを確かめる",
+     "preset": "c-fact",
+     "purpose": "1人置くたびに選べる人が1人ずつ減るので、4人の並べ方は 4×3×2×1＝24 通り",
      "play": {
       "mode": "list",
       "set": {
-       "n": 5,
-       "r": 3,
+       "n": 4,
+       "r": 4,
        "role": "あり"
       },
-      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+      "task": "人数を動かし、全員を並べる並べ方の数を見る。"
      }
     }
    ],
@@ -9378,23 +9378,24 @@
    "labs": [
     {
      "id": "LAB-expect",
-     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=s1-dist",
+     "url": "https://watanabe-masao.github.io/stats2-labs/expect/?p=c-expect",
      "title": "期待値ラボ",
      "kind": "check",
-     "preset": "s1-dist",
-     "purpose": "期待値が分布の重心になることを、予測してから確かめる",
+     "preset": "c-expect",
+     "purpose": "1回あたりの金額の期待値は 0×0.6＋10×0.3＋100×0.1＝13円。確率の棒の釣り合う所に来る",
      "play": {
       "mode": "dist",
       "set": {
-       "xs": "0,1,2",
+       "xs": "0,10,100",
        "p": [
-        20,
-        50,
-        30
+        60,
+        30,
+        10
        ],
-       "unit": "個",
-       "name": "買う個数"
-      }
+       "unit": "円",
+       "name": "1回の金額"
+      },
+      "task": "確率を動かし、期待値（棒の釣り合う所）がどう動くかを見る。"
      }
     }
    ],
@@ -10436,20 +10437,20 @@
    "labs": [
     {
      "id": "LAB-prob",
-     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=c-bayes",
      "title": "確率ラボ",
      "kind": "check",
-     "preset": "rel-bayes-free",
-     "purpose": "元の割合・検出率・誤検出率を動かし、検出ありのうち本当に当てはまる割合（事後確率）がどう動くかを見る",
+     "preset": "c-bayes",
+     "purpose": "検出率90%の検査でも、病気の人が20人に1人なら、陽性の人のうち病気なのは3割ほど（0.045÷0.14≒0.32）にとどまる",
      "play": {
       "mode": "bayes",
       "set": {
-       "prior": 2,
+       "prior": 5,
        "sens": 90,
-       "fpr": 5,
+       "fpr": 10,
        "times": 1
       },
-      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+      "task": "元の割合・検出率・誤検出率を動かし、検出ありのうち本当に当てはまる割合を見る。"
      }
     }
    ],
@@ -10529,20 +10530,20 @@
    "labs": [
     {
      "id": "LAB-prob",
-     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=c-bayes-ex",
      "title": "確率ラボ",
      "kind": "check",
-     "preset": "rel-bayes-free",
-     "purpose": "元の割合（事前確率）を動かすと、同じ検査でも事後確率が大きく変わるのを見る",
+     "preset": "c-bayes-ex",
+     "purpose": "同じ検査・同じ陽性でも、検査の前の割合（事前確率）が1%なら病気である確率は15%ほど。元の割合を上げ下げすると大きく変わる",
      "play": {
       "mode": "bayes",
       "set": {
-       "prior": 2,
+       "prior": 1,
        "sens": 90,
        "fpr": 5,
        "times": 1
       },
-      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+      "task": "元の割合・検出率・誤検出率を動かし、検出ありのうち本当に当てはまる割合を見る。"
      }
     }
    ],
@@ -10616,20 +10617,20 @@
    "labs": [
     {
      "id": "LAB-prob",
-     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=c-bayes-ex",
      "title": "確率ラボ",
      "kind": "check",
-     "preset": "rel-bayes-free",
-     "purpose": "検出率・誤検出率（結果の起こりやすさ）を動かすと、事後確率がどう変わるかを見る",
+     "preset": "c-bayes-ex",
+     "purpose": "陽性は病気のときに起きやすい（0.9 と 0.05）が、陽性の人が病気である確率は15%ほど。尤度だけでなく元の割合でも決まる",
      "play": {
       "mode": "bayes",
       "set": {
-       "prior": 2,
+       "prior": 1,
        "sens": 90,
        "fpr": 5,
        "times": 1
       },
-      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+      "task": "元の割合・検出率・誤検出率を動かし、検出ありのうち本当に当てはまる割合を見る。"
      }
     }
    ],
@@ -11946,7 +11947,7 @@
      "title": "二項分布ラボ",
      "kind": "check",
      "preset": "s1-path",
-     "purpose": "並び方の数×1つの並びの確率を、予測してから確かめる",
+     "purpose": "並び方の数×1つの並びの確率で、ちょうど k 人が買う確率になる",
      "play": {
       "mode": "path",
       "set": {
@@ -12577,20 +12578,19 @@
    "labs": [
     {
      "id": "LAB-pois",
-     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=c-geom",
      "title": "離散分布ラボ",
      "kind": "check",
-     "preset": "s3-free",
-     "purpose": "「成功するまで」のモードで、初めて成功する回の確率と平均を見る",
+     "preset": "c-geom",
+     "purpose": "1割の当たりでも、初めて当たる回は1回目がいちばん起こりやすく、平均は 1÷0.1＝10 回",
      "play": {
-      "mode": "pois",
-      "modes": [
-       "pois",
-       "approx",
-       "geom",
-       "hyper"
-      ],
-      "task": "解いてから、問題が数えているもの（区間の件数・n 回中・成功まで・戻さない）に合うモードで確かめる。"
+      "mode": "geom",
+      "set": {
+       "p": 0.1,
+       "r": 1,
+       "k": 1
+      },
+      "task": "成功確率を動かし、初めて成功する回の確率と平均を見る。"
      }
     }
    ],
@@ -12823,20 +12823,19 @@
    "labs": [
     {
      "id": "LAB-pois",
-     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=s3-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=c-negbinom",
      "title": "離散分布ラボ",
      "kind": "check",
-     "preset": "s3-free",
-     "purpose": "「成功するまで」のモードで r を増やし、r＝1 の幾何分布から形が変わるのを見る",
+     "preset": "c-negbinom",
+     "purpose": "r を1（幾何分布）から3に増やすと山が右へ移り、止めるまでの回数の平均は r÷p になる",
      "play": {
-      "mode": "pois",
-      "modes": [
-       "pois",
-       "approx",
-       "geom",
-       "hyper"
-      ],
-      "task": "解いてから、問題が数えているもの（区間の件数・n 回中・成功まで・戻さない）に合うモードで確かめる。"
+      "mode": "geom",
+      "set": {
+       "p": 0.3,
+       "r": 3,
+       "k": 3
+      },
+      "task": "r（何回目の成功で止めるか）を1から増やし、形と平均を見る。"
      }
     }
    ],
@@ -13187,20 +13186,20 @@
    "labs": [
     {
      "id": "LAB-pois",
-     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=rel-hyper",
+     "url": "https://watanabe-masao.github.io/stats2-labs/poisson/?p=c-hyper",
      "title": "離散分布ラボ",
      "kind": "check",
-     "preset": "rel-hyper",
-     "purpose": "戻さず取り出す確率を、戻す場合（二項分布）と比べる",
+     "preset": "c-hyper",
+     "purpose": "戻さないので、取るたびに箱の中身が変わる。N を大きくすると、戻して取り出す二項分布の確率に近づく",
      "play": {
       "mode": "hyper",
       "set": {
-       "N": 20,
-       "K": 6,
-       "n": 5,
+       "N": 10,
+       "K": 3,
+       "n": 4,
        "k": 1
       },
-      "task": "当たりの割合（K÷N＝0.3）を保ったまま N を大きくすると、戻さず取り出す確率が、戻して取り出す二項分布の確率に近づく。補正（fpc）が1に近づくのを見る。"
+      "task": "当たりの割合を保ったまま N を大きくし、戻して取り出す二項分布の確率に近づくのを見る。"
      }
     }
    ],
@@ -13575,19 +13574,20 @@
    "labs": [
     {
      "id": "LAB-cont",
-     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s5-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=c-expo",
      "title": "連続分布ラボ",
      "kind": "check",
-     "preset": "s5-free",
-     "purpose": "すでに待った時間を動かしても、その先の確率が変わらないのを見る",
+     "preset": "c-expo",
+     "purpose": "すでに何分待っても、そこからさらに10分より長く待つ確率は変わらない（平均10分なら e⁻¹≒0.37）",
      "play": {
       "mode": "expo",
-      "modes": [
-       "expo",
-       "unif",
-       "dens"
-      ],
-      "task": "「指数分布」で s（すでに待った時間）を動かし、その先の確率が変わらないことを見る（発展1）。「高さと面積」で σ を小さくし、高さが1を超えても面積は1のままなのを見る（発展2）。"
+      "set": {
+       "mean": 10,
+       "t": 10,
+       "s": 0,
+       "unit": "分"
+      },
+      "task": "s（すでに待った時間）を動かし、そこからさらに t 分より長く待つ確率を見る。"
      }
     }
    ],
@@ -14129,20 +14129,21 @@
    "labs": [
     {
      "id": "LAB-cont",
-     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=s3-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/continuous/?p=c-unif",
      "title": "連続分布ラボ",
      "kind": "check",
-     "preset": "s3-free",
-     "purpose": "「一様分布」のモードで、確率が区間の長さに比例するのを見る",
+     "preset": "c-unif",
+     "purpose": "待ち時間が0〜12分のどこも同じように出るなら、4分以内に乗れる確率は 4÷12＝1/3",
      "play": {
-      "mode": "norm",
-      "modes": [
-       "norm",
-       "q",
-       "unif",
-       "expo"
-      ],
-      "task": "解いてから、問題の分布（正規・一様・指数）と、求めるもの（区間の確率か、上位 p% の値か）に合うモードで確かめる。"
+      "mode": "unif",
+      "set": {
+       "a": 0,
+       "b": 12,
+       "c": 0,
+       "d": 4,
+       "unit": "分"
+      },
+      "task": "区間の端を動かし、確率が区間の長さに比例するのを見る。"
      }
     }
    ],
@@ -19488,20 +19489,20 @@
    "labs": [
     {
      "id": "LAB-prob",
-     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=c-bayes-ex",
      "title": "確率ラボ",
      "kind": "check",
-     "preset": "rel-bayes-free",
-     "purpose": "検査の結果を見たあと、元の割合が事後確率へどう更新されるかを、2つの道すじの個数で見る",
+     "preset": "c-bayes-ex",
+     "purpose": "1%だった病気の確率が、陽性という結果を見て15%ほどに更新される。2回続けて陽性なら、さらに上がる",
      "play": {
       "mode": "bayes",
       "set": {
-       "prior": 2,
+       "prior": 1,
        "sens": 90,
        "fpr": 5,
        "times": 1
       },
-      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+      "task": "元の割合・検出率・誤検出率を動かし、検出ありのうち本当に当てはまる割合を見る。"
      }
     }
    ],
@@ -21430,23 +21431,24 @@
    "labs": [
     {
      "id": "LAB-z",
-     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=s1-z",
+     "url": "https://watanabe-masao.github.io/stats2-labs/zscore/?p=c-z",
      "title": "標準化ラボ",
      "kind": "check",
-     "preset": "s1-z",
-     "purpose": "単位やばらつきの違うものを z得点でそろえて比べる",
+     "preset": "c-z",
+     "purpose": "点数は国語80・数学78と近いが、z得点にすると国語は2、数学は1.6で、国語の方が目立つ",
      "play": {
       "mode": "z",
       "set": {
-       "mA": 50,
+       "mA": 60,
        "sA": 10,
-       "xA": 70,
-       "mB": 80,
+       "xA": 80,
+       "mB": 70,
        "sB": 5,
-       "xB": 90,
-       "nameA": "店舗A",
-       "nameB": "店舗B"
-      }
+       "xB": 78,
+       "nameA": "国語",
+       "nameB": "数学"
+      },
+      "task": "点数・平均・標準偏差を動かし、2つの z得点を比べる。"
      }
     }
    ],
