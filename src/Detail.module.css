@@ -175,7 +175,13 @@
 }
 .pane {
   display: grid;
+  /* 中身（長い式・作業台の選び肢）の幅で段が広がらないように、列は画面の幅まで。式は段の中で横に送る（2026-11-25。期待値・共分散のページが横にはみ出した） */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
+}
+.pane :global(.katex-display) {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .pane > h3:first-child {
   margin-top: var(--sp-2);

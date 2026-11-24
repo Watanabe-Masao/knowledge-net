@@ -6,6 +6,8 @@
   border-radius: var(--r-l);
   padding: 14px 14px var(--sp-3);
   display: grid;
+  /* 欄の幅は作業台の幅まで（長い場面の名前の選び肢で、作業台ごと画面から横にはみ出した。2026-11-25） */
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   box-shadow:
     0 1px 0 var(--line),
