@@ -97,10 +97,10 @@ export default function Library({ net, open, onToggle, onConcept, onMap }: Props
                       <span className={s.catIcon}>{icon ? <img src={icon} alt="" /> : null}</span>
                       <span className={s.catText}>
                         <b>{cat}</b>
-                        <small>
-                          {n}概念
-                          {labs ? <span className={s.labs}>実験 {labs}</span> : null}
-                        </small>
+                        {labs ? <span className={s.labs}>実験 {labs}</span> : null}
+                        <span className={s.count} aria-label={`${n}概念`}>
+                          {n}
+                        </span>
                       </span>
                       <span className={s.chev} aria-hidden="true">
                         ›
