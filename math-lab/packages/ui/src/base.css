@@ -177,3 +177,10 @@ path[data-hold] {
       filter 0s linear var(--dur-hold) !important;
   }
 }
+/* 図（svg）の中の字は選ばせない。棒や ▲ を指で押さえたとき、iPhone で字の選択と「コピー・検索」の帯が出て、
+   引く操作が止まった（2026-11-24、期待値の実験室の予測の図。渡辺さんの画面の録画） */
+svg {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
