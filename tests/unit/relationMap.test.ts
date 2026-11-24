@@ -131,6 +131,34 @@ describe("まとまりの関係図", () => {
           ).toBe(true);
   });
 
+  // 確かめる対象：線がほかの語のカードを貫かないこと（全部の分類）。
+  // 想定する故障：2行目より下の語へ入る線や、下に語がある語から出る線が、列をまっすぐ縦に通ってその間の語のカードの上を走る
+  //   （渡辺さん 2026-11-24 の iPhone の画像：相関・回帰で相関係数 → 回帰係数の線がダミー変数を貫いた。stats2-course #588）。
+  // 見つけ方：見本の全部の分類を描き、どの線のどの区間も、端の2語以外のカードの内側（縁から 0.5px 内）に入らないこと。
+  // 既存との違い：上は線の端と形（縁から縁・縦横）を確率分布だけで見る。ここは途中の区間を全分類で見る
+  it("線はどの分類でも、端の2語以外のカードを貫かない", () => {
+    const n = net();
+    const cats = [...new Set([...n.concepts.values()].map((c) => c.category).filter(Boolean))] as string[];
+    expect(cats.length).toBeGreaterThan(5);
+    let checked = 0;
+    for (const cat of cats) {
+      const L = layoutCategory(n, cat);
+      for (const e of L.edges)
+        e.pts.slice(1).forEach((p, i) => {
+          const q = e.pts[i]!;
+          const [x1, x2] = [Math.min(p.x, q.x), Math.max(p.x, q.x)],
+            [y1, y2] = [Math.min(p.y, q.y), Math.max(p.y, q.y)];
+          for (const t of L.terms) {
+            if (t.id === e.from || t.id === e.to) continue;
+            const hit = x2 > t.x + 0.5 && x1 < t.x + t.w - 0.5 && y2 > t.y + 0.5 && y1 < t.y + t.h - 0.5;
+            expect(hit, `${cat}：${e.id} の区間が ${t.id} を貫く`).toBe(false);
+          }
+          checked++;
+        });
+    }
+    expect(checked).toBeGreaterThan(50);
+  });
+
   // 確かめる対象：線の上の種類の印（lineBadges）が重ならないこと（設計書 3 のテスト「線の上の印が重なる・語や見出しに乗る」）。
   // 想定する故障：印どうしが重なって読めない・語のカードやまとまりの見出しの上に乗る（倍率で印の大きさを割るので、引くほど混む）。
   // 見つけ方：見本の全部の語を選んだ状態と、何も選ばない状態を、読める倍率の下限（0.62）・ふつう（0.8）・寄った（1.1）で、
