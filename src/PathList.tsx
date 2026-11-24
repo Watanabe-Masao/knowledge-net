@@ -2,6 +2,7 @@
 // 関係図は1つの分類の中の横のつながり（製本 ⑤）、ここは分類をまたぐ学ぶ順（製本 ⑥。教材の learning_order）。
 // 読むものなので全画面のページ（画面の原則 20）。遠い前提から学ぶ順に並べ、行ごとに分類を添える。最後の行は選んだ概念。
 // 行を押すと、その概念を関係図と概念のページで開く。← で閉じると、来た概念に戻る。
+import { useEffect } from "react";
 import { FullView, subText } from "@math-lab/ui";
 import { type Network, lead } from "./data";
 import st from "./PathList.module.css";
@@ -22,7 +23,15 @@ type Props = {
   onClose: () => void;
 };
 
+/** 一覧ごとに、最後に開いた行（同じタブの中だけ。戻ったらその行が見える所から出す。画面の原則 3・stats2-course の issue 595） */
+const opened = new Map<string, string>();
+
 export default function PathList({ net, target, seq, onOpen, onClose }: Props) {
+  useEffect(() => {
+    const id = opened.get(target);
+    if (!id) return;
+    document.querySelector(`[data-testid="path-row-${id}"]`)?.scrollIntoView({ block: "center" });
+  }, [target]);
   const here = net.concepts.get(target)!;
   const rows = [...seq, target].filter((id) => net.concepts.has(id));
   const cats = new Set(seq.map((id) => net.concepts.get(id)?.category).filter(Boolean));
@@ -49,7 +58,10 @@ export default function PathList({ net, target, seq, onOpen, onClose }: Props) {
                   className={st.row}
                   data-testid={`path-row-${id}`}
                   aria-current={me ? "step" : undefined}
-                  onClick={() => onOpen(id)}
+                  onClick={() => {
+                    opened.set(target, id);
+                    onOpen(id);
+                  }}
                 >
                   <span className={st.no} aria-hidden="true">
                     {me ? "" : no}
