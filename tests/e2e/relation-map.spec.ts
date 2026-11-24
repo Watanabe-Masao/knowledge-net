@@ -680,6 +680,28 @@ test("現在地：語を選ぶと左上に分類名、押すと分類のペー�
   await expect(cat).toHaveCount(0);
 });
 
+// 確かめる対象：現在地と ‹ が、寄ったあとの語を隠さない（画面の原則 12：押せる物は押せる見た目のまま）。
+// 想定する故障：語を選ぶと寄る先の計算が左上の操作を見ず、相手の語が現在地や ‹ の下に入って押せない
+//   （2026-11-24、CI の webkit で ベルヌーイ分布 が現在地の下になり、たどった道のテストが時間切れ）。
+// 見つけ方：分類の地図で二項分布を選び、止まったあと、選んだ語と相手のうち左上の列（現在地の幅）にあるものの上の端が、
+//   現在地の下と ‹ の場所（‹ は次に選ぶと出るので、出る前から空けておく）より下にあること。
+// 既存との違い：現在地のテストは現在地と ‹ どうしの重なりだけを見る
+// 検出の確かめ（2026-11-24）：寄る先の上の帯（fitPick の top）を 0 にすると、ベルヌーイ分布 が y=78（‹ の場所）で落ちることを見た
+test("現在地と ‹ の下に、寄ったあとの語を置かない", async ({ page }) => {
+  const m = await open(page);
+  await m.getByTestId(`rm-term-${T("binom")}`).click({ position: { x: 20, y: 12 } });
+  const cat = page.getByTestId("rm-cat");
+  await expect(cat).toBeVisible();
+  await still(page);
+  const cb = (await cat.boundingBox())!;
+  const clear = cb.y + cb.height + 8 + 44; // ‹ の下端（.full .backCtl.under）
+  for (const t of await m.locator('[data-state="sel"], [data-state="near"]').all()) {
+    const r = await t.boundingBox();
+    if (!r || r.x > cb.x + cb.width || r.y + r.height < 0) continue;
+    expect(r.y, `${await t.getAttribute("aria-label")} が左上の操作の下に入る`).toBeGreaterThanOrEqual(clear);
+  }
+});
+
 // 確かめる対象：たどった道（設計書 3：見てきた道は置かず、← の長押しでたどった道。渡辺さん 2026-11-07）。
 // 想定する故障：← が出ない・1つ前に戻らない・戻ったのに道に積み直して ← が行き来する。長押しでメニューが出ない・新しい順でない・
 //   選んだ所へ戻らない。長押しのあとの「押した」で、さらに1つ戻ってしまう。概念が1つだけのときにも ← が出る。

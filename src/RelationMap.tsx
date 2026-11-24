@@ -207,6 +207,13 @@ export default function RelationMap({
     return { W: r.width, H: r.height };
   };
   /** 下の面（詳しく）が地図に重なっている高さ */
+  /** 左上に浮かぶ操作（現在地と、その下に出る ‹）の下端（地図の上から）。現在地がなければ 0。
+   *  ‹ は次の語を選ぶと出るので、まだ出ていなくてもその場所を空けておく（寄ったあとの相手の語が ‹ の下にならない） */
+  const topOf = () => {
+    const el = box.current?.querySelector<HTMLElement>("[data-testid=rm-cat]");
+    if (!el || !box.current) return 0;
+    return Math.max(0, el.getBoundingClientRect().bottom - box.current.getBoundingClientRect().top) + 8 + 44 + 4;
+  };
   const bottomOf = () => {
     const sh = document.querySelector<HTMLElement>("[data-testid=detail]");
     if (!sh || !box.current || calmRef.current === "all") return 0;
@@ -503,7 +510,7 @@ export default function RelationMap({
     if (!fitKey || !vRef.current) return;
     const id = setTimeout(() => {
       const { W, H } = size();
-      const nv = fitPick(L, fitKey, types, { W, H, bottom: bottomOf(), k: vRef.current!.k });
+      const nv = fitPick(L, fitKey, types, { W, H, bottom: bottomOf(), top: topOf(), k: vRef.current!.k });
       if (nv) go(nv, true);
     }, 60); // 面の高さが決まってから
     return () => clearTimeout(id);
@@ -527,9 +534,12 @@ export default function RelationMap({
       if (!b) return;
       const vis = H - bottomOf();
       const inside =
-        b.x0 * v0.k + v0.x >= 0 && b.x1 * v0.k + v0.x <= W && b.y0 * v0.k + v0.y >= 0 && b.y1 * v0.k + v0.y <= vis;
+        b.x0 * v0.k + v0.x >= 0 &&
+        b.x1 * v0.k + v0.x <= W &&
+        b.y0 * v0.k + v0.y >= topOf() &&
+        b.y1 * v0.k + v0.y <= vis;
       if (inside) return;
-      const nv = fitPick(L, pick, types, { W, H, bottom: bottomOf(), k: v0.k });
+      const nv = fitPick(L, pick, types, { W, H, bottom: bottomOf(), top: topOf(), k: v0.k });
       if (nv) go(nv);
     }, 30); // 面の止まる先の高さが決まってから（面と同じときに動く）
     return () => clearTimeout(id);
@@ -1489,7 +1499,7 @@ export default function RelationMap({
             e.stopPropagation();
             if (pick) {
               const { W, H } = size();
-              const nv = fitPick(L, pick, types, { W, H, bottom: bottomOf(), k: vRef.current?.k ?? 1 });
+              const nv = fitPick(L, pick, types, { W, H, bottom: bottomOf(), top: topOf(), k: vRef.current?.k ?? 1 });
               if (nv) go(nv, true);
             } else go(start(), true);
           }}
