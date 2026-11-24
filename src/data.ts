@@ -194,6 +194,10 @@ export type Unit = {
   title: string;
   url?: string;
   /** まとまり（学習・問題集のタブで分ける。型の改訂12） */ group?: string;
+  /** 単元のページ（型の改訂9。stats2-course の issue 596）：入口の問い・分かるようになること・段ごとのゴールと目安 */
+  entry?: string;
+  goal?: string;
+  stages?: { id: string; name: string; goal?: string; evidence?: string }[];
   /** 問題の一覧（id・段階の名前・問題文の始め。解いた記録は持たない） */ problems?: {
     id: string;
     stage: string;

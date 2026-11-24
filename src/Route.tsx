@@ -28,9 +28,12 @@ export default function Route({
   net,
   onOpen,
   onGroups,
+  onUnit,
 }: {
   net: Network;
   onOpen: (id: string) => void;
+  /** 単元のページを開く（issue 596） */
+  onUnit?: (id: string) => void;
   /** 分類で見る（ライブラリ） */
   onGroups: () => void;
 }) {
@@ -75,7 +78,21 @@ export default function Route({
           return (
             <li key={key} className={s.leg} data-testid={`route-unit-${key}`}>
               <h3 className={s.unit}>
-                {l.unit ? (
+                {l.unit && onUnit ? (
+                  // 単元の見出しを押すと単元のページ（入口の問い・ゴール・段と問題。issue 596）
+                  <button
+                    type="button"
+                    className={s.unitBtn}
+                    onClick={() => onUnit(l.unit!.id)}
+                    data-testid={`route-unit-open-${key}`}
+                  >
+                    <span className={s.num}>U{l.unit.number}</span>
+                    <span className={s.unitTitle}>{l.unit.title}</span>
+                    <span className={s.unitChev} aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                ) : l.unit ? (
                   <>
                     <span className={s.num}>U{l.unit.number}</span>
                     {l.unit.title}
