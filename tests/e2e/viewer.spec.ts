@@ -153,7 +153,10 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   );
   await page.goto(`./?${SRC}&c=stats2:TERM-data-std`); // z得点のラボはデータの標準化に付く（stats2-course #312）
   const d = page.getByTestId("detail");
-  await d.getByTestId("media-concept").getByRole("radio", { name: /操作/ }).click();
+  await d
+    .getByTestId("media-concept")
+    .getByRole("radio", { name: /確かめる/ })
+    .click();
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z&embed=1/);
   await expect(d.getByTestId("labs-concept").locator("iframe")).toHaveAttribute("src", /host=kn/); // ラボの中の「大きく開く ↗」は親に知らせる
   // 大きく開く：新しいタブではなく同じ画面の全面に出し、✕ で元の画面に戻る
@@ -171,8 +174,8 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
     .click();
   const media = page.getByTestId("media-panel-stats2:REL-binom-poisson");
   // 解説・触るは押したときだけ開く（前に選んだ形を覚えていても自動では開かない。渡辺さん 2026-11-07）
-  await expect(media.getByRole("radio", { name: /操作/ })).toHaveAttribute("aria-checked", "false");
-  await media.getByRole("radio", { name: /操作/ }).click();
+  await expect(media.getByRole("radio", { name: /確かめる/ })).toHaveAttribute("aria-checked", "false");
+  await media.getByRole("radio", { name: /確かめる/ }).click();
   await expect(page.getByTestId("labs-panel-stats2:REL-binom-poisson").locator("iframe")).toHaveAttribute(
     "src",
     /poisson\/\?p=rel-approx&embed=1/,
@@ -235,7 +238,7 @@ test("つながり一覧からも同じ説明を開ける", async ({ page }) => 
     .click();
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toContainText("集団 N を大きく");
-  await expect(panel.getByRole("radio", { name: /操作/ })).toBeVisible();
+  await expect(panel.getByRole("radio", { name: /確かめる/ })).toBeVisible();
   await page.getByTestId("edge-ends").getByRole("button", { name: "超幾何分布" }).click(); // 概念のページから開いたつながりは全画面のページ
   await expect(page.getByTestId("detail").getByRole("heading", { name: "超幾何分布", exact: true })).toBeVisible();
 });
@@ -313,14 +316,14 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図で
   await expect(page.getByTestId("tour")).toBeVisible(); // 解説・触るは全画面のページで開く（#188 07）
   await expect(page.locator("iframe")).toHaveCount(0);
   await page.getByTestId("media-back").click();
-  await sw.getByRole("radio", { name: /操作/ }).click();
+  await sw.getByRole("radio", { name: /確かめる/ }).click();
   await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "geom");
   await page.getByTestId("media-back").click();
   await sw.getByRole("radio", { name: /解説/ }).click();
   await page.getByTestId("tour-prev").click(); // 1段目の「やめる」で閉じる
   await expect(page.getByTestId("tour")).toHaveCount(0);
   // 触るを選んでいても、別の線は図で開く（全画面のページへ勝手に移らない。渡辺さん 2026-11-07）
-  await sw.getByRole("radio", { name: /操作/ }).click();
+  await sw.getByRole("radio", { name: /確かめる/ }).click();
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   await settle(page);
   await tab(page, /関係/);
@@ -331,7 +334,7 @@ test("図／解説／触る は切り替えて1つだけ出す。最初は図で
   await expect(page.getByTestId("explore")).toHaveCount(0);
   await page
     .getByTestId(/^media-panel-/)
-    .getByRole("radio", { name: /操作/ })
+    .getByRole("radio", { name: /確かめる/ })
     .click();
   await expect(page.getByTestId("explore").getByTestId("scene")).toHaveAttribute("data-mode", "pmf");
   await expect(page.getByTestId("explore").getByTestId("exp-curve")).toBeVisible(); // s5-norm は正規分布の曲線を重ねた版
@@ -369,7 +372,7 @@ test("切り替えの印は選んだ項目の上に滑って重なる", async ({
   await fullSheet(page);
   const media = page.getByTestId("media-concept");
   const mark = media.getByTestId("segmented-mark");
-  for (const name of [/操作/, /解説/, /図/]) {
+  for (const name of [/確かめる/, /解説/, /図/]) {
     const item = media.getByRole("radio", { name });
     await item.click();
     await expect(async () => {
@@ -394,7 +397,7 @@ test("押した瞬間に少し沈み、動きを減らす設定では動かな�
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(btn).toHaveCSS("transition-duration", /^0s/);
   const media = page.getByTestId("media-concept");
-  await media.getByRole("radio", { name: /操作/ }).click(); // 切り替えはすぐ変わる（View Transitions を使わない）
+  await media.getByRole("radio", { name: /確かめる/ }).click(); // 切り替えはすぐ変わる（View Transitions を使わない）
   await expect(page.getByTestId("labs-concept")).toBeVisible();
 });
 
