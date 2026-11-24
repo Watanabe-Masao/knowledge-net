@@ -26,7 +26,7 @@ import {
   type GroupArrow,
 } from "./relationMap";
 import { conceptIcon } from "./conceptIcons";
-import { iconUri } from "./icons";
+import { CATEGORY_ICON, iconUri } from "./icons";
 import { GLYPH_D, KIND_VAR, KindMark, kcol, kindName } from "./kinds";
 import s from "./RelationMap.module.css";
 
@@ -100,6 +100,8 @@ type Props = {
   onRelation: (relId: string) => void;
   /** 引いて離したとき、ライブラリへ戻る（遠くの見え方＝ライブラリ。2つ持たない） */
   onOut?: () => void;
+  /** 語を選んで上の帯が引っ込んでいる間の現在地「分類の印＋分類名」を押したとき：分類のページ（正方形・一覧・地図）へ（stats2-course #588。渡辺さん 2026-11-24「1で」） */
+  onCategory?: () => void;
   /** 空いた所の1回のタップで、まず下の面を1段下げる（下げたら true）。帯を戻すのより後、選びを外すのより先 */
   onBlank?: () => boolean;
   /** 下の面の段。段が替わったら、選んだ語の相手が面の下に隠れたときだけ寄り直す */
@@ -114,6 +116,7 @@ export default function RelationMap({
   onOpen,
   onRelation,
   onOut,
+  onCategory,
   onBlank,
   step,
 }: Props) {
@@ -1369,9 +1372,31 @@ export default function RelationMap({
           <b>{category}</b>
         </div>
       ) : null}
+      {calm && selected && onCategory && !page ? (
+        // 現在地（stats2-course #588）：語を選ぶと上の帯（パンくず）が引っ込むので、地図の左上に分類の印と名前を出す。押すと分類のページ。
+        // 上＝分類（画面の原則 17）。1つ前の概念へ戻る ‹ とは印を分ける（こちらは ‹ を付けず分類の印。原則 8）
+        <div className={s.catCtl} data-ui>
+          <button
+            type="button"
+            data-testid="rm-cat"
+            aria-label={`${category}の分類のページへ`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCategory();
+            }}
+          >
+            {CATEGORY_ICON[category] ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className={s.ctlIcon}>
+                <path d={CATEGORY_ICON[category]} />
+              </svg>
+            ) : null}
+            <span>{category}</span>
+          </button>
+        </div>
+      ) : null}
       {prevs.length ? (
         // 地図の左上の ←：1つ前に選んだ概念へ戻る。長押しで、たどった道のメニュー（押さえている間は沈んで光る。長押しの手触り）
-        <div className={s.backCtl} data-ui>
+        <div className={`${s.backCtl}${calm && selected && onCategory && !page ? ` ${s.under}` : ""}`} data-ui>
           <button
             type="button"
             data-testid="rm-trail-back"

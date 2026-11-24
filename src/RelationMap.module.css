@@ -1005,6 +1005,49 @@
   top: calc(12px + env(safe-area-inset-top, 0px));
   left: calc(12px + env(safe-area-inset-left, 0px));
 }
+/* 現在地（分類の印＋分類名）が左上にあるとき、1つ前へ戻る ‹ はその下 */
+.full .backCtl.under {
+  top: calc(64px + env(safe-area-inset-top, 0px));
+}
+/* 現在地：語を選んで上の帯が引っ込んでいる間の分類の印と名前（押すと分類のページ。stats2-course #588） */
+.catCtl {
+  position: absolute;
+  z-index: 5;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  max-width: calc(100% - 96px);
+}
+.catCtl button {
+  all: unset;
+  box-sizing: border-box;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0 14px 0 12px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 0 1px var(--line-strong);
+  cursor: pointer;
+  color: var(--ink);
+  font-size: var(--fs-tag);
+  font-weight: 600;
+}
+.catCtl button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.catCtl button:active {
+  transform: scale(var(--press-scale));
+}
+.catCtl button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .menuHead {
   margin: 0;
   padding: 10px 16px 4px;

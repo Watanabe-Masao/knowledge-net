@@ -652,6 +652,34 @@ test("全体の見え方：引くとまとまりの名前と1本の矢印。矢�
   await expect(page.getByTestId("edge-panel")).toBeVisible();
 });
 
+// 確かめる対象：現在地（stats2-course #588。渡辺さん 2026-11-24「1で」）。語を選ぶと上の帯（パンくず・並べ方の切り替え）が引っ込むので、
+//   地図の左上に分類の印と名前を出し、押すと分類のページ（正方形・一覧・地図の切り替えのある画面）へ戻る。
+// 想定する故障：語を選んでも現在地が出ない・分類名が違う・押しても分類のページに戻らない（語の選びが残る）・
+//   1つ前へ戻る ‹ と同じ所に重なる・押せる所が 44px 未満。
+// 見つけ方：Notion のリンク（?c=二項分布）で開くと、左上に「確率分布」。押せる所は 44px 以上。もう1つ語を選ぶと ‹ が出て、現在地の下にあり重ならない。
+//   現在地を押すと c が外れ、g=確率分布、並べ方の切り替え（一覧）が見える。
+// 既存との違い：たどった道のテストは ‹ の働きだけを見る
+test("現在地：語を選ぶと左上に分類名、押すと分類のページへ（一覧に切り替えられる）", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
+  const m = page.getByTestId("relation-map");
+  await expect(m).toHaveAttribute("data-ready", "true");
+  const cat = page.getByTestId("rm-cat");
+  await expect(cat).toHaveText("確率分布");
+  const cb = (await cat.boundingBox())!;
+  expect(cb.height).toBeGreaterThanOrEqual(44);
+  await m.getByTestId(`rm-term-${T("bernoulli")}`).click({ position: { x: 20, y: 12 } });
+  const back = page.getByTestId("rm-trail-back");
+  await expect(back).toBeVisible();
+  const bb = (await back.boundingBox())!;
+  expect(bb.y, "‹ が現在地に重なる").toBeGreaterThanOrEqual(cb.y + cb.height);
+  await cat.click();
+  await expect(page).not.toHaveURL(/c=stats2/);
+  await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
+  await expect(page.getByRole("radio", { name: /一覧/ })).toBeVisible();
+  await expect(cat).toHaveCount(0);
+});
+
 // 確かめる対象：たどった道（設計書 3：見てきた道は置かず、← の長押しでたどった道。渡辺さん 2026-11-07）。
 // 想定する故障：← が出ない・1つ前に戻らない・戻ったのに道に積み直して ← が行き来する。長押しでメニューが出ない・新しい順でない・
 //   選んだ所へ戻らない。長押しのあとの「押した」で、さらに1つ戻ってしまう。概念が1つだけのときにも ← が出る。

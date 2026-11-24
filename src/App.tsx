@@ -476,6 +476,10 @@ export default function App() {
             setSel(null);
             setGroup(null, true);
           }}
+          onCategory={() => {
+            setSel(null);
+            setGroup(mapCat!, true);
+          }}
           onBlank={() => {
             const d = sheeted ? stepDown(detent) : null;
             if (d) setDetent(d);
