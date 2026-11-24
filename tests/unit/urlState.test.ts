@@ -17,6 +17,7 @@ const state: fc.Arbitrary<UrlState> = fc.record({
   layout: fc.constantFrom("grid", "list", "map"),
   tab: fc.constantFrom(...TAB_IDS),
   unit: fc.option(fc.constantFrom("stats2:U14", "stats2:U22"), { nil: null }),
+  pick: fc.option(fc.constantFrom("stats2:TERM-binom", "stats2:TERM-std"), { nil: null }),
 }) as fc.Arbitrary<UrlState>;
 /** 意味のある状態（URL に書かない組み合わせを落とした形） */
 const normal = (s: UrlState): UrlState => ({
@@ -49,6 +50,7 @@ describe("URL の状態：保存と復元は同じ定義で往復する", () => 
         layout: "grid",
         tab: "explore",
         unit: null,
+        pick: null,
       }),
       new URLSearchParams("src=sample/x.json&embed=1&trace=1"),
     );

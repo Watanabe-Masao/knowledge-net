@@ -106,6 +106,8 @@ type Props = {
   onBlank?: () => boolean;
   /** 下の面の段。段が替わったら、選んだ語の相手が面の下に隠れたときだけ寄り直す */
   step?: string;
+  /** 左上の ‹（たどった道）を出すか。関係図のページでは出さない（← は1つ。ひと目の中の来た道で足りる。issue 599） */
+  trail?: boolean;
 };
 
 export default function RelationMap({
@@ -119,6 +121,7 @@ export default function RelationMap({
   onCategory,
   onBlank,
   step,
+  trail: showTrail = true,
 }: Props) {
   const L = useMemo(() => layoutCategory(net, category, { lane: 6 }), [net, category]);
   const cross = useMemo(() => crossings(L), [L]);
@@ -215,6 +218,13 @@ export default function RelationMap({
     return Math.max(0, el.getBoundingClientRect().bottom - box.current.getBoundingClientRect().top) + 8 + 44 + 4;
   };
   const bottomOf = () => {
+    // 下に重なる面：ひと目（関係図のページで語を押したとき。issue 599）か、詳しくの面
+    const g = document.querySelector<HTMLElement>("[data-testid=glance]");
+    // 出てくる途中でも、止まる先（半分の段＝画面の 55%。math-lab の Sheet の HALF）で測る（面の動きと地図の寄りを同じときに）
+    if (g && box.current)
+      return (
+        Math.max(0, box.current.getBoundingClientRect().bottom - (innerHeight - Math.round(innerHeight * 0.55))) + 8
+      );
     const sh = document.querySelector<HTMLElement>("[data-testid=detail]");
     if (!sh || !box.current || calmRef.current === "all") return 0;
     const r = box.current.getBoundingClientRect();
@@ -1382,20 +1392,23 @@ export default function RelationMap({
           <b>{category}</b>
         </div>
       ) : null}
-      {calm && selected && onCategory && !page ? (
+      {onCategory && !page && (!showTrail || (calm && selected)) ? (
         // 現在地（stats2-course #588）：語を選ぶと上の帯（パンくず）が引っ込むので、地図の左上に分類の印と名前を出す。押すと分類のページ。
         // 上＝分類（画面の原則 17）。1つ前の概念へ戻る ‹ とは印を分ける（こちらは ‹ を付けず分類の印。原則 8）
         <div className={s.catCtl} data-ui>
           <button
             type="button"
             data-testid="rm-cat"
-            aria-label={`${category}の分類のページへ`}
+            aria-label={showTrail ? `${category}の分類のページへ` : `戻る（${category}の関係図）`}
             onClick={(e) => {
               e.stopPropagation();
               onCategory();
             }}
           >
-            {CATEGORY_ICON[category] ? (
+            {!showTrail ? (
+              // 関係図のページでは、ほかのページと同じ ← （1つ前のページへ。issue 599）
+              <span aria-hidden="true">←</span>
+            ) : CATEGORY_ICON[category] ? (
               <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className={s.ctlIcon}>
                 <path d={CATEGORY_ICON[category]} />
               </svg>
@@ -1404,7 +1417,7 @@ export default function RelationMap({
           </button>
         </div>
       ) : null}
-      {prevs.length ? (
+      {showTrail && prevs.length ? (
         // 地図の左上の ←：1つ前に選んだ概念へ戻る。長押しで、たどった道のメニュー（押さえている間は沈んで光る。長押しの手触り）
         <div className={`${s.backCtl}${calm && selected && onCategory && !page ? ` ${s.under}` : ""}`} data-ui>
           <button

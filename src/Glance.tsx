@@ -1,16 +1,17 @@
 // 語のひと目（stats2-course #592 の段 1・#593）：どの画面でも、文の下の語の札を押すと、その語の定義1文と式を下から出す。
 // 閉じると読んでいた所のまま（画面の原則 3）。ひと目の中の語を押すと次のひと目に替わり、来た道を上に出す（原則 11。式の「開く・戻る」と同じ見せ方）。
 // ページへ行くのは「ページを開く」を押したときだけ（読む所を勝手に替えない。原則 1）。
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import katex from "katex";
 import { Button, Muted, Sheet, subText } from "@math-lab/ui";
 import { lead, termsIn, type Network } from "./data";
 import { Terms } from "./Conditions";
 import st from "./Glance.module.css";
 
-const Ctx = createContext<((id: string) => void) | null>(null);
+type Api = { open: (id: string) => void; show: (id: string | null) => void };
+const Ctx = createContext<Api | null>(null);
 /** ひと目を開く関数。ひと目の外（GlanceRoot の外）では null（札は前のとおりページへ行く） */
-export const useGlance = () => useContext(Ctx);
+export const useGlance = () => useContext(Ctx)?.open ?? null;
 
 export function GlanceRoot({
   net,
@@ -26,12 +27,20 @@ export function GlanceRoot({
 }) {
   const [trail, setTrail] = useState<string[]>([]);
   const open = (id: string) => setTrail((t) => (t.length && t.at(-1) === id ? t : [...t, id]));
+  // 来た道を作らずに出す・閉じる（関係図のページで語を押し直したとき。issue 599）
+  const show = (id: string | null) => setTrail(id ? [id] : []);
+  // ページが替わったら閉じる（戻る・進むでほかのページへ移ったのに、前のひと目が残っていた。issue 599）
+  useEffect(() => {
+    const close = () => setTrail([]);
+    addEventListener("popstate", close);
+    return () => removeEventListener("popstate", close);
+  }, []);
   const id = trail.at(-1);
   const c = id ? net.concepts.get(id) : undefined;
   const f = c ? (c.workspace ? c.formulas?.[c.workspace.formula] : c.formulas?.[0]) : undefined;
   const text = c ? lead(c) : undefined;
   return (
-    <Ctx.Provider value={open}>
+    <Ctx.Provider value={{ open, show }}>
       {children}
       {c && (
         <div className={st.layer}>
@@ -101,7 +110,11 @@ export function Words({ net, text, self }: { net: Network; text?: string | null;
 }
 
 /** ひと目を開く関数を、子に渡す（部品の props で用語を受け取る所。実験室の onConcept など） */
-export function WithGlance({ children }: { children: (open: (id: string) => void) => ReactNode }) {
-  const open = useGlance();
-  return <>{children(open ?? (() => {}))}</>;
+export function WithGlance({
+  children,
+}: {
+  children: (open: (id: string) => void, show: (id: string | null) => void) => ReactNode;
+}) {
+  const api = useContext(Ctx);
+  return <>{children(api?.open ?? (() => {}), api?.show ?? (() => {}))}</>;
 }
