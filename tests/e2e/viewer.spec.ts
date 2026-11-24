@@ -1064,7 +1064,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   expect(skel).toBeGreaterThan(0);
   await expect(page.getByText(`（定義だけ ${skel}）`)).toBeVisible();
   const lib = page.getByTestId("library");
-  await expect(lib.locator("[data-testid^=lib-]")).toHaveCount(12); // 12の分類のタイル
+  await expect(lib.locator("[data-testid^=lib-]")).toHaveCount(12); // 12の分類の行（どれも開いていない）
   // 柱は教材の course.pillars から（上から 記述 → 確率 → 推測）
   await expect(lib.locator("h3")).toHaveText(["データを記述する", "確率で考える", "推測する"]);
   const small = await lib.locator("button").evaluateAll(
@@ -1083,10 +1083,11 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     return { all: all.length, live: all.filter((it: any) => !it.retired).length };
   });
   expect(items.all).toBeGreaterThan(items.live); // 使わない問いがある見本で確かめている
-  await expect(lib.getByTestId("lib-確率分布").locator("xpath=..")).toContainText(`実験 ${items.live}`);
-  // 語の印：教材のデータの icon（教材のサイトの icons/ の下）を mask で読み、ブラウザが実際に取り寄せる
+  await expect(lib.getByTestId("lib-確率分布")).toContainText(`実験 ${items.live}`);
+  // 語の印：教材のデータの icon（教材のサイトの icons/ の下）を mask で読み、ブラウザが実際に取り寄せる（分類を開いた中の一覧。issue 601）
+  await lib.getByTestId("lib-確率分布").click();
   const iconUrl = await lib
-    .getByTestId("lib-確率分布")
+    .getByTestId("category-list")
     .getByTestId("concept-icon")
     .first()
     .evaluate(
@@ -1097,11 +1098,10 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     );
   expect(new URL(iconUrl).pathname).toMatch(/^\/stats2-labs\/icons\/TERM-[\w-]+\.svg$/);
   await expect.poll(() => iconHits.includes(new URL(iconUrl).pathname)).toBe(true);
-  // タイルの4つ目（ほかの語）を押すと、その分類のページ（リストビュー）。地図は並べ方の切り替えから（stats2-course #228）
-  await lib.getByRole("button", { name: "確率の概念をすべて見る" }).click();
+  // 分類を開いた中の「関係図で見る」で、その分類の関係図（issue 601。前は分類のページの並べ方の切り替え）
+  await lib.getByTestId("lib-確率").click();
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87/);
-  await expect(page.getByTestId("category-list")).toHaveAttribute("data-layout", "grid");
-  await page.getByTestId("cat-layout-map").click();
+  await page.getByTestId("lib-map-確率").click();
   await expect(page).toHaveURL(/lv=map/);
   // 地図は関係図（stats2-course #588）：確率の14語だけを描く（ほかの分類の語は出さない）
   const rm = page.getByTestId("relation-map");

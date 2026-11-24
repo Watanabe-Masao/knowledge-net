@@ -63,21 +63,8 @@ function expectHoldFeel(name: string, r: Awaited<ReturnType<typeof holdAt>>, sin
   expect(r.after.lit || r.after.sunk, `${name}：離しても戻らない`).toBe(false);
 }
 
-test("長押しの手触り：一覧・関係図の語と線は、押さえている間に沈んで光り、離すと戻る", async ({ page }) => {
+test("長押しの手触り：関係図の語と線は、押さえている間に沈んで光り、離すと戻る", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  // 一覧の正方形
-  await page.goto(`${SRC}&lv=grid&g=${encodeURIComponent("確率分布")}`);
-  const cell = page.getByTestId("category-list").locator("button").first();
-  await expect(cell).toBeVisible();
-  const cb = (await cell.boundingBox())!;
-  await page.evaluate(() =>
-    document.querySelector("[data-testid=category-list] button")!.setAttribute("data-probe", ""),
-  );
-  expectHoldFeel(
-    "一覧の正方形",
-    await holdAt(page, cb.x + cb.width / 2, cb.y + cb.height / 2, look(page, "[data-probe]"), true),
-  );
-
   // 関係図の語
   await page.goto(`${SRC}&lv=map&g=${encodeURIComponent("確率分布")}`);
   const m = page.getByTestId("relation-map");

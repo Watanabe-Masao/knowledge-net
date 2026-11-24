@@ -9,7 +9,6 @@ import { GlanceRoot, WithGlance } from "./Glance";
 import Library from "./Library";
 import Route, { rememberStation } from "./Route";
 import UnitPage from "./UnitPage";
-import CategoryList, { LayoutSwitch } from "./CategoryList";
 import RelationMap from "./RelationMap";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Detail, { name } from "./Detail";
@@ -41,7 +40,7 @@ function useUrlState() {
   const [cards, setCards] = useState<string | null>(init.cards);
   // 全体図を分類で絞る（?g=分類。#105 の骨格の分類）
   const [group, setGroupRaw] = useState<string | null>(init.group);
-  // 分類のページの並べ方（?lv=。正方形・一覧・地図。stats2-course #228）
+  // 分類の関係図のページか（?lv=map）。ほかの値（前の URL の grid・list）はライブラリでその分類を開く（issue 601）
   const [layout, setLayoutRaw] = useState<Layout>(init.layout);
   /** 分類を変える。open＝ライブラリから分類のページを開く（「戻る」でライブラリへ戻れるよう履歴に積む）。
    *  地図の「分類で絞る」の選び直しは積まない（同じ履歴の中で書き換える） */
@@ -49,14 +48,14 @@ function useUrlState() {
     if (open) push.current = true;
     setGroupRaw(g);
   };
+  /** ライブラリで分類を開く・閉じる（"*"＝どれも開かない）。同じページの中なので履歴は積まない（issue 601） */
+  const openInLibrary = (g: string) => {
+    setLayoutRaw("grid");
+    setGroupRaw(g);
+  };
   const setLayout = (l: Layout) => {
     push.current = true;
     setLayoutRaw(l);
-  };
-  /** ライブラリから分類のページを開く（正方形から） */
-  const openGroup = (g: string) => {
-    setLayoutRaw("grid");
-    setGroup(g, true);
   };
   // タブ（?t=。探索は付けない。実験室を開いているときは実験室）
   // 前の URL の ?t=（学習・問題集・実験室の一覧のタブ）は読まない。実験室を開いているときだけ lab（URL には出さない。issue 599）
@@ -139,7 +138,7 @@ function useUrlState() {
     setGroup,
     layout,
     setLayout,
-    openGroup,
+    openInLibrary,
     tab,
   };
 }
@@ -168,7 +167,7 @@ export default function App() {
     setGroup,
     layout,
     setLayout,
-    openGroup,
+    openInLibrary,
   } = useUrlState();
   // 下のタブはなくした（学習・問題集は路線図の単元の見出しに、実験室の一覧は概念のページの「試す」の段に。issue 592 の段 3・issue 599）。
   // 前の URL（?t=learn・problems・lab）は、路線図か概念のページで開く
@@ -405,32 +404,34 @@ export default function App() {
             />
           ) : null}
           {/* 分類・ライブラリのページの見出しは「← 題」（関係図のページは、地図の左上の「← 分類名」が見出しを兼ねる。issue 599） */}
-          {group && !concept && !mapCat ? <PageBack title={group === "*" ? "分類" : group} onBack={back} /> : null}
+          {group && !concept && !mapCat ? <PageBack title="分類" onBack={back} /> : null}
         </div>
         {errors.map((e) => (
           <ErrorText key={e}>{e}</ErrorText>
         ))}
-        {/* 分類のページ（ライブラリでタイルを押したあと）：並べ方の切り替え。正方形・一覧はリストビュー、地図は関係図（stats2-course #228） */}
-        {!sel && group && group !== "*" ? (
-          <div className={st.catBar} data-edge="top">
-            <LayoutSwitch value={layout} onChange={setLayout} />
-          </div>
-        ) : null}
         {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ。分類を押すとその分類のページ、語を押すと概念 */}
         {!sel && !group ? (
           <Route
             net={net}
             onOpen={openPage}
-            onGroups={() => setGroup("*")}
+            onGroups={() => setGroup("*", true)}
             onUnit={(u) => {
               unitHere.current = true;
               setUnit(u);
             }}
           />
-        ) : !sel && group === "*" ? (
-          <Library net={net} onConcept={setSel} onGroup={openGroup} />
-        ) : !sel && layout !== "map" ? (
-          <CategoryList net={net} category={group!} layout={layout} onConcept={setSel} />
+        ) : !sel && group && !mapCat ? (
+          // ライブラリ（issue 601）：分類を押すとその場で開く（開き閉じは履歴を積まない）。開いた分類は ?g=分類
+          <Library
+            net={net}
+            open={group === "*" ? null : group}
+            onToggle={(c) => openInLibrary(c ?? "*")}
+            onConcept={setSel}
+            onMap={(c) => {
+              setGroup(c);
+              setLayout("map");
+            }}
+          />
         ) : mapCat ? (
           // 関係図のページ（issue 599）：語を押すと選んで（?m=）ひと目。ダブルタップ・ひと目の「ページを開く」で概念のページ
           <WithGlance>
