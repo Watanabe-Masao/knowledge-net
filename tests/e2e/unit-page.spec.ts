@@ -1,5 +1,5 @@
 // 単元のページ（stats2-course の issue 596）：路線図の単元の見出しから開き、入口の問い → 分かるようになること → 概念 → 実験 → 段と問題。
-// 見本はまだ型の改訂9 の項目（entry・goal・stages）を持たないので、書き出した形をテストの中で足す（CLAUDE.md「テストの見本」）。スマホの幅で見る。
+// 1つ目のテストは決まった文で確かめるため、改訂9 の項目（entry・goal・stages）をテストの中で書き換える（CLAUDE.md「テストの見本」）。スマホの幅で見る。
 import { test, expect, type Page } from "@playwright/test";
 
 const SRC = "src=sample/stats2.json";
@@ -65,6 +65,16 @@ test("単元のページ：見出しから開き、概念を全画面で開い�
 // 見つけ方：見本のまま ?u=stats2:U14 で開くと、入口の問いの段はなく、概念の行と「初学」の段（問題の数＝見本の U14 の初学の問題の数）。閉じると路線図。
 // 既存との違い：上は教材の項目を足した形
 test("単元のページ：教材の項目がなくても開き、直接の URL から閉じると路線図", async ({ page }) => {
+  // 見本は改訂9 の項目を持つようになった（2026-11-24 の公開）。項目のない教材（改訂9 の前の形）を、ここで作る
+  await page.route("**/sample/stats2.json", async (r) => {
+    const d = await (await r.fetch()).json();
+    for (const u of d.course.units) {
+      delete u.entry;
+      delete u.goal;
+      delete u.stages;
+    }
+    await r.fulfill({ json: d });
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`./?${SRC}&u=${encodeURIComponent("stats2:U14")}`);
   const u = page.getByTestId("unit-page");
