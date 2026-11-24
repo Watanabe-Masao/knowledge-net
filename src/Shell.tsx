@@ -1,20 +1,14 @@
-// サイトの骨組み（stats2-course #42・#130）：ヘッダー・パンくず・下のタブ4つと、学習・実験室・問題集の入口の一覧。
-// タブは URL の ?t= に持つ（探索は付けない）。一覧は教材の JSON だけから作る（教材の原本は読まない）。
+// サイトの骨組み（stats2-course #42・#130）：ヘッダー・パンくず・印と、実験室の一覧。
+// 下のタブはなくした（路線図と概念のページに絞った。stats2-course の issue 592 の段 3）。実験室は URL の ?t=lab。一覧は教材の JSON だけから作る（教材の原本は読まない）。
 // 個人の記録（解いた・お気に入り）は持たない。単元と問題は Notion のページへのリンク。
 import { useState, type ReactNode } from "react";
-import { Button, Muted, Sheet, subText } from "@math-lab/ui";
+import { Button, Muted, Sheet } from "@math-lab/ui";
 import type { ExperimentData, Network } from "./data";
 import s from "./Shell.module.css";
 
 import type { Tab } from "./urlState";
 export type { Tab } from "./urlState";
 export { readTab } from "./urlState";
-export const TABS: { id: Tab; label: string }[] = [
-  { id: "explore", label: "さがす" },
-  { id: "learn", label: "学習" },
-  { id: "lab", label: "実験室" },
-  { id: "problems", label: "問題集" },
-];
 
 /** 線で描く小さな印（絵文字は使わない） */
 export function Icon({
@@ -161,124 +155,8 @@ export function Crumbs({ items }: { items: { label: string; onClick?: () => void
   );
 }
 
-/** 選んだ概念（探索で選んだもの）。下のタブは、その概念の分の単元・実験室・問題に絞って開く（渡辺さん 2026-11-01：学ぶ行動は下のタブに動的に） */
+/** 選んだ概念。実験室の一覧を、その概念の分に絞って開く */
 export type Focus = { id: string; name: string; units: string[]; problems: string[]; exps: string[] };
-
-/** 下のタブに出す、選んだ概念の分の目印（学習＝単元、実験室・問題集＝数） */
-export function focusBadges(net: Network, f: Focus | null): Partial<Record<Tab, string>> {
-  if (!f) return {};
-  const u = f.units.map((id) => net.units.get(id)).find((x) => !!x);
-  return {
-    ...(u ? { learn: `U${u.number}` } : {}),
-    ...(f.exps.length ? { lab: String(f.exps.length) } : {}),
-    ...(f.problems.length ? { problems: String(f.problems.length) } : {}),
-  };
-}
-
-export function TabBar({
-  tab,
-  onTab,
-  badges = {},
-  focusName,
-}: {
-  tab: Tab;
-  onTab: (t: Tab) => void;
-  badges?: Partial<Record<Tab, string>>;
-  focusName?: string;
-}) {
-  return (
-    <nav className={s.tabs} aria-label="タブ" data-testid="tabbar" data-edge="bottom">
-      {TABS.map((t) => (
-        <a
-          key={t.id}
-          href={t.id === "explore" ? "?" : `?t=${t.id}`}
-          aria-current={tab === t.id ? "page" : undefined}
-          aria-label={badges[t.id] ? `${t.label}（${focusName}：${badges[t.id]}）` : undefined}
-          onClick={(e) => {
-            e.preventDefault();
-            onTab(t.id);
-          }}
-        >
-          <span className={s.tabIcon}>
-            <Icon name={t.id} />
-            {badges[t.id] ? (
-              <span className={s.badge} data-testid={`badge-${t.id}`}>
-                {badges[t.id]}
-              </span>
-            ) : null}
-          </span>
-          {t.label}
-        </a>
-      ))}
-    </nav>
-  );
-}
-
-/** 絞り込みの札：「期待値 の分」を出し、押すと全部に戻す（もう一度押すと絞る） */
-function FocusChip({ focus, on, onToggle }: { focus: Focus | null; on: boolean; onToggle: () => void }) {
-  if (!focus) return null;
-  return (
-    <button type="button" className={s.focusChip} aria-pressed={on} onClick={onToggle} data-testid="focus-chip">
-      {on ? (
-        <>
-          {focus.name} に絞り込み中<span aria-hidden="true">✕</span>
-        </>
-      ) : (
-        <>{focus.name} に絞り込む</>
-      )}
-    </button>
-  );
-}
-
-/** まとまり（単元の group）の切り替え。「すべて」と、データに出てくる順のまとまり */
-function GroupChips({ net, value, onChange }: { net: Network; value: string; onChange: (g: string) => void }) {
-  const groups = [...new Set([...net.units.values()].map((u) => u.group).filter((g): g is string => !!g))];
-  if (groups.length < 2) return null;
-  return (
-    <div className={s.chips} role="radiogroup" aria-label="まとまり" data-testid="group-chips">
-      {["", ...groups].map((g) => (
-        <button key={g || "all"} type="button" role="radio" aria-checked={value === g} onClick={() => onChange(g)}>
-          {g || "すべて"}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/** 学習：単元の一覧（まとまりで絞る）。押すと Notion の単元ページ（読んで、自分のメモを書き足す所） */
-export function LearnPage({ net, focus = null }: { net: Network; focus?: Focus | null }) {
-  const [group, setGroup] = useState("");
-  const [on, setOn] = useState(true);
-  const only = focus && on ? new Set(focus.units) : null;
-  const units = [...net.units.values()].filter((u) => (only ? only.has(u.id) : !group || u.group === group));
-  const labUnits = labsByUnit(net);
-  return (
-    <section className={s.page} data-testid="page-learn">
-      <h2 className={s.pageTitle}>学習</h2>
-      <Muted>単元のページは Notion で読み、自分のメモを書き足す。</Muted>
-      <FocusChip focus={focus} on={on} onToggle={() => setOn(!on)} />
-      {!only ? <GroupChips net={net} value={group} onChange={setGroup} /> : null}
-      <ul className={s.list}>
-        {units.map((u) => (
-          <li key={u.id}>
-            <a className={s.row} href={u.url} target="_blank" rel="noreferrer" aria-disabled={!u.url}>
-              <span className={s.num}>{u.number}</span>
-              <span className={s.rowText}>
-                {u.title}
-                {labUnits.get(u.id)?.length ? <small>実験室：{labUnits.get(u.id)!.join("・")}</small> : null}
-              </span>
-              {u.url ? (
-                <span className={s.out} aria-label="Notion で開く">
-                  <Icon name="out" size={16} />
-                </span>
-              ) : null}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
 
 type Item = { id: string; title: string; open?: string; concept?: string; related?: string[]; retired?: boolean };
 /** 主が関係（REL-…）なら、その両端の概念として数える（stats2-course issue 169）。概念ならそれ自身 */
@@ -569,100 +447,3 @@ export function LabPage({
 }
 
 /** 問題集：まとまり → 単元 → 段階ごとの数と問題の一覧。押すと Notion の単元ページ（問題を解き、記録は Notion の解答記録へ） */
-export function ProblemsPage({ net, focus = null }: { net: Network; focus?: Focus | null }) {
-  const [group, setGroup] = useState("");
-  const [on, setOn] = useState(true);
-  const only = focus && on ? new Set(focus.problems) : null;
-  const probsOf = (u: { problems?: { id: string; stage: string; prompt: string }[] }) =>
-    (u.problems ?? []).filter((p) => !only || only.has(p.id));
-  const units = [...net.units.values()].filter((u) => probsOf(u).length && (only || !group || u.group === group));
-  const [open, setOpen] = useState<string | null>(only && units[0] ? units[0].id : null); // 絞ったときは最初の単元を開いておく
-  return (
-    <section className={s.page} data-testid="page-problems">
-      <h2 className={s.pageTitle}>問題集</h2>
-      <Muted>
-        押すと Notion の単元ページの問題へ。解いた記録は Notion の解答記録に残す（このサイトは記録を持たない）。
-      </Muted>
-      <FocusChip
-        focus={focus}
-        on={on}
-        onToggle={() => {
-          setOn(!on);
-          setOpen(null);
-        }}
-      />
-      {!only ? (
-        <GroupChips
-          net={net}
-          value={group}
-          onChange={(g) => {
-            setGroup(g);
-            setOpen(null);
-          }}
-        />
-      ) : null}
-      <ul className={s.list}>
-        {units.map((u) => {
-          const ps = probsOf(u),
-            isOpen = open === u.id;
-          const stages = [...new Set(ps.map((p) => p.stage))];
-          return (
-            <li key={u.id}>
-              <button
-                type="button"
-                className={s.row}
-                aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? null : u.id)}
-                data-testid={`unit-${u.id}`}
-              >
-                <span className={s.num}>{u.number}</span>
-                <span className={s.rowText}>
-                  {u.title}
-                  <small className={s.mute}>{ps.length} 問</small>
-                </span>
-                <span className={`${s.chev}${isOpen ? ` ${s.chevOn}` : ""}`} aria-hidden="true">
-                  <Icon name="chevron" size={16} />
-                </span>
-              </button>
-              {isOpen ? (
-                <div className={s.probs} data-testid={`problems-${u.id}`}>
-                  <div className={s.stageCounts}>
-                    {stages.map((st) => (
-                      <span key={st}>
-                        <b>{ps.filter((p) => p.stage === st).length}</b>
-                        {st}
-                      </span>
-                    ))}
-                  </div>
-                  <ul>
-                    {ps.map((p) => (
-                      <li key={p.id}>
-                        <a href={u.url} target="_blank" rel="noreferrer">
-                          <small>
-                            {p.id.replace(/^[\w-]+:/, "")}・{p.stage}
-                          </small>
-                          {subText(p.prompt)}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-      {!units.length ? <Muted>問題はまだない。</Muted> : null}
-    </section>
-  );
-}
-
-/** 単元 → その単元の概念につながる実験室の名前 */
-function labsByUnit(net: Network) {
-  const m = new Map<string, string[]>();
-  for (const x of net.experiments.values()) {
-    const units = new Set((x.links.concepts ?? []).flatMap((id) => net.concepts.get(id)?.units.slice(0, 1) ?? []));
-    for (const u of units) (m.get(u) ?? m.set(u, []).get(u)!).push(x.title.replace(/\s*実験室$/, ""));
-  }
-  return m;
-}

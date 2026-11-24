@@ -1,12 +1,14 @@
 // 画面全体。状態は URL に持つ（?t=タブ&c=選んだ概念&view=path（前提をさかのぼる）&x=実験室&g=分類&lv=並べ方&embed=1&src=データ）。
-// 下のタブは4つ（探索・学習・実験室・問題集。stats2-course #130）。埋め込みではタブとヘッダーを出さない。
+// 画面は路線図（ホーム）と概念のページとひと目（stats2-course の issue 592。渡辺さん 2026-11-24「できる限りシンプルに」）。下のタブは置かない。
+// 埋め込みではヘッダーを出さない。
 // 概念を選ぶたびに履歴に積む（ブラウザの「戻る」で前の概念・表示に戻る）。
 // 概念の地図は関係図の1つ（stats2-course #587・#588。渡辺さん 2026-11-23「こちらに一本化」）：どの入口（検索・ライブラリ・一覧・Notion の 🕸 リンク）から
 // 概念を開いても、その概念の分類の関係図で開く。分類をまたぐ学ぶ順は「前提をさかのぼる」（全画面の一覧）で読む。
 // Notion の埋め込み（高さ約320px）では embed=1：概念の名前と短い説明と「拡大表示 ↗」。
 import { GlanceRoot, WithGlance } from "./Glance";
-import { STEPS, stepDown } from "./steps";
+import { stepDown } from "./steps";
 import Library from "./Library";
+import Route, { rememberStation } from "./Route";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
 import RelationMap from "./RelationMap";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,11 +18,14 @@ import PathList from "./PathList";
 import Search from "./Search";
 import { Button, ErrorText, Experiment, FullView, Muted, Sheet, type Detent, subText } from "@math-lab/ui";
 import st from "./App.module.css";
-import { experimentsFor, learnOrder, load, pairOpen, trace, type Network } from "./data";
-import { Crumbs, Header, Icon, LabPage, LearnPage, ProblemsPage, TabBar, focusBadges, type Focus } from "./Shell";
+import { experimentsFor, learnOrder, load, pairOpen, routeOf, trace, type Network } from "./data";
+import { Crumbs, Header, Icon, LabPage, type Focus } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
 const params = new URLSearchParams(location.search);
+// ページの送り位置はアプリが決める（戻る・進むでブラウザが前の画面の送り位置を当てない。路線図で送った分が関係図に残った。
+// stats2-course の issue 592 の段 3。2026-11-24）
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 const EMBED = params.get("embed") === "1";
 const SRC = params.get("src");
 
@@ -146,7 +151,7 @@ export default function App() {
   const narrow = useNarrow();
   // 詳しくの段（少し・半分・全部）。別の概念を選ぶと「少し」から
   const [detent, setDetent] = useState<Detent>("peek");
-  const [tabH, setTabH] = useState(58);
+  const tabH = 0; // 下のタブは置かない（面は画面の下の端に乗る）
   const [searchOpen, setSearchOpen] = useState(false);
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -166,9 +171,11 @@ export default function App() {
     layout,
     setLayout,
     openGroup,
-    tab,
+    tab: tabRaw,
     setTab,
   } = useUrlState();
+  // 学習・問題集のタブはなくした（路線図の単元の見出しに入れた。issue 592 の段 3）。前の URL（?t=learn・problems）は路線図で開く
+  const tab = tabRaw === "lab" ? "lab" : "explore";
   // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
   // 概念を選んでいる間は、どの幅でも関係図が画面いっぱいになり、詳しくは下からの面で出す（関係図に一本化。stats2-course #588。
   // 広い画面で面にしないと、詳しくが画面いっぱいの関係図の後ろに隠れた）
@@ -203,6 +210,28 @@ export default function App() {
   const openFull = useRef(false);
   // 前提をさかのぼる一覧を、このページの中から開いたか（閉じ方を分ける）
   const pathHere = useRef(false);
+  // 路線図・探すから開いた概念のページ（全画面）：← で路線図へ戻る（関係図の面に降りない）。
+  // 「関係図で見る」で関係図に降りたら、その後は今までどおり面の段へ戻る
+  const fromRoute = useRef(false);
+  const openPage = (id: string) => {
+    fromRoute.current = true;
+    openFull.current = true;
+    if (id === sel) setDetent("full");
+    else setSel(id);
+  };
+  const onDetent = (d: Detent) => {
+    if (fromRoute.current && d !== "full") {
+      fromRoute.current = false;
+      setSel(null);
+      setGroup(null);
+      return;
+    }
+    setDetent(d);
+  };
+  // 現在地：最後に開いた概念（その端末にだけ。路線図の「前に開いた駅」）
+  useEffect(() => {
+    if (sel) rememberStation(sel);
+  }, [sel]);
   useEffect(() => {
     setEdgeRaw(null);
     // 別の概念へ進んだら段2はそのまま（渡辺さん 2026-11-07「2段目を維持」。画面の原則 3）。フルからは段1へ
@@ -210,14 +239,6 @@ export default function App() {
     openFull.current = false;
     setDetent((d) => (full ? "full" : sel && d === "half" ? "half" : "peek"));
   }, [sel]); // 別の概念へ進んだら、線の説明は閉じる
-  useEffect(() => {
-    // 下のタブの高さ（詳しくの面はその上に乗る）
-    const el = document.querySelector<HTMLElement>('[data-testid="tabbar"]');
-    if (!el || typeof ResizeObserver !== "function") return;
-    const ro = new ResizeObserver(() => setTabH(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  });
   // ラボを全面で開く：一覧の「大きく開く」と、ラボの中の「大きく開く ↗」（host=kn のときは親に知らせてくる）
   const [full, setFull] = useState<{ url: string; title?: string } | null>(null);
   useEffect(() => {
@@ -251,6 +272,8 @@ export default function App() {
   }, []);
 
   // 前提をさかのぼる（view=path）：選んだ概念の前提を学ぶ順（遠い前提から）に並べた全画面の一覧（stats2-course #588 B2）
+  // 路線図の駅の並び（概念のページの「次の駅」）
+  const route = useMemo(() => (net ? routeOf(net) : null), [net]);
   const tr = useMemo(() => (net && sel && net.concepts.has(sel) ? trace(net, sel) : null), [net, sel]);
   const seq = useMemo(
     () => (tr ? learnOrder(tr).filter((id) => id !== sel && net?.concepts.has(id)) : []),
@@ -267,6 +290,7 @@ export default function App() {
     );
   const concept = sel ? net.concepts.get(sel) : undefined;
   const tracing = view === "path" && !!concept;
+  const nextId = concept && route ? route.order[route.order.indexOf(concept.id) + 1] : undefined;
   // 地図は関係図（stats2-course #588）：概念を選んでいればその概念の分類、選んでいなければ分類のページの「地図」で開いた分類
   const mapCat = concept ? concept.category : group && group !== "*" && layout === "map" ? group : undefined;
 
@@ -343,7 +367,7 @@ export default function App() {
     );
   }
   const sub = net.courses.map((c) => c.title).join("・");
-  // 選んだ概念の分：下のタブに目印を出し、押すとその分に絞って開く（学ぶ行動は下のタブに。詳しくの面には置かない）
+  // 選んだ概念の分：実験室の一覧をその分に絞る（概念のページの「実験室で検証」から開く）
   const fc = sel ? net.concepts.get(sel) : undefined;
   const focus: Focus | null = fc
     ? {
@@ -354,30 +378,16 @@ export default function App() {
         exps: experimentsFor(net, fc.id).map((x) => x.id),
       }
     : null;
-  const badges = focusBadges(net, focus);
-  if (tab !== "explore")
+  // 実験室の一覧（概念のページの「実験室で検証」から）。学習・問題集は路線図の単元の見出しに入れた（下のタブは置かない。issue 592 の段 3）
+  if (tab === "lab")
     return (
-      <main className={`${st.app} ${st.withTabs}`}>
+      <main className={st.app}>
         <Header title="知識ネットワーク" sub={sub} />
-        {/* 概念から実験室・学習・問題集へ移ったときは、来た概念へ戻る ← を上に（下のタブだけにしない。UI レビュー「動線設計」2） */}
-        {focus && (
-          <button
-            type="button"
-            className={st.backTo}
-            onClick={() => setTab("explore")} // 履歴を戻すのでなく探索のタブへ（URL で直接開いたときにサイトの外へ戻らない）
-            data-testid="tab-back"
-          >
-            <span aria-hidden="true">←</span> {focus.name}
-          </button>
-        )}
-        {tab === "learn" ? (
-          <LearnPage net={net} focus={focus} />
-        ) : tab === "lab" ? (
-          <LabPage net={net} onOpen={setExp} focus={focus} />
-        ) : (
-          <ProblemsPage net={net} focus={focus} />
-        )}
-        <TabBar tab={tab} onTab={setTab} badges={badges} focusName={focus?.name} />
+        {/* 来た所へ戻る ← を上に。履歴を戻すのでなく、概念のページか路線図へ（URL で直接開いたときにサイトの外へ戻らない） */}
+        <button type="button" className={st.backTo} onClick={() => setTab("explore")} data-testid="tab-back">
+          <span aria-hidden="true">←</span> {focus ? focus.name : "路線図"}
+        </button>
+        <LabPage net={net} onOpen={setExp} focus={focus} />
       </main>
     );
   const compact = sheeted && !!concept;
@@ -390,7 +400,7 @@ export default function App() {
         setSel(id);
       }}
     >
-      <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
+      <main className={`${st.app}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
         <div className={st.top} data-edge="top">
           <Header
             title="知識ネットワーク"
@@ -427,7 +437,7 @@ export default function App() {
               concepts={[...net.concepts.values()]}
               onPick={(id) => {
                 setSearchOpen(false);
-                setSel(id);
+                openPage(id);
               }}
             />
           ) : null}
@@ -437,7 +447,7 @@ export default function App() {
               ...(concept || group
                 ? [
                     {
-                      label: "ライブラリ",
+                      label: "路線図",
                       onClick: () => {
                         setSel(null);
                         setGroup(null);
@@ -460,8 +470,8 @@ export default function App() {
                       : []),
                     { label: concept.name },
                   ]
-                : group && group !== "*"
-                  ? [{ label: group }]
+                : group
+                  ? [{ label: group === "*" ? "分類" : group }]
                   : []),
             ]}
           />
@@ -476,7 +486,9 @@ export default function App() {
           </div>
         ) : null}
         {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ。分類を押すとその分類のページ、語を押すと概念 */}
-        {!sel && (!group || group === "*") ? (
+        {!sel && !group ? (
+          <Route net={net} onOpen={openPage} onGroups={() => setGroup("*")} />
+        ) : !sel && group === "*" ? (
           <Library net={net} onConcept={setSel} onGroup={openGroup} />
         ) : !sel && layout !== "map" ? (
           <CategoryList net={net} category={group!} layout={layout} onConcept={setSel} />
@@ -514,7 +526,13 @@ export default function App() {
           <Detail
             net={net}
             concept={concept}
-            sheet={sheeted ? { detent, onDetent: setDetent, bottom: tabH } : undefined}
+            sheet={sheeted ? { detent, onDetent, bottom: tabH } : undefined}
+            next={nextId ? { id: nextId, name: net.concepts.get(nextId)!.name } : undefined}
+            onNext={(id) => openPage(id)}
+            onMap={() => {
+              fromRoute.current = false;
+              setDetent("half");
+            }}
             onCompare={() => setModal("pick")}
             onSelect={setSel}
             onEdge={setEdgeSel}
@@ -592,15 +610,6 @@ export default function App() {
             データ：各教材の公開した JSON（型 kn-schema v2）。教材の原本は各教材のリポジトリ。
           </Muted>
         )}
-        <TabBar
-          tab="explore"
-          onTab={(t) => {
-            if (t === "explore" && sel) setDetent(STEPS[0]!);
-            else setTab(t);
-          }}
-          badges={badges}
-          focusName={focus?.name}
-        />
       </main>
     </GlanceRoot>
   );

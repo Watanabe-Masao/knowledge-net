@@ -74,6 +74,11 @@ type Props = {
   /** 前提をさかのぼる（全画面の一覧）を開く。数は分類をまたぐ学ぶ順でたどれる前提の数（stats2-course #588 B2） */
   onTrace?: () => void;
   traceCount?: number;
+  /** 路線図の次の駅（stats2-course の issue 592 の段 3）。押すとその概念のページ */
+  next?: { id: string; name: string };
+  onNext?: (id: string) => void;
+  /** この概念の分類の関係図に降りる（面の段2。ページの関係の段から） */
+  onMap?: () => void;
   /** スマホでは下からの面にする（段と、下のタブの高さ） */
   sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
 };
@@ -257,6 +262,9 @@ export default function Detail({
   onLab,
   onTrace,
   traceCount,
+  next,
+  onNext,
+  onMap,
   sheet,
 }: Props) {
   // 「少し」の段の高さ：見出し・定義・学ぶ行動がちょうど見える高さ（中身の量で変わるので測る）
@@ -424,7 +432,7 @@ export default function Detail({
             className={st.back}
             onClick={() => leaveFull()}
             data-testid="detail-to-map"
-            aria-label="地図へ戻る"
+            aria-label="戻る"
           >
             ←
           </button>
@@ -771,18 +779,32 @@ export default function Detail({
       {(all || tab === "rel") && (
         <div className={st.pane} data-testid="tab-rel">
           {all && <h3 className={st.paneTitle}>関係</h3>}
-          {/* 前提をさかのぼる（stats2-course #588 B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧 */}
-          {onTrace && traceCount ? (
+          {/* 前提をさかのぼる（stats2-course の issue 588 の B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧。
+              関係図で見る（issue 592 の段 3）：ホームは路線図になったので、分類の関係図にはここから降りる */}
+          {(onTrace && traceCount) || (all && onMap) ? (
             <ul className={st.rels}>
-              <li>
-                <button type="button" className={st.rel} onClick={onTrace} data-testid="trace-open">
-                  <span className={st.relText}>前提をさかのぼる</span>
-                  <span className={st.relGist}>{`学ぶ前に読む ${traceCount} の概念を、学ぶ順に並べる`}</span>
-                  <span className={st.relChev} aria-hidden="true">
-                    ›
-                  </span>
-                </button>
-              </li>
+              {all && onMap && (
+                <li>
+                  <button type="button" className={st.rel} onClick={onMap} data-testid="map-open">
+                    <span className={st.relText}>関係図で見る</span>
+                    <span className={st.relGist}>{`${c.category ?? "この分類"}の概念と関係を、地図で見る`}</span>
+                    <span className={st.relChev} aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                </li>
+              )}
+              {onTrace && traceCount ? (
+                <li>
+                  <button type="button" className={st.rel} onClick={onTrace} data-testid="trace-open">
+                    <span className={st.relText}>前提をさかのぼる</span>
+                    <span className={st.relGist}>{`学ぶ前に読む ${traceCount} の概念を、学ぶ順に並べる`}</span>
+                    <span className={st.relChev} aria-hidden="true">
+                      ›
+                    </span>
+                  </button>
+                </li>
+              ) : null}
             </ul>
           ) : null}
           {groups.length ? (
@@ -836,6 +858,16 @@ export default function Detail({
             <Muted>まだ関係がない。</Muted>
           )}
           <Muted>押すと、関係のページが開く。グラフの線を押すのと同じ。</Muted>
+          {/* 次の駅（路線図の次。ページのいちばん下＝読み終えた所に置く。画面の原則 9：次の1手を示す） */}
+          {all && next && onNext && (
+            <button type="button" className={st.nextStation} onClick={() => onNext(next.id)} data-testid="next-station">
+              <span className={st.nextLab}>次の駅</span>
+              <span className={st.nextName}>{next.name}</span>
+              <span className={st.relChev} aria-hidden="true">
+                ›
+              </span>
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -315,7 +315,6 @@ test("空いた所のタップは1段戻す・選ぶと上の帯が引っ込む�
     120,
   );
   await expect.poll(() => bars(page)).toBe("hidden");
-  await expect(page.getByTestId("tabbar")).not.toHaveCSS("transform", "none");
   await page.waitForTimeout(500);
   const b = await blank(page);
   await page.mouse.click(b.x, b.y);
@@ -363,7 +362,7 @@ test("段2で別の語を選んでも段2のまま、中身はその語に替わ
 // 見つけ方：ポアソン分布を選んで段2にし、指で少し動かしてから、その画面の上の位置を測る。フルへ行って ← で戻り、同じ位置か。URL に lv=map が残るか。
 //   選びを外して地図を指で動かし、ライブラリへ出てブラウザで戻ると、動かした後の位置か。既存との違い：段のテストは面の高さだけを見る
 // 検出の確かめ（2026-11-07）：フルの前後で寄り直さない処理を外すと1つ目、分類ごとの見え方を覚える処理を外すと2つ目で落ちることを見た
-test("戻ると離れたときのまま：フルから戻っても、ライブラリへ出て戻っても、地図の見え方は同じ", async ({ page }) => {
+test("戻ると離れたときのまま：フルから戻っても、路線図へ出て戻っても、地図の見え方は同じ", async ({ page }) => {
   const m = await open(page);
   const at = async (id: string) => {
     const r = (await m.getByTestId(`rm-term-${T(id)}`).boundingBox())!;
@@ -418,16 +417,16 @@ test("戻ると離れたときのまま：フルから戻っても、ライブ�
     120,
   );
   await expect.poll(() => bars(page)).toBe("hidden");
-  await page.mouse.click(b2.x, b2.y); // 帯を戻す（ライブラリへのパンくずを押すため）
+  await page.mouse.click(b2.x, b2.y); // 帯を戻す（路線図へのパンくずを押すため）
   await expect.poll(() => bars(page)).toBe("shown");
   await still(page);
   const p1 = await at("binom");
-  await page.getByTestId("crumbs").getByRole("button", { name: "ライブラリ" }).click();
+  await page.getByTestId("crumbs").getByRole("button", { name: "路線図" }).click();
   await expect(m).toHaveCount(0);
   await page.goBack();
   await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
   await still(page);
-  expect(await at("binom"), "ライブラリから戻ると初めの見え方に戻る").toEqual(p1);
+  expect(await at("binom"), "路線図から戻ると初めの見え方に戻る").toEqual(p1);
 });
 
 // 確かめる対象：指の物理（画面の原則 2。UX レビュー A1・B10・B11）。

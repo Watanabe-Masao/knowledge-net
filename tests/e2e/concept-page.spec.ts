@@ -104,7 +104,7 @@ test("つながりは 定義に使う概念・前提知識・変換・対比 に
 // 次の1手が実験室の一覧を開かない・つながりを開くと面が重なり、戻ると地図まで戻ってしまう。
 // 見つけ方：下のタブの中心の点がページの中か・次の1手で実験室の一覧になるか・つながりのページの ← で概念のページ（全画面）に戻るか。
 // 既存との違い：上の「問いの札」のテストは札から開く。ここはページの骨組み（重ならない・次の1手・戻り先）
-test("読むときは全画面のページ：下のタブに重なり、次の1手で実験室へ、つながりも全画面で ← で概念へ", async ({
+test("読むときは全画面のページ：画面の下まで覆い、次の1手で実験室へ、つながりも全画面で ← で概念へ", async ({
   page,
 }) => {
   const errs = noErrors(page);
@@ -113,11 +113,11 @@ test("読むときは全画面のページ：下のタブに重なり、次の1�
   const d = page.getByTestId("detail");
   await openTab(d, "概要");
   await expect(d).toHaveAttribute("data-detent", "full");
+  // 画面の下の端まで覆う（下のタブはなくした。後ろの地図に指が届かない）
   expect(
-    await page.evaluate(() => {
-      const t = document.querySelector("[data-testid=tabbar]")!.getBoundingClientRect();
-      return !!document.elementFromPoint(t.x + t.width / 2, t.y + t.height / 2)?.closest("[data-testid=detail]");
-    }),
+    await page.evaluate(
+      () => !!document.elementFromPoint(innerWidth / 2, innerHeight - 10)?.closest("[data-testid=detail]"),
+    ),
   ).toBe(true);
   await openTab(d, "関係");
   await d

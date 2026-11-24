@@ -15,7 +15,7 @@ const TESTS = sample.concepts.filter((c) => c.category === "検定").length;
 // 既存との違い：ライブラリのテストはタイルまで。学ぶ順そのものは単体テスト（order.test.ts）が全部の分類で見る
 test("ライブラリ → 分類のページ：正方形（長押しで説明）・一覧・地図を切り替え、語を押すと概念", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json");
+  await page.goto("./?src=sample/stats2.json&g=*"); // 分類のライブラリ（路線図の「分類で見る」。issue 592 の段 3）
   await page.getByTestId("lib-検定").getByRole("button", { name: "検定の概念をすべて見る" }).click();
   const list = page.getByTestId("category-list");
   await expect(list).toHaveAttribute("data-layout", "grid");

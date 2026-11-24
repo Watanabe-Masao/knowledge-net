@@ -818,3 +818,23 @@ function termNames(net: Network) {
   }
   return n;
 }
+
+/** 路線図（stats2-course の issue 592 の段 3）：単元の番号の順に、その単元を最初の単元にする概念を学ぶ順で並べる。
+ *  単元のない概念は最後の「単元の外」に。駅の並び（全部をつないだ順）も返す（概念のページの「次の駅」に使う） */
+export type RouteLeg = { unit?: Unit; ids: string[] };
+export function routeOf(net: Network): { legs: RouteLeg[]; order: string[] } {
+  const byUnit = new Map<string, string[]>();
+  const outside: string[] = [];
+  for (const c of net.concepts.values()) {
+    const u = c.units[0];
+    if (u && net.units.has(u)) (byUnit.get(u) ?? byUnit.set(u, []).get(u)!).push(c.id);
+    else outside.push(c.id);
+  }
+  const num = (u: Unit) => parseFloat(u.number.replace(/[^\d.]/g, "")) || 0;
+  const units = [...net.units.values()].sort((a, b) => num(a) - num(b) || a.number.localeCompare(b.number));
+  const legs: RouteLeg[] = units
+    .filter((u) => byUnit.has(u.id))
+    .map((u) => ({ unit: u, ids: learningOrder(net, byUnit.get(u.id)!) }));
+  if (outside.length) legs.push({ ids: learningOrder(net, outside) });
+  return { legs, order: legs.flatMap((l) => l.ids) };
+}
