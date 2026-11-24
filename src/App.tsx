@@ -9,6 +9,7 @@ import { GlanceRoot, WithGlance } from "./Glance";
 import { stepDown } from "./steps";
 import Library from "./Library";
 import Route, { rememberStation } from "./Route";
+import UnitPage from "./UnitPage";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
 import RelationMap from "./RelationMap";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -60,7 +61,11 @@ function useUrlState() {
   };
   // タブ（?t=。探索は付けない。実験室を開いているときは実験室）
   const [tab, setTabRaw] = useState<Tab>(init.tab);
+  // 単元のページ（?u=。路線図の単元の見出しから。stats2-course の issue 596）
+  const [unit, setUnitRaw] = useState<string | null>(init.unit);
   const push = useRef(false);
+  /** 次に積む履歴を「概念のページ」として印を付ける（openPage） */
+  const pageNext = useRef(false);
   const setSel = (id: string | null) => {
     push.current = true;
     setSelRaw(id);
@@ -85,13 +90,15 @@ function useUrlState() {
     scrollTo(0, 0);
   };
   useEffect(() => {
-    const p = toUrl({ sel, view, exp, q, cards, group, layout, tab }, new URLSearchParams(location.search));
+    const p = toUrl({ sel, view, exp, q, cards, group, layout, tab, unit }, new URLSearchParams(location.search));
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
-    if (push.current) history.pushState(null, "", url);
-    else history.replaceState(null, "", url);
+    // 概念のページとして開いた所は、履歴に印（page）を残す（戻る・進むで、また全画面のページで開く。issue 596）
+    if (push.current) history.pushState(pageNext.current ? { page: true } : null, "", url);
+    else history.replaceState(history.state, "", url);
+    pageNext.current = false;
     push.current = false;
-  }, [sel, view, exp, q, cards, group, layout, tab]);
+  }, [sel, view, exp, q, cards, group, layout, tab, unit]);
   useEffect(() => {
     // 「戻る」：URL から全部の項目を、書き込みと同じ定義で戻す
     const back = () => {
@@ -104,21 +111,29 @@ function useUrlState() {
       setGroupRaw(s.group);
       setLayoutRaw(s.layout);
       setTabRaw(s.tab);
+      setUnitRaw(s.unit);
     };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
   }, []);
+  const setUnit = (u: string | null, replace = false) => {
+    push.current = !replace;
+    setUnitRaw(u);
+  };
   const setViewPush = (v: View) => {
     push.current = true;
     setView(v);
   };
   return {
+    pageNext,
     sel,
     setSel,
     view,
     setView: setViewPush,
     /** 履歴に積まずに表示を替える（直接開いた一覧を閉じるとき。閉じた一覧が「戻る」で開き直さない） */
     replaceView: setView,
+    unit,
+    setUnit,
     exp,
     setExp,
     q,
@@ -156,11 +171,14 @@ export default function App() {
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const {
+    pageNext,
     sel,
     setSel,
     view,
     setView,
     replaceView,
+    unit,
+    setUnit,
     exp,
     setExp,
     q,
@@ -210,24 +228,38 @@ export default function App() {
   const openFull = useRef(false);
   // 前提をさかのぼる一覧を、このページの中から開いたか（閉じ方を分ける）
   const pathHere = useRef(false);
+  // 単元のページを、路線図から開いたか（閉じ方を分ける。前提の一覧と同じ）
+  const unitHere = useRef(false);
   // 路線図・探すから開いた概念のページ（全画面）：← で路線図へ戻る（関係図の面に降りない）。
   // 「関係図で見る」で関係図に降りたら、その後は今までどおり面の段へ戻る
   const fromRoute = useRef(false);
   const openPage = (id: string) => {
+    if (id === sel) return setDetent("full");
     fromRoute.current = true;
     openFull.current = true;
-    if (id === sel) setDetent("full");
-    else setSel(id);
+    pageNext.current = true;
+    setSel(id);
   };
+  // ← は履歴を1つ戻す（路線図・単元のページ・前の概念のページへ。戻った先が概念のページなら全画面のまま）。
+  // ← で履歴を積み増すと、そのあとの「閉じる」「戻る」が積んだ所へ戻ってしまった（issue 596）
   const onDetent = (d: Detent) => {
     if (fromRoute.current && d !== "full") {
       fromRoute.current = false;
-      setSel(null);
-      setGroup(null);
+      history.back();
       return;
     }
     setDetent(d);
   };
+  // 戻る・進むで概念のページの印がある所に来たら、全画面のページで開く（← の働きも保つ）
+  useEffect(() => {
+    const pop = (e: PopStateEvent) => {
+      const page = !!(e.state as { page?: boolean } | null)?.page;
+      fromRoute.current = page;
+      if (page) openFull.current = true;
+    };
+    addEventListener("popstate", pop);
+    return () => removeEventListener("popstate", pop);
+  }, []);
   // 現在地：最後に開いた概念（その端末にだけ。路線図の「前に開いた駅」）
   useEffect(() => {
     if (sel) rememberStation(sel);
@@ -487,7 +519,15 @@ export default function App() {
         ) : null}
         {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ。分類を押すとその分類のページ、語を押すと概念 */}
         {!sel && !group ? (
-          <Route net={net} onOpen={openPage} onGroups={() => setGroup("*")} />
+          <Route
+            net={net}
+            onOpen={openPage}
+            onGroups={() => setGroup("*")}
+            onUnit={(u) => {
+              unitHere.current = true;
+              setUnit(u);
+            }}
+          />
         ) : !sel && group === "*" ? (
           <Library net={net} onConcept={setSel} onGroup={openGroup} />
         ) : !sel && layout !== "map" ? (
@@ -544,6 +584,21 @@ export default function App() {
               setView("path");
             }}
             traceCount={seq.length}
+          />
+        ) : null}
+        {unit && !sel && net.units.has(unit) ? (
+          <UnitPage
+            net={net}
+            id={unit}
+            onConcept={openPage}
+            onExperiment={(x) => setExp(x)}
+            onClose={() => {
+              // 路線図から開いたものは履歴を1つ戻して閉じる。共有の URL で直接開いたものは置き換えて路線図に
+              if (unitHere.current) {
+                unitHere.current = false;
+                history.back();
+              } else setUnit(null, true);
+            }}
           />
         ) : null}
         {tracing ? (
