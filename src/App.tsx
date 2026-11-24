@@ -4,7 +4,7 @@
 // 概念の地図は関係図の1つ（stats2-course #587・#588。渡辺さん 2026-11-23「こちらに一本化」）：どの入口（検索・ライブラリ・一覧・Notion の 🕸 リンク）から
 // 概念を開いても、その概念の分類の関係図で開く。分類をまたぐ学ぶ順は「前提をさかのぼる」（全画面の一覧）で読む。
 // Notion の埋め込み（高さ約320px）では embed=1：概念の名前と短い説明と「拡大表示 ↗」。
-import { GlanceRoot } from "./Glance";
+import { GlanceRoot, WithGlance } from "./Glance";
 import { STEPS, stepDown } from "./steps";
 import Library from "./Library";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
@@ -112,6 +112,8 @@ function useUrlState() {
     setSel,
     view,
     setView: setViewPush,
+    /** 履歴に積まずに表示を替える（直接開いた一覧を閉じるとき。閉じた一覧が「戻る」で開き直さない） */
+    replaceView: setView,
     exp,
     setExp,
     q,
@@ -153,6 +155,7 @@ export default function App() {
     setSel,
     view,
     setView,
+    replaceView,
     exp,
     setExp,
     q,
@@ -198,6 +201,8 @@ export default function App() {
   };
   // 関係図で語をダブルタップしたときは、その語を選んで詳しくを全部の段で開く（下の effect が「少し」に戻さないよう印を置く）
   const openFull = useRef(false);
+  // 前提をさかのぼる一覧を、このページの中から開いたか（閉じ方を分ける）
+  const pathHere = useRef(false);
   useEffect(() => {
     setEdgeRaw(null);
     // 別の概念へ進んだら段2はそのまま（渡辺さん 2026-11-07「2段目を維持」。画面の原則 3）。フルからは段1へ
@@ -298,35 +303,43 @@ export default function App() {
         ? { formula: f, mean: w.mean !== undefined ? formulaOf(cid, w.mean) : undefined, vary: w.vary, over: w.over }
         : undefined;
     };
+    // 実験の中の用語はひと目で開く（実験を閉じない。段・予測・条件・結果が残る。stats2-course の issue 595）。
+    // ひと目の「ページを開く」で、初めて概念のページへ移る
     return (
-      <main className={st.app}>
-        <Experiment
-          key={`${xdef.id}-${q ?? ""}`}
-          def={xdef}
-          walkTexts={net.walkTexts.get(xdef.id.split(":")[0]!)}
-          applyTexts={net.applyTexts.get(xdef.id.split(":")[0]!)}
-          open={q ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open : undefined}
-          cards={cards ?? undefined}
-          onCards={(e) => setCards(e || null)}
-          reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)}
-          spreadFormula={
-            "spread_reason" in xdef && xdef.spread_reason
-              ? formulaOf(xdef.spread_reason.concept, xdef.spread_reason.formula)
-              : undefined
-          }
-          mainFormula={formulaOf(xdef.links.concepts?.[0])}
-          onConcept={(id) => net.concepts.has(id) && setSel(id)}
-          conceptName={(id) => name(net, id)}
-          onBack={() => (history.length > 1 ? history.back() : setExp(null))}
-          definitions={(id) =>
-            (net.concepts.get(id)?.formulas ?? []).map(
-              (f) => formulaOf(id, (net.concepts.get(id)?.formulas ?? []).indexOf(f))!,
-            )
-          }
-          workspace={wsOf(xdef.reason?.concept ?? xdef.links.concepts?.[0])}
-          workspaceOf={wsOf}
-        />
-      </main>
+      <GlanceRoot net={net} onOpen={(id) => setSel(id)}>
+        <main className={st.app}>
+          <WithGlance>
+            {(glance) => (
+              <Experiment
+                key={`${xdef.id}-${q ?? ""}`}
+                def={xdef}
+                walkTexts={net.walkTexts.get(xdef.id.split(":")[0]!)}
+                applyTexts={net.applyTexts.get(xdef.id.split(":")[0]!)}
+                open={q ? xdef.catalog?.flatMap((g) => g.items).find((it) => it.id === q)?.open : undefined}
+                cards={cards ?? undefined}
+                onCards={(e) => setCards(e || null)}
+                reasonFormula={formulaOf(xdef.reason?.concept, xdef.reason?.formula)}
+                spreadFormula={
+                  "spread_reason" in xdef && xdef.spread_reason
+                    ? formulaOf(xdef.spread_reason.concept, xdef.spread_reason.formula)
+                    : undefined
+                }
+                mainFormula={formulaOf(xdef.links.concepts?.[0])}
+                onConcept={(id) => net.concepts.has(id) && glance(id)}
+                conceptName={(id) => name(net, id)}
+                onBack={() => (history.length > 1 ? history.back() : setExp(null))}
+                definitions={(id) =>
+                  (net.concepts.get(id)?.formulas ?? []).map(
+                    (f) => formulaOf(id, (net.concepts.get(id)?.formulas ?? []).indexOf(f))!,
+                  )
+                }
+                workspace={wsOf(xdef.reason?.concept ?? xdef.links.concepts?.[0])}
+                workspaceOf={wsOf}
+              />
+            )}
+          </WithGlance>
+        </main>
+      </GlanceRoot>
     );
   }
   const sub = net.courses.map((c) => c.title).join("・");
@@ -508,7 +521,10 @@ export default function App() {
             edgeSel={edgeSel}
             onQuestion={(x, q) => setExp(x, q)}
             onLab={() => setTab("lab")}
-            onTrace={() => setView("path")}
+            onTrace={() => {
+              pathHere.current = true;
+              setView("path");
+            }}
             traceCount={seq.length}
           />
         ) : null}
@@ -521,7 +537,12 @@ export default function App() {
               setView("around");
               setSel(id);
             }}
-            onClose={() => setView("around")}
+            onClose={() => {
+              // アプリの中で開いた一覧は、履歴を1つ戻して閉じる（そのあと「戻る」で一覧が開き直さない）。
+              // 共有・旧 URL で直接開いた一覧は、履歴を置き換えて同じ概念に留まる（stats2-course の issue 595）
+              if (pathHere.current) history.back();
+              else replaceView("around");
+            }}
           />
         ) : null}
         {modal === "pick" && concept ? (

@@ -33,7 +33,8 @@ async function toReason(page: Page) {
   return x;
 }
 
-// 確かめる対象：考察の段の終わりに「この結果を言う概念」が出て、主概念が先頭（選んだ見た目）・関連概念が続き、押すとその概念のページを開くこと。
+// 確かめる対象：考察の段の終わりに「この結果を言う概念」が出て、主概念が先頭（選んだ見た目）・関連概念が続き、押すとひと目、
+//   ひと目の「ページを開く」でその概念のページを開くこと（実験を閉じずに寄り道できる。stats2-course の issue 595）。
 //   ほかの段（予測・観察）には出さないこと（結果を見る前に答えの概念を見せない。在り方：予測してから確かめる）。
 // 想定する故障：どの段にも出る（予測の前に「二項分布の標準偏差」を見せてしまう）・主と関連の取り違え・押しても開かない・問いの形によって出ない。
 // 見つけ方：A-01 に関連（標準偏差）を足した教材で考察まで進め、札の並びと先頭の印、予測の段で札がないこと、押した先の見出しを見る。
@@ -54,6 +55,8 @@ test("考察の段の終わりに、問いの主概念と関連概念を出し�
   await expect(found.getByTestId("exp-found-stats2:TERM-binom")).toHaveClass(/on/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await found.getByTestId("exp-found-stats2:TERM-sd").click();
+  await expect(page.getByTestId("glance")).toContainText("標準偏差");
+  await page.getByTestId("glance-open").click();
   await expect(page.getByTestId("detail").locator("h2")).toHaveText("標準偏差");
   expect(errs).toEqual([]);
 });

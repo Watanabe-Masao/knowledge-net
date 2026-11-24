@@ -99,3 +99,9 @@ export function Words({ net, text, self }: { net: Network; text?: string | null;
   if (!open) return null;
   return <Terms net={net} ids={termsIn(net, text, self)} onTerm={open} testPrefix="word" />;
 }
+
+/** ひと目を開く関数を、子に渡す（部品の props で用語を受け取る所。実験室の onConcept など） */
+export function WithGlance({ children }: { children: (open: (id: string) => void) => ReactNode }) {
+  const open = useGlance();
+  return <>{children(open ?? (() => {}))}</>;
+}
