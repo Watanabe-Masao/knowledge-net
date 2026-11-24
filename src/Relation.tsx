@@ -62,7 +62,8 @@ export const openLab = (url: string, title?: string) =>
   window.dispatchEvent(new CustomEvent("kn:open-lab", { detail: { url, title } }));
 
 type MediaKey = "fig" | "tour" | "check";
-const LABEL: Record<MediaKey, string> = { fig: "図", tour: "解説", check: "操作" };
+// 「解説」は答えを見せる・「確かめる」は自分で動かす（教材の CLAUDE.md「使い所と切り分け」の呼び名。前は「操作」で、何をするのかが分からなかった。2026-11-25）
+const LABEL: Record<MediaKey, string> = { fig: "図", tour: "解説", check: "確かめる" };
 /** 図・解説・操作の印（下のタブと同じ線の印。絵文字は使わない。UI レビュー「カラー設定」） */
 const MEDIA_ICON: Record<MediaKey, "figure" | "play" | "lab"> = { fig: "figure", tour: "play", check: "lab" };
 
@@ -101,7 +102,7 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
         <Segmented
           value={value}
           onChange={choose}
-          label="図・解説・操作"
+          label="図・解説・確かめる"
           items={have.map((k) => ({
             value: k,
             label: (
@@ -172,7 +173,7 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
             data-testid={`labs-${context}`}
             data-native=""
             role="region"
-            aria-label={value === "tour" ? "解説" : "操作して確認"}
+            aria-label={value === "tour" ? "解説" : "確かめる"}
           >
             <div className={s.pageHead}>
               <button
@@ -184,12 +185,18 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
               >
                 ←
               </button>
+              {/* 題はラボの名前（短く）。何をするか（目的の文）は本文の最初に置く（前は目的の文がそのまま3行の題になった。2026-11-25） */}
               <div className={s.pageTitle}>
-                <b>{lab.purpose ?? lab.title ?? (value === "tour" ? "解説" : "操作して確認")}</b>
-                <span>{value === "tour" ? "解説" : "操作して確認"}</span>
+                <b>{lab.title ?? (value === "tour" ? "解説" : "確かめる")}</b>
+                <span>{value === "tour" ? "解説" : "確かめる"}</span>
               </div>
             </div>
             <div className={s.pageBody}>
+              {lab.purpose && (
+                <p className={s.purpose} data-testid="media-purpose">
+                  {lab.purpose}
+                </p>
+              )}
               {value === "tour" ? (
                 <Tour key={lab.url} play={lab.play!} onDone={() => choose("")} />
               ) : (

@@ -711,9 +711,9 @@ const bayes: ModeDef = {
   extra: ["name", "other", "event"],
   fields: [
     { key: "prior", label: "元の割合 %", min: 0, max: 100, step: 0.5, show: pc },
-    { key: "sens", label: "該当で結果が出る %", min: 0, max: 100, step: 1, show: pc },
-    { key: "fpr", label: "該当しないのに結果が出る %", min: 0, max: 100, step: 1, show: pc },
-    { key: "times", label: "検査の回数", min: 1, max: 2, step: 1 },
+    { key: "sens", label: "該当で結果が出る %", chip: "検出率", min: 0, max: 100, step: 1, show: pc },
+    { key: "fpr", label: "該当しないのに結果が出る %", chip: "誤検出率", min: 0, max: 100, step: 1, show: pc },
+    { key: "times", label: "検査の回数", chip: "回数", min: 1, max: 2, step: 1 },
   ],
   draw(st, { dec }) {
     // 項目のない状態（set のない解説の空の初期状態）でも、ほかのモードと同じく初期値で描く

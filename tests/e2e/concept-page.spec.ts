@@ -511,7 +511,7 @@ test("概念・関係のページの中身が 390px から横にはみ出さな�
   const d = page.getByTestId("detail");
   await openTab(d, "関係");
   await d.getByTestId("rel-stats2:REL-perm-to-comb").click();
-  await page.locator("[data-testid^=media-panel-]").getByRole("radio", { name: "操作" }).click();
+  await page.locator("[data-testid^=media-panel-]").getByRole("radio", { name: "確かめる" }).click();
   await expect(page.locator("[class*=_paths_]").first()).toBeVisible(); // 帯の並べ方が出た
   await expect.poll(over, "ラボが横にはみ出す").toEqual([]);
 });

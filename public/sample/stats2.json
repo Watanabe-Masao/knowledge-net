@@ -4897,6 +4897,25 @@
      "scope": "data"
     }
    ],
+   "labs": [
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "title": "数え方ラボ",
+     "kind": "check",
+     "preset": "rel-perm-free",
+     "purpose": "人数と選ぶ人数を動かし、役割を区別して並べる数が、1人目・2人目…の選び方の掛け算になるのを確かめる",
+     "play": {
+      "mode": "list",
+      "set": {
+       "n": 5,
+       "r": 3,
+       "role": "あり"
+      },
+      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+     }
+    }
+   ],
    "sources": [
     {
      "title": "公式2級範囲表",
@@ -5126,6 +5145,25 @@
      "scope": "data"
     }
    ],
+   "labs": [
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "title": "数え方ラボ",
+     "kind": "check",
+     "preset": "rel-perm-free",
+     "purpose": "役割を区別しないに切り替え、順列を選んだ人数の階乗で割ると組合せになるのを、人数を動かして確かめる",
+     "play": {
+      "mode": "list",
+      "set": {
+       "n": 5,
+       "r": 3,
+       "role": "あり"
+      },
+      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+     }
+    }
+   ],
    "sources": [
     {
      "title": "公式2級範囲表",
@@ -5342,6 +5380,25 @@
     }
    ],
    "basis_formula": "F-fact-def",
+   "labs": [
+    {
+     "id": "LAB-count",
+     "url": "https://watanabe-masao.github.io/stats2-labs/count/?p=rel-perm-free",
+     "title": "数え方ラボ",
+     "kind": "check",
+     "preset": "rel-perm-free",
+     "purpose": "選ぶ人数を全員に合わせると、並べ方の数が人数の階乗になるのを確かめる",
+     "play": {
+      "mode": "list",
+      "set": {
+       "n": 5,
+       "r": 3,
+       "role": "あり"
+      },
+      "task": "人数と選ぶ人数を動かし、役割を区別する・しないを切り替える。帯1本の並べ方の数が「選ぶ人数の階乗」になり、順列をそれで割ると組合せになるかを見る。選ぶ人数を全員に合わせると、順列は人数の階乗になる。"
+     }
+    }
+   ],
    "sources": [
     {
      "title": "公式2級範囲表",
@@ -10376,6 +10433,26 @@
      "scope": "data"
     }
    ],
+   "labs": [
+    {
+     "id": "LAB-prob",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "title": "確率ラボ",
+     "kind": "check",
+     "preset": "rel-bayes-free",
+     "purpose": "元の割合・検出率・誤検出率を動かし、検出ありのうち本当に当てはまる割合（事後確率）がどう動くかを見る",
+     "play": {
+      "mode": "bayes",
+      "set": {
+       "prior": 2,
+       "sens": 90,
+       "fpr": 5,
+       "times": 1
+      },
+      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+     }
+    }
+   ],
    "sources": [
     {
      "title": "公式2級範囲表",
@@ -10449,6 +10526,26 @@
      "scope": "data"
     }
    ],
+   "labs": [
+    {
+     "id": "LAB-prob",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "title": "確率ラボ",
+     "kind": "check",
+     "preset": "rel-bayes-free",
+     "purpose": "元の割合（事前確率）を動かすと、同じ検査でも事後確率が大きく変わるのを見る",
+     "play": {
+      "mode": "bayes",
+      "set": {
+       "prior": 2,
+       "sens": 90,
+       "fpr": 5,
+       "times": 1
+      },
+      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+     }
+    }
+   ],
    "sources": [
     {
      "title": "公式2級範囲表",
@@ -10514,6 +10611,26 @@
     {
      "text": "尤度の数（感度・偽陽性の率など）が、どの結果についての数かを確かめる（陽性になる確率か、陰性になる確率か）",
      "scope": "data"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-prob",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "title": "確率ラボ",
+     "kind": "check",
+     "preset": "rel-bayes-free",
+     "purpose": "検出率・誤検出率（結果の起こりやすさ）を動かすと、事後確率がどう変わるかを見る",
+     "play": {
+      "mode": "bayes",
+      "set": {
+       "prior": 2,
+       "sens": 90,
+       "fpr": 5,
+       "times": 1
+      },
+      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+     }
     }
    ],
    "sources": [
@@ -19366,6 +19483,26 @@
     {
      "text": "2回目の結果で更新するときは、1回目と2回目の結果が（原因を決めたもとで）独立かを確かめる。同じ人を同じ検査で測り直すと、誤りが繰り返されやすい",
      "scope": "data"
+    }
+   ],
+   "labs": [
+    {
+     "id": "LAB-prob",
+     "url": "https://watanabe-masao.github.io/stats2-labs/prob/?p=rel-bayes-free",
+     "title": "確率ラボ",
+     "kind": "check",
+     "preset": "rel-bayes-free",
+     "purpose": "検査の結果を見たあと、元の割合が事後確率へどう更新されるかを、2つの道すじの個数で見る",
+     "play": {
+      "mode": "bayes",
+      "set": {
+       "prior": 2,
+       "sens": 90,
+       "fpr": 5,
+       "times": 1
+      },
+      "task": "元の割合・検出率・誤検出率を動かし、2つの道すじの個数と、検出ありのうち不良の割合がどう動くかを見る。検査の回数を2回にすると、事後確率がどこまで上がるかも見る。"
+     }
     }
    ],
    "sources": [

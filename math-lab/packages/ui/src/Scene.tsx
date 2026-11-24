@@ -494,7 +494,7 @@ export function Explore({ play }: { play: ScenePlay }) {
         />
       )}
       <Dock
-        chips={fields.map((x) => [x.key, `${x.label.split(" ")[0]} ${show(x, value(x))}`])}
+        chips={fields.map((x) => [x.key, `${x.chip ?? x.label.split(" ")[0]} ${show(x, value(x))}`])}
         sel={sel}
         onSel={setSel}
       >

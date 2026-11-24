@@ -41,6 +41,8 @@ export type Drawn = {
 export type FieldDef = {
   key: string;
   label: string;
+  /** 下の帯の札に出す短い名前（なければ label の最初の語）。つまみを開くと label を出す */
+  chip?: string;
   min: number | ((st: SceneState) => number);
   max: number | ((st: SceneState) => number);
   step: number;
