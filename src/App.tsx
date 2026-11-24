@@ -23,6 +23,9 @@ import { Crumbs, Header, Icon, LabPage, type Focus } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
 const params = new URLSearchParams(location.search);
+// ページの送り位置はアプリが決める（戻る・進むでブラウザが前の画面の送り位置を当てない。路線図で送った分が関係図に残った。
+// stats2-course の issue 592 の段 3。2026-11-24）
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 const EMBED = params.get("embed") === "1";
 const SRC = params.get("src");
 
@@ -467,8 +470,8 @@ export default function App() {
                       : []),
                     { label: concept.name },
                   ]
-                : group && group !== "*"
-                  ? [{ label: group }]
+                : group
+                  ? [{ label: group === "*" ? "分類" : group }]
                   : []),
             ]}
           />

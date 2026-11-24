@@ -155,7 +155,7 @@ export function Crumbs({ items }: { items: { label: string; onClick?: () => void
   );
 }
 
-/** 選んだ概念（探索で選んだもの）。下のタブは、その概念の分の単元・実験室・問題に絞って開く（渡辺さん 2026-11-01：学ぶ行動は下のタブに動的に） */
+/** 選んだ概念。実験室の一覧を、その概念の分に絞って開く */
 export type Focus = { id: string; name: string; units: string[]; problems: string[]; exps: string[] };
 
 type Item = { id: string; title: string; open?: string; concept?: string; related?: string[]; retired?: boolean };

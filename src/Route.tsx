@@ -2,7 +2,7 @@
 // 単元を区切りの見出しにして、概念の駅を学ぶ順に並べる。駅を押すとその概念のページ（全画面）。
 // 現在地は、最後に開いた駅（その端末にだけ残す。公開サイトは記録を持たない。消えても選び直せる）。
 // 単元の見出しの下に、その単元の問題と Notion の単元ページ（読む・記録する入口）。
-import { useEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 import { Muted, subText } from "@math-lab/ui";
 import { lead, routeOf, type Network } from "./data";
 import { Icon } from "./Shell";
@@ -42,9 +42,11 @@ export default function Route({
   const next = here ? order[order.indexOf(here) + 1] : order[0];
   const [openUnit, setOpenUnit] = useState<string | null>(null);
   // 戻ってきたら、前に開いた駅が見える所から（画面の原則 3：離れたときの所へ）
-  useEffect(() => {
-    if (!here) return;
-    document.querySelector(`[data-testid="route-st-${here}"]`)?.scrollIntoView({ block: "center" });
+  // 描く前に（次の画面が大きさを測る前に）戻す
+  useLayoutEffect(() => {
+    if (here) document.querySelector(`[data-testid="route-st-${here}"]`)?.scrollIntoView({ block: "center" });
+    // 路線図を離れたら、次の画面（関係図・ライブラリ）はページの上から（路線図で送った分を持ち越さない）
+    return () => scrollTo(0, 0);
   }, [here]);
   const name = (id: string) => net.concepts.get(id)!.name;
   return (

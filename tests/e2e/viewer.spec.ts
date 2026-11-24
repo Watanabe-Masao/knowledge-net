@@ -112,9 +112,9 @@ test("つながりから別の概念へ移る・教材へのリンク", async ({
     .click();
   await page.getByTestId("edge-ends").getByRole("button", { name: "ポアソン分布" }).click(); // 概念のページから開いたつながりは全画面のページ
   await expect(d.getByRole("heading", { name: "ポアソン分布", exact: true })).toBeVisible();
-  // 教材へは下のタブ「学習」から（選んだ概念の単元に絞って開く）
-  await page.getByTestId("tabbar").getByRole("link", { name: /^学習/ }).click();
-  await expect(page.getByTestId("page-learn").getByRole("link", { name: /^15/ })).toHaveAttribute(
+  // 教材（Notion の単元ページ）へは、路線図の単元の見出しから（下のタブはなくした。stats2-course の issue 592 の段 3）
+  await page.goto(`./?${SRC}`);
+  await expect(page.getByTestId("route-unit-stats2:U15").getByRole("link", { name: /Notion で読む/ })).toHaveAttribute(
     "href",
     /app\.notion\.com/,
   );
@@ -678,11 +678,8 @@ test("実験室（位置・前提崩し）：入口から問いを選び、予�
   // 疲れて下がる n＝10・p＝0.5・d＝0.3 の分散 2.5−0.09×330/81＝2.13、戻さずに取る 40 個の箱の分散 10×0.25×30/39＝1.92）
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
-  await page
-    .getByTestId("tabbar")
-    .getByRole("link", { name: /^実験室/ })
-    .click();
+  // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
+  await page.goto(`./?${SRC}&c=stats2:TERM-binom&t=lab`);
   await page.getByTestId("open-stats2:EXP-binom-p").click();
   const x = page.getByTestId("experiment");
   // テーマ体系（#163）：まとまりを上の選択で選ぶ。A は 4 問のうち 3 問が開け、1 問は作成中（押せない）。比べるはいつも下
@@ -863,12 +860,8 @@ test("値の表の実験室：平均の行き先を予測し、引いて照ら�
   // この時刻の種では大当たりが出て線は約 100px 動く。縦の幅を揺れの目安で広げる故障では 2px ほどにつぶれる
   await page.clock.setFixedTime(new Date("2026-11-01T13:00:55.555Z"));
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${SRC}&c=stats2:TERM-expect`);
-  // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
-  await page
-    .getByTestId("tabbar")
-    .getByRole("link", { name: /^実験室/ })
-    .click();
+  // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
+  await page.goto(`./?${SRC}&c=stats2:TERM-expect&t=lab`);
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   await page.getByTestId("experiment").getByTestId("exp-q-A-01").click(); // テーマ体系の入口から最初の問い（#119）
   const x = page.getByTestId("experiment");
@@ -1045,7 +1038,7 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
     delete c.definition; // 骨格は定義1文（short）を出す。ほかの項目はどこからも指されないので残す
     await r.fulfill({ json: d });
   });
-  await page.goto("./?src=sample/stats2.json");
+  await page.goto("./?src=sample/stats2.json&g=*"); // 分類のライブラリ（路線図の「分類で見る」。issue 592 の段 3）
   // 骨格の語の数は見本から数える（W1 で説明を書くたびに数が変わる。数を書き写すと、語を1つ埋めるごとにテストを直すことになる。stats2-course #45）
   const skel = await page.evaluate(async () => {
     const d = await (await fetch("sample/stats2.json")).json();
@@ -1116,68 +1109,6 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   expect(errs).toEqual([]);
 });
 
-// サイトの骨組み（stats2-course #42・#130）：下のタブ4つ・パンくず・学習／実験室／問題集の一覧。埋め込みにはタブを出さない
-test("下のタブでさがす・学習・実験室・問題集を切り替え、パンくずで分類へ戻る", async ({ page }) => {
-  const errs = noErrors(page);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
-  const bar = page.getByTestId("tabbar");
-  await expect(bar.getByRole("link")).toHaveCount(4);
-  await expect(bar.getByRole("link", { name: "さがす" })).toHaveAttribute("aria-current", "page");
-  const crumbs = page.getByTestId("crumbs");
-  // ライブラリ → 分類 → 語 の3段（UI レビュー 16。故障：入口へ戻る所がない）。ライブラリを押すと入口に戻る
-  await expect(crumbs.getByRole("button")).toHaveText(["ライブラリ", "確率分布"]);
-  await expect(crumbs).toContainText("二項分布");
-  // 語を選んでいる間は上の帯（パンくず）が引っ込む（関係図の決定。渡辺さん 2026-11-07）。押すのは分類のページで
-  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布"));
-  await crumbs.getByRole("button", { name: "ライブラリ" }).click();
-  await expect(page.getByTestId("library")).toBeVisible();
-  await expect(page.getByTestId("crumbs")).toHaveCount(0);
-  // 学習：単元の一覧（Notion へのリンク）。概念を選んでいないときは全部（選んでいるときの絞り込みは別のテスト）
-  await page.goto("./?src=sample/stats2.json");
-  await bar.getByRole("link", { name: "学習" }).click();
-  await expect(page).toHaveURL(/t=learn/);
-  await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
-  await expect(page.getByTestId("page-learn")).toContainText("実験室：二項分布");
-  // まとまりで絞る（単元の group。型の改訂12）
-  await page.getByTestId("group-chips").getByRole("radio", { name: "確率分布" }).click();
-  await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(3);
-  // 実験室：問いから選んで開く
-  await bar.getByRole("link", { name: "実験室" }).click();
-  await expect(page).toHaveURL(/t=lab/);
-  await page
-    .getByTestId("page-lab")
-    .getByRole("button", { name: /二項分布 実験室.*目的から問いを選ぶ/ })
-    .click();
-  await expect(page).toHaveURL(/x=stats2%3AEXP-binom-p|x=stats2:EXP-binom-p/);
-  await page.goBack();
-  await expect(page.getByTestId("page-lab")).toBeVisible();
-  // 問題集：概念とつないだ問題のある単元
-  await bar.getByRole("link", { name: "問題集" }).click();
-  // 問題集：単元を押すと段階ごとの数と問題の一覧（押すと Notion の単元ページへ）
-  const pp = page.getByTestId("page-problems");
-  await pp.getByTestId("unit-stats2:U14").click();
-  const list = pp.getByTestId("problems-stats2:U14");
-  await expect(list.getByRole("link")).toHaveCount(16);
-  await expect(list).toContainText("5初学");
-  await expect(list.getByRole("link").first()).toHaveAttribute("href", /notion\.com/);
-  // 探索へ戻り、パンくずの分類を押すとその分類の地図
-  await bar.getByRole("link", { name: "さがす" }).click();
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
-  await page.getByTestId("crumbs").getByRole("button", { name: "確率分布" }).dispatchEvent("click"); // 引っ込んだ帯の中のボタン
-  await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
-  await expect(page).not.toHaveURL(/c=stats2/);
-  // タブは 380px で横にはみ出さず、押す所は 44px 以上
-  const box = (await bar.getByRole("link", { name: "問題集" }).boundingBox())!;
-  expect(box.height).toBeGreaterThanOrEqual(44);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  // 埋め込みではタブを出さない
-  await page.goto("./?src=sample/stats2.json&embed=1&c=stats2:TERM-binom");
-  await expect(page.getByTestId("embed-card")).toBeVisible();
-  await expect(page.getByTestId("tabbar")).toHaveCount(0);
-  expect(errs).toEqual([]);
-});
-
 // 詳しく（stats2-course #42・渡辺さん 2026-10-31／11-01）：動かない見出しは名前の1行と切り替え（概要・式・つながり）だけ。使うことの少ない操作は「…」に
 test("詳しく：見出しは名前と切り替えだけ、ほかは「…」", async ({ page }) => {
   const errs = noErrors(page);
@@ -1199,140 +1130,6 @@ test("詳しく：見出しは名前と切り替えだけ、ほかは「…」",
   expect(errs).toEqual([]);
 });
 
-// 確かめる対象：学ぶ行動を下のタブに動的に入れる（渡辺さん 2026-11-01）。想定する故障：選んだ概念の目印がタブに出ない・数が詳しくの数とずれる・
-// 押しても全部の一覧のまま（絞れていない）・絞りを外せない・探索をもう一度押しても地図が出ない。見つけ方：二項分布（問題は見本の数・単元 U14・実験室 1）で各タブを開いて数を数える
-test("下のタブ：選んだ概念の分を目印で出し、押すとその分に絞って開く。探索をもう一度押すと地図に戻る", async ({
-  page,
-}) => {
-  const errs = noErrors(page);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
-  const bar = page.getByTestId("tabbar");
-  await expect(bar.getByTestId("badge-learn")).toHaveText("U14");
-  // 問題の数は見本の概念の problems から数える（W1 で単元の問題に概念を付けるたびに増える。stats2-course #45）。画面がそれと同じ数を出すか
-  const nProblems = await page.evaluate(async () => {
-    const d = await (await fetch("sample/stats2.json")).json();
-    return d.concepts.find((c: { id: string }) => c.id === "stats2:TERM-binom").problems.length as number;
-  });
-  expect(nProblems).toBeGreaterThan(1);
-  await expect(bar.getByTestId("badge-problems")).toHaveText(String(nProblems));
-  await expect(bar.getByTestId("badge-lab")).toHaveText("1");
-  await page.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click(); // 段2でつまりが出る
-  await expect(page.getByTestId("concept-gist")).toContainText("成功確率が毎回同じで"); // 概念のページの一言（定義の前。つまり）
-  // 問題集：二項分布の問題だけ（17問）。札を押すと全部に戻る
-  await bar.getByRole("link", { name: /^問題集/ }).click();
-  const pp = page.getByTestId("page-problems");
-  await expect(pp.getByTestId("focus-chip")).toContainText("二項分布 に絞り込み中");
-  let n = 0; // 単元は1つずつ開く：開いて数える
-  for (const u of await pp.locator("[data-testid^=unit-]").all()) {
-    if ((await u.getAttribute("aria-expanded")) !== "true") await u.click();
-    n += await pp.locator("[data-testid^=problems-] li").count();
-  }
-  expect(n).toBe(nProblems);
-  await pp.getByTestId("focus-chip").click();
-  expect(await pp.locator("[data-testid^=unit-]").count()).toBeGreaterThan(3);
-  // 実験室：二項分布の実験室だけ
-  await bar.getByRole("link", { name: /^実験室/ }).click();
-  const lab = page.getByTestId("page-lab");
-  await expect(lab.locator("[data-testid^=open-]")).toHaveCount(1);
-  // 概念＝知識との関連から問いを探す入口（#163）。いくつでも選べ、選んだ概念を「すべて」主か関連に持つ問いを並べる（かつ）。
-  // 故障：「または」で絞って問いが増える・主と関連の取り違え・作成中を押せる・問いを押しても入口のまま。見つけ方：数と並びを手で数えた値と照らす
-  // 概念は下から出る面で選ぶ（渡辺さん 2026-11-02）。上には選んだ概念の札だけ。故障：面で選んでも絞れない・数が一覧とずれる・札で外せない
-  await expect(lab.getByTestId("lab-sel-stats2:TERM-binom")).toBeVisible();
-  await expect(lab.getByTestId("lab-concept-pick")).toContainText("概念で検索：二項分布");
-  await expect(lab.getByTestId("lab-rule")).toContainText("二項分布を使う問い");
-  // 24 問のうち、使わない印の2問（C-03・D-04）は並べない。主が関係の問い（E-03：二項分布と超幾何分布の対比）も両端の概念から引く（#169）。C-01 は主が二項分布（stats2-course #298 で、主だった対比を外した）
-  // 概念を1つだけ選ぶと、その概念が主の問いと関連の問いに分ける（#163・#171）。主が関係（E-03：二項分布と超幾何分布の対比）は両端の概念の主。
-  // 故障：主と関連の取り違え・関係の主を関連に入れる・分けたときに問いが落ちる。見つけ方：見本の JSON から手で数えた 16 問と 6 問の並び
-  const ids = (key: string) =>
-    lab
-      .getByTestId(`lab-q-stats2:EXP-binom-p-${key}`)
-      .locator("[data-testid^=lab-open-]")
-      .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")!.replace("lab-open-stats2:binom-", "")));
-  expect(await ids("main")).toEqual([
-    "A-01",
-    "A-02",
-    "A-03",
-    "A-04",
-    "B-01",
-    "B-04",
-    "C-01",
-    "C-02",
-    "D-01",
-    "D-02",
-    "E-01",
-    "E-02",
-    "E-03",
-    "E-04",
-    "F-01",
-    "F-02",
-  ]);
-  expect(await ids("related")).toEqual(["B-02", "B-03", "C-04", "F-03", "F-04"]); // D-03 は retired（stats2-course #119）
-  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-main-head")).toContainText("主となる問い16 問");
-  await expect(lab.getByTestId("lab-q-stats2:EXP-binom-p-related-head")).toContainText("関連する問い5 問");
-  await expect(lab.getByTestId("lab-open-stats2:binom-C-03")).toHaveCount(0);
-  await expect(lab.getByTestId("lab-open-stats2:binom-E-03")).toContainText("主：二項分布と超幾何分布のつながり");
-  // 絞った概念が主の問いは「主：二項分布」を省き、関連だけ（全行に同じ名前を並べない。UI レビュー「重複と量」。故障：全行に「主：二項分布」）
-  await expect(lab.getByTestId("lab-open-stats2:binom-A-01")).not.toContainText("主：");
-  await lab.getByTestId("lab-concept-pick").click();
-  const sh = page.getByTestId("lab-concept-sheet");
-  await expect(sh.getByTestId("lab-c-stats2:TERM-expect")).toContainText("期待値");
-  await expect(sh.getByTestId("lab-c-stats2:TERM-hyper")).toContainText("1 問"); // その概念を使う問いの数
-  await sh.getByTestId("lab-c-stats2:TERM-expect").click();
-  await expect(sh.getByTestId("lab-sheet-rule")).toContainText(
-    "二項分布・期待値をすべて使う問い（主概念か関連概念に入っている問い）：2 問", // D-03 は retired（stats2-course #119）
-  );
-  await sh.getByTestId("lab-show").click(); // 「2 問を見る」で閉じる
-  await expect(sh).toHaveCount(0);
-  await expect(lab.getByTestId("lab-rule")).toContainText("二項分布・期待値をすべて使う問い");
-  expect(
-    await lab
-      .getByTestId("lab-q-stats2:EXP-binom-p")
-      .locator("[data-testid^=lab-open-]")
-      .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")!.replace("lab-open-stats2:binom-", ""))),
-  ).toEqual(["D-01", "F-01"]);
-  await expect(lab.getByTestId("lab-open-stats2:binom-F-01")).toContainText(
-    "主：二項分布｜関連：標準偏差", // 絞った概念（期待値）は関連から省く（D-03 で見ていた形を、D-03 を retired にしたので F-01 で見る。stats2-course #119）
-  );
-  await expect(lab.getByTestId("lab-open-stats2:binom-D-01")).not.toContainText("まだ");
-  await expect(lab.getByTestId("lab-open-stats2:binom-F-01")).toContainText("まだ");
-  await expect(lab.locator("[data-testid^=open-]")).toHaveCount(1); // 期待値の値の表の実験室は二項分布を使わない
-  // 実験室のカードの見出しは、問いの1つではなく主な概念の一言（地図・概念のページと同じ文）。故障：問いの文を出す・概念の一言とずれる
-  const SHORT = "同じ条件で成功・失敗をくり返したとき、成功回数がどのような確率で現れるかを表す分布";
-  await expect(lab.getByTestId("open-stats2:EXP-binom-p").locator("b")).toHaveText(SHORT);
-  // 問いが先、実験室の入口（目的から選ぶ・自分で条件を決めて比べる）はその下（渡辺さん 2026-11-02）
-  expect(
-    await lab
-      .locator("[data-testid=lab-q-stats2\\:EXP-binom-p], [data-testid=open-stats2\\:EXP-binom-p]")
-      .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid"))),
-  ).toEqual(["lab-q-stats2:EXP-binom-p", "open-stats2:EXP-binom-p"]);
-  await lab.getByTestId("lab-sel-stats2:TERM-expect").click(); // 札の ✕ で外す
-  await expect(lab.getByTestId("lab-sel-stats2:TERM-expect")).toHaveCount(0);
-  await lab.getByTestId("lab-concept-pick").click();
-  await sh.getByTestId("lab-clear").click(); // すべて外す
-  await sh.getByTestId("lab-concept-search").fill("超幾何"); // 名前で探す
-  await expect(sh.locator("[data-testid^=lab-c-]")).toHaveCount(1);
-  await sh.getByTestId("lab-c-stats2:TERM-hyper").click();
-  await sh.getByTestId("lab-show").click();
-  await lab.getByTestId("lab-open-stats2:binom-E-03").click(); // 押すとその問いを直接開く（戻さずに取るを選んだ状態）
-  await expect(page.getByTestId("exp-bnd-urn")).toHaveAttribute("aria-pressed", "true");
-  expect(page.url()).toContain("q=stats2%3Abinom-E-03");
-  await page.getByRole("button", { name: "戻る" }).first().click();
-  await expect(page.getByTestId("page-lab")).toBeVisible();
-  // 学習：二項分布の単元だけ
-  await bar.getByRole("link", { name: /^学習/ }).click();
-  await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(3); // U14・U15・U19
-  // 探索に戻ると、離れたときの段（段2）の詳しくの面（画面の原則 3）。もう一度押すと段1に下げ、地図が主に（しまう段は置かない）
-  await bar.getByRole("link", { name: /^さがす/ }).click();
-  const det = page.getByTestId("detail");
-  await expect(det).toHaveAttribute("data-detent", "half");
-  const t0 = (await det.boundingBox())!.y;
-  await bar.getByRole("link", { name: /^さがす/ }).click();
-  await expect(det).toHaveAttribute("data-detent", "peek");
-  await expect.poll(async () => (await det.boundingBox())!.y).toBeGreaterThan(t0 + 50); // 面が下がり、地図が広く見える
-  expect(errs).toEqual([]);
-});
-
 test("スマホ：詳しくは地図に重なる下からの面で、段を動かせる", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
@@ -1340,13 +1137,12 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   const s = page.getByTestId("detail");
   await expect(s).toHaveAttribute("data-detent", "peek");
   await expect(s.getByTestId("detail-chips")).toBeInViewport(); // 段1は名前の1行と、右に札（渡辺さん 2026-11-07）
-  const tabs = (await page.getByTestId("tabbar").boundingBox())!;
   await expect
     .poll(async () => {
       const b = (await s.boundingBox())!;
       return b.y + b.height;
     })
-    .toBeLessThanOrEqual(tabs.y + 1); // 下のタブの上に乗る（出てくる動きが止まってから）
+    .toBeLessThanOrEqual(845); // 画面の下の端に乗る（下のタブはなくした。出てくる動きが止まってから）
   await s.getByRole("button", { name: "広げる" }).click();
   await expect(s).toHaveAttribute("data-detent", "half");
   // 見出しをつかんで上へ速く払う → 全部
@@ -1357,12 +1153,11 @@ test("スマホ：詳しくは地図に重なる下からの面で、段を動�
   await page.mouse.up();
   await expect(s).toHaveAttribute("data-detent", "full");
   // 上まで上げると面を重ねず全画面のページ。← で地図（少しの段）へ戻る（#188 07a）
-  // 下のタブの上に重なり、押しても下のタブに届かない（画面の下の端の点がページの中）
+  // 画面の下の端まで覆い、押しても後ろの地図に届かない（画面の下の端の点がページの中）
   expect(
-    await page.evaluate(() => {
-      const t = document.querySelector("[data-testid=tabbar]")!.getBoundingClientRect();
-      return !!document.elementFromPoint(t.x + t.width / 2, t.y + t.height / 2)?.closest("[data-testid=detail]");
-    }),
+    await page.evaluate(
+      () => !!document.elementFromPoint(innerWidth / 2, innerHeight - 10)?.closest("[data-testid=detail]"),
+    ),
   ).toBe(true);
   // ← は来た段（段2）へ戻る（画面の原則 3）。フルの上のつまみも同じ（渡辺さん 2026-11-07）
   await s.getByTestId("detail-to-map").click();
@@ -1419,7 +1214,7 @@ test("フルのつまみを引くと指に付いて下がり、面はその高�
   await page.waitForTimeout(1200); // ばねで止まるまで
   const hf = await s.evaluate((el) => el.getBoundingClientRect().height);
   expect(h0, "離した直後の面が段2の高さ（一瞬で落ちた）").toBeGreaterThan(hf + 100);
-  expect(hf).toBeCloseTo(Math.round((844 - (await page.getByTestId("tabbar").boundingBox())!.height) * 0.55), -1);
+  expect(hf).toBeCloseTo(Math.round(844 * 0.55), -1);
 });
 
 // 確かめる対象：動きを減らす設定（iPhone の「視差効果を減らす」）での積み上がりの再生（math-lab #28）。
@@ -1443,22 +1238,20 @@ test("動きを減らす設定でも、移り変わりの再生は1セット目�
 });
 
 // 確かめる対象：スマホで概念を選んでいる間、ページが縦に送れない（渡辺さん 2026-11-01：下まで送ると下のタブと面が画面の途中に浮いた）。
-// 想定する故障：余白や下の注記でページが画面より長くなり、送れてしまう。見つけ方：390×844 で詳しくの面と経路の面を出し、下へ送っても位置が 0 のままか・タブが画面の下にあるか
-test("スマホで概念を選んでいる間は、ページが縦に送れず、下のタブは画面の下", async ({ page }) => {
+// 想定する故障：余白や下の注記でページが画面より長くなり、送れてしまう。見つけ方：390×844 で詳しくの面と経路の面を出し、下へ送っても位置が 0 のままか・面が画面の下にあるか
+test("スマホで概念を選んでいる間は、ページが縦に送れず、面は画面の下", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const q of ["", "&view=path"]) {
     await page.goto(`./?src=sample/stats2.json&c=stats2:TERM-sample-space${q}`);
-    await expect(page.getByTestId("tabbar")).toBeVisible();
+    await expect(page.getByTestId("detail")).toBeVisible();
     await page.mouse.move(195, 300);
     await page.mouse.wheel(0, 2000);
     await page.evaluate(() => scrollTo(0, 5000));
     expect(await page.evaluate(() => scrollY)).toBe(0);
-    const bar = (await page.getByTestId("tabbar").boundingBox())!;
-    expect(Math.round(bar.y + bar.height)).toBe(844);
   }
-  // 概念を選んでいないときは、ふつうに送れる（一覧などを読むため）
+  // 概念を選んでいないとき（路線図）は、ふつうに送れる（一覧などを読むため）。前の URL（?t=learn）も路線図で開く
   await page.goto("./?src=sample/stats2.json&t=learn");
-  await expect(page.getByTestId("page-learn").getByRole("link")).toHaveCount(33);
+  await expect(page.getByTestId("route")).toBeVisible();
   await page.evaluate(() => scrollTo(0, 400));
   expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
 });
@@ -1499,12 +1292,8 @@ test("値の表の実験室：横は値に比例し、▲（期待値）と予�
   // （38円の▲が 0 と 100 の間の 4 割に立ち、重心＝てんびんの支点に見えない）。見つけ方：棒の位置だけから値→位置の直線を作り、
   // ▲・予想の線がその直線の 38 円・予想の値に立つかを見る（画面の計算式は使わない）。既存のテストは ▲ の有無だけを見ていた
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`./?${SRC}&c=stats2:TERM-expect`);
-  // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
-  await page
-    .getByTestId("tabbar")
-    .getByRole("link", { name: /^実験室/ })
-    .click();
+  // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
+  await page.goto(`./?${SRC}&c=stats2:TERM-expect&t=lab`);
   await page.getByTestId("open-stats2:EXP-expect-table").click();
   await page.getByTestId("experiment").getByTestId("exp-q-A-01").click(); // テーマ体系の入口から最初の問い（#119）
   const x = page.getByTestId("experiment");
@@ -1529,12 +1318,8 @@ test("実験室の基本の面は型どおり：式は記号を押せる・本�
     ["TERM-binom", "EXP-binom-p", "二項分布", ["期待値"]],
     ["TERM-expect", "EXP-expect-table", "期待値", []],
   ] as const) {
-    await page.goto(`./?${SRC}&c=stats2:${cid}`);
-    // 下のタブは少しの段のまま押せる（全画面のページは下のタブを隠す。#188 07a）
-    await page
-      .getByTestId("tabbar")
-      .getByRole("link", { name: /^実験室/ })
-      .click();
+    // 実験室の一覧は、概念のページの「実験室で検証」から開く（下のタブはなくした。stats2-course の issue 592 の段 3）
+    await page.goto(`./?${SRC}&c=stats2:${cid}&t=lab`);
     await page.getByTestId(`open-stats2:${eid}`).click();
     await page.getByTestId("experiment").getByRole("button", { name: "基本と用語" }).click();
     const info = page.getByTestId("exp-info");
