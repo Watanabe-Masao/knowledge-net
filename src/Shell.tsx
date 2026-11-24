@@ -1,8 +1,8 @@
 // サイトの骨組み（stats2-course #42・#130）：ヘッダー・パンくず・印と、実験室の一覧。
-// 下のタブはなくした（路線図と概念のページに絞った。stats2-course の issue 592 の段 3）。実験室は URL の ?t=lab。一覧は教材の JSON だけから作る（教材の原本は読まない）。
+// 下のタブはなくした（路線図と概念のページに絞った。stats2-course の issue 592 の段 3）。実験室の一覧は概念のページの「試す」の段（issue 599）。一覧は教材の JSON だけから作る（教材の原本は読まない）。
 // 個人の記録（解いた・お気に入り）は持たない。単元と問題は Notion のページへのリンク。
-import { useState, type ReactNode } from "react";
-import { Button, Muted, Sheet } from "@math-lab/ui";
+import type { ReactNode } from "react";
+import { Muted } from "@math-lab/ui";
 import type { ExperimentData, Network } from "./data";
 import s from "./Shell.module.css";
 
@@ -183,28 +183,34 @@ export function labConcepts(x: ExperimentData, ends: Ends = (id) => [id]): strin
   return [...new Set([...(x.links.concepts ?? []), ...itemsOf(x).flatMap((it) => conceptsOf(it, ends))])];
 }
 
-/** 実験室のタブ（stats2-course issue 163）。役割を2つに分ける：
- *  - 概念（このタブ）＝知識との関連から問いを探す入口。概念はいくつでも選べ、選んだ概念を「すべて」主概念か関連概念に持つ問いを並べる（かつ）。
- *    問いには、選んだ概念がその問いの主か関連かを出し、押すとその問いを直接開く
- *  - A〜F（実験室の入口）＝実験の目的から問いを探す入口。実験室のカードから入る
- *  何も選ばなければ実験室のカードだけを並べる */
-export function LabPage({
+/** 概念のページの「試す」の段（stats2-course issue 163・599）：この概念を主概念か関連概念に持つ問いを、実験室ごとに主・関連に分けて並べ、
+ *  押すとその問いを直接開く。その下に実験室の入口（目的から問いを選ぶ・自分で条件を決めて比べる）。
+ *  前は概念で絞った実験室の一覧のページ（?t=lab）だった。ページを積む形にしたとき、概念のページの1つの段にした（issue 599） */
+/** id（概念）を主概念か関連概念に持つ問いのある実験室（問いのない実験室は、つなぐ概念に入っていれば）。主が関係なら両端の概念として数える */
+export function labsFor(net: Network, id: string): ExperimentData[] {
+  const ends: Ends = (x) => {
+    const r = net.relations.find((y) => y.id === x);
+    return r ? [r.from, r.to] : [x];
+  };
+  return [...net.experiments.values()].filter((x) =>
+    itemsOf(x).length ? itemsOf(x).some((it) => conceptsOf(it, ends).includes(id)) : labConcepts(x, ends).includes(id),
+  );
+}
+
+export function ConceptLabs({
   net,
+  id,
   onOpen,
-  focus = null,
 }: {
   net: Network;
+  id: string;
   onOpen: (id: string, question?: string | null) => void;
-  focus?: Focus | null;
 }) {
-  const all = [...net.experiments.values()];
   const ends: Ends = (id) => {
     const r = net.relations.find((x) => x.id === id);
     return r ? [r.from, r.to] : [id];
   };
-  const concepts = [...new Set(all.flatMap((x) => labConcepts(x, ends)))].filter((id) => net.concepts.has(id));
-  const [picked, setPicked] = useState<string[]>(() => (focus && concepts.includes(focus.id) ? [focus.id] : []));
-  const toggle = (id: string) => setPicked(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
+  const picked = [id];
   const nm = (id: string) => {
     const r = net.relations.find((x) => x.id === id);
     return r
@@ -213,131 +219,16 @@ export function LabPage({
   };
   const hits = (x: ExperimentData) => itemsOf(x).filter((it) => picked.every((c) => conceptsOf(it, ends).includes(c)));
   const isMain = (it: Item, c: string) => !!it.concept && ends(it.concept).includes(c); // 主が関係なら、その両端のどちらかが c
-  // 選んだ概念をすべて使う問いがある実験室（問いのない実験室は、つなぐ概念にすべて入っていれば出す）
-  const xs = all.filter(
-    (x) =>
-      !picked.length ||
-      (itemsOf(x).length ? hits(x).length > 0 : picked.every((c) => labConcepts(x, ends).includes(c))),
-  );
+  const xs = labsFor(net, id);
   // 実験室のカードの見出し：主な概念の一言（short。地図と同じ文。なければ定義）。問いの1つを代表にしない（渡辺さん 2026-11-02）
   const lead = (x: ExperimentData) => {
     const c = net.concepts.get(x.links.concepts?.[0] ?? "");
     return c?.short ?? c?.definition ?? x.question;
   }; // つなぐ概念の最初＝この実験室の主な概念
   const short = (id: string) => id.replace(/^.*-([A-Z]-\d+)$/, "$1");
-  const [sheet, setSheet] = useState(false);
-  const [query, setQuery] = useState("");
-  const rule = `${picked.map(nm).join("・")}を${picked.length > 1 ? "すべて" : ""}使う問い（主概念か関連概念に入っている問い）`;
-  const total = all.reduce((t, x) => t + hits(x).length, 0);
-  // その概念を使う問いの数（作成中を含む）。問いのない実験室だけでつながる概念は「実験室」
-  const countOf = (id: string) => {
-    const n = all.reduce((t, x) => t + itemsOf(x).filter((it) => conceptsOf(it, ends).includes(id)).length, 0);
-    return n ? `${n} 問` : "実験室";
-  };
-  // 地図と同じ分類ごと（データに出てくる順）。名前で探すと、合う概念だけ
-  const cats = [...new Set(concepts.map((id) => net.concepts.get(id)?.category ?? "そのほか"))]
-    .map((cat): [string, string[]] => [
-      cat,
-      concepts.filter(
-        (id) =>
-          (net.concepts.get(id)?.category ?? "そのほか") === cat &&
-          (!query ||
-            nm(id).includes(query.trim()) ||
-            (net.concepts.get(id)?.en ?? "").toLowerCase().includes(query.trim().toLowerCase())),
-      ),
-    ])
-    .filter(([, ids]) => ids.length);
+  if (!xs.length) return null;
   return (
     <section className={s.page} data-testid="page-lab">
-      <h2 className={s.pageTitle}>実験室</h2>
-      <Muted>予測してから、自分で起こして確かめる。</Muted>
-      {concepts.length ? (
-        <>
-          {/* 概念は下から出る面で選ぶ（いくつでも。渡辺さん 2026-11-02）。上には選んだ概念の札だけを出す */}
-          <button
-            type="button"
-            className={s.conceptPick}
-            aria-haspopup="dialog"
-            onClick={() => {
-              setQuery("");
-              setSheet(true);
-            }}
-            data-testid="lab-concept-pick"
-          >
-            <span>概念で検索{picked.length ? <b>：{picked.map(nm).join("・")}</b> : null}</span>
-            <i aria-hidden="true">▾</i>
-          </button>
-          {picked.length ? (
-            <div className={s.picked} data-testid="lab-picked">
-              {picked.map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => toggle(id)}
-                  aria-label={`${nm(id)} を外す`}
-                  data-testid={`lab-sel-${id}`}
-                >
-                  {nm(id)}
-                  <span aria-hidden="true">✕</span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-          <Muted as="p" data-testid="lab-rule">
-            {picked.length
-              ? rule
-              : "概念を選ぶと、その概念を使う問いが並ぶ。実験の目的から探すときは、実験室を開いて目的のまとまりから選ぶ。"}
-          </Muted>
-          {sheet ? (
-            <Sheet
-              label="概念で検索"
-              title="概念で検索"
-              onClose={() => setSheet(false)}
-              data-testid="lab-concept-sheet"
-            >
-              <input
-                className={s.conceptSearch}
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="概念を検索"
-                aria-label="概念を検索"
-                data-testid="lab-concept-search"
-              />
-              {cats.map(([cat, ids]) => (
-                <section key={cat} className={s.conceptCat} aria-label={cat}>
-                  <h4>{cat}</h4>
-                  <ul>
-                    {ids.map((id) => (
-                      <li key={id}>
-                        <label data-testid={`lab-c-${id}`}>
-                          <input type="checkbox" checked={picked.includes(id)} onChange={() => toggle(id)} />
-                          <span>{nm(id)}</span>
-                          <small>{countOf(id)}</small>
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-              {!cats.length ? <Muted>「{query}」に合う概念はない。</Muted> : null}
-              <div className={s.sheetFoot}>
-                <Muted as="p" data-testid="lab-sheet-rule">
-                  {picked.length ? `${rule}：${total} 問` : "何も選ばないときは、実験室だけを並べる"}
-                </Muted>
-                <div>
-                  <Button onClick={() => setPicked([])} disabled={!picked.length} data-testid="lab-clear">
-                    選択を解除
-                  </Button>
-                  <Button variant="primary" onClick={() => setSheet(false)} data-testid="lab-show">
-                    {picked.length ? `${total} 問を表示` : "閉じる"}
-                  </Button>
-                </div>
-              </div>
-            </Sheet>
-          ) : null}
-        </>
-      ) : null}
       <ul className={s.cards}>
         {xs.map((x) => {
           const hs = picked.length ? hits(x) : [];
@@ -439,9 +330,6 @@ export function LabPage({
           );
         })}
       </ul>
-      {!xs.length ? (
-        <Muted>{picked.length ? "選んだ概念をすべて使う問いはまだない。" : "実験室はまだない。"}</Muted>
-      ) : null}
     </section>
   );
 }

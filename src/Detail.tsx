@@ -26,6 +26,7 @@ import { kindName, readingOf } from "./kinds";
 import Conditions, { conditionCount } from "./Conditions";
 import Claims from "./Claims";
 import { useGlance, Words } from "./Glance";
+import { ConceptLabs, labsFor } from "./Shell";
 import {
   kindOf,
   MODES,
@@ -67,10 +68,8 @@ type Props = {
   /** つながりの行を押す（線を押したのと同じ。下からシートが開く） */
   onEdge: (id: string) => void;
   edgeSel?: string | null;
-  /** この概念を主にする実験室の問いを開く（stats2-course #188 05：概念から実験へ） */
-  onQuestion?: (experiment: string, question: string) => void;
-  /** この概念で絞った実験室の一覧を開く（概念のページから実験室への入口は下の主ボタン1つ。渡辺さん 2026-11-04） */
-  onLab?: () => void;
+  /** 実験室を開く（問いを選んでいれば、その問いを直接。stats2-course #188 05：概念から実験へ） */
+  onQuestion?: (experiment: string, question: string | null) => void;
   /** 前提をさかのぼる（全画面の一覧）を開く。数は分類をまたぐ学ぶ順でたどれる前提の数（stats2-course #588 B2） */
   onTrace?: () => void;
   traceCount?: number;
@@ -259,7 +258,6 @@ export default function Detail({
   onEdge,
   edgeSel,
   onQuestion,
-  onLab,
   onTrace,
   traceCount,
   next,
@@ -328,7 +326,7 @@ export default function Detail({
   };
   // 目次：その段の頭へ送る（1本のページの中の位置。画面の原則 3：戻ると離れたときのまま、は送った位置で保つ）
   const restRef = useRef<HTMLDivElement>(null);
-  const jump = (t: Tab) =>
+  const jump = (t: Tab | "lab") =>
     requestAnimationFrame(() =>
       restRef.current?.querySelector(`[data-testid=tab-${t}]`)?.scrollIntoView({ block: "start" }),
     );
@@ -363,17 +361,8 @@ export default function Detail({
     if (compact) return; // 段の形では、押したとき（離したとき）に上げる（段2で中身を指で送れるように）
     if (sheet && (sheet.detent === "peek" || sheet.detent === "min")) reading();
   };
-  // この概念を主にする実験室の問い（問いの側で一元管理。#163）
-  const qs = useMemo(
-    () =>
-      [...net.experiments.values()].flatMap((x) =>
-        ("catalog" in x ? (x.catalog ?? []) : [])
-          .flatMap((g) => g.items)
-          .filter((it) => !it.retired && it.open && it.concept === c.id)
-          .map((it) => ({ x: x.id, id: it.id, title: it.title })),
-      ),
-    [net, c.id],
-  );
+  // 試すの段に出す実験室があるか（この概念を主か関連に持つ問い・つなぐ概念。段の中身は ConceptLabs）
+  const hasLabs = useMemo(() => labsFor(net, c.id).length > 0, [net, c.id]);
   const [pick, setPick] = useState<string | null>(null); // つながりの地図で選んだつながり
   useEffect(() => {
     setPick(null);
@@ -858,17 +847,24 @@ export default function Detail({
             <Muted>まだ関係がない。</Muted>
           )}
           <Muted>押すと、関係のページが開く。グラフの線を押すのと同じ。</Muted>
-          {/* 次の駅（路線図の次。ページのいちばん下＝読み終えた所に置く。画面の原則 9：次の1手を示す） */}
-          {all && next && onNext && (
-            <button type="button" className={st.nextStation} onClick={() => onNext(next.id)} data-testid="next-station">
-              <span className={st.nextLab}>次の駅</span>
-              <span className={st.nextName}>{next.name}</span>
-              <span className={st.relChev} aria-hidden="true">
-                ›
-              </span>
-            </button>
-          )}
         </div>
+      )}
+      {/* 試す（issue 599）：この概念を使う実験室の問い。前は別のページ（実験室の一覧）だった。全画面のページだけに置く */}
+      {all && onQuestion && hasLabs && (
+        <div className={st.pane} data-testid="tab-lab">
+          <h3 className={st.paneTitle}>試す</h3>
+          <ConceptLabs net={net} id={c.id} onOpen={(x, q) => onQuestion(x, q ?? null)} />
+        </div>
+      )}
+      {/* 次の駅（路線図の次。ページのいちばん下＝読み終えた所に置く。画面の原則 9：次の1手を示す） */}
+      {all && next && onNext && (
+        <button type="button" className={st.nextStation} onClick={() => onNext(next.id)} data-testid="next-station">
+          <span className={st.nextLab}>次の駅</span>
+          <span className={st.nextName}>{next.name}</span>
+          <span className={st.relChev} aria-hidden="true">
+            ›
+          </span>
+        </button>
       )}
     </div>
   );
@@ -881,7 +877,7 @@ export default function Detail({
     );
   // 読むときは面を重ねず全画面のページ（実験室と同じ骨組み：上に「←・題・…」、中は指で送る、下に次の1手。stats2-course #188 07a・#194）
   if (sheet.detent === "full") {
-    const lab = qs.length > 0 && onLab;
+    const lab = hasLabs && !!onQuestion;
     return (
       <section
         className={st.page}
@@ -936,7 +932,7 @@ export default function Detail({
         <div className={st.pageBody}>{rest}</div>
         {lab && (
           <div className={st.pageBar}>
-            <Button variant="primary" className={st.pageCta} onClick={onLab} data-testid="page-cta">
+            <Button variant="primary" className={st.pageCta} onClick={() => jump("lab")} data-testid="page-cta">
               {LAB_ICON} 実験室で検証
             </Button>
           </div>

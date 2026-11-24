@@ -18,8 +18,8 @@ import PathList from "./PathList";
 import Search from "./Search";
 import { Button, ErrorText, Experiment, FullView, Muted, Sheet, subText } from "@math-lab/ui";
 import st from "./App.module.css";
-import { experimentsFor, learnOrder, load, pairOpen, routeOf, trace, type Network } from "./data";
-import { Crumbs, Header, Icon, LabPage, type Focus } from "./Shell";
+import { learnOrder, load, pairOpen, routeOf, trace, type Network } from "./data";
+import { Crumbs, Header, Icon } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
 const params = new URLSearchParams(location.search);
@@ -59,7 +59,8 @@ function useUrlState() {
     setGroup(g, true);
   };
   // タブ（?t=。探索は付けない。実験室を開いているときは実験室）
-  const [tab, setTabRaw] = useState<Tab>(init.tab);
+  // 前の URL の ?t=（学習・問題集・実験室の一覧のタブ）は読まない。実験室を開いているときだけ lab（URL には出さない。issue 599）
+  const [tab, setTabRaw] = useState<Tab>(init.exp ? "lab" : "explore");
   // 単元のページ（?u=。路線図の単元の見出しから。stats2-course の issue 596）
   const [unit, setUnitRaw] = useState<string | null>(init.unit);
   // 関係図のページで選んでいる語（?m=。issue 599）
@@ -78,15 +79,7 @@ function useUrlState() {
     setExpRaw(id);
     setQ(id ? question : null);
     setCards(null);
-    if (id) setTabRaw("lab");
-  };
-  const setTab = (t: Tab) => {
-    push.current = true;
-    setTabRaw(t);
-    setExpRaw(null);
-    setQ(null);
-    setCards(null);
-    scrollTo(0, 0);
+    setTabRaw(id ? "lab" : "explore");
   };
   useEffect(() => {
     const p = toUrl({ sel, view, exp, q, cards, group, layout, tab, unit, pick }, new URLSearchParams(location.search));
@@ -109,7 +102,7 @@ function useUrlState() {
       setCards(s.cards);
       setGroupRaw(s.group);
       setLayoutRaw(s.layout);
-      setTabRaw(s.tab);
+      setTabRaw(s.exp ? "lab" : "explore");
       setUnitRaw(s.unit);
       setPickRaw(s.pick);
     };
@@ -148,7 +141,6 @@ function useUrlState() {
     setLayout,
     openGroup,
     tab,
-    setTab,
   };
 }
 
@@ -177,15 +169,13 @@ export default function App() {
     layout,
     setLayout,
     openGroup,
-    tab: tabRaw,
-    setTab,
   } = useUrlState();
-  // 学習・問題集のタブはなくした（路線図の単元の見出しに入れた。issue 592 の段 3）。前の URL（?t=learn・problems）は路線図で開く
-  const tab = tabRaw === "lab" ? "lab" : "explore";
+  // 下のタブはなくした（学習・問題集は路線図の単元の見出しに、実験室の一覧は概念のページの「試す」の段に。issue 592 の段 3・issue 599）。
+  // 前の URL（?t=learn・problems・lab）は、路線図か概念のページで開く
   // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
   // 概念を選んでいる間は、どの幅でも関係図が画面いっぱいになり、詳しくは下からの面で出す（関係図に一本化。stats2-course #588。
   // 広い画面で面にしないと、詳しくが画面いっぱいの関係図の後ろに隠れた）
-  const locked = !!sel && tab === "explore" && !exp;
+  const locked = !!sel && !exp;
   useEffect(() => {
     if (!locked) return;
     scrollTo(0, 0);
@@ -363,29 +353,6 @@ export default function App() {
     );
   }
   const sub = net.courses.map((c) => c.title).join("・");
-  // 選んだ概念の分：実験室の一覧をその分に絞る（概念のページの「実験室で検証」から開く）
-  const fc = sel ? net.concepts.get(sel) : undefined;
-  const focus: Focus | null = fc
-    ? {
-        id: fc.id,
-        name: fc.name,
-        units: fc.units,
-        problems: fc.problems,
-        exps: experimentsFor(net, fc.id).map((x) => x.id),
-      }
-    : null;
-  // 実験室の一覧（概念のページの「実験室で検証」から）。学習・問題集は路線図の単元の見出しに入れた（下のタブは置かない。issue 592 の段 3）
-  if (tab === "lab")
-    return (
-      <main className={st.app}>
-        <Header title="知識ネットワーク" sub={sub} />
-        {/* 来た所へ戻る ← を上に。履歴を戻すのでなく、概念のページか路線図へ（URL で直接開いたときにサイトの外へ戻らない） */}
-        <button type="button" className={st.backTo} onClick={() => setTab("explore")} data-testid="tab-back">
-          <span aria-hidden="true">←</span> {focus ? focus.name : "路線図"}
-        </button>
-        <LabPage net={net} onOpen={setExp} focus={focus} />
-      </main>
-    );
   const compact = !!concept;
   return (
     <GlanceRoot
@@ -541,7 +508,6 @@ export default function App() {
             onEdge={setEdgeSel}
             edgeSel={edgeSel}
             onQuestion={(x, q) => setExp(x, q)}
-            onLab={() => setTab("lab")}
             onTrace={() => {
               pathHere.current = true;
               setView("path");
