@@ -22,7 +22,7 @@ test("関係図の語は教材の印を mask で読み、場所の外の印は�
     }),
   );
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布") + "&m=stats2:TERM-binom");
   const m = page.getByTestId("relation-map");
   const binom = m.getByTestId("rm-term-stats2:TERM-binom").getByTestId("concept-icon").first();
   await expect(binom).toBeAttached();

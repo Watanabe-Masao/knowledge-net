@@ -71,7 +71,7 @@ test("一覧を閉じる：アプリの中で開いたものは戻るで開き�
   await page.goto(`./?${SRC}`);
   await page.goto(`./?${SRC}&c=stats2%3ATERM-binom`);
   const d = page.getByTestId("detail");
-  await d.getByTestId("detail-chips").getByRole("button", { name: "関係", exact: true }).click();
+  await d.getByRole("radio", { name: "関係" }).click(); // 概念のページはいつも全画面（issue 599）
   await d.getByTestId("trace-open").click();
   await expect(page).toHaveURL(/view=path/);
   await page.getByRole("dialog", { name: "前提をさかのぼる" }).getByRole("button", { name: "閉じて戻る" }).click();

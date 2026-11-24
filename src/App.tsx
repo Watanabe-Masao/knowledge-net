@@ -6,7 +6,6 @@
 // 概念を開いても、その概念の分類の関係図で開く。分類をまたぐ学ぶ順は「前提をさかのぼる」（全画面の一覧）で読む。
 // Notion の埋め込み（高さ約320px）では embed=1：概念の名前と短い説明と「拡大表示 ↗」。
 import { GlanceRoot, WithGlance } from "./Glance";
-import { stepDown } from "./steps";
 import Library from "./Library";
 import Route, { rememberStation } from "./Route";
 import UnitPage from "./UnitPage";
@@ -17,7 +16,7 @@ import Detail, { name } from "./Detail";
 import Panel from "./Panel";
 import PathList from "./PathList";
 import Search from "./Search";
-import { Button, ErrorText, Experiment, FullView, Muted, Sheet, type Detent, subText } from "@math-lab/ui";
+import { Button, ErrorText, Experiment, FullView, Muted, Sheet, subText } from "@math-lab/ui";
 import st from "./App.module.css";
 import { experimentsFor, learnOrder, load, pairOpen, routeOf, trace, type Network } from "./data";
 import { Crumbs, Header, Icon, LabPage, type Focus } from "./Shell";
@@ -63,11 +62,11 @@ function useUrlState() {
   const [tab, setTabRaw] = useState<Tab>(init.tab);
   // 単元のページ（?u=。路線図の単元の見出しから。stats2-course の issue 596）
   const [unit, setUnitRaw] = useState<string | null>(init.unit);
+  // 関係図のページで選んでいる語（?m=。issue 599）
+  const [pick, setPickRaw] = useState<string | null>(init.pick);
   const push = useRef(false);
-  /** 次に積む履歴を「概念のページ」として印を付ける（openPage） */
-  const pageNext = useRef(false);
-  const setSel = (id: string | null) => {
-    push.current = true;
+  const setSel = (id: string | null, replace = false) => {
+    push.current = !replace;
     setSelRaw(id);
     setExpRaw(null);
     setQ(null);
@@ -90,15 +89,15 @@ function useUrlState() {
     scrollTo(0, 0);
   };
   useEffect(() => {
-    const p = toUrl({ sel, view, exp, q, cards, group, layout, tab, unit }, new URLSearchParams(location.search));
+    const p = toUrl({ sel, view, exp, q, cards, group, layout, tab, unit, pick }, new URLSearchParams(location.search));
     const url = `${location.pathname}?${p.toString()}`.replace(/\?$/, "");
     if (url === `${location.pathname}${location.search}`) return;
     // 概念のページとして開いた所は、履歴に印（page）を残す（戻る・進むで、また全画面のページで開く。issue 596）
-    if (push.current) history.pushState(pageNext.current ? { page: true } : null, "", url);
+    // アプリが積んだ履歴には印（app）を付ける。← は、印があれば履歴を1つ戻し、なければ（共有の URL で直接開いた）路線図へ（issue 599）
+    if (push.current) history.pushState({ app: true }, "", url);
     else history.replaceState(history.state, "", url);
-    pageNext.current = false;
     push.current = false;
-  }, [sel, view, exp, q, cards, group, layout, tab, unit]);
+  }, [sel, view, exp, q, cards, group, layout, tab, unit, pick]);
   useEffect(() => {
     // 「戻る」：URL から全部の項目を、書き込みと同じ定義で戻す
     const back = () => {
@@ -112,6 +111,7 @@ function useUrlState() {
       setLayoutRaw(s.layout);
       setTabRaw(s.tab);
       setUnitRaw(s.unit);
+      setPickRaw(s.pick);
     };
     addEventListener("popstate", back);
     return () => removeEventListener("popstate", back);
@@ -124,8 +124,11 @@ function useUrlState() {
     push.current = true;
     setView(v);
   };
+  /** 関係図で語を選ぶ（それだけでは履歴に積まない。選びなおすたびに戻るが増えない） */
+  const setPick = (id: string | null) => setPickRaw(id);
   return {
-    pageNext,
+    pick,
+    setPick,
     sel,
     setSel,
     view,
@@ -149,29 +152,14 @@ function useUrlState() {
   };
 }
 
-/** スマホの幅か（詳しくを下からの面にする） */
-function useNarrow() {
-  const q = "(max-width: 759px)";
-  const [n, setN] = useState(() => typeof matchMedia === "function" && matchMedia(q).matches);
-  useEffect(() => {
-    const m = matchMedia(q);
-    const f = () => setN(m.matches);
-    m.addEventListener("change", f);
-    return () => m.removeEventListener("change", f);
-  }, []);
-  return n;
-}
-
 export default function App() {
-  const narrow = useNarrow();
   // 詳しくの段（少し・半分・全部）。別の概念を選ぶと「少し」から
-  const [detent, setDetent] = useState<Detent>("peek");
-  const tabH = 0; // 下のタブは置かない（面は画面の下の端に乗る）
   const [searchOpen, setSearchOpen] = useState(false);
   const [net, setNet] = useState<Network | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const {
-    pageNext,
+    pick,
+    setPick,
     sel,
     setSel,
     view,
@@ -197,8 +185,7 @@ export default function App() {
   // スマホで概念を選んでいる間は、ページを縦に送らない（地図は面の上いっぱいに合わせてある）。送れると下のタブと面が画面の途中に浮く（渡辺さん 2026-11-01）
   // 概念を選んでいる間は、どの幅でも関係図が画面いっぱいになり、詳しくは下からの面で出す（関係図に一本化。stats2-course #588。
   // 広い画面で面にしないと、詳しくが画面いっぱいの関係図の後ろに隠れた）
-  const sheeted = narrow || !!sel;
-  const locked = sheeted && !!sel && tab === "explore" && !exp;
+  const locked = !!sel && tab === "explore" && !exp;
   useEffect(() => {
     if (!locked) return;
     scrollTo(0, 0);
@@ -224,52 +211,28 @@ export default function App() {
     setModalRaw(m);
     if (m) setEdgeRaw(null);
   };
-  // 関係図で語をダブルタップしたときは、その語を選んで詳しくを全部の段で開く（下の effect が「少し」に戻さないよう印を置く）
-  const openFull = useRef(false);
   // 前提をさかのぼる一覧を、このページの中から開いたか（閉じ方を分ける）
   const pathHere = useRef(false);
   // 単元のページを、路線図から開いたか（閉じ方を分ける。前提の一覧と同じ）
   const unitHere = useRef(false);
-  // 路線図・探すから開いた概念のページ（全画面）：← で路線図へ戻る（関係図の面に降りない）。
-  // 「関係図で見る」で関係図に降りたら、その後は今までどおり面の段へ戻る
-  const fromRoute = useRef(false);
+  // 概念はいつも全画面のページで開く（関係図の上の面はやめた。issue 599）
   const openPage = (id: string) => {
-    if (id === sel) return setDetent("full");
-    fromRoute.current = true;
-    openFull.current = true;
-    pageNext.current = true;
-    setSel(id);
+    if (id !== sel) setSel(id);
   };
-  // ← は履歴を1つ戻す（路線図・単元のページ・前の概念のページへ。戻った先が概念のページなら全画面のまま）。
-  // ← で履歴を積み増すと、そのあとの「閉じる」「戻る」が積んだ所へ戻ってしまった（issue 596）
-  const onDetent = (d: Detent) => {
-    if (fromRoute.current && d !== "full") {
-      fromRoute.current = false;
-      history.back();
-      return;
+  // ← はどのページでも1つ：アプリが積んだ履歴なら1つ戻る。共有の URL で直接開いたページなら、置き換えて路線図へ（サイトの外へ出ない）
+  const back = () => {
+    if ((history.state as { app?: boolean } | null)?.app) history.back();
+    else {
+      setSel(null, true);
+      setGroup(null);
     }
-    setDetent(d);
   };
-  // 戻る・進むで概念のページの印がある所に来たら、全画面のページで開く（← の働きも保つ）
-  useEffect(() => {
-    const pop = (e: PopStateEvent) => {
-      const page = !!(e.state as { page?: boolean } | null)?.page;
-      fromRoute.current = page;
-      if (page) openFull.current = true;
-    };
-    addEventListener("popstate", pop);
-    return () => removeEventListener("popstate", pop);
-  }, []);
   // 現在地：最後に開いた概念（その端末にだけ。路線図の「前に開いた駅」）
   useEffect(() => {
     if (sel) rememberStation(sel);
   }, [sel]);
   useEffect(() => {
     setEdgeRaw(null);
-    // 別の概念へ進んだら段2はそのまま（渡辺さん 2026-11-07「2段目を維持」。画面の原則 3）。フルからは段1へ
-    const full = openFull.current; // 更新の関数はあとで呼ばれるので、印は先に読んでおく
-    openFull.current = false;
-    setDetent((d) => (full ? "full" : sel && d === "half" ? "half" : "peek"));
   }, [sel]); // 別の概念へ進んだら、線の説明は閉じる
   // ラボを全面で開く：一覧の「大きく開く」と、ラボの中の「大きく開く ↗」（host=kn のときは親に知らせてくる）
   const [full, setFull] = useState<{ url: string; title?: string } | null>(null);
@@ -324,7 +287,8 @@ export default function App() {
   const tracing = view === "path" && !!concept;
   const nextId = concept && route ? route.order[route.order.indexOf(concept.id) + 1] : undefined;
   // 地図は関係図（stats2-course #588）：概念を選んでいればその概念の分類、選んでいなければ分類のページの「地図」で開いた分類
-  const mapCat = concept ? concept.category : group && group !== "*" && layout === "map" ? group : undefined;
+  // 関係図はページ（分類の「地図」）。概念のページの「関係図で見る」からも開く（issue 599）
+  const mapCat = !concept && group && group !== "*" && layout === "map" ? group : undefined;
 
   if (EMBED) {
     // 埋め込み（Notion の 360×320）は入口：名前・短い説明・拡大表示（地図は大きく開いた先の関係図で見る。stats2-course #588）
@@ -422,7 +386,7 @@ export default function App() {
         <LabPage net={net} onOpen={setExp} focus={focus} />
       </main>
     );
-  const compact = sheeted && !!concept;
+  const compact = !!concept;
   return (
     <GlanceRoot
       net={net}
@@ -533,45 +497,44 @@ export default function App() {
         ) : !sel && layout !== "map" ? (
           <CategoryList net={net} category={group!} layout={layout} onConcept={setSel} />
         ) : mapCat ? (
-          // 関係図（stats2-course #235・#588）：語を選んでも関係図のまま、下の面に詳しく（Detail）を出す
-          <RelationMap
-            key={mapCat}
-            net={net}
-            category={mapCat}
-            selected={sel}
-            onSelect={setSel}
-            onOpen={(id) => {
-              openFull.current = true;
-              if (id === sel) setDetent("full");
-              else setSel(id);
-            }}
-            onRelation={setEdgeSel}
-            onOut={() => {
-              setSel(null);
-              setGroup(null, true);
-            }}
-            onCategory={() => {
-              setSel(null);
-              setGroup(mapCat!, true);
-            }}
-            onBlank={() => {
-              const d = sheeted ? stepDown(detent) : null;
-              if (d) setDetent(d);
-              return !!d;
-            }}
-            step={detent}
-          />
+          // 関係図のページ（issue 599）：語を押すと選んで（?m=）ひと目。ダブルタップ・ひと目の「ページを開く」で概念のページ
+          <WithGlance>
+            {(_glance, show) => (
+              <RelationMap
+                key={mapCat}
+                net={net}
+                category={mapCat}
+                selected={pick}
+                onSelect={(id) => {
+                  setPick(id);
+                  show(id);
+                }}
+                onOpen={openPage}
+                onRelation={setEdgeSel}
+                onOut={() => {
+                  setSel(null);
+                  setGroup(null, true);
+                }}
+                trail={false}
+                onCategory={back}
+              />
+            )}
+          </WithGlance>
         ) : null}
         {concept ? (
           <Detail
             net={net}
             concept={concept}
-            sheet={sheeted ? { detent, onDetent, bottom: tabH } : undefined}
+            sheet={{ detent: "full", onDetent: back, bottom: 0 }}
             next={nextId ? { id: nextId, name: net.concepts.get(nextId)!.name } : undefined}
             onNext={(id) => openPage(id)}
             onMap={() => {
-              fromRoute.current = false;
-              setDetent("half");
+              // 関係図で見る：この概念の分類の関係図のページで、この概念を選んだ所から（← で概念のページへ戻る）
+              const c = concept;
+              setSel(null);
+              setGroup(c.category ?? null);
+              setLayout("map");
+              setPick(c.id);
             }}
             onCompare={() => setModal("pick")}
             onSelect={setSel}
@@ -656,11 +619,11 @@ export default function App() {
             edgeId={edgeSel}
             onClose={() => setEdgeSel(null)}
             onSelect={(id) => setSel(id)}
-            page={sheeted && !!concept && !tracing && detent === "full"}
+            page={!!concept && !tracing}
             onQuestion={(x, q) => setExp(x, q)}
           />
         ) : null}
-        {(sheeted && concept) || group ? null : (
+        {concept || group ? null : (
           <Muted as="div" className={st.footer}>
             データ：各教材の公開した JSON（型 kn-schema v2）。教材の原本は各教材のリポジトリ。
           </Muted>

@@ -73,7 +73,7 @@ test("路線図：単元の問題と Notion、分類で見る、前の URL", asy
   }
 });
 
-// 確かめる対象：概念のページの「関係図で見る」で、その概念の分類の関係図（面の段2）に降り、そのあとの ← は面の段へ戻る（路線図へ飛ばない）。
+// 確かめる対象：概念のページの「関係図で見る」で、その概念の分類の関係図のページに降り、← で概念のページへ戻る（路線図へ飛ばない。issue 599）。
 // 想定する故障：ホームが路線図になって、関係図に入る道がなくなる・関係図に降りても ← で路線図に戻ってしまう。
 // 見つけ方：路線図から二項分布を開き、関係の段の「関係図で見る」→ 確率分布の関係図と段2の面。
 // 既存との違い：関係図のテストは URL で関係図を直接開く
@@ -86,6 +86,10 @@ test("概念のページの「関係図で見る」で、分類の関係図に�
   await d.getByTestId("map-open").click();
   const m = page.getByTestId("relation-map");
   await expect(m).toHaveAttribute("aria-label", "確率分布の関係図");
-  await expect(d).toHaveAttribute("data-detent", "half");
+  // 関係図はページ（issue 599）：上に概念の面を重ねず、二項分布を選んだ形で開く。← で概念のページへ
+  await expect(d).toHaveCount(0);
+  await expect(m.getByTestId(`rm-term-stats2:TERM-binom`)).toHaveAttribute("data-state", "sel");
   await expect(page.getByTestId("route")).toHaveCount(0);
+  await page.getByTestId("rm-cat").click();
+  await expect(page.getByTestId("detail").locator("h2")).toHaveText("二項分布");
 });
