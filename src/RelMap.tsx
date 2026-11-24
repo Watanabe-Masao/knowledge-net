@@ -242,12 +242,18 @@ export function RelMap({
 export function RelDig({
   net,
   id,
+  center,
   onOpen,
+  onConcept,
   onClose,
 }: {
   net: Network;
   id: string;
+  /** いま見ている概念（つながりの相手を出すため） */
+  center?: string;
   onOpen: (id: string) => void;
+  /** つながりの相手の概念のページを開く（stats2-course の issue 601 の続き。渡辺さん 2026-11-24） */
+  onConcept?: (id: string) => void;
   onClose?: () => void;
 }) {
   const r = net.relations.find((x) => x.id === id);
@@ -265,6 +271,7 @@ export function RelDig({
     ) : null;
   }
   const tour = (r.labs ?? []).find((l) => l.kind === "tour" && sceneSupported(l.play));
+  const other = center ? net.concepts.get(r.from === center ? r.to : r.from) : undefined;
   return (
     <section className={st.dig} data-testid="rel-dig" aria-live="polite">
       <div className={st.digHead}>
@@ -284,9 +291,22 @@ export function RelDig({
       ) : (
         <p className={st.digText}>{subText(r.gist ?? r.description)}</p>
       )}
-      <button type="button" className={st.digOpen} onClick={() => onOpen(r.id)} data-testid="rel-dig-open">
-        全画面で開く ›
-      </button>
+      {/* 行き先は2つ：つながりの相手の概念のページと、この関係の全画面のページ（どちらもページを積む） */}
+      <div className={st.digFoot}>
+        {other && onConcept && (
+          <button
+            type="button"
+            className={st.digOpen}
+            onClick={() => onConcept(other.id)}
+            data-testid="rel-dig-concept"
+          >
+            {other.name}のページ ›
+          </button>
+        )}
+        <button type="button" className={st.digOpen} onClick={() => onOpen(r.id)} data-testid="rel-dig-open">
+          関係を全画面で ›
+        </button>
+      </div>
     </section>
   );
 }
