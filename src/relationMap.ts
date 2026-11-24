@@ -458,12 +458,15 @@ export function fitPick(
   L: CanvasLayout,
   pick: string,
   types: Set<string>,
-  room: { W: number; H: number; bottom: number; k: number },
+  room: { W: number; H: number; bottom: number; k: number; top?: number },
 ): View | null {
   const me = L.terms.find((t) => t.id === pick);
   if (!me) return null;
   const PAD = 14;
-  const { W, H, bottom } = room;
+  // top：上の縁に浮かぶ操作（現在地の札など）の帯。見える所はその下から（操作の下に語を置かない。原則 12）
+  const T = room.top ?? 0;
+  const { W, bottom } = room;
+  const H = room.H - T;
   const P = pickPoints(L, pick, types)!;
   const cx = me.x + me.w / 2,
     cy = me.y + me.h / 2;
@@ -501,7 +504,7 @@ export function fitPick(
   return {
     k,
     x: fitAxis(x0, x1, W, W / 2 - cx * k),
-    y,
+    y: y + T,
   };
 }
 
