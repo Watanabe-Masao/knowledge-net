@@ -790,7 +790,7 @@ function orderByEdges(edges: LearningEdge[], ids: string[]): string[] {
 }
 
 /** 文に出る概念の名前を、出た順に重ならないよう拾う（長い名前を先に当てる。自分は除く）。
- *  文の中の語を押して「何だっけ」を引く入口（stats2-course #593）。文の下の札に並べる（文の中を押させない。画面の原則 6） */
+ *  文の中の語を押して「何だっけ」を引く入口（stats2-course の issue 593）。文の下の札に並べる（文の中を押させない。画面の原則 6） */
 export function termsIn(net: Network, text: string | undefined | null, self?: string): string[] {
   if (!text) return [];
   const names = termNames(net);
