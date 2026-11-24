@@ -49,13 +49,3 @@
   -webkit-box-orient: vertical;
   margin: 0;
 }
-
-/* 概念から下のタブへ移ったとき、来た概念へ戻る行（UI レビュー「動線設計」2） */
-/* 分類のページの並べ方の切り替え（上＝探す・分類の置き場所。右に寄せる） */
-.catBar {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--sp-2);
-  position: relative;
-  z-index: 2;
-}

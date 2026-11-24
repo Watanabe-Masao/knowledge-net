@@ -1,4 +1,4 @@
-// 分類のページのリストビュー（stats2-course #228。渡辺さん 2026-11-05：ライブラリの次は、正方形と一覧を切り替えるリストビュー）
+// 分類のライブラリと、開いた中の概念の一覧（stats2-course #228・issue 601）
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
@@ -6,19 +6,24 @@ import { readFileSync } from "node:fs";
 const sample = JSON.parse(readFileSync("public/sample/stats2.json", "utf8")) as { concepts: { category?: string }[] };
 const TESTS = sample.concepts.filter((c) => c.category === "検定").length;
 
-// 確かめる対象：ライブラリ → 分類のページ（正方形・一覧・地図の切り替え）→ 概念 の流れと、正方形の長押し。
-// 想定する故障：分類の語が全部出ない・ほかの分類の語が混ざる・学ぶ順でない（画面が並べ替えずに教材の並びのまま）・
-//   長押しで説明が出ない／長押しのあと離すと概念へ移ってしまう・切り替えが URL に残らず「戻る」で消える・
-//   並べ方の切り替えで地図へ行けない・押せる大きさが 44px 未満。
-// 見つけ方：検定（語の数は見本から数える）で、枠の数・最初の語（仮説検定）・押せる大きさ、p値を長押し→説明→離しても移らない→押すと概念、
-//   一覧に切り替えると定義1文、地図に切り替えると島の地図、「戻る」で一覧・正方形・ライブラリへ順に戻る。
-// 既存との違い：ライブラリのテストはタイルまで。学ぶ順そのものは単体テスト（order.test.ts）が全部の分類で見る
-test("ライブラリ → 分類のページ：正方形（長押しで説明）・一覧・地図を切り替え、語を押すと概念", async ({ page }) => {
+// 確かめる対象：ライブラリで分類を押すと、その場で開いて全部の概念を学ぶ順に出し、関係図へも行ける（issue 601：分類の1枚のページはなくした）。
+// 想定する故障：分類の語が全部出ない・ほかの分類の語が混ざる・学ぶ順でない（画面が並べ替えずに教材の並びのまま）・2つ以上開く・
+//   開いた分類が URL に残らず「戻る」で閉じる・押した行が開いたときに画面の上でずれる・定義1文が出ない・押せる大きさが 44px 未満。
+// 見つけ方：検定（語の数は見本から数える）を押す → ?g=検定、語の数・学ぶ順・定義1文・行の位置。確率分布を押すと検定は閉じる。
+//   概念へ進んで戻ると確率分布が開いたまま。「関係図で見る」で確率分布の関係図、戻ると開いたまま。もう一度押すと閉じる。
+// 既存との違い：学ぶ順そのものは単体テスト（order.test.ts）が全部の分類で見る
+test("ライブラリ：分類を押すとその場で開き、全部の概念を学ぶ順に。関係図へも行ける", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json&g=*"); // 分類のライブラリ（路線図の「分類で見る」。issue 592 の段 3）
-  await page.getByTestId("lib-検定").getByRole("button", { name: "検定の概念をすべて見る" }).click();
+  const row = page.getByTestId("lib-検定");
+  await row.scrollIntoViewIfNeeded();
+  const y0 = (await row.boundingBox())!.y;
+  await row.click();
+  await expect(row).toHaveAttribute("aria-expanded", "true");
+  await expect(page).toHaveURL(/g=%E6%A4%9C%E5%AE%9A/);
+  expect(Math.abs((await row.boundingBox())!.y - y0), "押した行が開いたときにずれた").toBeLessThan(2);
   const list = page.getByTestId("category-list");
-  await expect(list).toHaveAttribute("data-layout", "grid");
+  await expect(list).toHaveCount(1);
   const items = list.locator("[data-testid^=cat-item-]");
   await expect(items).toHaveCount(TESTS);
   // 学ぶ順：定義に使う概念が先（帰無仮説 → … → 仮説検定 → 一種の対応のある t 検定 → … → 多重比較）。教材の並び（対応のある t 検定が先頭）ではない。
@@ -30,39 +35,45 @@ test("ライブラリ → 分類のページ：正方形（長押しで説明）
   expect(ids.indexOf("test")).toBeLessThan(ids.indexOf("paired-t"));
   // 最後の語は見ない：まとまりがあると、まとまりの順で区切ってから学ぶ順に並べるので、多重比較は最後のまとまりでなくなる（#588）
   expect(ids.indexOf("anova")).toBeLessThan(ids.indexOf("multcomp"));
-  const box = (await items.first().boundingBox())!;
-  expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
+  await expect(list.getByTestId("cat-item-stats2:TERM-pvalue")).toContainText("極端な値"); // 定義1文
+  for (const el of [row, items.first()]) expect((await el.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 
-  // 長押し：説明が出て、離しても概念へは移らない
-  const pv = list.getByTestId("cat-item-stats2:TERM-pvalue");
-  await pv.scrollIntoViewIfNeeded(); // まとまりの見出しが入ると p値 が画面の下に出る（#588）
-  const b = (await pv.boundingBox())!;
-  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
-  await page.mouse.down();
-  await expect(page.getByTestId("cat-tip")).toContainText("極端な値");
-  await page.mouse.up();
-  await expect(page.getByTestId("cat-tip")).toHaveCount(0);
-  await expect(page).not.toHaveURL(/[?&]c=/);
-
-  // 一覧：定義1文も出る
-  await page.getByTestId("cat-layout-list").click();
-  await expect(page).toHaveURL(/lv=list/);
-  await expect(list).toHaveAttribute("data-layout", "list");
-  await expect(list.getByTestId("cat-item-stats2:TERM-pvalue")).toContainText("極端な値");
-  // 地図：関係図（島の地図は外した。stats2-course #588）
-  await page.getByTestId("cat-layout-map").click();
+  // ほかの分類を押すと、そちらが開いて検定は閉じる（開くのは1つ）
+  const dist = page.getByTestId("lib-確率分布");
+  await dist.click();
+  await expect(row).toHaveAttribute("aria-expanded", "false");
+  await expect(dist).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByTestId("category-list")).toHaveCount(1);
+  // 概念へ進んで戻ると、確率分布が開いたまま
+  await page.getByTestId("cat-item-stats2:TERM-binom").click();
+  await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(dist).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByTestId("cat-item-stats2:TERM-binom")).toBeInViewport();
+  // 関係図で見る → 確率分布の関係図。戻ると開いたまま
+  await page.getByTestId("lib-map-確率分布").click();
   await expect(page).toHaveURL(/lv=map/);
+  await expect(page.getByTestId("relation-map")).toHaveAttribute("aria-label", "確率分布の関係図");
+  await page.goBack();
+  await expect(dist).toHaveAttribute("aria-expanded", "true");
+  // もう一度押すと閉じる
+  await dist.click();
   await expect(page.getByTestId("category-list")).toHaveCount(0);
-  await expect(page.getByTestId("relation-map")).toHaveAttribute("aria-label", "検定の関係図");
-  // 「戻る」：地図 → 一覧 → 正方形 → ライブラリ
-  await page.goBack();
-  await expect(page.getByTestId("category-list")).toHaveAttribute("data-layout", "list");
-  await page.goBack();
-  await expect(page.getByTestId("category-list")).toHaveAttribute("data-layout", "grid");
-  // ふつうに押すと概念のページ
-  await page.getByTestId("cat-item-stats2:TERM-pvalue").click();
-  await expect(page).toHaveURL(/c=stats2%3ATERM-pvalue/);
-  await expect(page.getByTestId("detail").getByRole("heading", { name: "p値", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/g=\*/);
+});
+
+// 確かめる対象：Notion の単元ページの「忘れたら：分類 🕸」（?g=分類）で開くと、ライブラリでその分類が開いて、その行が画面の上に来る（issue 601）。
+// 想定する故障：前の分類のページがなくなって空の画面・ライブラリの上から（分類を探し直す）・開いていない。
+test("分類の URL（Notion の「忘れたら」）は、ライブラリでその分類を開いた所", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("検定"));
+  const row = page.getByTestId("lib-検定");
+  await expect(row).toHaveAttribute("aria-expanded", "true");
+  await expect(row).toBeInViewport();
+  expect((await row.boundingBox())!.y).toBeLessThan(120);
+  // 前の並べ方の URL（lv=grid・list）も同じ
+  await page.goto("./?src=sample/stats2.json&lv=list&g=" + encodeURIComponent("検定"));
+  await expect(page.getByTestId("lib-検定")).toHaveAttribute("aria-expanded", "true");
 });
 
 // 確かめる対象：意味のまとまり（教材の groups・概念の group。型の改訂35。stats2-course #228）で区切って並べること。
