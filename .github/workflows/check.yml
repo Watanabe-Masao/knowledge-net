@@ -1,5 +1,8 @@
 name: check
 # PR と main への取り込みで、型・計算の単体テスト、build、画面のテストを走らせる。
+# 速い段（書式・math-lab・見本・デザインの決まり・単体テスト・build）を先に走らせ、落ちたら数分で分かるようにする。
+# 画面のテストは、速い段が作った build をそのまま使い、chromium と webkit を並べて走らせる
+# （stats2-course の issue 594。2026-11-24、ブラウザの依存の取り込みが毎回 29〜35 分かかり、1秒のデザインの決まりがその後で落ちた）。
 on:
   pull_request:
   push:
@@ -9,27 +12,46 @@ on:
 permissions:
   contents: read
 jobs:
-  check:
+  fast:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
-        with: {node-version: "22"}
+        with: {node-version: "22", cache: npm}
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run check
-      # main への取り込みで通ったら、確かめたその build（dist）を公開用に残す。pages.yml はこれを取り出して公開し、作り直さない
-      # （確かめた成果物と公開する成果物を同じにする。同じコミットでテストを2回走らせない。stats2-course #285 の決定 2026-11-19）
-      - if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v5
+      - run: npm run check:fast
+      # 画面のテストと公開は、ここで確かめた build（dist）を使う（確かめた成果物と公開する成果物を同じにする。#285 の決定 2026-11-19）
+      - uses: actions/upload-artifact@v5
         with:
           name: site-dist
           path: dist/
           retention-days: 3
+  e2e:
+    needs: fast
+    runs-on: ubuntu-latest
+    # Playwright の公式の実行環境：ブラウザと OS の依存が入っている（apt の取り込みをしない）。版は package-lock の @playwright/test と同じ
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, webkit]
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: {node-version: "22", cache: npm}
+      - run: npm ci
+      - run: npm run gen
+      - uses: actions/download-artifact@v5
+        with:
+          name: site-dist
+          path: dist
+      - run: npx playwright test --project=${{ matrix.project }}
       # 画面のテストが落ちたら、Playwright の記録（WebKit の trace・error-context）を残す（原因を後から見られるように。stats2-course #239）
       - if: failure()
         uses: actions/upload-artifact@v5
         with:
-          name: test-results
+          name: test-results-${{ matrix.project }}
           path: test-results/
           retention-days: 7
