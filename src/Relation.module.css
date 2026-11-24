@@ -409,3 +409,11 @@
   margin: 0 0 var(--sp-1);
   line-height: 1.6;
 }
+/* 全画面で開いた解説・確かめるの、何をするか（目的の文）。本文の最初に読む1文として、ラボの課題の文より強く */
+.mediaPage .purpose {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.6;
+  margin: var(--sp-2) 0 var(--sp-1);
+}
