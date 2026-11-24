@@ -25,6 +25,7 @@ import st from "./Detail.module.css";
 import { kindName, readingOf } from "./kinds";
 import Conditions, { conditionCount } from "./Conditions";
 import Claims from "./Claims";
+import { useGlance, Words } from "./Glance";
 import {
   kindOf,
   MODES,
@@ -345,6 +346,9 @@ export default function Detail({
     return { m, pmf, mean, hi };
   }, [c.chart]);
   const mainF = c.workspace ? c.formulas?.[c.workspace.formula] : c.formulas?.[0];
+  // 文の下の語の札は、ひと目を開く（ページを替えない。stats2-course #593）。ひと目の外では前のとおりページへ
+  const glance = useGlance();
+  const onWord = glance ?? onSelect;
   const cl = useMemo(() => claimsOf(net, c.id), [net, c.id]);
   const heads = useMemo(() => headingsOf(net, c.id), [net, c.id]);
   const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
@@ -537,7 +541,7 @@ export default function Detail({
                 net={net}
                 detail={c.heading_of.context.conditions}
                 math={[]}
-                onTerm={onSelect}
+                onTerm={onWord}
                 plainClass={st.conds}
                 testId="heading-conditions"
               />
@@ -562,6 +566,8 @@ export default function Detail({
                   定義だけ：今は定義1文と分類まで。原理・条件・例・式は、単元を進めるときに足す
                 </p>
               )}
+              {/* つまりと定義に出る語（何だっけ。#593）。つまりの下に並べると、問い → つまり → 図 → 定義 の順を崩す */}
+              <Words net={net} text={`${c.gist ?? ""} ${c.definition ?? c.short ?? ""}`} self={c.id} />
             </section>
           )}
           {/* 見出しは定義のあと（概要の情報階層 stats2-course の issue 188 02 を崩さない）。行は名前だけ（対応の文は見出しのページで読む） */}
@@ -584,6 +590,7 @@ export default function Detail({
           {c.principle && (
             <More title="なぜその形か（原理）" onOpen={reading}>
               <p>{subText(c.principle)}</p>
+              <Words net={net} text={c.principle} self={c.id} />
             </More>
           )}
           {/* 要件の行がなく（math が空。仮定は主張の側。stats2-course #532）手掛かりもない概念には、空の段を置かない */}
@@ -607,7 +614,7 @@ export default function Detail({
                   detail={c.conditions_detail}
                   math={c.conditions.math}
                   data={c.conditions.data ?? []}
-                  onTerm={onSelect}
+                  onTerm={onWord}
                   plainClass={st.conds}
                 />
               </More>
@@ -621,7 +628,7 @@ export default function Detail({
               }
               onOpen={reading}
             >
-              <Claims net={net} self={c.id} about={cl.about} uses={cl.uses} onTerm={onSelect} />
+              <Claims net={net} self={c.id} about={cl.about} uses={cl.uses} onTerm={onWord} />
             </More>
           )}
           {c.example || c.counterexample || c.misconceptions?.length ? (
@@ -632,12 +639,14 @@ export default function Detail({
                     <div>
                       <b className={st.ok}>例</b>
                       <p>{subText(c.example)}</p>
+                      <Words net={net} text={c.example} self={c.id} />
                     </div>
                   )}
                   {c.counterexample && (
                     <div>
                       <b className={st.ng}>反例</b>
                       <p>{subText(c.counterexample)}</p>
+                      <Words net={net} text={c.counterexample} self={c.id} />
                       <Media labs={c.counterexample_labs} context="counterexample" />
                     </div>
                   )}
@@ -654,6 +663,7 @@ export default function Detail({
                         <p>
                           <span className={st.ok}>○</span> {m.correction}
                         </p>
+                        <Words net={net} text={`${m.misconception} ${m.correction}`} self={c.id} />
                         <Media labs={m.labs} context={`misconception-${i}`} />
                       </Card>
                     </li>

@@ -4,6 +4,7 @@
 // 概念の地図は関係図の1つ（stats2-course #587・#588。渡辺さん 2026-11-23「こちらに一本化」）：どの入口（検索・ライブラリ・一覧・Notion の 🕸 リンク）から
 // 概念を開いても、その概念の分類の関係図で開く。分類をまたぐ学ぶ順は「前提をさかのぼる」（全画面の一覧）で読む。
 // Notion の埋め込み（高さ約320px）では embed=1：概念の名前と短い説明と「拡大表示 ↗」。
+import { GlanceRoot } from "./Glance";
 import { STEPS, stepDown } from "./steps";
 import Library from "./Library";
 import CategoryList, { LayoutSwitch } from "./CategoryList";
@@ -368,209 +369,218 @@ export default function App() {
     );
   const compact = sheeted && !!concept;
   return (
-    <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
-      <div className={st.top} data-edge="top">
-        <Header
-          title="知識ネットワーク"
-          sub={
-            <>
-              {sub}
-              {compact ? null : (
-                <>
-                  　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}
-                  {(() => {
-                    const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length;
-                    return k ? `（定義だけ ${k}）` : "";
-                  })()}
-                  ・関係 {net.relations.length}・導出 {net.derivations.length}
-                </>
-              )}
-            </>
-          }
-        >
-          {compact ? (
-            <Button
-              variant="quiet"
-              icon
-              aria-label="概念を検索"
-              aria-expanded={searchOpen}
-              onClick={() => setSearchOpen(!searchOpen)}
-            >
-              <Icon name="search" size={20} />
-            </Button>
+    <GlanceRoot
+      net={net}
+      current={concept?.id}
+      onOpen={(id) => {
+        setView("around");
+        setSel(id);
+      }}
+    >
+      <main className={`${st.app} ${st.withTabs}${edgeSel || modal ? ` ${st.withSheet} has-panel` : ""}`}>
+        <div className={st.top} data-edge="top">
+          <Header
+            title="知識ネットワーク"
+            sub={
+              <>
+                {sub}
+                {compact ? null : (
+                  <>
+                    　概念 {[...net.concepts.values()].filter((c) => c.status === "filled").length}
+                    {(() => {
+                      const k = [...net.concepts.values()].filter((c) => c.status === "skeleton").length;
+                      return k ? `（定義だけ ${k}）` : "";
+                    })()}
+                    ・関係 {net.relations.length}・導出 {net.derivations.length}
+                  </>
+                )}
+              </>
+            }
+          >
+            {compact ? (
+              <Button
+                variant="quiet"
+                icon
+                aria-label="概念を検索"
+                aria-expanded={searchOpen}
+                onClick={() => setSearchOpen(!searchOpen)}
+              >
+                <Icon name="search" size={20} />
+              </Button>
+            ) : null}
+          </Header>
+          {!compact || searchOpen ? (
+            <Search
+              concepts={[...net.concepts.values()]}
+              onPick={(id) => {
+                setSearchOpen(false);
+                setSel(id);
+              }}
+            />
           ) : null}
-        </Header>
-        {!compact || searchOpen ? (
-          <Search
-            concepts={[...net.concepts.values()]}
-            onPick={(id) => {
-              setSearchOpen(false);
-              setSel(id);
+          <Crumbs
+            items={[
+              // いちばん上はライブラリ（入口）。ライブラリ → 分類 → 語 の3段をパンくずで示す（UI レビュー「地図の変更で見直した点」1）
+              ...(concept || group
+                ? [
+                    {
+                      label: "ライブラリ",
+                      onClick: () => {
+                        setSel(null);
+                        setGroup(null);
+                      },
+                    },
+                  ]
+                : []),
+              ...(concept
+                ? [
+                    ...(concept.category
+                      ? [
+                          {
+                            label: concept.category,
+                            onClick: () => {
+                              setSel(null);
+                              setGroup(concept.category!);
+                            },
+                          },
+                        ]
+                      : []),
+                    { label: concept.name },
+                  ]
+                : group && group !== "*"
+                  ? [{ label: group }]
+                  : []),
+            ]}
+          />
+        </div>
+        {errors.map((e) => (
+          <ErrorText key={e}>{e}</ErrorText>
+        ))}
+        {/* 分類のページ（ライブラリでタイルを押したあと）：並べ方の切り替え。正方形・一覧はリストビュー、地図は関係図（stats2-course #228） */}
+        {!sel && group && group !== "*" ? (
+          <div className={st.catBar} data-edge="top">
+            <LayoutSwitch value={layout} onChange={setLayout} />
+          </div>
+        ) : null}
+        {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ。分類を押すとその分類のページ、語を押すと概念 */}
+        {!sel && (!group || group === "*") ? (
+          <Library net={net} onConcept={setSel} onGroup={openGroup} />
+        ) : !sel && layout !== "map" ? (
+          <CategoryList net={net} category={group!} layout={layout} onConcept={setSel} />
+        ) : mapCat ? (
+          // 関係図（stats2-course #235・#588）：語を選んでも関係図のまま、下の面に詳しく（Detail）を出す
+          <RelationMap
+            key={mapCat}
+            net={net}
+            category={mapCat}
+            selected={sel}
+            onSelect={setSel}
+            onOpen={(id) => {
+              openFull.current = true;
+              if (id === sel) setDetent("full");
+              else setSel(id);
             }}
+            onRelation={setEdgeSel}
+            onOut={() => {
+              setSel(null);
+              setGroup(null, true);
+            }}
+            onCategory={() => {
+              setSel(null);
+              setGroup(mapCat!, true);
+            }}
+            onBlank={() => {
+              const d = sheeted ? stepDown(detent) : null;
+              if (d) setDetent(d);
+              return !!d;
+            }}
+            step={detent}
           />
         ) : null}
-        <Crumbs
-          items={[
-            // いちばん上はライブラリ（入口）。ライブラリ → 分類 → 語 の3段をパンくずで示す（UI レビュー「地図の変更で見直した点」1）
-            ...(concept || group
-              ? [
-                  {
-                    label: "ライブラリ",
-                    onClick: () => {
-                      setSel(null);
-                      setGroup(null);
-                    },
-                  },
-                ]
-              : []),
-            ...(concept
-              ? [
-                  ...(concept.category
-                    ? [
-                        {
-                          label: concept.category,
-                          onClick: () => {
-                            setSel(null);
-                            setGroup(concept.category!);
-                          },
-                        },
-                      ]
-                    : []),
-                  { label: concept.name },
-                ]
-              : group && group !== "*"
-                ? [{ label: group }]
-                : []),
-          ]}
-        />
-      </div>
-      {errors.map((e) => (
-        <ErrorText key={e}>{e}</ErrorText>
-      ))}
-      {/* 分類のページ（ライブラリでタイルを押したあと）：並べ方の切り替え。正方形・一覧はリストビュー、地図は関係図（stats2-course #228） */}
-      {!sel && group && group !== "*" ? (
-        <div className={st.catBar} data-edge="top">
-          <LayoutSwitch value={layout} onChange={setLayout} />
-        </div>
-      ) : null}
-      {/* 何も選ばず分類も決めていないときの入口：分類のライブラリ。分類を押すとその分類のページ、語を押すと概念 */}
-      {!sel && (!group || group === "*") ? (
-        <Library net={net} onConcept={setSel} onGroup={openGroup} />
-      ) : !sel && layout !== "map" ? (
-        <CategoryList net={net} category={group!} layout={layout} onConcept={setSel} />
-      ) : mapCat ? (
-        // 関係図（stats2-course #235・#588）：語を選んでも関係図のまま、下の面に詳しく（Detail）を出す
-        <RelationMap
-          key={mapCat}
-          net={net}
-          category={mapCat}
-          selected={sel}
-          onSelect={setSel}
-          onOpen={(id) => {
-            openFull.current = true;
-            if (id === sel) setDetent("full");
-            else setSel(id);
-          }}
-          onRelation={setEdgeSel}
-          onOut={() => {
-            setSel(null);
-            setGroup(null, true);
-          }}
-          onCategory={() => {
-            setSel(null);
-            setGroup(mapCat!, true);
-          }}
-          onBlank={() => {
-            const d = sheeted ? stepDown(detent) : null;
-            if (d) setDetent(d);
-            return !!d;
-          }}
-          step={detent}
-        />
-      ) : null}
-      {concept ? (
-        <Detail
-          net={net}
-          concept={concept}
-          sheet={sheeted ? { detent, onDetent: setDetent, bottom: tabH } : undefined}
-          onCompare={() => setModal("pick")}
-          onSelect={setSel}
-          onEdge={setEdgeSel}
-          edgeSel={edgeSel}
-          onQuestion={(x, q) => setExp(x, q)}
-          onLab={() => setTab("lab")}
-          onTrace={() => setView("path")}
-          traceCount={seq.length}
-        />
-      ) : null}
-      {tracing ? (
-        <PathList
-          net={net}
-          target={concept!.id}
-          seq={seq}
-          onOpen={(id) => {
-            setView("around");
-            setSel(id);
-          }}
-          onClose={() => setView("around")}
-        />
-      ) : null}
-      {modal === "pick" && concept ? (
-        // 比べる相手を選ぶ（2つの概念のページへ）。関係のある相手は関係のタブ・地図の線から開くので、ここは探すだけ
-        <Sheet
-          label="比べる概念を選ぶ"
-          title={`${concept.name} と比べる`}
-          onClose={() => setModal(null)}
-          data-testid="pick"
-        >
-          <Muted>選ぶと、2つの概念のページで関係と、定義・条件・反例を並べて見られる。</Muted>
-          <Search
-            concepts={[...net.concepts.values()].filter((c) => c.id !== concept.id)}
-            onPick={(id) => {
-              setModal(null);
-              setEdgeSel(pairOpen(net, concept.id, id));
-            }}
+        {concept ? (
+          <Detail
+            net={net}
+            concept={concept}
+            sheet={sheeted ? { detent, onDetent: setDetent, bottom: tabH } : undefined}
+            onCompare={() => setModal("pick")}
+            onSelect={setSel}
+            onEdge={setEdgeSel}
+            edgeSel={edgeSel}
+            onQuestion={(x, q) => setExp(x, q)}
+            onLab={() => setTab("lab")}
+            onTrace={() => setView("path")}
+            traceCount={seq.length}
           />
-        </Sheet>
-      ) : null}
-      {full && (
-        <FullView
-          label="実験室"
-          title={full.title ?? "実験室"}
-          onClose={() => setFull(null)}
-          aside={
-            <a href={full.url} target="_blank" rel="noreferrer">
-              別画面で開く ↗
-            </a>
-          }
-        >
-          <iframe src={full.url} title={full.title ?? "実験室"} />
-        </FullView>
-      )}
-      {edgeSel ? (
-        <Panel
-          net={net}
-          edgeId={edgeSel}
-          onClose={() => setEdgeSel(null)}
-          onSelect={(id) => setSel(id)}
-          page={sheeted && !!concept && !tracing && detent === "full"}
-          onQuestion={(x, q) => setExp(x, q)}
+        ) : null}
+        {tracing ? (
+          <PathList
+            net={net}
+            target={concept!.id}
+            seq={seq}
+            onOpen={(id) => {
+              setView("around");
+              setSel(id);
+            }}
+            onClose={() => setView("around")}
+          />
+        ) : null}
+        {modal === "pick" && concept ? (
+          // 比べる相手を選ぶ（2つの概念のページへ）。関係のある相手は関係のタブ・地図の線から開くので、ここは探すだけ
+          <Sheet
+            label="比べる概念を選ぶ"
+            title={`${concept.name} と比べる`}
+            onClose={() => setModal(null)}
+            data-testid="pick"
+          >
+            <Muted>選ぶと、2つの概念のページで関係と、定義・条件・反例を並べて見られる。</Muted>
+            <Search
+              concepts={[...net.concepts.values()].filter((c) => c.id !== concept.id)}
+              onPick={(id) => {
+                setModal(null);
+                setEdgeSel(pairOpen(net, concept.id, id));
+              }}
+            />
+          </Sheet>
+        ) : null}
+        {full && (
+          <FullView
+            label="実験室"
+            title={full.title ?? "実験室"}
+            onClose={() => setFull(null)}
+            aside={
+              <a href={full.url} target="_blank" rel="noreferrer">
+                別画面で開く ↗
+              </a>
+            }
+          >
+            <iframe src={full.url} title={full.title ?? "実験室"} />
+          </FullView>
+        )}
+        {edgeSel ? (
+          <Panel
+            net={net}
+            edgeId={edgeSel}
+            onClose={() => setEdgeSel(null)}
+            onSelect={(id) => setSel(id)}
+            page={sheeted && !!concept && !tracing && detent === "full"}
+            onQuestion={(x, q) => setExp(x, q)}
+          />
+        ) : null}
+        {(sheeted && concept) || group ? null : (
+          <Muted as="div" className={st.footer}>
+            データ：各教材の公開した JSON（型 kn-schema v2）。教材の原本は各教材のリポジトリ。
+          </Muted>
+        )}
+        <TabBar
+          tab="explore"
+          onTab={(t) => {
+            if (t === "explore" && sel) setDetent(STEPS[0]!);
+            else setTab(t);
+          }}
+          badges={badges}
+          focusName={focus?.name}
         />
-      ) : null}
-      {(sheeted && concept) || group ? null : (
-        <Muted as="div" className={st.footer}>
-          データ：各教材の公開した JSON（型 kn-schema v2）。教材の原本は各教材のリポジトリ。
-        </Muted>
-      )}
-      <TabBar
-        tab="explore"
-        onTab={(t) => {
-          if (t === "explore" && sel) setDetent(STEPS[0]!);
-          else setTab(t);
-        }}
-        badges={badges}
-        focusName={focus?.name}
-      />
-    </main>
+      </main>
+    </GlanceRoot>
   );
 }

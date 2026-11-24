@@ -47,6 +47,8 @@ test("概念のページに、主張を「この概念について」と「こ�
   const chip = about.getByTestId("claim-stats2:CLM-1").getByTestId("cond-term-stats2:TERM-bernoulli");
   expect((await chip.boundingBox())!.height, "札が 44px より小さい").toBeGreaterThanOrEqual(44);
   await chip.click();
+  await expect(page.getByTestId("glance")).toContainText("ベルヌーイ分布");
+  await page.getByTestId("glance-open").click();
   await expect(page.getByTestId("detail").locator("h2")).toHaveText("ベルヌーイ分布");
   expect(errs).toEqual([]);
 });

@@ -151,7 +151,17 @@ export default function Conditions({
   );
 }
 
-export function Terms({ net, ids, onTerm }: { net: Network; ids?: string[]; onTerm?: (id: string) => void }) {
+export function Terms({
+  net,
+  ids,
+  onTerm,
+  testPrefix = "cond-term",
+}: {
+  net: Network;
+  ids?: string[];
+  onTerm?: (id: string) => void;
+  testPrefix?: string;
+}) {
   const known = (ids ?? []).filter((id) => net.concepts.has(id));
   if (!known.length) return null;
   const nm = (id: string) => net.concepts.get(id)!.name;
@@ -159,7 +169,13 @@ export function Terms({ net, ids, onTerm }: { net: Network; ids?: string[]; onTe
   return (
     <div className={s.terms}>
       {known.map((id) => (
-        <button key={id} type="button" className={s.term} data-testid={`cond-term-${id}`} onClick={() => onTerm(id)}>
+        <button
+          key={id}
+          type="button"
+          className={s.term}
+          data-testid={`${testPrefix}-${id}`}
+          onClick={() => onTerm(id)}
+        >
           {nm(id)}
         </button>
       ))}

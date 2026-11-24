@@ -788,3 +788,33 @@ function orderByEdges(edges: LearningEdge[], ids: string[]): string[] {
   }
   return out.length === ids.length ? out : [...out, ...ids.filter((id) => !out.includes(id))];
 }
+
+/** 文に出る概念の名前を、出た順に重ならないよう拾う（長い名前を先に当てる。自分は除く）。
+ *  文の中の語を押して「何だっけ」を引く入口（stats2-course #593）。文の下の札に並べる（文の中を押させない。画面の原則 6） */
+export function termsIn(net: Network, text: string | undefined | null, self?: string): string[] {
+  if (!text) return [];
+  const names = termNames(net);
+  const out: string[] = [];
+  for (let i = 0; i < text.length; ) {
+    const hit = names.find((n) => text.startsWith(n.name, i));
+    if (!hit) {
+      i++;
+      continue;
+    }
+    if (hit.id !== self && !out.includes(hit.id)) out.push(hit.id);
+    i += hit.name.length;
+  }
+  return out;
+}
+const namesCache = new WeakMap<Network, { name: string; id: string }[]>();
+function termNames(net: Network) {
+  let n = namesCache.get(net);
+  if (!n) {
+    n = [...net.concepts.values()]
+      .filter((c) => c.name.length >= 2)
+      .map((c) => ({ name: c.name, id: c.id }))
+      .sort((a, b) => b.name.length - a.name.length);
+    namesCache.set(net, n);
+  }
+  return n;
+}
