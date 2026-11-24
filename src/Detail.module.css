@@ -909,3 +909,10 @@
   margin: 0;
   padding: 0;
 }
+/* 1本のページの段の見出し（式で試す・つながり。stats2-course の issue 592 の段 2） */
+.paneTitle {
+  margin: 24px 0 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-h3, 17px);
+}
