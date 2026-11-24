@@ -193,7 +193,9 @@ async function openQ(x: import("@playwright/test").Locator, key: string) {
 const tab = (page: Page, name: RegExp) => openTab(page.getByTestId("detail"), name);
 /** 開いたページが描き終わるまで待つ：概念のページ（?c= はいつも概念のページ。issue 599）か、関係図のページ */
 const settle = (page: Page) =>
-  expect(page.getByTestId("detail").or(page.locator("[data-testid=relation-map][data-ready=true]")).first()).toBeVisible();
+  expect(
+    page.getByTestId("detail").or(page.locator("[data-testid=relation-map][data-ready=true]")).first(),
+  ).toBeVisible();
 // 概念はいつも全画面のページ（issue 599）。中身を触るテストは、ページが出たのを待ってから
 const fullSheet = (page: Page) => expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "full");
 
@@ -201,7 +203,9 @@ const fullSheet = (page: Page) => expect(page.getByTestId("detail")).toHaveAttri
 //   その語を選んだ形で降りる（issue 599：概念はいつも全画面のページ。前は ?c= で関係図の上の面で開いた）。
 // 想定する故障：?c= で何も出ない・関係図の上の面で開く・「関係図で見る」でほかの分類の地図・語が選ばれていない。
 // 見つけ方：?c=二項分布 は概念のページ。関係の段の「関係図で見る」で確率分布の関係図、二項分布が選ばれている（m=）。組合せは数学の道具の関係図
-test("🕸 リンク（c 付き）で開くと概念のページで、「関係図で見る」でその分類の関係図に語を選んで降りる", async ({ page }) => {
+test("🕸 リンク（c 付き）で開くと概念のページで、「関係図で見る」でその分類の関係図に語を選んで降りる", async ({
+  page,
+}) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 380, height: 800 });
   for (const [id, cat] of [
