@@ -422,3 +422,37 @@ test("文の中の下付きは、画面では下付きの字で出る（r_xy・z
   await expect(def.locator("sub").first()).toHaveText("xy・z");
   await expect(def).not.toContainText("_");
 });
+
+// 確かめる対象：全画面の概念のページは、概要 → 式 → 関係を上から1本に並べ、上の切り替えは目次として働く（stats2-course の issue 592 の段 2）。
+// 想定する故障：全画面でも1つの中身しか出ない（切り替えないと式・関係が読めない）・並びが崩れる・目次を押しても送られない・
+//   送って読んでいる段と目次の選びが食い違う。
+// 見つけ方：二項分布の全画面で3つの段がそろって上から並ぶこと。目次の「関係」で関係の段の頭が上の帯の下に来て、目次も「関係」。
+//   上へ送り戻すと目次が「概要」に戻る。
+// 既存との違い：ほかのテストは openTab で1つの中身を開いて、その中を見る
+// 検出の確かめ（2026-11-24）：中身の出し分けを tab === … だけに戻すと、1つ目の確かめで落ちることを見た
+test("全画面は概要 → 式 → 関係の1本、切り替えは目次で、読んでいる段に合わせる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(URL);
+  const d = page.getByTestId("detail");
+  await openTab(d, "概要");
+  const ys = async () => {
+    const out: number[] = [];
+    for (const t of ["tab-about", "tab-formula", "tab-rel"]) out.push((await d.getByTestId(t).boundingBox())!.y);
+    return out;
+  };
+  const [a, f, r] = await ys();
+  expect(a! < f! && f! < r!, "概要 → 式 → 関係 の順でない").toBe(true);
+  const rel = page.getByRole("radio", { name: "関係" });
+  await rel.click();
+  await expect(rel).toBeChecked();
+  // 関係の段の頭が、送る面（ページの中身）の上の端に来る
+  const fromTop = () =>
+    d.getByTestId("tab-rel").evaluate((el) => {
+      let p = el.parentElement;
+      while (p && getComputedStyle(p).overflowY !== "auto") p = p.parentElement;
+      return el.getBoundingClientRect().top - (p?.getBoundingClientRect().top ?? 0);
+    });
+  await expect.poll(fromTop, { message: "目次で関係の段へ送られない" }).toBeLessThan(40);
+  await d.getByTestId("tab-about").evaluate((el) => el.scrollIntoView({ block: "start" }));
+  await expect(page.getByRole("radio", { name: "概要" }), "送り戻しても目次が替わらない").toBeChecked();
+});

@@ -272,6 +272,9 @@ export default function Detail({
   // 面の段（src/steps.ts）：段1＝名前の1行の右に札 → 段2＝つまりと選んだ札の中身 → フル＝ふだんの形。関係図・一覧でも同じ面なので同じ段
   const compact = !!sheet && sheet.detent !== "full";
   const showLead = !compact || sheet?.detent === "half";
+  // 読むとき（全画面・広い画面）は、概要 → 式 → つながりを上から1本に並べる（stats2-course の issue 592 の段 2。渡辺さん 2026-11-24）。
+  // 切り替えは、その段へ送る目次として働く。段2（面の半分）では今までどおり1つの中身だけを見せる
+  const all = !compact;
   const peekOut = sheet ? Math.max(64, peekH + 32) : 0; // 段1：つまみ・名前と札の行の下まで
   // ← は来た段へ戻す（画面の原則 3・11）
   const lastStep = useRef<Detent>("peek");
@@ -315,6 +318,36 @@ export default function Detail({
     setTabRaw(t);
     reading();
   };
+  // 目次：その段の頭へ送る（1本のページの中の位置。画面の原則 3：戻ると離れたときのまま、は送った位置で保つ）
+  const restRef = useRef<HTMLDivElement>(null);
+  const jump = (t: Tab) =>
+    requestAnimationFrame(() =>
+      restRef.current?.querySelector(`[data-testid=tab-${t}]`)?.scrollIntoView({ block: "start" }),
+    );
+  // 目次の選びは、読んでいる段に合わせる（送るだけで替わる。押した段と見えている段を食い違わせない）
+  useEffect(() => {
+    if (!all) return;
+    const body = restRef.current?.parentElement;
+    if (!body) return;
+    const on = () => {
+      const top = body.getBoundingClientRect().top + 80;
+      let cur: Tab = "about";
+      for (const t of ["about", "formula", "rel"] as Tab[]) {
+        const el = restRef.current?.querySelector(`[data-testid=tab-${t}]`);
+        if (el && el.getBoundingClientRect().top <= top) cur = t;
+      }
+      setTabRaw((x) => (x === cur ? x : cur));
+    };
+    body.addEventListener("scroll", on, { passive: true });
+    return () => body.removeEventListener("scroll", on);
+  }, [all, c.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 段2で選んでいた中身のまま全画面へ上げたら、1本のページのその段から読む
+  const wasFull = useRef(false);
+  useEffect(() => {
+    const full = sheet?.detent === "full";
+    if (full && !wasFull.current && tabRaw !== "about") jump(tabRaw);
+    wasFull.current = full;
+  }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
   // 少しの段で中身に触れたら、読むために上まで上げる（押した所の操作はそのまま）
   // 押す所（問いの札・開く段・ボタン）は、その操作をそのまま通す（全画面のページに切り替えると、押した所が入れ替わって押しても効かなかった。#188 07a）
   const touch = (e: RPE) => {
@@ -432,7 +465,17 @@ export default function Detail({
         />
       </header>
       <div className={st.tabs} hidden={compact}>
-        <Segmented variant="tabs" value={tab} onChange={(v) => v && setTab(v as Tab)} label="概念の中身" items={tabs} />
+        <Segmented
+          variant="tabs"
+          value={tab}
+          onChange={(v) => {
+            if (!v) return;
+            setTab(v as Tab);
+            jump(v as Tab);
+          }}
+          label="概念の中身"
+          items={tabs}
+        />
       </div>
     </>
   );
@@ -461,6 +504,7 @@ export default function Detail({
   );
   const rest = (
     <div
+      ref={restRef}
       className={st.rest}
       onClick={
         compact
@@ -472,7 +516,7 @@ export default function Detail({
       }
     >
       {compact && showLead && leadBlock}
-      {tab === "about" && (
+      {(all || tab === "about") && (
         <div className={st.pane} data-testid="tab-about" onPointerDown={touch}>
           {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
           {!compact && leadBlock}
@@ -695,8 +739,9 @@ export default function Detail({
           </Muted>
         </div>
       )}
-      {tab === "formula" && (
+      {(all || tab === "formula") && (
         <div className={st.pane} data-testid="tab-formula">
+          {all && <h3 className={st.paneTitle}>式</h3>}
           {c.table_workspace && c.formulas?.[c.table_workspace.formula]?.tree && (
             <TableWorkspace
               key={c.id}
@@ -723,8 +768,9 @@ export default function Detail({
           {formulaList}
         </div>
       )}
-      {tab === "rel" && (
+      {(all || tab === "rel") && (
         <div className={st.pane} data-testid="tab-rel">
+          {all && <h3 className={st.paneTitle}>関係</h3>}
           {/* 前提をさかのぼる（stats2-course #588 B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧 */}
           {onTrace && traceCount ? (
             <ul className={st.rels}>
