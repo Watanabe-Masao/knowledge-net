@@ -312,28 +312,46 @@ export function layoutCategory(net: Network, category: string, opt: { lane?: num
         ];
       }
     } else {
+      // 縦の区間がほかの語のカードを貫かないように（渡辺さん 2026-11-24 の iPhone の画像：相関係数 → 回帰係数の線がダミー変数を貫いた。stats2-course #588）：
+      // 同じ列の下に語がある語からは横の溝へ出てから下り、2行目より下の語へは横の溝を下りて横の縁へ入る。溝は列の間（gx）：
+      // ふつうは右、右端の列は左（右端とまとまりの枠の間は狭く、矢じりが枠に詰まった）
+      const toRight = (T: TermBox) => T.c < cols - 1;
+      const gutter = (T: TermBox) => (toRight(T) ? T.x + T.w + gx / 2 : T.x - gx / 2);
+      const side = (T: TermBox) => (toRight(T) ? T.x + T.w : T.x);
+      const below = terms.some((t) => t.g === A.g && t.c === A.c && t.r > A.r);
+      const start = (y: number): Pt[] =>
+        below
+          ? [
+              { x: side(A), y: A.y + A.h / 2 },
+              { x: gutter(A), y: A.y + A.h / 2 },
+              { x: gutter(A), y },
+            ]
+          : [
+              { x: ax, y: A.y + A.h },
+              { x: ax, y },
+            ];
+      const end = (y: number): Pt[] =>
+        B.r > 0
+          ? [
+              { x: gutter(B), y },
+              { x: gutter(B), y: B.y + B.h / 2 },
+              { x: side(B), y: B.y + B.h / 2 },
+            ]
+          : [
+              { x: bx, y },
+              { x: bx, y: B.y },
+            ];
       const ga = groups[A.g]!;
       const yA = ga.y + ga.h + 24 + lane(`g${A.g}`) * LG;
-      if (B.g === A.g || B.g === A.g + 1)
-        pts = [
-          { x: ax, y: A.y + A.h },
-          { x: ax, y: yA },
-          { x: bx, y: yA },
-          { x: bx, y: B.y },
-        ];
+      if (B.g === A.g || B.g === A.g + 1) pts = [...start(yA), ...end(yA)];
       else {
         const gb = groups[B.g - 1]!;
         const yB = gb.y + gb.h + 24 + lane(`g${B.g - 1}`) * LG;
         const xr = right + lane("trunk") * LG;
-        pts = [
-          { x: ax, y: A.y + A.h },
-          { x: ax, y: yA },
-          { x: xr, y: yA },
-          { x: xr, y: yB },
-          { x: bx, y: yB },
-          { x: bx, y: B.y },
-        ];
+        pts = [...start(yA), { x: xr, y: yA }, { x: xr, y: yB }, ...end(yB)];
       }
+      // 同じ点が続く所（溝と縦の線が同じ x）を詰める
+      pts = pts.filter((p, k) => k === 0 || p.x !== pts[k - 1]!.x || p.y !== pts[k - 1]!.y);
     }
     e.types.sort((p, q) => rank(p) - rank(q));
     const type = e.types[0]!;
