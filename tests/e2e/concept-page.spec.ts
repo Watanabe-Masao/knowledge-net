@@ -456,3 +456,29 @@ test("全画面は概要 → 式 → 関係の1本、切り替えは目次で、
   await d.getByTestId("tab-about").evaluate((el) => el.scrollIntoView({ block: "start" }));
   await expect(page.getByRole("radio", { name: "概要" }), "送り戻しても目次が替わらない").toBeChecked();
 });
+
+// 確かめる対象：関係の段の小さな関係図で、右と左の列の点が中心の箱にかからない（画面の原則 6・12：押せる物と名前が隠れない）。
+// 想定する故障：名前の長い相手（パーセントポイント）の点が中心の箱の下に入り、名前が切れて押しにくい（2026-11-24、iPhone の割合のページ）。
+// 見つけ方：割合のページの関係図で、点の枠と中心の枠が重ならないこと（画面の上の実寸で測る）。
+// 既存との違い：ほかの関係図のテストは関係の行と点の数を見る
+// 検出の確かめ（2026-11-24）：右と左の列の幅の上限（SIDE_W）を外すと落ちることを見た
+test("関係の段の小さな関係図：右と左の点が中心の箱にかからない", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-ratio");
+  const d = page.getByTestId("detail");
+  await openTab(d, "関係");
+  const map = d.getByTestId("rel-map");
+  await expect(map).toBeVisible();
+  const center = (await map.locator("rect[class*=relMapCenter]").boundingBox())!;
+  const nodes = map.locator("[data-testid^=rel-node-] rect");
+  expect(await nodes.count()).toBeGreaterThan(0);
+  for (const r of await nodes.all()) {
+    const b = (await r.boundingBox())!;
+    const apart =
+      b.x + b.width <= center.x ||
+      b.x >= center.x + center.width ||
+      b.y + b.height <= center.y ||
+      b.y >= center.y + center.height;
+    expect(apart, `${await r.locator("xpath=..").getAttribute("aria-label")} が中心の箱にかかる`).toBe(true);
+  }
+});

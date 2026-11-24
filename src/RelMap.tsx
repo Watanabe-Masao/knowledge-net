@@ -80,13 +80,23 @@ export function RelMap({
   const keptOf = (k: Side) => allOf(k).slice(0, CAP[k]);
   const restOf = (k: Side) => Math.max(0, allOf(k).length - CAP[k]);
   // 名前の長い点が端からはみ出さないよう、箱の幅の分だけ内側に寄せる
-  const wOf = (r: MapRow) => Math.max(54, [...r.other].slice(0, 9).length * 12.5 + 20);
+  // 右と左の列の点は、中心の箱（幅 104）にかからない幅まで（名前は … で切る。2026-11-24、割合のページで「パーセントポイント」が中心の箱の下に隠れた）
+  const SIDE_W = cx - 52 - 8 - 4;
+  const wOf = (r: MapRow, k?: Side) =>
+    Math.min(
+      Math.max(54, [...r.other].slice(0, 9).length * 12.5 + 20),
+      k === "change" || k === "after" ? SIDE_W : W - 8,
+    );
+  const fit = (r: MapRow, k: Side) => {
+    const n = Math.floor((wOf(r, k) - 20) / 12.5);
+    return r.other.length > n ? `${r.other.slice(0, n - 1)}…` : r.other;
+  };
   const nodes = sides.flatMap((k) =>
     place(k, keptOf(k)).map((p) => ({
       ...p,
       r: p.r as MapRow & { group: string; tags: string[] },
       k,
-      x: Math.min(W - wOf(p.r) / 2 - 4, Math.max(wOf(p.r) / 2 + 4, p.x)),
+      x: Math.min(W - wOf(p.r, k) / 2 - 4, Math.max(wOf(p.r, k) / 2 + 4, p.x)),
     })),
   );
   const dim = (id: string) => !!sel && sel !== id;
@@ -172,7 +182,7 @@ export function RelMap({
               // 札は線の真ん中ではなく相手の点の手前に置く（右の点が多いと、真ん中は中心の近くに集まって重なる）。
               // 右の点が1つなら、点は中心と同じ高さで手前が中心の箱にかかるので、点の上に置く
               <text
-                x={oneChange ? x : x - wOf(r) / 2 - 4}
+                x={oneChange ? x : x - wOf(r, k) / 2 - 4}
                 y={oneChange ? y - 22 : y + 4}
                 textAnchor={oneChange ? "middle" : "end"}
                 className={st.relMapTag}
@@ -186,7 +196,7 @@ export function RelMap({
       })}
       {nodes.map(({ r, x, y, k }) => {
         const on = sel === r.id,
-          w = wOf(r);
+          w = wOf(r, k);
         return (
           <g
             key={`n${r.id}`}
@@ -215,7 +225,7 @@ export function RelMap({
               strokeWidth={on ? 2 : 1.2}
             />
             <text x={x} y={y + 4.5} textAnchor="middle" className={on ? st.relMapLabelOn : st.relMapLabel}>
-              {r.other.length > 9 ? `${r.other.slice(0, 8)}…` : r.other}
+              {fit(r, k)}
             </text>
           </g>
         );
