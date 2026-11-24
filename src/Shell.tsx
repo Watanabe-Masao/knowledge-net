@@ -130,27 +130,14 @@ export function Header({ title, sub, children }: { title: string; sub?: ReactNod
   );
 }
 
-/** いまいる所：分類 › 概念。分類を押すとその分類の地図へ */
-export function Crumbs({ items }: { items: { label: string; onClick?: () => void }[] }) {
-  if (!items.length) return null;
+/** 全画面のページの見出し：「← 題」（ページを積む形。← はブラウザの「戻る」と同じ。stats2-course の issue 599。前はパンくず） */
+export function PageBack({ title, onBack }: { title: string; onBack: () => void }) {
   return (
-    <nav className={s.crumbs} aria-label="いまいる所" data-testid="crumbs">
-      {items.map((it, i) => (
-        <span key={i} className={s.crumb}>
-          {i ? (
-            <span className={s.sep} aria-hidden="true">
-              /
-            </span>
-          ) : null}
-          {it.onClick && i < items.length - 1 ? (
-            <button type="button" onClick={it.onClick}>
-              {it.label}
-            </button>
-          ) : (
-            <b aria-current={i === items.length - 1 ? "page" : undefined}>{it.label}</b>
-          )}
-        </span>
-      ))}
+    <nav className={s.pageBack} aria-label="いまいる所" data-testid="page-back">
+      <button type="button" className={s.backBtn} onClick={onBack} aria-label="戻る" data-testid="page-back-btn">
+        ←
+      </button>
+      <h2>{title}</h2>
     </nav>
   );
 }

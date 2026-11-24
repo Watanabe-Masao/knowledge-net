@@ -19,7 +19,7 @@ import Search from "./Search";
 import { Button, ErrorText, Experiment, FullView, Muted, Sheet, subText } from "@math-lab/ui";
 import st from "./App.module.css";
 import { learnOrder, load, pairOpen, routeOf, trace, type Network } from "./data";
-import { Crumbs, Header, Icon } from "./Shell";
+import { Header, Icon, PageBack } from "./Shell";
 import { fromUrl, toUrl, type Layout, type Tab, type View } from "./urlState";
 
 const params = new URLSearchParams(location.search);
@@ -404,40 +404,8 @@ export default function App() {
               }}
             />
           ) : null}
-          <Crumbs
-            items={[
-              // いちばん上はライブラリ（入口）。ライブラリ → 分類 → 語 の3段をパンくずで示す（UI レビュー「地図の変更で見直した点」1）
-              ...(concept || group
-                ? [
-                    {
-                      label: "路線図",
-                      onClick: () => {
-                        setSel(null);
-                        setGroup(null);
-                      },
-                    },
-                  ]
-                : []),
-              ...(concept
-                ? [
-                    ...(concept.category
-                      ? [
-                          {
-                            label: concept.category,
-                            onClick: () => {
-                              setSel(null);
-                              setGroup(concept.category!);
-                            },
-                          },
-                        ]
-                      : []),
-                    { label: concept.name },
-                  ]
-                : group
-                  ? [{ label: group === "*" ? "分類" : group }]
-                  : []),
-            ]}
-          />
+          {/* 分類・ライブラリのページの見出しは「← 題」（関係図のページは、地図の左上の「← 分類名」が見出しを兼ねる。issue 599） */}
+          {group && !concept && !mapCat ? <PageBack title={group === "*" ? "分類" : group} onBack={back} /> : null}
         </div>
         {errors.map((e) => (
           <ErrorText key={e}>{e}</ErrorText>

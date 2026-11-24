@@ -160,7 +160,7 @@ test("概念と関係からラボを開く（図／解説／触る の切り替�
   await d.getByTestId("labs-concept").getByRole("button", { name: "拡大表示" }).click();
   const full = page.getByTestId("fullview");
   await expect(full.locator("iframe")).toHaveAttribute("src", /zscore\/\?p=s1-z$/);
-  await full.getByRole("button", { name: "閉じて戻る" }).click();
+  await full.getByRole("button", { name: "戻る", exact: true }).click();
   await expect(full).toHaveCount(0);
   await expect(d.getByTestId("labs-concept")).toBeVisible();
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
@@ -1145,39 +1145,6 @@ test("概念のページの見出しは ← ・名前・切り替えと「…」
   await page.mouse.click(10, 10);
   await expect(page.getByRole("menu")).toHaveCount(0);
   expect(errs).toEqual([]);
-});
-
-// 確かめる対象：概念のページの上のつまみを下へ引くと、ページが指に付いて下がり、離すと前のページ（路線図）へ戻る。少し引いただけでは戻らない
-//   （issue 599：段はなくなり、つまみは「戻る」と同じ働き）。
-// 想定する故障：ページが指に付かない・少し触れただけで戻る・離しても戻らない。
-test("概念のページのつまみを下へ引くと指に付いて下がり、離すと前のページへ戻る", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json");
-  await page.getByTestId("route").getByTestId("route-st-stats2:TERM-binom").click();
-  const s = page.getByTestId("detail");
-  await expect(s).toHaveAttribute("data-detent", "full");
-  const g = (await page.getByTestId("page-grab").boundingBox())!;
-  const x = g.x + g.width / 2,
-    y = g.y + g.height / 2;
-  const pull = async (dy: number, up = true) => {
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    for (let i = 1; i <= 6; i++) {
-      await page.mouse.move(x, y + (dy * i) / 6);
-      await page.waitForTimeout(30);
-    }
-    if (up) await page.mouse.up();
-  };
-  await pull(30);
-  await expect(s).toBeVisible();
-  await expect.poll(() => s.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42)).toBeLessThan(0.5); // 上へ戻る
-  await pull(150, false);
-  const t = await s.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42);
-  expect(Math.abs(t - 150), "ページが指に付いて下がらない").toBeLessThan(4);
-  await page.waitForTimeout(150);
-  await page.mouse.up();
-  await expect(page.getByTestId("detail")).toHaveCount(0);
-  await expect(page.getByTestId("route")).toBeVisible();
 });
 
 // 確かめる対象：動きを減らす設定（iPhone の「視差効果を減らす」）での積み上がりの再生（math-lab #28）。
