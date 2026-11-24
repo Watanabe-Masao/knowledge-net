@@ -57,6 +57,7 @@
 
 `npm run check`（math-lab の確認 → 見本の写し → デザインの決まり → vitest の単体テスト → build → Playwright の画面のテスト）。
 
+- **コメントに issue の番号を書くときは「issue 588」の形**（`#` と3〜8桁の数は、デザインの決まりの検査が色の値と読んで止める。2026-11-24 に2回止まった）。
 - **push の前は `npm run check:local`**：`npm run check` と同じ段を、手元にない webkit だけ外して走らせる（段の一部だけを走らせない。2026-11-24、デザインの決まりを見落として CI で止まった。stats2-course の issue 594）。
 - **CI**：速い段（`npm run check:fast`）を先に走らせ、その build で画面のテストを chromium と webkit に分けて並べて走らせる。画面のテストは Playwright の公式の実行環境（依存入り）で走らせ、版は @playwright/test と同じにする（.github/workflows/check.yml の container。Playwright の版を上げたら一緒に上げる）。
 

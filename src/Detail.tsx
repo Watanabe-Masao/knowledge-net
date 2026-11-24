@@ -779,7 +779,7 @@ export default function Detail({
       {(all || tab === "rel") && (
         <div className={st.pane} data-testid="tab-rel">
           {all && <h3 className={st.paneTitle}>関係</h3>}
-          {/* 前提をさかのぼる（stats2-course #588 B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧。
+          {/* 前提をさかのぼる（stats2-course の issue 588 の B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧。
               関係図で見る（issue 592 の段 3）：ホームは路線図になったので、分類の関係図にはここから降りる */}
           {(onTrace && traceCount) || (all && onMap) ? (
             <ul className={st.rels}>
