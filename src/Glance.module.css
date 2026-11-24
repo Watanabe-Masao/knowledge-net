@@ -44,7 +44,7 @@
 }
 .text {
   margin: 4px 0 0;
-  font-size: var(--fs-body, 15px);
+  font-size: var(--fs-body);
   line-height: 1.7;
 }
 .tex {
