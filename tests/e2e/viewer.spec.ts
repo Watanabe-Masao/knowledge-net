@@ -32,6 +32,8 @@ for (const scheme of ["light", "dark"] as const) {
     await expect(page.getByTestId("relation-map")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
     await page.getByTestId("relation-map").getByTestId("rm-term-stats2:TERM-binom").click();
+    await expect(page.getByTestId("glance")).toContainText("二項分布"); // 関係図で語を押すとひと目（issue 599）
+    await page.getByTestId("glance-open").click();
     await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
     await tab(page, /^式$/);
     await expect(page.getByTestId("detail").locator(".katex").first()).toBeVisible();
@@ -53,9 +55,9 @@ test("探して選ぶ・前提をさかのぼる", async ({ page }) => {
   await expect(page.getByRole("listbox", { name: "候補" })).toBeVisible();
   await page.getByRole("option", { name: /^標準化 / }).click(); // 「データの標準化」も候補に出る（stats2-course #312）。確率変数の標準化を選ぶ
   await expect(page.getByRole("listbox", { name: "候補" })).toHaveCount(0);
-  const m = page.getByTestId("relation-map");
-  await expect(m).toHaveAttribute("aria-label", "要約（代表値・ばらつき）の関係図");
-  await expect(m.getByTestId("rm-term-stats2:TERM-std")).toHaveAttribute("data-state", "sel");
+  // 探して選ぶと、その概念のページ（全画面。issue 599）
+  await expect(page.getByTestId("detail").locator("h2")).toHaveText("標準化");
+  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "full");
   await tab(page, /関係/);
   await page.getByTestId("trace-open").click();
   await expect(page).toHaveURL(/view=path/);
@@ -189,30 +191,33 @@ async function openQ(x: import("@playwright/test").Locator, key: string) {
 }
 /** 概念の中身の切り替え（概要・式・実験・つながり・教材）を選ぶ */
 const tab = (page: Page, name: RegExp) => openTab(page.getByTestId("detail"), name);
-/** 関係図が描き終わるまで待つ（島の地図を外した。stats2-course #588） */
-const settle = (page: Page) => expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
-// スマホの幅では詳しくは下からの面（#42）。中身を触るテストは、つまみを押して全部に広げてから
-const fullSheet = async (page: Page) => {
-  const s = page.getByTestId("detail");
-  for (let i = 0; i < 2 && (await s.getAttribute("data-detent")) !== "full"; i++)
-    await s.getByRole("button", { name: "広げる" }).click();
-  await expect(s).toHaveAttribute("data-detent", "full");
-};
+/** 開いたページが描き終わるまで待つ：概念のページ（?c= はいつも概念のページ。issue 599）か、関係図のページ */
+const settle = (page: Page) =>
+  expect(page.getByTestId("detail").or(page.locator("[data-testid=relation-map][data-ready=true]")).first()).toBeVisible();
+// 概念はいつも全画面のページ（issue 599）。中身を触るテストは、ページが出たのを待ってから
+const fullSheet = (page: Page) => expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "full");
 
-// 確かめる対象：どの入口から概念を開いても、その概念の分類の関係図で、その語を選んで開く（stats2-course #588。画面の原則 4）。
-// 想定する故障：Notion の 🕸 リンク（?c=）で関係図でなく何も出ない・ほかの分類の地図で開く・語が選ばれていない・関係図の分類の外の語へ移ると地図が替わらない。
-// 見つけ方：?c=二項分布 は確率分布の関係図で二項分布が選ばれている。つながりから組合せ（数学の道具）へ移ると、数学の道具の関係図に替わる
-test("🕸 リンク（c 付き）で開くと、その概念の分類の関係図で、その語を選んで開く", async ({ page }) => {
+// 確かめる対象：Notion の 🕸 リンク（?c=）で開くと、その概念のページ（全画面）で開き、「関係図で見る」でその概念の分類の関係図に、
+//   その語を選んだ形で降りる（issue 599：概念はいつも全画面のページ。前は ?c= で関係図の上の面で開いた）。
+// 想定する故障：?c= で何も出ない・関係図の上の面で開く・「関係図で見る」でほかの分類の地図・語が選ばれていない。
+// 見つけ方：?c=二項分布 は概念のページ。関係の段の「関係図で見る」で確率分布の関係図、二項分布が選ばれている（m=）。組合せは数学の道具の関係図
+test("🕸 リンク（c 付き）で開くと概念のページで、「関係図で見る」でその分類の関係図に語を選んで降りる", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 380, height: 800 });
-  await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
-  const m = page.getByTestId("relation-map");
-  await expect(m).toHaveAttribute("aria-label", "確率分布の関係図");
-  await expect(m.getByTestId("rm-term-stats2:TERM-binom")).toHaveAttribute("data-state", "sel");
+  for (const [id, cat] of [
+    ["binom", "確率分布"],
+    ["comb", "数学の道具"],
+  ] as const) {
+    await page.goto(`./?${SRC}&c=stats2:TERM-${id}`);
+    const d = page.getByTestId("detail");
+    await expect(d).toHaveAttribute("data-detent", "full");
+    await openTab(d, "関係");
+    await d.getByTestId("map-open").click();
+    const m = page.getByTestId("relation-map");
+    await expect(m).toHaveAttribute("aria-label", `${cat}の関係図`);
+    await expect(m.getByTestId(`rm-term-stats2:TERM-${id}`)).toHaveAttribute("data-state", "sel");
+  }
   await expect(page.getByTestId("graph")).toHaveCount(0);
-  await page.goto(`./?${SRC}&c=stats2:TERM-comb`);
-  await expect(m).toHaveAttribute("aria-label", "数学の道具の関係図");
-  await expect(m.getByTestId("rm-term-stats2:TERM-comb")).toHaveAttribute("data-state", "sel");
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(380);
   expect(errs).toEqual([]);
 });
@@ -231,11 +236,19 @@ test("つながり一覧からも同じ説明を開ける", async ({ page }) => 
   await expect(page.getByTestId("detail").getByRole("heading", { name: "超幾何分布", exact: true })).toBeVisible();
 });
 
-test("関係図で別の語を選び、「戻る」で前の概念へ", async ({ page }) => {
+// 確かめる対象：関係図のページから別の概念のページへ進み、「戻る」で関係図のページ、もう一度で前の概念のページ（issue 599：ページを積む）。
+// 想定する故障：戻ると関係図を飛ばして路線図へ・前の概念に戻らない・関係図の選びが消える。
+test("概念のページ → 関係図 → 別の概念のページ、「戻る」で関係図、もう一度で前の概念のページ", async ({ page }) => {
+  await page.goto(`./?${SRC}`);
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
-  await settle(page);
+  await openTab(page.getByTestId("detail"), "関係");
+  await page.getByTestId("map-open").click();
   await page.getByTestId("relation-map").getByTestId("rm-term-stats2:TERM-poisson").click();
+  await page.getByTestId("glance-open").click();
   await expect(page.getByTestId("detail").getByRole("heading", { name: "ポアソン分布", exact: true })).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId("relation-map")).toBeVisible();
+  await expect(page).toHaveURL(/m=stats2%3ATERM-poisson/);
   await page.goBack();
   await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
 });
@@ -383,8 +396,8 @@ test("押した瞬間に少し沈み、動きを減らす設定では動かな�
 
 test("説明のシートは指で動かせる：上へ引くと全体、下へ払うと閉じる", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
-  // 概念のページを段1のまま2つの概念のページを開くと下からの面（概念のページ〔全画面〕から開くと全画面のページ。#188 07a）
-  await page.goto(`./?${SRC}&c=stats2:TERM-binom&cmp=stats2:TERM-binom,stats2:TERM-poisson`);
+  // 概念を選んでいないとき（前の比較の URL）に2つの概念のページを開くと下からの面（概念のページから開くと全画面のページ。issue 599）
+  await page.goto(`./?${SRC}&cmp=stats2:TERM-binom,stats2:TERM-poisson`);
   const panel = page.getByTestId("edge-panel");
   await expect(panel).toHaveAttribute("data-detent", "half");
   // 面の動きが止まるまで待つ：位置が 150ms 変わらない（getAnimations は中の部品の動きも数え、待ちが伸びて時間切れになることがあった）
@@ -422,7 +435,7 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
   for (let i = 1; i <= 8; i++) await page.mouse.move(b2.x + 30, b2.y + 9 + 50 * i);
   await page.mouse.up();
   await expect(panel).toHaveCount(0);
-  await expect(page.getByTestId("detail").getByRole("heading", { name: "二項分布", exact: true })).toBeVisible();
+  await expect(page.getByTestId("route")).toBeVisible(); // 概念を選んでいないので、閉じると路線図（issue 599）
 });
 
 // 式を触る（#72）：記号を押すと意味と概念、値を入れると右辺を1段ずつ計算する
@@ -1109,19 +1122,19 @@ test("分類のライブラリから分類を開き、骨格の概念は定義1�
   expect(errs).toEqual([]);
 });
 
-// 詳しく（stats2-course #42・渡辺さん 2026-10-31／11-01）：動かない見出しは名前の1行と切り替え（概要・式・つながり）だけ。使うことの少ない操作は「…」に
-test("詳しく：見出しは名前と切り替えだけ、ほかは「…」", async ({ page }) => {
+// 確かめる対象：概念のページの見出しは ← ・名前・切り替え（目次）と「…」だけ（stats2-course #42。issue 599 で概念はいつも全画面のページ）。
+// 想定する故障：見出しに学ぶ行動のボタンが並ぶ・「…」の中身が違う・面の札（概要・式・関係の段の札）が残る。
+test("概念のページの見出しは ← ・名前・切り替えと「…」だけ", async ({ page }) => {
   const errs = noErrors(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
   const det = page.getByTestId("detail");
   await expect(det).toContainText("確率分布・U14 U15 U19");
-  // 段1は名前の1行の右に札（概要・式・関係）。札を押すと段2、もう一度でフル（ふだんの形の切り替えの帯）
-  await expect(det.getByTestId("detail-chips").getByRole("button")).toHaveText(["概要", "式", "関係"]);
-  // 学ぶ行動（実験・問題・単元）は詳しくに置かない（下のタブと同じ機能を2か所に置かない）
+  await expect(det.getByTestId("detail-chips")).toHaveCount(0);
+  await expect(det.getByRole("radio", { name: /^(概要|式|関係)$/ })).toHaveText(["概要", "式", "関係"]);
+  await expect(det.getByTestId("detail-to-map")).toBeVisible();
   await expect(det.getByRole("button", { name: "実験してみる" })).toHaveCount(0);
   await expect(det.getByRole("link", { name: /問題を解く|単元で読む/ })).toHaveCount(0);
-  await expect(det.getByRole("button", { name: "前提をさかのぼる" })).toHaveCount(0);
   await det.getByRole("button", { name: "ほかの操作" }).click();
   await expect(page.getByRole("menu")).toBeVisible();
   await expect(page.getByRole("menuitem")).toHaveCount(2);
@@ -1130,64 +1143,14 @@ test("詳しく：見出しは名前と切り替えだけ、ほかは「…」",
   expect(errs).toEqual([]);
 });
 
-test("スマホ：詳しくは地図に重なる下からの面で、段を動かせる", async ({ page }) => {
-  const errs = noErrors(page);
+// 確かめる対象：概念のページの上のつまみを下へ引くと、ページが指に付いて下がり、離すと前のページ（路線図）へ戻る。少し引いただけでは戻らない
+//   （issue 599：段はなくなり、つまみは「戻る」と同じ働き）。
+// 想定する故障：ページが指に付かない・少し触れただけで戻る・離しても戻らない。
+test("概念のページのつまみを下へ引くと指に付いて下がり、離すと前のページへ戻る", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json");
+  await page.getByTestId("route").getByTestId("route-st-stats2:TERM-binom").click();
   const s = page.getByTestId("detail");
-  await expect(s).toHaveAttribute("data-detent", "peek");
-  await expect(s.getByTestId("detail-chips")).toBeInViewport(); // 段1は名前の1行と、右に札（渡辺さん 2026-11-07）
-  await expect
-    .poll(async () => {
-      const b = (await s.boundingBox())!;
-      return b.y + b.height;
-    })
-    .toBeLessThanOrEqual(845); // 画面の下の端に乗る（下のタブはなくした。出てくる動きが止まってから）
-  await s.getByRole("button", { name: "広げる" }).click();
-  await expect(s).toHaveAttribute("data-detent", "half");
-  // 見出しをつかんで上へ速く払う → 全部
-  const h = (await s.getByRole("heading", { name: "二項分布", exact: true }).boundingBox())!;
-  await page.mouse.move(h.x + 4, h.y + 4);
-  await page.mouse.down();
-  for (const dy of [20, 60, 140]) await page.mouse.move(h.x + 4, h.y + 4 - dy);
-  await page.mouse.up();
-  await expect(s).toHaveAttribute("data-detent", "full");
-  // 上まで上げると面を重ねず全画面のページ。← で地図（少しの段）へ戻る（#188 07a）
-  // 画面の下の端まで覆い、押しても後ろの地図に届かない（画面の下の端の点がページの中）
-  expect(
-    await page.evaluate(
-      () => !!document.elementFromPoint(innerWidth / 2, innerHeight - 10)?.closest("[data-testid=detail]"),
-    ),
-  ).toBe(true);
-  // ← は来た段（段2）へ戻る（画面の原則 3）。フルの上のつまみも同じ（渡辺さん 2026-11-07）
-  await s.getByTestId("detail-to-map").click();
-  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "half");
-  await s.getByRole("button", { name: "広げる" }).click();
-  await expect(s).toHaveAttribute("data-detent", "full");
-  await page.getByTestId("page-grab").click();
-  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "half");
-  await page.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click(); // 段2で選んでいる札をもう一度 → フル
-  await expect(s).toHaveAttribute("data-detent", "full");
-  // 別の概念を選ぶと少しの段から
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-poisson");
-  await expect(page.getByTestId("detail")).toHaveAttribute("data-detent", "peek");
-  expect(errs).toEqual([]);
-});
-
-// 確かめる対象：フルのページの上のつまみを下へ引くと、ページが指に付いて下がり、離すと面がその高さから段へ動く（渡辺さん 2026-11-07「ストっと落ちる」）。
-// 想定する故障：引いても動かない（40px で急に段へ切り替わる）。離すと面が下から出直す・段の高さへ一瞬で落ちる。少しだけ引いても戻らない。
-// 見つけ方：つまみを 30px 引いて離すとフルのまま。150px 引く間はページが指の分だけ下がる（transform）。離した直後の面は段2より高く、
-//   そのあと段2の高さまで下がる（高さの動きはばね）。
-// 既存との違い：上のテストはつまみを押す・← だけ（指で引く動きは見ていない）
-// 検出の確かめ（2026-11-07）：面に出だしの高さ（from）を渡す処理を外すと「離した直後の面が段2の高さ」で落ちることを見た
-test("フルのつまみを引くと指に付いて下がり、面はその高さから段へ動く", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
-  const s = page.getByTestId("detail");
-  await expect(s).toHaveAttribute("data-detent", "peek");
-  await s.getByRole("button", { name: "広げる" }).click();
-  await expect(s).toHaveAttribute("data-detent", "half");
-  await s.getByRole("button", { name: "広げる" }).click();
   await expect(s).toHaveAttribute("data-detent", "full");
   const g = (await page.getByTestId("page-grab").boundingBox())!;
   const x = g.x + g.width / 2,
@@ -1202,19 +1165,15 @@ test("フルのつまみを引くと指に付いて下がり、面はその高�
     if (up) await page.mouse.up();
   };
   await pull(30);
-  await expect(s).toHaveAttribute("data-detent", "full");
+  await expect(s).toBeVisible();
   await expect.poll(() => s.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42)).toBeLessThan(0.5); // 上へ戻る
   await pull(150, false);
   const t = await s.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m42);
   expect(Math.abs(t - 150), "ページが指に付いて下がらない").toBeLessThan(4);
-  await page.waitForTimeout(150); // 止めてから離す（投げにしない）
+  await page.waitForTimeout(150);
   await page.mouse.up();
-  await expect(s).toHaveAttribute("data-detent", "half");
-  const h0 = await s.evaluate((el) => el.getBoundingClientRect().height);
-  await page.waitForTimeout(1200); // ばねで止まるまで
-  const hf = await s.evaluate((el) => el.getBoundingClientRect().height);
-  expect(h0, "離した直後の面が段2の高さ（一瞬で落ちた）").toBeGreaterThan(hf + 100);
-  expect(hf).toBeCloseTo(Math.round(844 * 0.55), -1);
+  await expect(page.getByTestId("detail")).toHaveCount(0);
+  await expect(page.getByTestId("route")).toBeVisible();
 });
 
 // 確かめる対象：動きを減らす設定（iPhone の「視差効果を減らす」）での積み上がりの再生（math-lab #28）。
@@ -1256,19 +1215,23 @@ test("スマホで概念を選んでいる間は、ページが縦に送れず�
   expect(await page.evaluate(() => scrollY)).toBeGreaterThan(0);
 });
 
-// 確かめる対象：ブラウザの「戻る」で URL に持つ状態が全部戻る（stats2-course #142）。想定する故障：popstate で分類（g）・並べ方（lv）を戻さず、
-// 戻ったページが前の分類のページにならない。見つけ方：分類のページ（地図）で語を選び（履歴に積む）、戻ると、同じ分類の地図で語の選びがない
-test("戻ると、分類のページも URL のとおりに戻る", async ({ page }) => {
+// 確かめる対象：ブラウザの「戻る」で URL に持つ状態が全部戻る（stats2-course #142）。想定する故障：popstate で分類（g）・並べ方（lv）・
+// 関係図の選び（m）を戻さず、戻ったページが前の関係図にならない。見つけ方：関係図のページで語を選び、ひと目からその概念のページへ進んで戻ると、
+// 同じ分類の関係図で同じ語を選んでいる
+test("戻ると、関係図のページも URL のとおりに戻る", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布"));
   const m = page.getByTestId("relation-map");
   await expect(m).toHaveAttribute("aria-label", "確率分布の関係図");
   await m.getByTestId("rm-term-stats2:TERM-rv").click(); // 上のまとまりの語（下の札の帯に重ならない所）
+  await expect(page).toHaveURL(/m=stats2%3ATERM-rv/);
+  await page.getByTestId("glance-open").click();
   await expect(page).toHaveURL(/c=stats2%3ATERM-rv/);
   await page.goBack();
   await expect(page).not.toHaveURL(/c=stats2/);
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
   await expect(page).toHaveURL(/lv=map/);
+  await expect(page).toHaveURL(/m=stats2%3ATERM-rv/);
   await expect(m).toHaveAttribute("aria-label", "確率分布の関係図");
 });
 

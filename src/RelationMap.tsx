@@ -78,7 +78,7 @@ export function Name({ text }: { text: string }) {
 }
 
 /** 分類ごとの最後の見え方（同じ画面の中だけ。開き直したときに戻す） */
-const memo = new Map<string, { net: unknown; page: boolean; v: { k: number; x: number; y: number } }>();
+const memo = new Map<string, { net: unknown; page: boolean; pick?: string; v: { k: number; x: number; y: number } }>();
 /** たどった道（分類ごと。選んだ概念を古い順に。最後が今の概念）。戻っても、離れたときのまま（画面の原則 3） */
 const trails = new Map<string, string[]>();
 /** たどった道に残す数（今の概念を入れて。メニューに出すのは前の5つまで。画面の原則 15） */
@@ -265,16 +265,22 @@ export default function RelationMap({
     return { k, x: (W - L.w * k) / 2 + c.left, y: (page ? 52 : 0) + c.top };
   };
   // 戻ると、離れたときのまま（画面の原則 3）：分類ごとに最後の見え方を覚え、開き直したらそこから（帯を引っ込めた分は除いて覚える）
+  const restored = useRef<string | null>(null);
   useLayoutEffect(() => {
     if (height === undefined) return;
     const m = memo.get(category);
-    setV(m && m.net === net && m.page === page ? m.v : start());
+    const same = !!m && m.net === net && m.page === page;
+    // 同じ語を選んだまま戻ったときは、寄り直さない（ページを積む形では、戻ると関係図を開き直す。stats2-course の issue 599）
+    restored.current = same && !!m!.pick ? m!.pick : null;
+    // 覚えた見え方は帯を引っ込めた分を除いてある。開き直した時点で帯を引っ込めていれば（語を選んだまま戻った）、その分を足す
+    const c = calmRef.current ? calmTop.current : { top: 0, left: 0 };
+    setV(same ? { ...m!.v, x: m!.v.x + c.left, y: m!.v.y + c.top } : start());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [L, height === undefined]);
   useEffect(() => {
     if (!v) return;
     const c = calmRef.current ? calmTop.current : { top: 0, left: 0 };
-    memo.set(category, { net, page, v: { k: v.k, x: v.x - c.left, y: v.y - c.top } });
+    memo.set(category, { net, page, pick: selected ?? undefined, v: { k: v.k, x: v.x - c.left, y: v.y - c.top } });
   });
 
   // ---- 指の操作（画面の原則 2。設計書 3「操作」）----
@@ -518,6 +524,9 @@ export default function RelationMap({
   const fitKey = pick && selected === pick ? pick : "";
   useEffect(() => {
     if (!fitKey || !vRef.current) return;
+    const back = restored.current === fitKey;
+    restored.current = null;
+    if (back) return;
     const id = setTimeout(() => {
       const { W, H } = size();
       const nv = fitPick(L, fitKey, types, { W, H, bottom: bottomOf(), top: topOf(), k: vRef.current!.k });

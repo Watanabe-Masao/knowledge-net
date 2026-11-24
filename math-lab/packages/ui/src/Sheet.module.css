@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 11;
+  z-index: 55; /* 全画面のページ（40〜50）の上に開く。ひと目（60）より下（stats2-course の issue 599） */
   display: flex;
   flex-direction: column;
   background: var(--raised);
@@ -106,7 +106,7 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  z-index: 54;
   background: var(--scrim);
   opacity: 0;
   pointer-events: none;

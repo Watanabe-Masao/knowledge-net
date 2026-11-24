@@ -171,7 +171,7 @@ test("分類の地図は関係図で、語を選んでも関係図のまま。�
   await expect(page.getByTestId("graph")).toHaveCount(0);
   for (const g of ["base", "count", "wait", "cont"]) await expect(m.getByTestId(`rm-group-${G(g)}`)).toBeVisible();
   await m.getByTestId(`rm-term-${T("binom")}`).click();
-  await expect(page.getByTestId("detail")).toBeVisible();
+  await expect(page.getByTestId("glance")).toBeVisible(); // 関係図のページで語を押すとひと目（issue 599）
   await expect(page.getByTestId("graph")).toHaveCount(0);
   const text = await m.getByTestId("rm-canvas").innerText();
   for (const ng of ["比べる", "を移すと", "の特別な場合", "定義に使われる"])
@@ -191,13 +191,13 @@ test("分類の地図は関係図で、語を選んでも関係図のまま。�
 //   全部の名前が画面の上で 11px 以上。
 // 既存との違い：単体テストは同じことを計算で。ここは描いた結果（CSS の変形・SVG の位置・App の面）がそのとおりか
 // 検出の確かめ（2026-11-06）：線の svg を 10px 下へずらすと、縁の確かめで落ちることを見た。名前を 11px に戻すと、実寸の確かめで落ちることを見た
-test("語を押すと、線を濃く・相手を種類の色に・ほかを灰色にし、下の面に詳しくを出して、読める倍率で面の上へ寄る", async ({
+test("語を押すと、線を濃く・相手を種類の色に・ほかを灰色にし、下にひと目を出して、読める倍率でひと目の上へ寄る", async ({
   page,
 }) => {
   const m = await open(page);
   await m.getByTestId(`rm-term-${T("binom")}`).click();
-  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
-  await expect(page.getByTestId("detail")).toContainText("二項分布");
+  await expect(page).toHaveURL(/m=stats2%3ATERM-binom/); // 関係図のページの選び（?m=。概念のページは開かない。issue 599）
+  await expect(page.getByTestId("glance")).toContainText("二項分布");
   await still(page);
   await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("data-state", "sel");
   await expect(m.getByTestId(`rm-term-${T("poisson")}`)).toHaveAttribute("data-state", "near");
@@ -209,11 +209,12 @@ test("語を押すと、線を濃く・相手を種類の色に・ほかを灰�
   expect(Number(await m.getByTestId("rm-canvas").getAttribute("data-k"))).toBeGreaterThanOrEqual(0.8);
   const r = await rectOf(page, T("binom"));
   const view = (await m.boundingBox())!;
-  const sheet = (await page.getByTestId("detail").boundingBox())!;
+  await page.waitForTimeout(400); // ひと目が出きってから測る
+  const sheet = (await page.getByTestId("glance").boundingBox())!;
   expect(r.x).toBeGreaterThanOrEqual(view.x);
   expect(r.x + r.w).toBeLessThanOrEqual(view.x + view.width);
   expect(r.y).toBeGreaterThanOrEqual(view.y);
-  expect(r.y + r.h, "選んだ語が下の面の下に隠れる").toBeLessThanOrEqual(sheet.y);
+  expect(r.y + r.h, "選んだ語がひと目の下に隠れる").toBeLessThanOrEqual(sheet.y);
   const tiny = await m.evaluate((el) =>
     [...el.querySelectorAll<HTMLElement>("[data-cv] b")]
       .map((b) => {
@@ -290,7 +291,7 @@ test("ダブルタップ：まとまりの中はそのまとまりへ、外は�
 //   もう1回 → 選びが外れ、下の面が消え、帯が全部戻る。もう1回 → 帯が全部引っ込み、語の画面の位置は同じ。引っ込んだ状態で幾何分布を1回押す
 //   → 選ばれ、上の帯だけ引っ込んだ形。既存との違い：ほかのテストは帯が出ている状態だけ
 // 検出の確かめ（2026-11-07）：空いた所で面を1段下げる処理（onBlank）を外すと、段2から段1へ下がらずに選びが外れて落ちることを見た
-test("空いた所のタップは1段戻す・選ぶと上の帯が引っ込む・地図を動かすと全部引っ込む・時間では変わらない", async ({
+test("空いた所のタップは帯を戻してから選びを外す・選ぶと上の帯が引っ込む・地図を動かすと全部引っ込む・時間では変わらない", async ({
   page,
 }) => {
   const m = await open(page);
@@ -299,14 +300,8 @@ test("空いた所のタップは1段戻す・選ぶと上の帯が引っ込む�
   await m.getByTestId(`rm-term-${T("binom")}`).click();
   await still(page);
   await expect.poll(() => bars(page)).toBe("top");
-  const det = page.getByTestId("detail");
-  await det.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click();
-  await expect(det).toHaveAttribute("data-detent", "half");
-  await page.waitForTimeout(600);
-  const bh = await blank(page);
-  await page.mouse.click(bh.x, Math.min(bh.y, ((await det.boundingBox())!.y as number) - 30));
-  await expect(det).toHaveAttribute("data-detent", "peek");
-  await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("aria-pressed", "true");
+  const det = page.getByTestId("glance"); // 関係図のページの下に出るのはひと目だけ（面の段はなくした。issue 599）
+  await expect(det).toBeVisible();
   await page.waitForTimeout(500);
   const b0 = await blank(page);
   await fingers(
@@ -339,30 +334,28 @@ test("空いた所のタップは1段戻す・選ぶと上の帯が引っ込む�
   await expect.poll(() => bars(page)).toBe("top");
 });
 
-// 確かめる対象：段2で別の語を選んでも段2のまま（渡辺さん 2026-11-07「2段目を維持」。画面の原則 3）。
-// 想定する故障：語を替えるたびに段1へ戻る・中身が前の語のまま。見つけ方：二項分布で札「式」を押して段2、ポアソン分布を押すと段2のままで
-//   名前がポアソン分布。既存との違い：上のテストは段を下げる側だけ
-// 検出の確かめ（2026-11-07）：語が替わったら段1にする前の形に戻すと落ちることを見た
-test("段2で別の語を選んでも段2のまま、中身はその語に替わる", async ({ page }) => {
+// 確かめる対象：関係図のページで語を押し直すと、ひと目はその語に替わり、来た道（‹）を作らない（関係図の選び直しは寄り道ではない。issue 599）。
+// 想定する故障：押し直すたびにひと目の来た道が積まれ、‹ で前の語へ戻る形になる・ひと目が前の語のまま・URL の選び（?m=）が替わらない。
+// 見つけ方：二項分布 → ベルヌーイ分布と押すと、ひと目はベルヌーイ分布で、来た道（glance-trail）がない。URL は m=ベルヌーイ分布。
+// 既存との違い：glance.spec はページの文の札からひと目の中の語へ進む形（来た道を作る）
+test("関係図で語を押し直すと、ひと目はその語に替わり、来た道を作らない", async ({ page }) => {
   const m = await open(page);
   await m.getByTestId(`rm-term-${T("binom")}`).click();
   await still(page);
-  const det = page.getByTestId("detail");
-  await det.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true }).click();
-  await expect(det).toHaveAttribute("data-detent", "half");
-  await still(page);
-  await m.getByTestId(`rm-term-${T("bernoulli")}`).click();
-  await expect(det.getByRole("heading", { level: 2 })).toHaveText("ベルヌーイ分布");
-  await expect(det).toHaveAttribute("data-detent", "half");
+  await m.getByTestId(`rm-term-${T("bernoulli")}`).click({ position: { x: 20, y: 12 } });
+  const g = page.getByTestId("glance");
+  await expect(g).toContainText("ベルヌーイ分布");
+  await expect(g.getByTestId("glance-trail")).toHaveCount(0);
+  await expect(page).toHaveURL(/m=stats2%3ATERM-bernoulli/);
 });
 
 // 確かめる対象：戻ると、離れたときのまま（画面の原則 3。#239 の入れる順 2）。
-// 想定する故障：フル（全画面のページ）の間に地図が寄り直し、戻ると選んだ概念の位置が変わる。ライブラリへ出て戻ると、
-//   初めの見え方に戻る（指で動かした所が消える）。概念を選んでいると URL から並べ方（lv=map）が消え、ブラウザで戻る・進むと関係図でなくなる。
-// 見つけ方：ポアソン分布を選んで段2にし、指で少し動かしてから、その画面の上の位置を測る。フルへ行って ← で戻り、同じ位置か。URL に lv=map が残るか。
-//   選びを外して地図を指で動かし、ライブラリへ出てブラウザで戻ると、動かした後の位置か。既存との違い：段のテストは面の高さだけを見る
-// 検出の確かめ（2026-11-07）：フルの前後で寄り直さない処理を外すと1つ目、分類ごとの見え方を覚える処理を外すと2つ目で落ちることを見た
-test("戻ると離れたときのまま：フルから戻っても、路線図へ出て戻っても、地図の見え方は同じ", async ({ page }) => {
+// 想定する故障：概念のページへ進んで ← で戻ると、関係図が寄り直して選んだ語の位置が変わる・選び（?m=）が消える。路線図へ出て戻ると、
+//   初めの見え方に戻る（指で動かした所が消える）。
+// 見つけ方：二項分布を選び、指で少し動かしてから画面の上の位置を測る。ひと目の「ページを開く」→ ← で戻り、同じ位置で m=二項分布。
+//   選びを外して地図を指で動かし、路線図へ出てブラウザで戻ると、動かした後の位置か。既存との違い：ほかのテストは1つの画面の中の動き
+// 検出の確かめ（2026-11-07）：分類ごとの見え方を覚える処理を外すと落ちることを見た（概念のページから戻る形は issue 599 で書き直した）
+test("戻ると離れたときのまま：概念のページから戻っても、路線図へ出て戻っても、地図の見え方は同じ", async ({ page }) => {
   const m = await open(page);
   const at = async (id: string) => {
     const r = (await m.getByTestId(`rm-term-${T(id)}`).boundingBox())!;
@@ -370,12 +363,6 @@ test("戻ると離れたときのまま：フルから戻っても、路線図�
   };
   await m.getByTestId(`rm-term-${T("binom")}`).click();
   await still(page);
-  const det = page.getByTestId("detail");
-  const chip = det.getByTestId("detail-chips").getByRole("button", { name: "概要", exact: true });
-  await chip.click();
-  await expect(det).toHaveAttribute("data-detent", "half");
-  await still(page);
-  // 指で少し動かしてから（自分で動かした所を覚えているか）、空いた所の1回で面を戻す
   const bs = await blank(page);
   await fingers(
     page,
@@ -387,26 +374,19 @@ test("戻ると離れたときのまま：フルから戻っても、路線図�
   const bs2 = await blank(page);
   await page.mouse.click(bs2.x, Math.min(bs2.y, 300));
   await expect.poll(() => bars(page)).toBe("top");
-  await expect(det).toHaveAttribute("data-detent", "half");
   await still(page);
   const p0 = await at("binom");
   expect(page.url()).toContain("lv=map");
-  await chip.click();
+  await page.getByTestId("glance-open").click();
   await expect(page.locator('[data-testid=detail][data-detent="full"]')).toHaveCount(1);
-  await page.waitForTimeout(600);
   await page.getByTestId("detail-to-map").click();
-  await expect(det).toHaveAttribute("data-detent", "half");
+  await expect(page.getByTestId("relation-map")).toHaveAttribute("data-ready", "true");
+  await expect(page).toHaveURL(/m=stats2%3ATERM-binom/);
   await still(page);
-  expect(await at("binom"), "フルから戻ると位置が変わる").toEqual(p0);
-  // 選びを外し、地図を指で動かしてからライブラリへ出て、ブラウザで戻る
-  // 選びを外す2回は、まとまり・語・線のどれにも当たらない所を毎回探して押す（決め打ちの右端だと、WebKit で線や語の当たりに
-  // 掛かって別の物を開き、地図が消えて次の blank が時間切れになった。stats2-course #418 の3回目、2026-11-15）
+  expect(await at("binom"), "概念のページから戻ると位置が変わる").toEqual(p0);
   const b = await outside(page);
   await page.mouse.click(b.x, b.y);
-  await expect(det).toHaveAttribute("data-detent", "peek");
-  const b1 = await outside(page);
-  await page.mouse.click(b1.x, b1.y);
-  await expect(det).toHaveCount(0);
+  await expect(m.getByTestId(`rm-term-${T("binom")}`)).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByTestId("relation-map"), "選びを外したのに地図が消えた（別の物を押した）").toBeVisible();
   await expect.poll(() => bars(page)).toBe("shown");
   await page.waitForTimeout(500);
@@ -651,32 +631,24 @@ test("全体の見え方：引くとまとまりの名前と1本の矢印。矢�
   await expect(page.getByTestId("edge-panel")).toBeVisible();
 });
 
-// 確かめる対象：現在地（stats2-course #588。渡辺さん 2026-11-24「1で」）。語を選ぶと上の帯（パンくず・並べ方の切り替え）が引っ込むので、
-//   地図の左上に分類の印と名前を出し、押すと分類のページ（正方形・一覧・地図の切り替えのある画面）へ戻る。
-// 想定する故障：語を選んでも現在地が出ない・分類名が違う・押しても分類のページに戻らない（語の選びが残る）・
-//   1つ前へ戻る ‹ と同じ所に重なる・押せる所が 44px 未満。
-// 見つけ方：Notion のリンク（?c=二項分布）で開くと、左上に「確率分布」。押せる所は 44px 以上。もう1つ語を選ぶと ‹ が出て、現在地の下にあり重ならない。
-//   現在地を押すと c が外れ、g=確率分布、並べ方の切り替え（一覧）が見える。
-// 既存との違い：たどった道のテストは ‹ の働きだけを見る
-test("現在地：語を選ぶと左上に分類名、押すと分類のページへ（一覧に切り替えられる）", async ({ page }) => {
+// 確かめる対象：関係図のページの左上の「← 分類名」（issue 599：← はどのページでも1つ。前は分類の印と名前の現在地と、たどった道の ‹ の2つ）。
+// 想定する故障：← がない・分類名が違う・押す所が 44px 未満・たどった道の ‹ が残る・直接開いたページの ← でサイトの外へ出る。
+// 見つけ方：共有の URL（?g=確率分布&lv=map&m=二項分布）で開くと左上に「← 確率分布」。別の語を押しても ‹ は出ない。← で路線図。
+// 既存との違い：route.spec の ← は概念のページの ←
+test("関係図のページの左上は「← 分類名」で、ほかのページと同じ ← （たどった道の ‹ は出さない）", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("./?src=sample/stats2.json&c=stats2:TERM-binom");
+  await page.goto("./?src=sample/stats2.json&g=" + encodeURIComponent("確率分布") + "&lv=map&m=stats2:TERM-binom");
   const m = page.getByTestId("relation-map");
   await expect(m).toHaveAttribute("data-ready", "true");
   const cat = page.getByTestId("rm-cat");
-  await expect(cat).toHaveText("確率分布");
-  const cb = (await cat.boundingBox())!;
-  expect(cb.height).toBeGreaterThanOrEqual(44);
+  await expect(cat).toContainText("確率分布");
+  await expect(cat).toContainText("←");
+  expect((await cat.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await m.getByTestId(`rm-term-${T("bernoulli")}`).click({ position: { x: 20, y: 12 } });
-  const back = page.getByTestId("rm-trail-back");
-  await expect(back).toBeVisible();
-  const bb = (await back.boundingBox())!;
-  expect(bb.y, "‹ が現在地に重なる").toBeGreaterThanOrEqual(cb.y + cb.height);
+  await still(page);
+  await expect(page.getByTestId("rm-trail-back"), "たどった道の ‹ が出る").toHaveCount(0);
   await cat.click();
-  await expect(page).not.toHaveURL(/c=stats2/);
-  await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
-  await expect(page.getByRole("radio", { name: /一覧/ })).toBeVisible();
-  await expect(cat).toHaveCount(0);
+  await expect(page.getByTestId("route")).toBeVisible();
 });
 
 // 確かめる対象：現在地と ‹ が、寄ったあとの語を隠さない（画面の原則 12：押せる物は押せる見た目のまま）。
@@ -699,48 +671,6 @@ test("現在地と ‹ の下に、寄ったあとの語を置かない", async 
     if (!r || r.x > cb.x + cb.width || r.y + r.height < 0) continue;
     expect(r.y, `${await t.getAttribute("aria-label")} が左上の操作の下に入る`).toBeGreaterThanOrEqual(clear);
   }
-});
-
-// 確かめる対象：たどった道（設計書 3：見てきた道は置かず、← の長押しでたどった道。渡辺さん 2026-11-07）。
-// 想定する故障：← が出ない・1つ前に戻らない・戻ったのに道に積み直して ← が行き来する。長押しでメニューが出ない・新しい順でない・
-//   選んだ所へ戻らない。長押しのあとの「押した」で、さらに1つ戻ってしまう。概念が1つだけのときにも ← が出る。
-// 見つけ方：二項分布だけ選んだときは ← がない。二項分布 → ベルヌーイ分布 → 超幾何分布と選ぶと ← が出て、押すとベルヌーイ分布、もう一度で二項分布
-//   （← が消える）。また3つ選んで ← を長押しすると「たどった道」に新しい順（ベルヌーイ分布・二項分布）。二項分布を選ぶと二項分布へ戻る。
-// 既存との違い：ほかのテストは1つの概念を選ぶだけ
-// 検出の確かめ（2026-11-08）：戻ったときに道を縮める処理（backTo の slice）を外すと「戻ったのに道に積み直す」で落ちることを見た
-test("たどった道：← で1つ前へ、長押しで新しい順のメニューから戻る", async ({ page }) => {
-  const m = await open(page);
-  const pickT = async (id: string) => {
-    await m.getByTestId(`rm-term-${T(id)}`).click({ position: { x: 20, y: 12 } });
-    await expect(page).toHaveURL(new RegExp(`c=stats2%3ATERM-${id}(&|$)`));
-    await still(page);
-  };
-  const back = page.getByTestId("rm-trail-back");
-  await pickT("binom");
-  await expect(back, "概念が1つだけでも ← が出る").toHaveCount(0);
-  await pickT("bernoulli");
-  await pickT("hyper");
-  await expect(back).toBeVisible();
-  await back.click();
-  await expect(page).toHaveURL(/c=stats2%3ATERM-bernoulli/);
-  await still(page); // ← で戻ると寄る動きが始まる。重ねないよう止まってから次へ
-  await back.click();
-  await expect(page, "戻ったのに道に積み直す").toHaveURL(/c=stats2%3ATERM-binom/);
-  await still(page);
-  await expect(back).toHaveCount(0);
-  await pickT("bernoulli");
-  await pickT("hyper");
-  const b = (await back.boundingBox())!;
-  await page.mouse.move(b.x + 22, b.y + 22);
-  await page.mouse.down();
-  const menu = page.getByTestId("rm-trail");
-  await expect(menu).toBeVisible();
-  await page.mouse.up();
-  await page.waitForTimeout(300);
-  await expect(page, "長押しのあとの押したで戻った").toHaveURL(/c=stats2%3ATERM-hyper/);
-  await expect(menu.getByTestId("rm-trail-item")).toHaveText([/ベルヌーイ分布/, /二項分布/]);
-  await menu.getByTestId("rm-trail-item").filter({ hasText: "二項分布" }).click();
-  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
 });
 
 // 確かめる対象：下の札（凡例）が地図の枠の中に全部入ること（画面の原則 6・7。凡例を消さない）。
