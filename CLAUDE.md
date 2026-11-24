@@ -57,4 +57,7 @@
 
 `npm run check`（math-lab の確認 → 見本の写し → デザインの決まり → vitest の単体テスト → build → Playwright の画面のテスト）。
 
+- **push の前は `npm run check:local`**：`npm run check` と同じ段を、手元にない webkit だけ外して走らせる（段の一部だけを走らせない。2026-11-24、デザインの決まりを見落として CI で止まった。stats2-course の issue 594）。
+- **CI**：速い段（`npm run check:fast`）を先に走らせ、その build で画面のテストを chromium と webkit に分けて並べて走らせる。画面のテストは Playwright の公式の実行環境（依存入り）で走らせ、版は @playwright/test と同じにする（.github/workflows/check.yml の container。Playwright の版を上げたら一緒に上げる）。
+
 **テストの見本**（stats2-course #209）：`public/sample/stats2.json` は教材の公開データ（stats2-labs の net/stats2.json）の写しで、版を `sample.lock.json` に固定する（`npm run sample` がずれを止める）。手で写さない・直さない。教材を公開したら `node scripts/sync-sample.mjs --update` で取り込み、テストを通す。テストで形を変えたいときは、そのテストの中で読み込みを書き換える（page.route）。画面を変えたら、スマホ幅と埋め込みのスクリーンショットも見る。
