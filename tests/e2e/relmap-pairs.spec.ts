@@ -69,3 +69,20 @@ test("1つの側に点が多いときは上限で畳み、隠した数を見出�
   expect(side.x + side.width).toBeLessThan(map.x + map.width / 2);
   expect(await left.count()).toBeLessThanOrEqual(5 + 6); // 左は5つまで（上の定義に使う概念を足しても上限の和）
 });
+
+// 確かめる対象：関係の段の小さな関係図で点を押して出た説明から、つながりの相手の概念のページへ進める（渡辺さん 2026-11-24。ページを積む）。
+// 想定する故障：相手の名前の行き先がない・相手でなく自分（いま見ている概念）を開く・関係のページを開いてしまう・戻ると元の概念に戻らない。
+// 見つけ方：二項分布のページでベルヌーイ分布の点を押し、「ベルヌーイ分布のページ」→ ベルヌーイ分布の概念のページ。戻ると二項分布
+test("小さな関係図で選んだつながりから、相手の概念のページへ進み、戻ると元の概念", async ({ page }) => {
+  const d = await open(page, "TERM-binom");
+  await d
+    .getByTestId("rel-map")
+    .getByRole("button", { name: /^ベルヌーイ分布（/ })
+    .click();
+  const go = d.getByTestId("rel-dig").getByTestId("rel-dig-concept");
+  await expect(go).toHaveText(/^ベルヌーイ分布のページ/);
+  await go.click();
+  await expect(page.getByTestId("detail").locator("h2")).toHaveText("ベルヌーイ分布");
+  await page.goBack();
+  await expect(page.getByTestId("detail").locator("h2")).toHaveText("二項分布");
+});

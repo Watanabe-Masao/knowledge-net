@@ -743,6 +743,13 @@
   font-size: var(--fs-small);
   color: var(--ink-2);
 }
+/* つながりの行き先（相手の概念のページ・関係の全画面）。狭ければ折り返す */
+.digFoot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0 var(--sp-4);
+}
 .digOpen {
   all: unset;
   justify-self: end;

@@ -801,7 +801,14 @@ export default function Detail({
                 onSel={(id) => setPick((x) => (x === id ? null : id))}
               />
               {pick ? (
-                <RelDig net={net} id={pick} onOpen={onEdge} onClose={() => setPick(null)} />
+                <RelDig
+                  net={net}
+                  id={pick}
+                  center={c.id}
+                  onOpen={onEdge}
+                  onConcept={onSelect}
+                  onClose={() => setPick(null)}
+                />
               ) : (
                 <Muted as="p" className={st.digHint}>
                   点を押すと、その関係を問いと段階に沿って掘り下げる。
