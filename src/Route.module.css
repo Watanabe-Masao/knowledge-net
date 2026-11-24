@@ -1,0 +1,208 @@
+/* 路線図（stats2-course の issue 592 の段 3）。駅は1本の線の上の点。色は「前に開いた駅」と「次の駅」だけ（画面の原則 18） */
+.route {
+  padding: 0 var(--sp-4) var(--sp-5);
+  max-width: 720px;
+  margin: 0 auto;
+}
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.title {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-title);
+}
+.lead {
+  margin: 4px 0 var(--sp-3);
+}
+.quiet {
+  all: unset;
+  box-sizing: border-box;
+  min-height: var(--tap);
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-m);
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  cursor: pointer;
+}
+.quiet:focus-visible,
+.station:focus-visible,
+.next:focus-visible,
+.footBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.next {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 16px;
+  display: grid;
+  gap: 2px;
+  border-radius: var(--r-l);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent-line);
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease);
+}
+.next:active,
+.station:active,
+.footBtn:active {
+  transform: scale(var(--press-scale));
+}
+.nextLab {
+  font-size: var(--fs-tag);
+  color: var(--accent);
+  font-weight: 600;
+}
+.nextName {
+  font-size: var(--fs-head);
+  font-weight: 600;
+  color: var(--ink);
+}
+.nextFrom {
+  color: var(--ink-2);
+  font-size: var(--fs-tag);
+}
+.legs,
+.stations,
+.probs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.leg {
+  margin-top: var(--sp-5);
+}
+.unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-body);
+}
+.num {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.stations {
+  position: relative;
+}
+/* 駅をつなぐ1本の線 */
+.stations::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 22px;
+  bottom: 22px;
+  width: 2px;
+  background: var(--line-strong);
+}
+.station {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 8px 8px 8px 0;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  border-radius: var(--r-m);
+  cursor: pointer;
+  color: var(--ink);
+}
+.dot {
+  justify-self: center;
+  margin-top: 6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 0 0 2px var(--line-strong);
+}
+.station[aria-current] .dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.stText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.stName {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hereTag {
+  font-size: var(--fs-tag);
+  font-weight: 600;
+  color: var(--accent);
+}
+.stLead {
+  color: var(--ink-2);
+  font-size: var(--fs-small);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.unitFoot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: var(--sp-2) 0 0 40px;
+}
+.footBtn {
+  all: unset;
+  box-sizing: border-box;
+  min-height: var(--tap);
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-pill);
+  box-shadow: 0 0 0 1px var(--line-strong);
+  color: var(--ink);
+  font-size: var(--fs-small);
+  cursor: pointer;
+  text-decoration: none;
+}
+.chev {
+  display: inline-flex;
+  transition: transform var(--dur) var(--ease);
+}
+.chevOn {
+  transform: rotate(90deg);
+}
+.probs {
+  margin: var(--sp-2) 0 0 40px;
+  display: grid;
+  gap: 6px;
+}
+.probs a {
+  display: grid;
+  gap: 2px;
+  min-height: var(--tap);
+  padding: 8px 12px;
+  box-sizing: border-box;
+  border-radius: var(--r-m);
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: var(--fs-small);
+}
+.probs small {
+  color: var(--ink-2);
+}
