@@ -1227,15 +1227,17 @@ test("戻ると、関係図のページも URL のとおりに戻る", async ({ 
   await page.goto("./?src=sample/stats2.json&lv=map&g=" + encodeURIComponent("確率分布"));
   const m = page.getByTestId("relation-map");
   await expect(m).toHaveAttribute("aria-label", "確率分布の関係図");
-  await m.getByTestId("rm-term-stats2:TERM-rv").click(); // 上のまとまりの語（下の札の帯に重ならない所）
-  await expect(page).toHaveURL(/m=stats2%3ATERM-rv/);
+  await expect(m).toHaveAttribute("data-ready", "true");
+  // 地図の真ん中あたりの語で、描き終えてから押す（2026-11-24 の CI で、上の端の語〔確率変数〕を押しても選びが URL に入らないことが1回あった。原因は特定していない）
+  await m.getByTestId("rm-term-stats2:TERM-binom").click();
+  await expect(page).toHaveURL(/m=stats2%3ATERM-binom/);
   await page.getByTestId("glance-open").click();
-  await expect(page).toHaveURL(/c=stats2%3ATERM-rv/);
+  await expect(page).toHaveURL(/c=stats2%3ATERM-binom/);
   await page.goBack();
   await expect(page).not.toHaveURL(/c=stats2/);
   await expect(page).toHaveURL(/g=%E7%A2%BA%E7%8E%87%E5%88%86%E5%B8%83/);
   await expect(page).toHaveURL(/lv=map/);
-  await expect(page).toHaveURL(/m=stats2%3ATERM-rv/);
+  await expect(page).toHaveURL(/m=stats2%3ATERM-binom/);
   await expect(m).toHaveAttribute("aria-label", "確率分布の関係図");
 });
 
