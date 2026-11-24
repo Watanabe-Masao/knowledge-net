@@ -480,3 +480,38 @@ test("関係の段の小さな関係図：右と左の点が中心の箱にか�
     expect(apart, `${await r.locator("xpath=..").getAttribute("aria-label")} が中心の箱にかかる`).toBe(true);
   }
 });
+
+// 確かめる対象：概念・関係のページの中身（作業台・長い式・ラボの並べて数える）が、390px の画面から横にはみ出さない。
+// 想定する故障：グリッドの欄が中身の幅（長い場面の名前の選び肢・長い式・帯1本の並べ方）まで広がり、ページの本文ごと横に送れてしまう。
+//   文書の幅（scrollWidth）は 390 のままなので、文書だけを測るテストでは見つからない（2026-11-25 に期待値・共分散・数え方ラボで起きていた）。
+// 見つけ方：本文と、その中の横に送れる箱（式の横送りを除く）の scrollWidth が clientWidth を超えないこと。
+// 検出の確かめ（2026-11-25）：作業台・段のグリッドの列の指定と、並べて数える帯の折り返しを外すと、それぞれ落ちることを見た
+test("概念・関係のページの中身が 390px から横にはみ出さない（作業台・長い式・ラボ）", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const over = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll("*")]
+        .filter(
+          (e) =>
+            ["auto", "scroll"].includes(getComputedStyle(e).overflowX) &&
+            !e.closest(".katex-display") &&
+            !e.classList.contains("katex-display") &&
+            e.scrollWidth > e.clientWidth + 1,
+        )
+        .map((e) => `${e.className} ${e.scrollWidth}/${e.clientWidth}`),
+    );
+  for (const id of ["TERM-expect", "TERM-cov"]) {
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3A${id}`);
+    await expect(page.getByTestId("detail")).toBeVisible();
+    await expect.poll(over, `${id} の本文が横にはみ出す`).toEqual([]);
+  }
+  // 数え方ラボ（並べて数える）：6人から3人で、帯1本に並べ方が6つ並ぶ
+  // 関係のページ（順列 → 組合せ）の「確かめる」から開く
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-comb");
+  const d = page.getByTestId("detail");
+  await openTab(d, "関係");
+  await d.getByTestId("rel-stats2:REL-perm-to-comb").click();
+  await page.locator("[data-testid^=media-panel-]").getByRole("radio", { name: "操作" }).click();
+  await expect(page.locator("[class*=_paths_]").first()).toBeVisible(); // 帯の並べ方が出た
+  await expect.poll(over, "ラボが横にはみ出す").toEqual([]);
+});
