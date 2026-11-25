@@ -108,8 +108,6 @@ test("実験室の押せる所は 44×44 あり、理論の確率の表の数は
   // 作業台（計算の段の送り・記号の行・初期値に戻す）：概念のページの式の欄
   await page.goto(`./?${SRC}&c=stats2:TERM-binom`);
   const d = page.getByTestId("detail");
-  for (let i = 0; i < 2 && (await d.getAttribute("data-detent")) !== "full"; i++)
-    await d.getByRole("button", { name: "広げる" }).click();
   await openTab(d, "式");
   const w = page.getByTestId("workspace");
   await expect(w.getByTestId("ws-calc")).toBeVisible();

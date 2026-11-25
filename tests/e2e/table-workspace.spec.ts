@@ -22,8 +22,6 @@ async function openSheet(page: Page, src: string, id: string) {
   await page.setViewportSize({ width: 380, height: 800 });
   await page.goto(`./?${src}&c=stats2%3A${id}`);
   const detail = page.getByTestId("detail");
-  for (let i = 0; i < 2 && (await detail.getAttribute("data-detent")) !== "full"; i++)
-    await detail.getByRole("button", { name: "広げる" }).click();
   await openTab(detail, "式");
   return page.getByTestId("workspace");
 }
