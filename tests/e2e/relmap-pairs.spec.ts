@@ -86,3 +86,28 @@ test("小さな関係図で選んだつながりから、相手の概念のペ�
   await page.goBack();
   await expect(page.getByTestId("detail").locator("h2")).toHaveText("二項分布");
 });
+
+// 確かめる対象：小さな関係図で選んだつながりの説明の見出しで、種類の札（定義に使う など）が1行のまま（2026-11-25 の実機の録画）。
+// 想定する故障：見出しの文が長いと、横に並べた札が押し縮められ、「定義に使う」が縦に3行に折れる（平均二乗誤差 ← 期待値）。
+// 見つけ方：平均二乗誤差のページで期待値の点を押し、札の文字の行が1つ（文字の各行の上端が1つにそろう）。
+// 検出の確かめ（2026-11-25）：札を縮めない指定を外すと、3行に折れて落ちることを見た
+test("つながりの説明の見出しが長くても、種類の札は1行", async ({ page }) => {
+  const d = await open(page, "TERM-mse");
+  await d
+    .getByTestId("rel-map")
+    .getByRole("button", { name: /^期待値（/ })
+    .click();
+  const head = d.getByTestId("rel-dig").locator("> div").first();
+  const lines = await head.evaluate((h) => {
+    // 札の中の文字だけの行（印の箱は数えない）
+    const w = document.createTreeWalker(h.lastElementChild!, NodeFilter.SHOW_TEXT);
+    const tops: number[] = [];
+    for (let n = w.nextNode(); n; n = w.nextNode()) {
+      const r = document.createRange();
+      r.selectNodeContents(n);
+      for (const x of r.getClientRects()) if (x.width > 2) tops.push(Math.round(x.top / 4));
+    }
+    return new Set(tops).size;
+  });
+  expect(lines).toBe(1);
+});

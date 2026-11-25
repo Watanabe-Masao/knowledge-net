@@ -726,6 +726,11 @@
   align-items: flex-start;
   gap: var(--sp-2);
 }
+/* 種類の札は縮めない（見出しの文が長いと「定義に使う」が縦に折れていた。2026-11-25 の実機）。折り返すのは見出しの文の側 */
+.digHead > :last-child {
+  flex: none;
+  white-space: nowrap;
+}
 .digTitle {
   font-size: var(--fs-body);
   line-height: 1.4;
