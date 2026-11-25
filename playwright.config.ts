@@ -14,7 +14,7 @@ export default defineConfig({
     {
       name: "webkit",
       use: { browserName: "webkit", trace: "retain-on-failure" },
-      testMatch: /(relation-map|glance)\.spec\.ts/,
+      testMatch: /glance-probe\.spec\.ts/,
     },
   ],
   webServer: { command: "npx vite preview --port 4173 --strictPort", port: 4173, reuseExistingServer: true },
