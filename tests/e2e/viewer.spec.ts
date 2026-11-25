@@ -519,7 +519,10 @@ test("定義域の外の値は計算せず、理由を知らせる（r ≦ n・0
 test("V(aX+b) を開くと中の μ は E(aX+b) になり、μ は μ＝E(X) で開ける", async ({ page }) => {
   await page.goto(`./?${SRC}&c=stats2:TERM-var`);
   await tab(page, /^式$/);
-  const lin = page.getByTestId("detail").getByTestId("formula").nth(1); // V(aX+b)＝a²V(X)
+  // 分散は作業台（さいころの値ごとの和）を持つので、ほかの式は「ほかの式」に畳まれている（stats2-course issue 577）
+  const more = page.getByTestId("more-formulas");
+  if ((await more.count()) && !(await more.getAttribute("open"))) await more.locator("summary").click();
+  const lin = more.getByTestId("formula").nth(1); // V(aX+b)＝a²V(X)（定義の次）
   await lin.getByTestId("sym-V").click();
   await lin.getByTestId("open-def").first().click();
   await expect(lin.locator(".katex").first()).toContainText("E((aX+b−E(aX+b))");
