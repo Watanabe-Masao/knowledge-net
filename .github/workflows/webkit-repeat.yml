@@ -25,7 +25,7 @@ jobs:
       - name: WebKit の関係図のテストを繰り返す
         env:
           CI: "1"
-          REPEAT: ${{ github.event.inputs.repeat || '20' }}
+          REPEAT: ${{ github.event.inputs.repeat || '30' }}
         run: |
           set +e
           npx playwright test --project=webkit --repeat-each="$REPEAT" --reporter=list > repeat.log 2>&1
@@ -41,7 +41,7 @@ jobs:
             echo "落ちたテスト（spec の行と回数）："
             echo
             echo '```'
-            grep '✘' repeat.log | grep -oE 'relation-map.spec.ts:[0-9]+:[0-9]+ › [^(─]*' | sort | uniq -c | sort -rn | head -20
+            grep '✘' repeat.log | grep -oE '[a-z-]+\.spec\.ts:[0-9]+:[0-9]+ › [^(─]*' | sort | uniq -c | sort -rn | head -20
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit $code
