@@ -515,3 +515,20 @@ test("概念・関係のページの中身が 390px から横にはみ出さな�
   await expect(page.locator("[class*=_paths_]").first()).toBeVisible(); // 帯の並べ方が出た
   await expect.poll(over, "ラボが横にはみ出す").toEqual([]);
 });
+
+// 確かめる対象：ラボの下の帯の札は、何の値かが分かる短い名前（標準化ラボの σ が「Aの」だけになっていた。2026-11-25）。
+// 想定する故障：札の名前を長い名前の最初の語から作るので、「Aの σ」が「Aの」になる・長い名前が iPhone の幅で2行に折れる。
+// 見つけ方：データの標準化のラボ（確かめる）の札が、平均A・σA・値A・平均B・σB・値B と値。chromium では折れが再現しないので、名前で見る
+test("ラボの札は短い名前：標準化ラボは 平均・σ・値 と A・B", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-data-std");
+  await page.getByTestId("media-concept").getByRole("radio", { name: "確かめる" }).click();
+  await expect(page.locator("[data-testid^=q-chip-]")).toHaveText([
+    /^平均A \d/,
+    /^σA \d/,
+    /^値A \d/,
+    /^平均B \d/,
+    /^σB \d/,
+    /^値B \d/,
+  ]);
+});
