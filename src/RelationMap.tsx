@@ -16,7 +16,6 @@ import {
   crossings,
   fitBox,
   fitPick,
-  pickBox,
   layoutCategory,
   lineBadges,
   linksOf,
@@ -26,7 +25,7 @@ import {
   type GroupArrow,
 } from "./relationMap";
 import { conceptIcon } from "./conceptIcons";
-import { CATEGORY_ICON, iconUri } from "./icons";
+import { iconUri } from "./icons";
 import { GLYPH_D, KIND_VAR, KindMark, kcol, kindName } from "./kinds";
 import s from "./RelationMap.module.css";
 
@@ -79,10 +78,6 @@ export function Name({ text }: { text: string }) {
 
 /** 分類ごとの最後の見え方（同じ画面の中だけ。開き直したときに戻す） */
 const memo = new Map<string, { net: unknown; page: boolean; pick?: string; v: { k: number; x: number; y: number } }>();
-/** たどった道（分類ごと。選んだ概念を古い順に。最後が今の概念）。戻っても、離れたときのまま（画面の原則 3） */
-const trails = new Map<string, string[]>();
-/** たどった道に残す数（今の概念を入れて。メニューに出すのは前の5つまで。画面の原則 15） */
-const TRAIL_MAX = 6;
 
 /** 帯の引っ込め方（false＝出ている） */
 type Calm = false | "top" | "all";
@@ -102,12 +97,6 @@ type Props = {
   onOut?: () => void;
   /** 語を選んで上の帯が引っ込んでいる間の現在地「分類の印＋分類名」を押したとき：分類のページ（正方形・一覧・地図）へ（stats2-course #588。渡辺さん 2026-11-24「1で」） */
   onCategory?: () => void;
-  /** 空いた所の1回のタップで、まず下の面を1段下げる（下げたら true）。帯を戻すのより後、選びを外すのより先 */
-  onBlank?: () => boolean;
-  /** 下の面の段。段が替わったら、選んだ語の相手が面の下に隠れたときだけ寄り直す */
-  step?: string;
-  /** 左上の ‹（たどった道）を出すか。関係図のページでは出さない（← は1つ。ひと目の中の来た道で足りる。issue 599） */
-  trail?: boolean;
 };
 
 export default function RelationMap({
@@ -119,9 +108,6 @@ export default function RelationMap({
   onRelation,
   onOut,
   onCategory,
-  onBlank,
-  step,
-  trail: showTrail = true,
 }: Props) {
   const L = useMemo(() => layoutCategory(net, category, { lane: 6 }), [net, category]);
   const cross = useMemo(() => crossings(L), [L]);
@@ -157,31 +143,6 @@ export default function RelationMap({
     if (now) onSelect(id);
     else commitT.current = window.setTimeout(() => onSelect(id), dblMs());
   };
-  // ---- たどった道（設計書 3：見てきた道は置かず、← の長押しでたどった道）----
-  const [trail, setTrail] = useState<string[]>(() => trails.get(category) ?? []);
-  useEffect(() => {
-    if (!pick) return;
-    setTrail((t) => {
-      if (t[t.length - 1] === pick) return t; // ← で戻ったときは、backTo が先に道を縮めている
-      const n = [...t.filter((x) => x !== pick), pick].slice(-TRAIL_MAX);
-      trails.set(category, n);
-      return n;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pick]);
-  const backTo = (id: string) => {
-    setTrail((t) => {
-      const i = t.lastIndexOf(id);
-      const n = i < 0 ? t : t.slice(0, i + 1);
-      trails.set(category, n);
-      return n;
-    });
-    setPick(id, true);
-  };
-  const [trailMenu, setTrailMenu] = useState(false);
-  const backHoldT = useRef(0),
-    backHeld = useRef(false);
-  const prevs = trail.length >= 2 && trail[trail.length - 1] === pick ? trail.slice(0, -1).reverse().slice(0, 5) : [];
 
   // ほかの所（下の面の関係・検索など）で選びが変わったら、地図もその語を選ぶ
   useEffect(() => {
@@ -197,9 +158,8 @@ export default function RelationMap({
       const el = box.current;
       if (!el || calmRef.current) return;
       const top = el.getBoundingClientRect().top + scrollY;
-      const tab = document.querySelector<HTMLElement>("[data-testid=tabbar]")?.offsetHeight ?? 0;
       setPage(innerHeight < PAGE_MIN);
-      setHeight(Math.max(260, Math.round(innerHeight - top - tab)));
+      setHeight(Math.max(260, Math.round(innerHeight - top)));
     };
     f();
     addEventListener("resize", f);
@@ -210,12 +170,11 @@ export default function RelationMap({
     return { W: r.width, H: r.height };
   };
   /** 下の面（詳しく）が地図に重なっている高さ */
-  /** 左上に浮かぶ操作（現在地と、その下に出る ‹）の下端（地図の上から）。現在地がなければ 0。
-   *  ‹ は次の語を選ぶと出るので、まだ出ていなくてもその場所を空けておく（寄ったあとの相手の語が ‹ の下にならない） */
+  /** 左上に浮かぶ「← 分類名」の下端（地図の上から）。なければ 0（寄ったあとの相手の語が ← の下にならない） */
   const topOf = () => {
     const el = box.current?.querySelector<HTMLElement>("[data-testid=rm-cat]");
     if (!el || !box.current) return 0;
-    return Math.max(0, el.getBoundingClientRect().bottom - box.current.getBoundingClientRect().top) + 8 + 44 + 4;
+    return Math.max(0, el.getBoundingClientRect().bottom - box.current.getBoundingClientRect().top) + 8;
   };
   const bottomOf = () => {
     // 下に重なる面：ひと目（関係図のページで語を押したとき。issue 599）か、詳しくの面
@@ -536,35 +495,6 @@ export default function RelationMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey]);
 
-  // 面の段が替わったら（段2・段3へ上げた・下げた）、選んだ語と相手が見える所に収まっていなければ寄り直す。
-  // 収まっていれば動かさない（1つの操作に動きは1つ。画面の原則 10）
-  // フル（全画面のページ）の間は地図が見えないので寄り直さない。フルから戻ったときも、離れたときのまま（画面の原則 3）
-  const prevStep = useRef(step);
-  useEffect(() => {
-    const from = prevStep.current;
-    prevStep.current = step;
-    if (step === "full" || from === "full") return;
-    if (!step || !pick || selected !== pick || !vRef.current) return;
-    const id = setTimeout(() => {
-      const v0 = vRef.current;
-      if (!v0) return;
-      const { W, H } = size();
-      const b = pickBox(L, pick, types);
-      if (!b) return;
-      const vis = H - bottomOf();
-      const inside =
-        b.x0 * v0.k + v0.x >= 0 &&
-        b.x1 * v0.k + v0.x <= W &&
-        b.y0 * v0.k + v0.y >= topOf() &&
-        b.y1 * v0.k + v0.y <= vis;
-      if (inside) return;
-      const nv = fitPick(L, pick, types, { W, H, bottom: bottomOf(), top: topOf(), k: v0.k });
-      if (nv) go(nv);
-    }, 30); // 面の止まる先の高さが決まってから（面と同じときに動く）
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
-
   // ---- ダブルタップ：語＝その語の詳しくを全部の段で／まとまりの中（語の外）＝そのまとまり／まとまりの外＝分類 ----
   // 1回目で語を選ぶと寄る動きが始まり、2回目の指の下からカードが動くので、語は1回目に押したものを覚えておく
   const lastTap = useRef<{ t: number; x: number; y: number; card?: string }>({ t: 0, x: 0, y: 0 });
@@ -786,7 +716,6 @@ export default function RelationMap({
         if (fold) return setFold(null); // 浮かせた一覧が出ていれば、まずそれを閉じる（1段戻す）
         blankT.current = window.setTimeout(() => {
           if (calmRef.current === "all") leave();
-          else if (pick && onBlank?.()) return;
           else if (pick) setPick(null, true);
           else enter();
         }, dblMs());
@@ -1401,116 +1330,23 @@ export default function RelationMap({
           <b>{category}</b>
         </div>
       ) : null}
-      {onCategory && !page && (!showTrail || (calm && selected)) ? (
-        // 現在地（stats2-course #588）：語を選ぶと上の帯（パンくず）が引っ込むので、地図の左上に分類の印と名前を出す。押すと分類のページ。
-        // 上＝分類（画面の原則 17）。1つ前の概念へ戻る ‹ とは印を分ける（こちらは ‹ を付けず分類の印。原則 8）
+      {onCategory && !page ? (
+        // 関係図のページの左上の「← 分類名」：ほかのページと同じ ← で、1つ前のページへ（issue 599。前のたどった道の ‹ と現在地の印は外した）
         <div className={s.catCtl} data-ui>
           <button
             type="button"
             data-testid="rm-cat"
-            aria-label={showTrail ? `${category}の分類のページへ` : `戻る（${category}の関係図）`}
+            aria-label={`戻る（${category}の関係図）`}
             onClick={(e) => {
               e.stopPropagation();
               onCategory();
             }}
           >
-            {!showTrail ? (
-              // 関係図のページでは、ほかのページと同じ ← （1つ前のページへ。issue 599）
-              <span aria-hidden="true">←</span>
-            ) : CATEGORY_ICON[category] ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className={s.ctlIcon}>
-                <path d={CATEGORY_ICON[category]} />
-              </svg>
-            ) : null}
+            <span aria-hidden="true">←</span>
             <span>{category}</span>
           </button>
         </div>
       ) : null}
-      {showTrail && prevs.length ? (
-        // 地図の左上の ←：1つ前に選んだ概念へ戻る。長押しで、たどった道のメニュー（押さえている間は沈んで光る。長押しの手触り）
-        <div className={`${s.backCtl}${calm && selected && onCategory && !page ? ` ${s.under}` : ""}`} data-ui>
-          <button
-            type="button"
-            data-testid="rm-trail-back"
-            aria-label={`${nameOf(net, prevs[0]!)}へ戻る。長押しで、たどった道`}
-            onPointerDown={(e) => {
-              backHeld.current = false;
-              const el = e.currentTarget;
-              el.setAttribute("data-hold", "");
-              clearTimeout(backHoldT.current);
-              backHoldT.current = window.setTimeout(() => {
-                el.removeAttribute("data-hold");
-                backHeld.current = true;
-                try {
-                  navigator.vibrate?.(10);
-                } catch {
-                  /* 振動できない端末 */
-                }
-                setTrailMenu(true);
-              }, holdMs());
-            }}
-            onPointerUp={(e) => {
-              e.currentTarget.removeAttribute("data-hold");
-              clearTimeout(backHoldT.current);
-            }}
-            onPointerLeave={(e) => {
-              e.currentTarget.removeAttribute("data-hold");
-              clearTimeout(backHoldT.current);
-            }}
-            onPointerCancel={(e) => {
-              e.currentTarget.removeAttribute("data-hold");
-              clearTimeout(backHoldT.current);
-            }}
-            onContextMenu={(e) => e.preventDefault()}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (backHeld.current) return; // 長押しのあとの「押した」は数えない
-              backTo(prevs[0]!);
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" className={s.ctlIcon}>
-              <path d="M15 5 8 12l7 7" />
-            </svg>
-          </button>
-        </div>
-      ) : null}
-      {trailMenu && prevs.length
-        ? createPortal(
-            <div
-              className={s.peekScrim}
-              data-ui
-              data-testid="rm-trail"
-              role="dialog"
-              aria-label="たどった道"
-              onClick={(ev) => {
-                if (ev.target === ev.currentTarget) setTrailMenu(false);
-              }}
-            >
-              <div className={s.peekMenu} role="menu">
-                <p className={s.menuHead}>たどった道</p>
-                {prevs.map((id, i) => (
-                  <button
-                    key={id}
-                    type="button"
-                    role="menuitem"
-                    data-testid="rm-trail-item"
-                    onClick={() => {
-                      setTrailMenu(false);
-                      backTo(id);
-                    }}
-                  >
-                    {nameOf(net, id)}
-                    <small className={s.menuNote}>{i + 1}つ前</small>
-                  </button>
-                ))}
-                <button type="button" role="menuitem" onClick={() => setTrailMenu(false)}>
-                  閉じる
-                </button>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
       {/* 地図の右上の操作（帯が引っ込んでも残す。渡辺さん 2026-11-07）：選んでいる語があればその語を真ん中へ、なければ全体に戻す */}
       <div className={s.ctl} data-ui data-calm-keep={calm ? "1" : undefined}>
         <button

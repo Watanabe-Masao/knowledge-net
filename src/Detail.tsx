@@ -1,11 +1,9 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
-import { STEPS } from "./steps";
-import { useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as RPE } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Media, relationParts } from "./Relation";
 import { RelDig, RelMap } from "./RelMap";
 import {
   Bars,
-  BottomSheet,
   Button,
   Card,
   Disclosure,
@@ -14,7 +12,6 @@ import {
   Segmented,
   Workspace,
   TableWorkspace,
-  type Detent,
   subPlain,
   subText,
 } from "@math-lab/ui";
@@ -78,7 +75,8 @@ type Props = {
   /** この概念の分類の関係図に降りる（面の段2。ページの関係の段から） */
   onMap?: () => void;
   /** スマホでは下からの面にする（段と、下のタブの高さ） */
-  sheet?: { detent: Detent; onDetent: (d: Detent) => void; bottom: number; onPeek?: (h: number) => void };
+  /** 見出しの ←：1つ前のページへ（ページを積む形。issue 599） */
+  onBack: () => void;
 };
 
 type Tab = "about" | "formula" | "rel";
@@ -145,15 +143,10 @@ const LAB_ICON = (
     <path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" />
   </svg>
 );
-/** 開いて読む段（原理・条件・例と反例）。開いたら面を上まで上げる */
-function More({ title, children, onOpen }: { title: ReactNode; children: ReactNode; onOpen: () => void }) {
+/** 開いて読む段（原理・条件・例と反例） */
+function More({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
-    <details
-      className={st.more2}
-      onToggle={(e) => {
-        if ((e.currentTarget as HTMLDetailsElement).open) onOpen();
-      }}
-    >
+    <details className={st.more2}>
       <summary>{title}</summary>
       <div className={st.moreBody}>{children}</div>
     </details>
@@ -262,43 +255,11 @@ export default function Detail({
   next,
   onNext,
   onMap,
-  sheet,
+  onBack,
 }: Props) {
   // 「少し」の段の高さ：見出し・定義・学ぶ行動がちょうど見える高さ（中身の量で変わるので測る）
-  const headRef = useRef<HTMLDivElement>(null);
-  const [peekH, setPeekH] = useState(240);
-  useEffect(() => {
-    const el = headRef.current;
-    if (!el || typeof ResizeObserver !== "function") return;
-    const ro = new ResizeObserver(() => setPeekH(el.offsetHeight));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [sheet !== undefined]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 面の段（src/steps.ts）：段1＝名前の1行の右に札 → 段2＝つまりと選んだ札の中身 → フル＝ふだんの形。関係図・一覧でも同じ面なので同じ段
-  const compact = !!sheet && sheet.detent !== "full";
-  const showLead = !compact || sheet?.detent === "half";
-  // 読むとき（全画面・広い画面）は、概要 → 式 → つながりを上から1本に並べる（stats2-course の issue 592 の段 2。渡辺さん 2026-11-24）。
-  // 切り替えは、その段へ送る目次として働く。段2（面の半分）では今までどおり1つの中身だけを見せる
-  const all = !compact;
-  const peekOut = sheet ? Math.max(64, peekH + 32) : 0; // 段1：つまみ・名前と札の行の下まで
-  // ← は来た段へ戻す（画面の原則 3・11）
-  const lastStep = useRef<Detent>("peek");
-  // 面へ戻るときの出だしの高さ（画面の原則 11）
-  const leaveFrom = useRef<number | undefined>(undefined);
-  const leaveFull = () => {
-    if (!sheet) return;
-    leaveFrom.current = Math.max(0, window.innerHeight - (sheet.bottom ?? 0) - 44);
-    sheet.onDetent(lastStep.current);
-  };
-  useEffect(() => {
-    if (sheet && sheet.detent !== "full" && sheet.detent !== "min") lastStep.current = sheet.detent;
-  }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (sheet?.detent !== "full") leaveFrom.current = undefined;
-  }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (sheet) sheet.onPeek?.(peekOut);
-  }, [peekOut]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 読むときは全画面のページ1本（概要 → 式 → 関係 → 試す → 次の駅）。切り替えはその段へ送る目次（stats2-course の issue 592 の段 2。渡辺さん 2026-11-24）。
+  // 前は地図の上の下からの面（段1・段2・フル）だったが、issue 599 でページを積む形にして外した
   const groups = groupsOf(net, c.id);
   const units = c.units.map((u) => net.units.get(u)).filter((u) => !!u);
   // 面の作り（渡辺さん 2026-10-31「スライドで見る部分が狭い」・11-01「下のツールバーに動的に」）：
@@ -311,14 +272,6 @@ export default function Detail({
     { value: "rel", label: "関係" },
   ];
   const [tabRaw, setTabRaw] = useState<Tab>("about");
-  // 読むときは全画面（地図を隠す）。切り替えや開く行に触ったら面を上まで上げる（stats2-course #188 02）
-  const reading = () => {
-    if (sheet && sheet.detent !== "full") sheet.onDetent("full");
-  };
-  const setTab = (t: Tab) => {
-    setTabRaw(t);
-    reading();
-  };
   // 目次：その段の頭へ送る（1本のページの中の位置。画面の原則 3：戻ると離れたときのまま、は送った位置で保つ）
   const restRef = useRef<HTMLDivElement>(null);
   const jump = (t: Tab | "lab") =>
@@ -327,7 +280,6 @@ export default function Detail({
     );
   // 目次の選びは、読んでいる段に合わせる（送るだけで替わる。押した段と見えている段を食い違わせない）
   useEffect(() => {
-    if (!all) return;
     const body = restRef.current?.parentElement;
     if (!body) return;
     const on = () => {
@@ -341,21 +293,7 @@ export default function Detail({
     };
     body.addEventListener("scroll", on, { passive: true });
     return () => body.removeEventListener("scroll", on);
-  }, [all, c.id]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 段2で選んでいた中身のまま全画面へ上げたら、1本のページのその段から読む
-  const wasFull = useRef(false);
-  useEffect(() => {
-    const full = sheet?.detent === "full";
-    if (full && !wasFull.current && tabRaw !== "about") jump(tabRaw);
-    wasFull.current = full;
-  }, [sheet?.detent]); // eslint-disable-line react-hooks/exhaustive-deps
-  // 少しの段で中身に触れたら、読むために上まで上げる（押した所の操作はそのまま）
-  // 押す所（問いの札・開く段・ボタン）は、その操作をそのまま通す（全画面のページに切り替えると、押した所が入れ替わって押しても効かなかった。#188 07a）
-  const touch = (e: RPE) => {
-    if ((e.target as HTMLElement).closest("button, a, summary, input, select")) return;
-    if (compact) return; // 段の形では、押したとき（離したとき）に上げる（段2で中身を指で送れるように）
-    if (sheet && (sheet.detent === "peek" || sheet.detent === "min")) reading();
-  };
+  }, [c.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // 試すの段に出す実験室があるか（この概念を主か関連に持つ問い・つなぐ概念。段の中身は ConceptLabs）
   const hasLabs = useMemo(() => labsFor(net, c.id).length > 0, [net, c.id]);
   const [pick, setPick] = useState<string | null>(null); // つながりの地図で選んだつながり
@@ -410,17 +348,9 @@ export default function Detail({
   const head = (
     <>
       <header className={st.head}>
-        {sheet?.detent === "full" && (
-          <button
-            type="button"
-            className={st.back}
-            onClick={() => leaveFull()}
-            data-testid="detail-to-map"
-            aria-label="戻る"
-          >
-            ←
-          </button>
-        )}
+        <button type="button" className={st.back} onClick={onBack} data-testid="detail-to-map" aria-label="戻る">
+          ←
+        </button>
         <div className={st.titles}>
           <h2>{c.name}</h2>
           <Muted as="div" className={st.kicker}>
@@ -428,27 +358,6 @@ export default function Detail({
             {c.status === "stub" ? "・まだ説明がない" : ""}
           </Muted>
         </div>
-        {compact && (
-          // 段1・段2では、切り替えを名前の右の空いた所に札で1行に並べる（渡辺さん 2026-11-07）。札は段2で見せる中身を選ぶ：
-          // 段1で押すとその中身で段2へ。段2で別の札は中身を替え、選んでいる札をもう一度押すとフルへ
-          <div className={st.chips} role="group" aria-label="概念の中身" data-testid="detail-chips">
-            {tabs.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                className={st.chip}
-                aria-pressed={sheet.detent === "half" && tab === t.value}
-                onClick={() => {
-                  if (sheet.detent === "half" && tab === t.value) return sheet.onDetent("full");
-                  setTabRaw(t.value);
-                  if (sheet.detent !== "half") sheet.onDetent("half");
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-        )}
         <MoreMenu
           items={[
             { label: "ほかの概念と比べる", onClick: onCompare },
@@ -456,13 +365,13 @@ export default function Detail({
           ]}
         />
       </header>
-      <div className={st.tabs} hidden={compact}>
+      <div className={st.tabs}>
         <Segmented
           variant="tabs"
           value={tab}
           onChange={(v) => {
             if (!v) return;
-            setTab(v as Tab);
+            setTabRaw(v as Tab);
             jump(v as Tab);
           }}
           label="概念の中身"
@@ -471,11 +380,11 @@ export default function Detail({
       </div>
     </>
   );
-  // つまり（と問い）。フルでは概要の頭。段2では札に依らず中身の上に出す
+  // 問いとつまり（概要の頭）
   const leadBlock = (
     <div className={st.lead}>
       {/* 問いは概念の問いの文だけ。実験室への入口は下の主ボタン1つ（同じ機能を2か所に置かない。渡辺さん 2026-11-04） */}
-      {c.question && !compact && (
+      {c.question && (
         <section className={st.ask} data-testid="concept-question">
           <span className={st.lab}>問い</span>
           <p className={st.askText}>{c.question}</p>
@@ -495,371 +404,344 @@ export default function Detail({
     </div>
   );
   const rest = (
-    <div
-      ref={restRef}
-      className={st.rest}
-      onClick={
-        compact
-          ? (e) => {
-              // 段の形：中身（つまり・図など）を押すとフルで読む（押す所の操作はそのまま）
-              if (!(e.target as HTMLElement).closest("button, a, summary, input, select")) reading();
-            }
-          : undefined
-      }
-    >
-      {compact && showLead && leadBlock}
-      {(all || tab === "about") && (
-        <div className={st.pane} data-testid="tab-about" onPointerDown={touch}>
-          {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
-          {!compact && leadBlock}
-          {chart && (
-            <section className={st.block} data-testid="concept-chart">
-              <div className={st.labRow}>
-                <span className={st.lab}>図</span>
-                <Muted as="span">
-                  n＝{chart.m.n}・p＝{Math.round(chart.m.p * 100)}%
-                </Muted>
-              </div>
-              <Bars
-                theory={chart.pmf}
-                hi={chart.hi}
-                marker={chart.mean}
-                height={130}
-                label={`成功の回数ごとの確率（n＝${chart.m.n}・p＝${Math.round(chart.m.p * 100)}%）。いちばん高いのは ${chart.hi} 回`}
-              />
-              {c.chart?.note && <p className={st.note}>{c.chart.note}</p>}
-            </section>
-          )}
-          {/* 文脈の見出し（製本 ① の 2。stats2-course の issue 302）：自分の定義を持たないので、定義の代わりに共有する概念との対応と、対象・文脈の違いを出す。
+    <div ref={restRef} className={st.rest}>
+      <div className={st.pane} data-testid="tab-about">
+        {/* 概要の情報階層（stats2-course #188 02）：問い → つまり → 図 → 定義を最初の画面に。原理・条件・例と反例・誤解は開いて読む */}
+        {leadBlock}
+        {chart && (
+          <section className={st.block} data-testid="concept-chart">
+            <div className={st.labRow}>
+              <span className={st.lab}>図</span>
+              <Muted as="span">
+                n＝{chart.m.n}・p＝{Math.round(chart.m.p * 100)}%
+              </Muted>
+            </div>
+            <Bars
+              theory={chart.pmf}
+              hi={chart.hi}
+              marker={chart.mean}
+              height={130}
+              label={`成功の回数ごとの確率（n＝${chart.m.n}・p＝${Math.round(chart.m.p * 100)}%）。いちばん高いのは ${chart.hi} 回`}
+            />
+            {c.chart?.note && <p className={st.note}>{c.chart.note}</p>}
+          </section>
+        )}
+        {/* 文脈の見出し（製本 ① の 2。stats2-course の issue 302）：自分の定義を持たないので、定義の代わりに共有する概念との対応と、対象・文脈の違いを出す。
               定義・式・成立条件は共有する概念のページで読む（重ねて出さない。画面の原則 8） */}
-          {c.heading_of && (
-            <section className={st.block} data-testid="concept-heading">
-              <span className={st.lab}>文脈の見出し</span>
-              <p className={st.definition}>{subText(c.heading_of.correspondence)}</p>
-              <dl className={st.headingDiff}>
-                <dt>対象の違い</dt>
-                <dd>{c.heading_of.object_diff}</dd>
-                <dt>文脈の違い</dt>
-                <dd>{c.heading_of.context_diff}</dd>
-                {/* 文脈ごとの構造（型 v2 の改訂7。stats2-course の issue 475）：取り方と H₀ を文と同じ段に。成立条件は下の開いて読む段 */}
-                {c.heading_of.context && (
-                  <>
-                    <dt>取り方</dt>
-                    <dd data-testid="heading-sampling">{c.heading_of.context.sampling}</dd>
-                    <dt>帰無仮説 H₀</dt>
-                    <dd data-testid="heading-h0">{subText(c.heading_of.context.null_hypothesis.text)}</dd>
-                  </>
-                )}
-              </dl>
-              {net.concepts.has(c.heading_of.concept) && (
-                <Button
-                  variant="quiet"
-                  className={st.headingTo}
-                  onClick={() => onSelect(c.heading_of!.concept)}
-                  data-testid="heading-shared"
-                >
-                  定義・式・{c.heading_of.context ? "共通の" : ""}成立条件は「{name(net, c.heading_of.concept)}」で読む
-                  ›
-                </Button>
+        {c.heading_of && (
+          <section className={st.block} data-testid="concept-heading">
+            <span className={st.lab}>文脈の見出し</span>
+            <p className={st.definition}>{subText(c.heading_of.correspondence)}</p>
+            <dl className={st.headingDiff}>
+              <dt>対象の違い</dt>
+              <dd>{c.heading_of.object_diff}</dd>
+              <dt>文脈の違い</dt>
+              <dd>{c.heading_of.context_diff}</dd>
+              {/* 文脈ごとの構造（型 v2 の改訂7。stats2-course の issue 475）：取り方と H₀ を文と同じ段に。成立条件は下の開いて読む段 */}
+              {c.heading_of.context && (
+                <>
+                  <dt>取り方</dt>
+                  <dd data-testid="heading-sampling">{c.heading_of.context.sampling}</dd>
+                  <dt>帰無仮説 H₀</dt>
+                  <dd data-testid="heading-h0">{subText(c.heading_of.context.null_hypothesis.text)}</dd>
+                </>
               )}
-            </section>
-          )}
-          {c.heading_of?.context?.conditions?.length ? (
+            </dl>
+            {net.concepts.has(c.heading_of.concept) && (
+              <Button
+                variant="quiet"
+                className={st.headingTo}
+                onClick={() => onSelect(c.heading_of!.concept)}
+                data-testid="heading-shared"
+              >
+                定義・式・{c.heading_of.context ? "共通の" : ""}成立条件は「{name(net, c.heading_of.concept)}」で読む ›
+              </Button>
+            )}
+          </section>
+        )}
+        {c.heading_of?.context?.conditions?.length ? (
+          <More
+            title={
+              <>
+                この文脈の成立条件 <span className={st.n}>{c.heading_of.context.conditions.length}</span>
+              </>
+            }
+          >
+            <Conditions
+              net={net}
+              detail={c.heading_of.context.conditions}
+              math={[]}
+              onTerm={onWord}
+              plainClass={st.conds}
+              testId="heading-conditions"
+            />
+          </More>
+        ) : null}
+        {(c.definition || c.short) && (
+          <section className={st.block}>
+            <span className={st.lab}>定義</span>
+            <p className={st.definition}>{subText(c.definition ?? c.short)}</p>
+            {/* 定義の段では式を見せるだけ（記号を押して開くのは「式」の切り替えの作業台で） */}
+            {mainF?.tex && (
+              <div
+                className={st.defTex}
+                data-testid="concept-def-tex"
+                dangerouslySetInnerHTML={{
+                  __html: katex.renderToString(mainF.tex, { throwOnError: false, displayMode: true }),
+                }}
+              />
+            )}
+            {c.status === "skeleton" && (
+              <p className={st.skeleton} data-testid="skeleton-note">
+                定義だけ：今は定義1文と分類まで。原理・条件・例・式は、単元を進めるときに足す
+              </p>
+            )}
+            {/* つまりと定義に出る語（何だっけ。#593）。つまりの下に並べると、問い → つまり → 図 → 定義 の順を崩す */}
+            <Words net={net} text={`${c.gist ?? ""} ${c.definition ?? c.short ?? ""}`} self={c.id} />
+          </section>
+        )}
+        {/* 見出しは定義のあと（概要の情報階層 stats2-course の issue 188 02 を崩さない）。行は名前だけ（対応の文は見出しのページで読む） */}
+        {heads.length > 0 && (
+          <section className={st.block} data-testid="concept-headings">
+            <span className={st.lab}>文脈の見出し</span>
+            <Muted as="p">同じ意味を、別の対象・文脈で呼ぶ名前。</Muted>
+            <ul className={st.headingList}>
+              {heads.map((h) => (
+                <li key={h.id}>
+                  <Button variant="quiet" className={st.headingTo} onClick={() => onSelect(h.id)}>
+                    {h.name} ›
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <Media figures={c.figures} labs={c.labs} context="concept" open={false} />
+        {c.principle && (
+          <More title="なぜその形か（原理）">
+            <p>{subText(c.principle)}</p>
+            <Words net={net} text={c.principle} self={c.id} />
+          </More>
+        )}
+        {/* 要件の行がなく（math が空。仮定は主張の側。stats2-course #532）手掛かりもない概念には、空の段を置かない */}
+        {c.conditions &&
+          (c.conditions.math.length > 0 ||
+            (c.conditions.data?.length ?? 0) > 0 ||
+            (c.conditions_detail?.length ?? 0) > 0) && (
             <More
               title={
                 <>
-                  この文脈の成立条件 <span className={st.n}>{c.heading_of.context.conditions.length}</span>
+                  成立条件{" "}
+                  <span className={st.n}>
+                    {conditionCount(c.conditions_detail, c.conditions.math, c.conditions.data)}
+                  </span>
                 </>
               }
-              onOpen={reading}
             >
               <Conditions
                 net={net}
-                detail={c.heading_of.context.conditions}
-                math={[]}
+                detail={c.conditions_detail}
+                math={c.conditions.math}
+                data={c.conditions.data ?? []}
                 onTerm={onWord}
                 plainClass={st.conds}
-                testId="heading-conditions"
               />
             </More>
-          ) : null}
-          {(c.definition || c.short) && (
-            <section className={st.block}>
-              <span className={st.lab}>定義</span>
-              <p className={st.definition}>{subText(c.definition ?? c.short)}</p>
-              {/* 定義の段では式を見せるだけ（記号を押して開くのは「式」の切り替えの作業台で） */}
-              {mainF?.tex && (
-                <div
-                  className={st.defTex}
-                  data-testid="concept-def-tex"
-                  dangerouslySetInnerHTML={{
-                    __html: katex.renderToString(mainF.tex, { throwOnError: false, displayMode: true }),
-                  }}
-                />
-              )}
-              {c.status === "skeleton" && (
-                <p className={st.skeleton} data-testid="skeleton-note">
-                  定義だけ：今は定義1文と分類まで。原理・条件・例・式は、単元を進めるときに足す
-                </p>
-              )}
-              {/* つまりと定義に出る語（何だっけ。#593）。つまりの下に並べると、問い → つまり → 図 → 定義 の順を崩す */}
-              <Words net={net} text={`${c.gist ?? ""} ${c.definition ?? c.short ?? ""}`} self={c.id} />
-            </section>
           )}
-          {/* 見出しは定義のあと（概要の情報階層 stats2-course の issue 188 02 を崩さない）。行は名前だけ（対応の文は見出しのページで読む） */}
-          {heads.length > 0 && (
-            <section className={st.block} data-testid="concept-headings">
-              <span className={st.lab}>文脈の見出し</span>
-              <Muted as="p">同じ意味を、別の対象・文脈で呼ぶ名前。</Muted>
-              <ul className={st.headingList}>
-                {heads.map((h) => (
-                  <li key={h.id}>
-                    <Button variant="quiet" className={st.headingTo} onClick={() => onSelect(h.id)}>
-                      {h.name} ›
-                    </Button>
+        {(cl.about.length > 0 || cl.uses.length > 0) && (
+          <More
+            title={
+              <>
+                主張 <span className={st.n}>{cl.about.length + cl.uses.length}</span>
+              </>
+            }
+          >
+            <Claims net={net} self={c.id} about={cl.about} uses={cl.uses} onTerm={onWord} />
+          </More>
+        )}
+        {c.example || c.counterexample || c.misconceptions?.length ? (
+          <More title="例と反例・よくある誤解">
+            {(c.example || c.counterexample) && (
+              <div className={st.pair}>
+                {c.example && (
+                  <div>
+                    <b className={st.ok}>例</b>
+                    <p>{subText(c.example)}</p>
+                    <Words net={net} text={c.example} self={c.id} />
+                  </div>
+                )}
+                {c.counterexample && (
+                  <div>
+                    <b className={st.ng}>反例</b>
+                    <p>{subText(c.counterexample)}</p>
+                    <Words net={net} text={c.counterexample} self={c.id} />
+                    <Media labs={c.counterexample_labs} context="counterexample" />
+                  </div>
+                )}
+              </div>
+            )}
+            {c.misconceptions?.length ? (
+              <ul className={st.misconceptions}>
+                {c.misconceptions.map((m, i) => (
+                  <li key={m.misconception}>
+                    <Card as="div" tone="inset">
+                      <span className={st.wrong}>
+                        <span className={st.ng}>✗</span> {m.misconception}
+                      </span>
+                      <p>
+                        <span className={st.ok}>○</span> {m.correction}
+                      </p>
+                      <Words net={net} text={`${m.misconception} ${m.correction}`} self={c.id} />
+                      <Media labs={m.labs} context={`misconception-${i}`} />
+                    </Card>
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
-          <Media figures={c.figures} labs={c.labs} context="concept" open={false} />
-          {c.principle && (
-            <More title="なぜその形か（原理）" onOpen={reading}>
-              <p>{subText(c.principle)}</p>
-              <Words net={net} text={c.principle} self={c.id} />
-            </More>
-          )}
-          {/* 要件の行がなく（math が空。仮定は主張の側。stats2-course #532）手掛かりもない概念には、空の段を置かない */}
-          {c.conditions &&
-            (c.conditions.math.length > 0 ||
-              (c.conditions.data?.length ?? 0) > 0 ||
-              (c.conditions_detail?.length ?? 0) > 0) && (
-              <More
-                title={
-                  <>
-                    成立条件{" "}
-                    <span className={st.n}>
-                      {conditionCount(c.conditions_detail, c.conditions.math, c.conditions.data)}
-                    </span>
-                  </>
-                }
-                onOpen={reading}
-              >
-                <Conditions
-                  net={net}
-                  detail={c.conditions_detail}
-                  math={c.conditions.math}
-                  data={c.conditions.data ?? []}
-                  onTerm={onWord}
-                  plainClass={st.conds}
-                />
-              </More>
-            )}
-          {(cl.about.length > 0 || cl.uses.length > 0) && (
-            <More
-              title={
-                <>
-                  主張 <span className={st.n}>{cl.about.length + cl.uses.length}</span>
-                </>
-              }
-              onOpen={reading}
-            >
-              <Claims net={net} self={c.id} about={cl.about} uses={cl.uses} onTerm={onWord} />
-            </More>
-          )}
-          {c.example || c.counterexample || c.misconceptions?.length ? (
-            <More title="例と反例・よくある誤解" onOpen={reading}>
-              {(c.example || c.counterexample) && (
-                <div className={st.pair}>
-                  {c.example && (
-                    <div>
-                      <b className={st.ok}>例</b>
-                      <p>{subText(c.example)}</p>
-                      <Words net={net} text={c.example} self={c.id} />
-                    </div>
-                  )}
-                  {c.counterexample && (
-                    <div>
-                      <b className={st.ng}>反例</b>
-                      <p>{subText(c.counterexample)}</p>
-                      <Words net={net} text={c.counterexample} self={c.id} />
-                      <Media labs={c.counterexample_labs} context="counterexample" />
-                    </div>
-                  )}
-                </div>
-              )}
-              {c.misconceptions?.length ? (
-                <ul className={st.misconceptions}>
-                  {c.misconceptions.map((m, i) => (
-                    <li key={m.misconception}>
-                      <Card as="div" tone="inset">
-                        <span className={st.wrong}>
-                          <span className={st.ng}>✗</span> {m.misconception}
-                        </span>
-                        <p>
-                          <span className={st.ok}>○</span> {m.correction}
-                        </p>
-                        <Words net={net} text={`${m.misconception} ${m.correction}`} self={c.id} />
-                        <Media labs={m.labs} context={`misconception-${i}`} />
-                      </Card>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </More>
-          ) : null}
-          {c.sources?.length ? (
-            <Muted>
-              出典：
-              {c.sources.map((s, i) => (
-                <span key={s.title}>
-                  {i ? "・" : ""}
-                  {s.url ? (
-                    <a href={s.url} target="_blank" rel="noreferrer">
-                      {s.title}
-                    </a>
-                  ) : (
-                    s.title
-                  )}
-                  {s.locator ? `（${s.locator}）` : ""}
-                </span>
-              ))}
-            </Muted>
-          ) : null}
-          <Muted as="div" className={st.idLine}>
-            {c.id}・版 {c.version}
+            ) : null}
+          </More>
+        ) : null}
+        {c.sources?.length ? (
+          <Muted>
+            出典：
+            {c.sources.map((s, i) => (
+              <span key={s.title}>
+                {i ? "・" : ""}
+                {s.url ? (
+                  <a href={s.url} target="_blank" rel="noreferrer">
+                    {s.title}
+                  </a>
+                ) : (
+                  s.title
+                )}
+                {s.locator ? `（${s.locator}）` : ""}
+              </span>
+            ))}
           </Muted>
-        </div>
-      )}
-      {(all || tab === "formula") && (
-        <div className={st.pane} data-testid="tab-formula">
-          {all && <h3 className={st.paneTitle}>式</h3>}
-          {c.table_workspace && c.formulas?.[c.table_workspace.formula]?.tree && (
-            <TableWorkspace
-              key={c.id}
-              tables={c.table_workspace.tables}
-              formula={keyed(c.formulas[c.table_workspace.formula]!)}
-              linear={c.table_workspace.linear !== undefined ? keyed(c.formulas[c.table_workspace.linear]!) : undefined}
-              definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
-              onConcept={(id) => net.concepts.has(id) && onSelect(id)}
-              conceptName={(id) => name(net, id)}
-            />
-          )}
-          {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
-            <Workspace
-              formula={keyed(c.formulas[c.workspace.formula]!)}
-              mean={c.workspace.mean !== undefined ? keyed(c.formulas[c.workspace.mean]!) : undefined}
-              linear={c.workspace.linear !== undefined ? keyed(c.formulas[c.workspace.linear]!) : undefined}
-              vary={c.workspace.vary}
-              over={c.workspace.over}
-              definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
-              onConcept={(id) => net.concepts.has(id) && onSelect(id)}
-              conceptName={(id) => name(net, id)}
-            />
-          )}
-          {formulaList}
-        </div>
-      )}
-      {(all || tab === "rel") && (
-        <div className={st.pane} data-testid="tab-rel">
-          {all && <h3 className={st.paneTitle}>関係</h3>}
-          {/* 前提をさかのぼる（stats2-course の issue 588 の B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧。
+        ) : null}
+        <Muted as="div" className={st.idLine}>
+          {c.id}・版 {c.version}
+        </Muted>
+      </div>
+      <div className={st.pane} data-testid="tab-formula">
+        <h3 className={st.paneTitle}>式</h3>
+        {c.table_workspace && c.formulas?.[c.table_workspace.formula]?.tree && (
+          <TableWorkspace
+            key={c.id}
+            tables={c.table_workspace.tables}
+            formula={keyed(c.formulas[c.table_workspace.formula]!)}
+            linear={c.table_workspace.linear !== undefined ? keyed(c.formulas[c.table_workspace.linear]!) : undefined}
+            definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
+            onConcept={(id) => net.concepts.has(id) && onSelect(id)}
+            conceptName={(id) => name(net, id)}
+          />
+        )}
+        {c.workspace && c.formulas?.[c.workspace.formula]?.tree && (
+          <Workspace
+            formula={keyed(c.formulas[c.workspace.formula]!)}
+            mean={c.workspace.mean !== undefined ? keyed(c.formulas[c.workspace.mean]!) : undefined}
+            linear={c.workspace.linear !== undefined ? keyed(c.formulas[c.workspace.linear]!) : undefined}
+            vary={c.workspace.vary}
+            over={c.workspace.over}
+            definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
+            onConcept={(id) => net.concepts.has(id) && onSelect(id)}
+            conceptName={(id) => name(net, id)}
+          />
+        )}
+        {formulaList}
+      </div>
+      <div className={st.pane} data-testid="tab-rel">
+        <h3 className={st.paneTitle}>関係</h3>
+        {/* 前提をさかのぼる（stats2-course の issue 588 の B2）：分類をまたぐ学ぶ順。関係の行と同じ部品で、押すと全画面の一覧。
               関係図で見る（issue 592 の段 3）：ホームは路線図になったので、分類の関係図にはここから降りる */}
-          {(onTrace && traceCount) || (all && onMap) ? (
-            <ul className={st.rels}>
-              {all && onMap && (
-                <li>
-                  <button type="button" className={st.rel} onClick={onMap} data-testid="map-open">
-                    <span className={st.relText}>関係図で見る</span>
-                    <span className={st.relGist}>{`${c.category ?? "この分類"}の概念と関係を、地図で見る`}</span>
-                    <span className={st.relChev} aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
-                </li>
-              )}
-              {onTrace && traceCount ? (
-                <li>
-                  <button type="button" className={st.rel} onClick={onTrace} data-testid="trace-open">
-                    <span className={st.relText}>前提をさかのぼる</span>
-                    <span className={st.relGist}>{`学ぶ前に読む ${traceCount} の概念を、学ぶ順に並べる`}</span>
-                    <span className={st.relChev} aria-hidden="true">
-                      ›
-                    </span>
-                  </button>
-                </li>
-              ) : null}
-            </ul>
-          ) : null}
-          {groups.length ? (
-            <>
-              {/* つながりの地図（#188 07c）：点を押すと、そのつながりを下に「問い → 段」で掘る。一覧の行を押すと全画面で開く */}
-              <RelMap
-                center={c.name}
-                groups={groups}
-                sel={pick}
-                onSel={(id) => setPick((x) => (x === id ? null : id))}
+        {(onTrace && traceCount) || onMap ? (
+          <ul className={st.rels}>
+            {onMap && (
+              <li>
+                <button type="button" className={st.rel} onClick={onMap} data-testid="map-open">
+                  <span className={st.relText}>関係図で見る</span>
+                  <span className={st.relGist}>{`${c.category ?? "この分類"}の概念と関係を、地図で見る`}</span>
+                  <span className={st.relChev} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+              </li>
+            )}
+            {onTrace && traceCount ? (
+              <li>
+                <button type="button" className={st.rel} onClick={onTrace} data-testid="trace-open">
+                  <span className={st.relText}>前提をさかのぼる</span>
+                  <span className={st.relGist}>{`学ぶ前に読む ${traceCount} の概念を、学ぶ順に並べる`}</span>
+                  <span className={st.relChev} aria-hidden="true">
+                    ›
+                  </span>
+                </button>
+              </li>
+            ) : null}
+          </ul>
+        ) : null}
+        {groups.length ? (
+          <>
+            {/* つながりの地図（#188 07c）：点を押すと、そのつながりを下に「問い → 段」で掘る。一覧の行を押すと全画面で開く */}
+            <RelMap center={c.name} groups={groups} sel={pick} onSel={(id) => setPick((x) => (x === id ? null : id))} />
+            {pick ? (
+              <RelDig
+                net={net}
+                id={pick}
+                center={c.id}
+                onOpen={onEdge}
+                onConcept={onSelect}
+                onClose={() => setPick(null)}
               />
-              {pick ? (
-                <RelDig
-                  net={net}
-                  id={pick}
-                  center={c.id}
-                  onOpen={onEdge}
-                  onConcept={onSelect}
-                  onClose={() => setPick(null)}
-                />
-              ) : (
-                <Muted as="p" className={st.digHint}>
-                  点を押すと、その関係を問いと段階に沿って掘り下げる。
-                </Muted>
-              )}
-              <div data-testid="edge-list">
-                {groups.map((g) => (
-                  <section key={g.key} data-testid={`rel-group-${g.key}`}>
-                    <h3 className={st.groupTitle}>{g.title}</h3>
-                    <ul className={st.rels}>
-                      {g.rows.map((r) => (
-                        <li key={r.id} data-testid={`${r.der ? "der" : "rel"}-${r.id}`}>
-                          {/* 読み上げは関係の文（「二項分布 を変換すると ポアソン分布」）。見た目は相手の名前とつまりを先に */}
-                          <button
-                            type="button"
-                            className={st.rel}
-                            aria-pressed={edgeSel === r.id}
-                            onClick={() => onEdge(r.id)}
-                            aria-label={`${r.label}。${subPlain(r.text)}`}
-                          >
-                            <span className={st.relText}>
-                              {r.other}
-                              {r.tag && <span className={st.relTag}>{r.tag}</span>}
-                            </span>
-                            <span className={st.relGist}>{subText(r.text)}</span>
-                            <span className={st.relChev} aria-hidden="true">
-                              ›
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))}
-              </div>
-            </>
-          ) : (
-            <Muted>まだ関係がない。</Muted>
-          )}
-          <Muted>押すと、関係のページが開く。グラフの線を押すのと同じ。</Muted>
-        </div>
-      )}
+            ) : (
+              <Muted as="p" className={st.digHint}>
+                点を押すと、その関係を問いと段階に沿って掘り下げる。
+              </Muted>
+            )}
+            <div data-testid="edge-list">
+              {groups.map((g) => (
+                <section key={g.key} data-testid={`rel-group-${g.key}`}>
+                  <h3 className={st.groupTitle}>{g.title}</h3>
+                  <ul className={st.rels}>
+                    {g.rows.map((r) => (
+                      <li key={r.id} data-testid={`${r.der ? "der" : "rel"}-${r.id}`}>
+                        {/* 読み上げは関係の文（「二項分布 を変換すると ポアソン分布」）。見た目は相手の名前とつまりを先に */}
+                        <button
+                          type="button"
+                          className={st.rel}
+                          aria-pressed={edgeSel === r.id}
+                          onClick={() => onEdge(r.id)}
+                          aria-label={`${r.label}。${subPlain(r.text)}`}
+                        >
+                          <span className={st.relText}>
+                            {r.other}
+                            {r.tag && <span className={st.relTag}>{r.tag}</span>}
+                          </span>
+                          <span className={st.relGist}>{subText(r.text)}</span>
+                          <span className={st.relChev} aria-hidden="true">
+                            ›
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </>
+        ) : (
+          <Muted>まだ関係がない。</Muted>
+        )}
+        <Muted>押すと、関係のページが開く。グラフの線を押すのと同じ。</Muted>
+      </div>
       {/* 試す（issue 599）：この概念を使う実験室の問い。前は別のページ（実験室の一覧）だった。全画面のページだけに置く */}
-      {all && onQuestion && hasLabs && (
+      {onQuestion && hasLabs && (
         <div className={st.pane} data-testid="tab-lab">
           <h3 className={st.paneTitle}>試す</h3>
           <ConceptLabs net={net} id={c.id} onOpen={(x, q) => onQuestion(x, q ?? null)} />
         </div>
       )}
       {/* 次の駅（路線図の次。ページのいちばん下＝読み終えた所に置く。画面の原則 9：次の1手を示す） */}
-      {all && next && onNext && (
+      {next && onNext && (
         <button type="button" className={st.nextStation} onClick={() => onNext(next.id)} data-testid="next-station">
           <span className={st.nextLab}>次の駅</span>
           <span className={st.nextName}>{next.name}</span>
@@ -870,55 +752,25 @@ export default function Detail({
       )}
     </div>
   );
-  if (!sheet)
-    return (
-      <Card data-testid="detail">
-        {head}
-        {rest}
-      </Card>
-    );
-  // 読むときは面を重ねず全画面のページ（実験室と同じ骨組み：上に「←・題・…」、中は指で送る、下に次の1手。stats2-course #188 07a・#194）
-  if (sheet.detent === "full") {
-    const lab = hasLabs && !!onQuestion;
-    return (
-      <section
-        className={st.page}
-        data-testid="detail"
-        data-detent="full"
-        role="region"
-        aria-label={`${c.name} のページ`}
-      >
-        {/* 上のつまみは外した：戻るは見出しの ← 1つ（ページを積む形。stats2-course の issue 599） */}
-        <div className={st.pageHead}>{head}</div>
-        <div className={st.pageBody}>{rest}</div>
-        {lab && (
-          <div className={st.pageBar}>
-            <Button variant="primary" className={st.pageCta} onClick={() => jump("lab")} data-testid="page-cta">
-              {LAB_ICON} 実験室で検証
-            </Button>
-          </div>
-        )}
-      </section>
-    );
-  }
-  const peek = peekOut;
-  const from = leaveFrom.current; // 面が出た次の描画で消す（下の effect）
-  // スマホ：地図の上に重なる下からの面。見出し・切り替え・定義が「少し」の段で見え、広げると面の残り全部で中身を送る（#42）
+  const lab = hasLabs && !!onQuestion;
   return (
-    <BottomSheet
-      label={`${c.name} の詳しく`}
-      data-edge="bottom"
+    <section
+      className={st.page}
       data-testid="detail"
-      detent={sheet.detent}
-      onDetent={sheet.onDetent}
-      bottom={sheet.bottom}
-      peek={peek}
-      min={84}
-      stops={STEPS}
-      from={from}
-      header={<div ref={headRef}>{head}</div>}
+      data-detent="full"
+      role="region"
+      aria-label={`${c.name} のページ`}
     >
-      {rest}
-    </BottomSheet>
+      {/* 上のつまみは外した：戻るは見出しの ← 1つ（ページを積む形。stats2-course の issue 599） */}
+      <div className={st.pageHead}>{head}</div>
+      <div className={st.pageBody}>{rest}</div>
+      {lab && (
+        <div className={st.pageBar}>
+          <Button variant="primary" className={st.pageCta} onClick={() => jump("lab")} data-testid="page-cta">
+            {LAB_ICON} 実験室で検証
+          </Button>
+        </div>
+      )}
+    </section>
   );
 }

@@ -451,7 +451,6 @@ export default function App() {
                   setSel(null);
                   setGroup(null, true);
                 }}
-                trail={false}
                 onCategory={back}
               />
             )}
@@ -461,7 +460,7 @@ export default function App() {
           <Detail
             net={net}
             concept={concept}
-            sheet={{ detent: "full", onDetent: back, bottom: 0 }}
+            onBack={back}
             next={nextId ? { id: nextId, name: net.concepts.get(nextId)!.name } : undefined}
             onNext={(id) => openPage(id)}
             onMap={() => {

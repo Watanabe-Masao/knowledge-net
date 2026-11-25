@@ -440,18 +440,6 @@ function pickPoints(L: CanvasLayout, pick: string, types: Set<string>): Pt[] | n
     }
   return P;
 }
-/** 選んだ語と相手と線を囲む枠（地図の座標）。面の段が替わったとき、見える所に収まっているかを見る */
-export function pickBox(L: CanvasLayout, pick: string, types: Set<string>) {
-  const P = pickPoints(L, pick, types);
-  if (!P) return null;
-  return {
-    x0: Math.min(...P.map((p) => p.x)),
-    x1: Math.max(...P.map((p) => p.x)),
-    y0: Math.min(...P.map((p) => p.y)),
-    y1: Math.max(...P.map((p) => p.y)),
-  };
-}
-
 /** 語を選んだときの寄り方：選んだ語を見える所（上の端から下の面の上まで）の真ん中に置き、相手と線が全部入る倍率に寄せる。
  *  字が読める倍率（KMIN）より引かない。真ん中のままで入らないときは、少しずらして収める */
 export function fitPick(
