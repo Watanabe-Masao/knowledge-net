@@ -35,3 +35,25 @@ test("ポアソン分布の作業台：開いたときの値で始まり、上�
   const hi = Number(/が (\d+) より大きい/.exec(last ?? "")?.[1]);
   expect(hi, "山の右側（λ＝25 の右に 3σ＝15）が図に入る").toBeGreaterThan(40);
 });
+
+// 確かめる対象：教材が作業台を足した5つの分布（stats2-course の issue 608）が、開いたときの値で正しい確率を出す。
+// 想定する故障：教材の initial・vary・over の書き違いで、別の値から始まる・式の値がずれる・作業台が出ない。
+// 見つけ方：見本（教材の公開データ）で開き、P(X＝k) を式と独立に手で出した値と照らす。
+//   ベルヌーイ p0.3 k0：0.7。ポアソン λ3 k3：e⁻³·27/6＝0.2240。幾何 p0.3 k3：0.7²·0.3＝0.147。
+//   負の二項 r3 p0.3 k10：₉C₂·0.3³·0.7⁷＝0.0800。超幾何 20・8・5 k2：₈C₂·₁₂C₃/₂₀C₅＝6160/15504＝0.3973
+for (const [id, label, pct] of [
+  ["bernoulli", "P(X=0)", "70.00%"],
+  ["poisson", "P(X=3)", "22.40%"],
+  ["geom", "P(X=3)", "14.70%"],
+  ["negbinom", "P(X=10)", "8.00%"],
+  ["hyper", "P(X=2)", "39.73%"],
+] as const)
+  test(`作業台：${id} は開いたときの値で ${label}＝${pct}`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3ATERM-${id}`);
+    await openTab(page.getByTestId("detail"), "式");
+    const ws = page.getByTestId("workspace");
+    await expect(ws).toContainText(label);
+    await expect(ws).toContainText(pct);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
