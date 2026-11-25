@@ -459,6 +459,12 @@
   padding-top: var(--sp-2);
   border-top: 1px solid var(--line);
 }
+.chartNote {
+  margin: 4px 0 0;
+  font-size: var(--fs-tag);
+  color: var(--ink-3);
+  line-height: 1.5;
+}
 .chartHead {
   display: grid;
   gap: 2px;

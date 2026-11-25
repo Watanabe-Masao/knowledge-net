@@ -642,6 +642,7 @@ export default function Detail({
             linear={c.workspace.linear !== undefined ? keyed(c.formulas[c.workspace.linear]!) : undefined}
             vary={c.workspace.vary}
             over={c.workspace.over}
+            initial={c.workspace.initial}
             definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
             onConcept={(id) => net.concepts.has(id) && onSelect(id)}
             conceptName={(id) => name(net, id)}
