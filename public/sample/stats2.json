@@ -7839,7 +7839,6 @@
    ],
    "table_workspace": {
     "formula": 2,
-    "linear": 1,
     "tables": [
      {
       "id": "dice",
