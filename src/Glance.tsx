@@ -2,6 +2,7 @@
 // 閉じると読んでいた所のまま（画面の原則 3）。ひと目の中の語を押すと次のひと目に替わり、来た道を上に出す（原則 11。式の「開く・戻る」と同じ見せ方）。
 // ページへ行くのは「ページを開く」を押したときだけ（読む所を勝手に替えない。原則 1）。
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import katex from "katex";
 import { Button, Muted, Sheet, subText } from "@math-lab/ui";
 import { lead, termsIn, type Network } from "./data";
@@ -42,62 +43,66 @@ export function GlanceRoot({
   return (
     <Ctx.Provider value={{ open, show }}>
       {children}
-      {c && (
-        <div className={st.layer}>
-          <Sheet label={`${c.name} のひと目`} title={c.name} onClose={() => setTrail([])} data-testid="glance">
-            {trail.length > 1 && (
-              <nav className={st.trail} aria-label="たどった語" data-testid="glance-trail">
-                <button
-                  type="button"
-                  className={st.back}
-                  aria-label={`${net.concepts.get(trail.at(-2)!)?.name} に戻る`}
-                  onClick={() => setTrail((t) => t.slice(0, -1))}
-                  data-testid="glance-back"
+      {/* ひと目は body の最後に出す（iPhone の実機で、概念のページの送る面がひと目の上に描かれ、ひと目が見えないまま押せていた。
+          2026-11-25 の実機の録画。WebKit の見立てでは起きないので、重なりの土台を画面いっぱいの固定の層にして、ページの外に置く） */}
+      {c &&
+        createPortal(
+          <div className={st.layer}>
+            <Sheet label={`${c.name} のひと目`} title={c.name} onClose={() => setTrail([])} data-testid="glance">
+              {trail.length > 1 && (
+                <nav className={st.trail} aria-label="たどった語" data-testid="glance-trail">
+                  <button
+                    type="button"
+                    className={st.back}
+                    aria-label={`${net.concepts.get(trail.at(-2)!)?.name} に戻る`}
+                    onClick={() => setTrail((t) => t.slice(0, -1))}
+                    data-testid="glance-back"
+                  >
+                    ‹
+                  </button>
+                  <span className={st.crumbs}>
+                    {trail.map((t, i) => (
+                      <span key={`${t}-${i}`} className={i === trail.length - 1 ? st.here : undefined}>
+                        {net.concepts.get(t)?.name}
+                      </span>
+                    ))}
+                  </span>
+                </nav>
+              )}
+              {c.category && <Muted as="p">{c.category}</Muted>}
+              {text ? (
+                <p className={st.text} data-testid="glance-text">
+                  {subText(text)}
+                </p>
+              ) : (
+                <Muted as="p">まだ定義の1文がない。ページで関係と学ぶ順を見られる。</Muted>
+              )}
+              {f?.tex && (
+                <div
+                  className={st.tex}
+                  data-testid="glance-tex"
+                  dangerouslySetInnerHTML={{
+                    __html: katex.renderToString(f.tex, { throwOnError: false, displayMode: true }),
+                  }}
+                />
+              )}
+              <Terms net={net} ids={termsIn(net, text, c.id)} onTerm={open} testPrefix="glance-term" />
+              {c.id !== current && (
+                <Button
+                  className={st.go}
+                  onClick={() => {
+                    setTrail([]);
+                    onOpen(c.id);
+                  }}
+                  data-testid="glance-open"
                 >
-                  ‹
-                </button>
-                <span className={st.crumbs}>
-                  {trail.map((t, i) => (
-                    <span key={`${t}-${i}`} className={i === trail.length - 1 ? st.here : undefined}>
-                      {net.concepts.get(t)?.name}
-                    </span>
-                  ))}
-                </span>
-              </nav>
-            )}
-            {c.category && <Muted as="p">{c.category}</Muted>}
-            {text ? (
-              <p className={st.text} data-testid="glance-text">
-                {subText(text)}
-              </p>
-            ) : (
-              <Muted as="p">まだ定義の1文がない。ページで関係と学ぶ順を見られる。</Muted>
-            )}
-            {f?.tex && (
-              <div
-                className={st.tex}
-                data-testid="glance-tex"
-                dangerouslySetInnerHTML={{
-                  __html: katex.renderToString(f.tex, { throwOnError: false, displayMode: true }),
-                }}
-              />
-            )}
-            <Terms net={net} ids={termsIn(net, text, c.id)} onTerm={open} testPrefix="glance-term" />
-            {c.id !== current && (
-              <Button
-                className={st.go}
-                onClick={() => {
-                  setTrail([]);
-                  onOpen(c.id);
-                }}
-                data-testid="glance-open"
-              >
-                「{c.name}」のページを開く
-              </Button>
-            )}
-          </Sheet>
-        </div>
-      )}
+                  「{c.name}」のページを開く
+                </Button>
+              )}
+            </Sheet>
+          </div>,
+          document.body,
+        )}
     </Ctx.Provider>
   );
 }

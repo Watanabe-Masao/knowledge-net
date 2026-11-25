@@ -63,3 +63,32 @@ test("ひと目の中の語で次のひと目、‹ で戻り、「ページを�
   await expect(page).toHaveURL(/c=stats2%3ATERM-expect/);
   await expect(page.getByTestId("detail").locator("h2")).toHaveText("期待値");
 });
+
+// 確かめる対象：ひと目が、概念のページ（全画面）の外の、画面いっぱいの固定の層に出て、一番上で押せる（2026-11-25 の実機の録画）。
+// 想定する故障：iPhone の実機で、ページの送る面がひと目の上に描かれ、ひと目が見えないまま押せる（2回目に押すと見えない「ページを開く」が押され、別の概念へ移る）。
+//   chromium・webkit の見立てでは描かれ方の違いが起きないので、置き場所（ページの外・body の直下の固定の層）と、真ん中の点がひと目であることを見る。
+// 検出の確かめ（2026-11-25）：出す先を body でなく #root にすると、置き場所の確かめで落ちることを見た
+test("ひと目はページの外の固定の層に出て、一番上で押せる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(at("stats2:TERM-binom"));
+  const w = page.getByTestId("detail").getByTestId("word-stats2:TERM-indep").first();
+  await w.scrollIntoViewIfNeeded();
+  await w.click();
+  const g = page.getByTestId("glance");
+  await expect(g).toBeVisible();
+  // 下から出る動きが止まってから測る
+  await expect
+    .poll(() => g.evaluate((el) => el.getAnimations().filter((a) => a.playState === "running").length))
+    .toBe(0);
+  const r = await g.evaluate((el) => {
+    const layer = el.parentElement!;
+    const b = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+    return {
+      outsidePage: !el.closest('[data-testid="detail"]') && !el.closest("main"),
+      layerOnBody: layer.parentElement === document.body && getComputedStyle(layer).position === "fixed",
+      top: el.contains(hit),
+    };
+  });
+  expect(r).toEqual({ outsidePage: true, layerOnBody: true, top: true });
+});
