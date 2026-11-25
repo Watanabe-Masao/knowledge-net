@@ -21,6 +21,7 @@ export function Chart({ w }: { w: WsCtx }) {
     table,
     overSym,
     symText,
+    tail,
     exp: { rec, freq, lastDraw },
   } = w;
   const W = 340,
@@ -229,6 +230,12 @@ export function Chart({ w }: { w: WsCtx }) {
           );
         })}
       </svg>
+      {/* 横軸に上限がない分布（ポアソン・幾何など）は、右の端で切っている。切った先の確率を出す（図に入らない所を黙って消さない。stats2-course の issue 608） */}
+      {tail !== undefined && bars.length > 0 && (
+        <p className={s.chartNote} data-testid="ws-tail">
+          {`${symText} が ${num6(bars[bars.length - 1]!.v)} より大きい所は図に入れていない（その確率は合わせて ${tail < 0.0001 ? "0.01% 未満" : `${Number((tail * 100).toPrecision(2))}%`}）`}
+        </p>
+      )}
     </figure>
   );
 }

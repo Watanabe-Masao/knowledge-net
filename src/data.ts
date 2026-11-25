@@ -85,6 +85,8 @@ export type Concept = {
     over: string;
     mean?: number;
     linear?: number;
+    /** 開いたときの記号の値（型の改訂10。stats2-course の issue 608） */
+    initial?: Record<string, number>;
   };
   /** 型の改訂15：期待値の値の表の作業台 */ table_workspace?: import("@math-lab/ui").TableWorkspaceData;
   conditions?: { math: string[]; data?: string[] };

@@ -28,6 +28,7 @@ import {
   openSymbol,
   rhsOf,
   sliderRange,
+  tailEnd,
   symbolsIn,
   toTex,
   type Definition,
@@ -102,6 +103,16 @@ function Frame({
   const vary = model.kind === "formula" ? model.vary : [],
     over = model.kind === "formula" ? model.over : "";
   const symOfGiven = (k: string) => (given.symbols ?? []).find((x) => x.key === k);
+  // 記号の動かせる範囲。横軸の記号に上限がない（ポアソン分布・幾何分布の k など）ときは、その先の確率が 0.01% 未満になる所まで
+  // （tailEnd。前は 0〜30 で切り、λ が大きいと山の右側が欠けた。stats2-course の issue 608）
+  const rangeOf = (k: string, v: Record<string, number>): { min: number; max: number; step: number; tail?: number } => {
+    const sym = symOfGiven(k);
+    if (!sym) return { min: 0, max: 0, step: 1 };
+    const r = sliderRange(sym, v, FALLBACK);
+    if (model.kind !== "formula" || k !== over || sym.domain?.max !== undefined || !given.tree) return r;
+    const t = tailEnd(given.tree, over, r.min, { values: v });
+    return { ...r, max: Math.max(r.min, t.hi), tail: t.tail };
+  };
 
   // ---- 6 入力（パターン1：記号の値／パターン2：表の重み）と 8 変換（a・b）。状態は reducer 1つ（workspace/state.ts） ----
   // ---- 6 入力（パターン1：記号の値／パターン2：表の重み）と 8 変換（a・b） ----
@@ -121,7 +132,7 @@ function Frame({
     }
     if (v[over] === undefined) {
       const m = mean?.tree ? evaluate(rhsOf(mean.tree), { values: v }) : undefined;
-      const r = symOfGiven(over) ? sliderRange(symOfGiven(over)!, v, FALLBACK) : { min: 0, max: 0, step: 1 };
+      const r = rangeOf(over, v);
       v[over] = Math.min(r.max, Math.max(r.min, Math.round(m ?? r.min)));
     }
     return v;
@@ -132,9 +143,8 @@ function Frame({
   const clampAll = (v: Record<string, number>) => {
     const out = { ...v };
     for (const k of [...vary, over]) {
-      const sym = symOfGiven(k);
-      if (!sym) continue;
-      const r = sliderRange(sym, out, FALLBACK);
+      if (!symOfGiven(k)) continue;
+      const r = rangeOf(k, out);
       out[k] = Math.min(r.max, Math.max(r.min, out[k] ?? r.min));
     }
     return out;
@@ -214,7 +224,7 @@ function Frame({
   const result = evaluate(rhsOf(tree), env);
   const lhs = lhsOf(tree);
   const overSym = symOfGiven(over);
-  const range = overSym ? sliderRange(overSym, values, FALLBACK) : { min: 0, max: 0, step: 1 };
+  const range = overSym ? rangeOf(over, values) : { min: 0, max: 0, step: 1 };
   // 分布（横軸は元の X の値。図は変換後の値 v＝ax＋b で並べる。a＝0 なら1本にまとめる）
   const distX = useMemo(
     () =>
@@ -418,6 +428,8 @@ function Frame({
     set,
     setWeight,
     totalW,
+    rangeOf,
+    tail: range.tail,
     overSym,
     bars,
     meanX,

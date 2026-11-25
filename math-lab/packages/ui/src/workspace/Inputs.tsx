@@ -1,10 +1,9 @@
 // 6 入力：パターン1＝実験室と同じ帯（値の出た札を押すと、その1本のつまみが札の上に出る。#188 07b）／パターン2＝値の表の行（重みの −／＋）。
 // Workspace.tsx から分けた（stats2-course #212）
 import { useEffect, useRef } from "react";
-import { sliderRange } from "@math-lab/engine";
 import { haptic } from "../motion";
 import { Field } from "../QuestionParts";
-import { FALLBACK, fmt, num6 } from "./shared";
+import { fmt, num6 } from "./shared";
 import type { WsCtx } from "./ctx";
 import s from "../Workspace.module.css";
 
@@ -67,7 +66,7 @@ export function Inputs({ w }: { w: WsCtx }) {
           const keys = [...vary, over].filter((k) => symOf(k));
           const cur = keys.includes(band) ? band : over;
           const sym = symOf(cur)!,
-            r = sliderRange(sym, values, FALLBACK);
+            r = w.rangeOf(cur, values);
           // 値はふだん札だけに出す（意味の行・つまみ・札の3か所に同じ値を出さない。UI レビュー「操作と入力」）
           return (
             <div className={s.band} data-testid="ws-band" data-open={bandOpen || undefined} {...hold}>
