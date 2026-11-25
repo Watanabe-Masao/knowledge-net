@@ -181,12 +181,12 @@ const zmode: ModeDef = {
   defaults: { mA: 50, sA: 10, xA: 70, mB: 80, sB: 5, xB: 90, nameA: "A", nameB: "B" },
   extra: ["nameA", "nameB"],
   fields: [
-    { key: "mA", label: "Aの平均", min: 0, max: 300, step: 1 },
-    { key: "sA", label: "Aの σ", min: 1, max: 60, step: 1 },
-    { key: "xA", label: "Aの値", min: 0, max: 400, step: 1 },
-    { key: "mB", label: "Bの平均", min: 0, max: 300, step: 1 },
-    { key: "sB", label: "Bの σ", min: 1, max: 60, step: 1 },
-    { key: "xB", label: "Bの値", min: 0, max: 400, step: 1 },
+    { key: "mA", label: "Aの平均", chip: "平均A", min: 0, max: 300, step: 1 },
+    { key: "sA", label: "Aの σ", chip: "σA", min: 1, max: 60, step: 1 },
+    { key: "xA", label: "Aの値", chip: "値A", min: 0, max: 400, step: 1 },
+    { key: "mB", label: "Bの平均", chip: "平均B", min: 0, max: 300, step: 1 },
+    { key: "sB", label: "Bの σ", chip: "σB", min: 1, max: 60, step: 1 },
+    { key: "xB", label: "Bの値", chip: "値B", min: 0, max: 400, step: 1 },
   ],
   draw(st, { dec }) {
     const g = (k: "A" | "B") => {
