@@ -447,24 +447,25 @@ test("説明のシートは指で動かせる：上へ引くと全体、下へ�
 
 // 式を触る（#72）：記号を押すと意味と概念、値を入れると右辺を1段ずつ計算する
 test("式の記号を押すと意味が出て、値を入れると1段ずつ計算できる", async ({ page }) => {
-  // 作業台に出した式は下の一覧に重ねて出さない（#156）ので、作業台のない幾何分布の式の一覧で確かめる
+  // 作業台に出した式は下の一覧に重ねて出さない（#156）ので、作業台のない指数分布の式の一覧で確かめる
+  // （幾何分布は 2026-11-26 に作業台を足した。stats2-course の issue 608）
   await page.setViewportSize({ width: 380, height: 800 });
-  await page.goto(`./?${SRC}&c=stats2:TERM-geom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-expo`);
   await fullSheet(page);
   const d = page.getByTestId("detail");
   await tab(page, /^式$/);
-  const f = d.getByTestId("formula").nth(1); // E(X)＝1/p
-  await f.getByTestId("sym-p").click();
-  await expect(f.getByTestId("sym-card")).toContainText("成功");
-  await expect(f.locator('[data-sym="p"][data-on]').first()).toBeVisible(); // 式の中でも強調
+  const f = d.getByTestId("formula").nth(2); // E(X)＝1/λ
+  await f.getByTestId("sym-lambda").click();
+  await expect(f.getByTestId("sym-card")).toContainText("平均");
+  await expect(f.locator('[data-sym="lambda"][data-on]').first()).toBeVisible(); // 式の中でも強調
   await f.getByRole("button", { name: "値を入れて計算する" }).click();
-  await f.getByRole("spinbutton", { name: /^p/ }).fill("0.25");
+  await f.getByRole("spinbutton", { name: /^λ/ }).fill("0.25");
   const ex = f.getByTestId("expansion");
   await expect(ex.locator(".katex")).toContainText("=4");
   await ex.getByRole("button", { name: "前の段" }).click();
   await expect(ex.locator(".katex")).toContainText("0.25");
-  // 記号から概念へ（V(X)＝(1−p)/p² の V から分散へ）
-  const v = d.getByTestId("formula").nth(2);
+  // 記号から概念へ（V(X)＝1/λ² の V から分散へ）
+  const v = d.getByTestId("formula").nth(3);
   await v.getByTestId("sym-V").click();
   await v.getByRole("button", { name: /分散 を開く/ }).click();
   await expect(page.getByTestId("detail").getByRole("heading", { name: "分散", exact: true })).toBeVisible();
@@ -494,8 +495,8 @@ test("式の記号を定義の式で開き、閉じると戻る", async ({ page 
 });
 
 // 式の正しさ（#109）：定義域の外は計算せず知らせる（k ≦ n も）、V(aX+b) は中の μ を E(X) にしてから開く、μ は μ＝E(X) で開く
-test("定義域の外の値は計算せず、理由を知らせる（r ≦ n・0 < p ≦ 1）", async ({ page }) => {
-  // 作業台のない概念の式で確かめる（組合せ ₙCᵣ の r ≦ n、幾何分布の 0 < p ≦ 1。#156。字は stats2-course #416 で k → r）
+test("定義域の外の値は計算せず、理由を知らせる（r ≦ n・λ > 0）", async ({ page }) => {
+  // 作業台のない概念の式で確かめる（組合せ ₙCᵣ の r ≦ n、指数分布の λ > 0。#156。字は stats2-course #416 で k → r。幾何分布は issue 608 で作業台を持った）
   await page.goto(`./?${SRC}&c=stats2:TERM-comb`);
   await tab(page, /^式$/);
   const f = page.getByTestId("detail").getByTestId("formula").first(); // ₙCᵣ＝n!/(r!(n−r)!)
@@ -508,12 +509,12 @@ test("定義域の外の値は計算せず、理由を知らせる（r ≦ n・0
   await f.getByRole("spinbutton", { name: /^r/ }).fill("2");
   await expect(out).toHaveCount(0);
   await expect(f.getByTestId("expansion")).toBeVisible();
-  await page.goto(`./?${SRC}&c=stats2:TERM-geom`);
+  await page.goto(`./?${SRC}&c=stats2:TERM-expo`);
   await tab(page, /^式$/);
-  const g = page.getByTestId("detail").getByTestId("formula").nth(1); // E(X)＝1/p
+  const g = page.getByTestId("detail").getByTestId("formula").nth(2); // E(X)＝1/λ
   await g.getByRole("button", { name: "値を入れて計算する" }).click();
-  await g.getByRole("spinbutton", { name: /^p/ }).fill("7");
-  await expect(g.getByTestId("outside")).toContainText("p は 0より大きい1以下（今 7）");
+  await g.getByRole("spinbutton", { name: /^λ/ }).fill("-1");
+  await expect(g.getByTestId("outside")).toContainText("λ は 0より大きい（今 -1）");
 });
 
 test("V(aX+b) を開くと中の μ は E(aX+b) になり、μ は μ＝E(X) で開ける", async ({ page }) => {
