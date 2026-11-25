@@ -53,11 +53,12 @@ describe("上限のない横軸の並べる範囲", () => {
       fc.property(fc.double({ min: 0.02, max: 0.98, noNaN: true }), (p) => {
         const { hi, tail } = tailEnd(f("TERM-geom").tree, "k", 1, { values: { p } });
         expect(Math.abs(tail - (1 - p) ** hi)).toBeLessThan(1e-9); // 返す残りは本当の残り（cap で止まったときも）
-        if (hi < 1 + 400) {
-          expect(tail).toBeLessThan(1e-4);
+        // 止まった理由で分ける（hi が cap と同じ所で残りが eps 未満になることもあるので、hi では分けない。2026-11-26 に main で落ちた）
+        if (tail < 1e-4)
           expect((1 - p) ** (hi - 1)).toBeGreaterThan(1e-4 * (1 - 1e-9)); // 1つ手前ではまだ残りが eps 以上（早く止まりすぎない・遅すぎない）
-        } else expect(tail).toBeGreaterThanOrEqual(1e-4); // cap で止まったのは、残りが eps 以上のときだけ
+        else expect(hi).toBe(1 + 400); // 残りが eps 以上で止まるのは cap に着いたときだけ
       }),
+      { examples: [[0.022706663421711907]] }, // 2026-11-26 に main で落ちた境目（cap と eps が同じ所）
     );
   });
   it("性質：ポアソン分布は、並べた分で期待値 λ をほぼ再現する（大きな λ でも山の右が欠けない）", () => {
