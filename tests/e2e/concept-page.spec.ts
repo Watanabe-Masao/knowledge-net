@@ -532,3 +532,29 @@ test("ラボの札は短い名前：標準化ラボは 平均・σ・値 と A�
     /^値B \d/,
   ]);
 });
+
+// 確かめる対象：指で触る端末では、入力欄・選び肢の字が 16px 以上（iPhone の Safari が触れたときに画面を拡大しない）。
+// 想定する故障：入力欄の字が 16px 未満（検索欄 14.5px・作業台の場面の選び肢 12.5px）で、iPhone で触れると画面が拡大したまま戻らず、
+//   ほかのページへ進んでも右の端が切れる（2026-11-25 の実機の録画。chromium・webkit の画面のテストでは拡大が起きないので、字の大きさで見る）。
+// 見つけ方：触る指の端末（hasTouch。pointer: coarse）で、路線図の検索欄と、分散の作業台（式のタブ）の入力欄・選び肢の字の大きさを測る。
+// 検出の確かめ（2026-11-25）：base.css の 16px の指定を外すと、検索欄の 14.5px で落ちることを見た（分散の選び肢は指定がないと 12.5px）
+test.describe("触る指の端末", () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+  test("入力欄・選び肢の字は 16px 以上（iPhone で触れても拡大しない）", async ({ page }) => {
+    const small = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll("input, select, textarea")]
+          .filter((e) => parseFloat(getComputedStyle(e).fontSize) < 16)
+          .map((e) => `${e.tagName}[${(e as HTMLInputElement).type}] ${getComputedStyle(e).fontSize}`),
+      );
+    expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
+    await page.goto("./?src=sample/stats2.json");
+    await expect(page.getByRole("combobox", { name: "概念を検索" })).toBeVisible();
+    expect(await small()).toEqual([]);
+    await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-var");
+    const d = page.getByTestId("detail");
+    await openTab(d, "式");
+    await expect(d.locator("select, input").first()).toBeVisible();
+    expect(await small()).toEqual([]);
+  });
+});
