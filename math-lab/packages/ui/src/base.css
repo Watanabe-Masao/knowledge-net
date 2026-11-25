@@ -184,3 +184,15 @@ svg {
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* 入力欄の字は、触る指の端末では 16px 以上（stats2-course の issue 599 の実機の確かめ。2026-11-25）。
+   iPhone の Safari は、16px より小さい字の入力欄・選び肢に触れると画面を拡大し、離れても元に戻さない。
+   拡大したまま別のページへ進み・← で戻っても拡大が残り、右の端が切れる（画面の原則 1・3）。
+   部品ごとの字の大きさ（クラスの指定）より強くするため !important を使う */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
