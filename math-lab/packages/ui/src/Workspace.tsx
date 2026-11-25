@@ -203,10 +203,13 @@ function Frame({
   useEffect(() => dispatch({ type: "formula-changed" }), [isTable && transformed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- 値 ----
+  // 表で決まる分布では、式の μ（期待値）を今の表の期待値に結ぶ（分散の値ごとの和 Σ(x−μ)²p(x) を表で計算するため。
+  // 前は μ に値がなく、分散の式が「—」になった。stats2-course issue 577。渡辺さん 2026-11-25）
+  const tableMu = support.reduce((s, v, i) => s + v * (probs[i] ?? 0), 0);
   const env: Env = isTable
     ? transformed
-      ? { values: {}, domains: { y: support }, fns: { P: (y: number) => probs[support.indexOf(y)] ?? 0 } }
-      : { values: {}, domains: { x: support }, fns: { p: (x: number) => probs[support.indexOf(x)] ?? 0 } }
+      ? { values: { mu: tableMu }, domains: { y: support }, fns: { P: (y: number) => probs[support.indexOf(y)] ?? 0 } }
+      : { values: { mu: tableMu }, domains: { x: support }, fns: { p: (x: number) => probs[support.indexOf(x)] ?? 0 } }
     : { values };
   const result = evaluate(rhsOf(tree), env);
   const lhs = lhsOf(tree);
