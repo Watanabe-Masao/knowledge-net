@@ -1,7 +1,14 @@
 /* ひと目は、概念のページ（全画面）・実験室（FullView 47）・図の拡大（Lightbox 55）の上に出す */
 .layer {
-  position: relative;
+  /* 画面いっぱいの固定の層（重なりの土台。押せるのはひと目の面だけ）。translateZ で独立した描画の層にする（iPhone の実機） */
+  position: fixed;
+  inset: 0;
   z-index: 60;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+.layer [role="dialog"] {
+  pointer-events: auto;
 }
 .trail {
   display: flex;
