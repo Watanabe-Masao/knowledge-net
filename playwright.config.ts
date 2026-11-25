@@ -10,7 +10,10 @@ export default defineConfig({
   // 2026-11-24、現在地の札が語を隠す不具合は WebKit でだけ出た。stats2-course の issue 594）
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
-    // 落ちたときは trace を残す（CI の WebKit で一度だけ止まる件の原因を見るため。手元に WebKit がない）
+    // 落ちたときは trace を残す（手元に WebKit がない）。
+    // 前にあったこと（stats2-course の issue 285。2026-11-26 に閉じた）：関係図の「たどった道」のテストが WebKit でだけ 150 回に3〜7回止まった
+    // （ページが落ちる・URL が移らない）。ぼかし・寄る動き・詳しく欄・数式・地図の絵を外しても変わらず、chromium では 0/150。原因は分からないまま、
+    // その機能を外したあと WebKit の全部が 630 回で 0。同じ止まり方がまた出たら、issue 285 の記録と webkit-repeat（flake-repeat/ のブランチ）で数えて比べる
     {
       name: "webkit",
       use: { browserName: "webkit", trace: "retain-on-failure" },

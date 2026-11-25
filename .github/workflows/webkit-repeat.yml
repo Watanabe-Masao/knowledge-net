@@ -1,6 +1,7 @@
 name: webkit-repeat
 # 関係図の WebKit の画面のテスト（relation-map.spec.ts）を、同じコミットで何回も走らせて、ゆれの頻度と落ちる所を数える
-# （stats2-course #285。2026-11-30 を判断日にした：再発するか、するならどの型か）。
+# （stats2-course #285。たどった道のテストが WebKit でだけ約3%止まった件。機能を外したあと 630 回で 0 になり、2026-11-26 に閉じた。
+#   同じ止まり方がまた出たら、issue 285 の表と同じ数え方で比べる）。
 # 公開や PR の止めには使わない。flake-repeat/ で始まるブランチへの push か、手で走らせたときだけ動く。
 # 再試行はしない（retries: 0 のまま）。落ちた回の記録（trace・error-context）は test-results に残す。
 on:
