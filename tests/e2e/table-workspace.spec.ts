@@ -186,3 +186,27 @@ test("埋め込みから作業台を開く経路を維持する", async ({ page 
     await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.scrollHeight]),
   ).toEqual([360, 320]);
 });
+
+// 確かめる対象：表で決まる分布で、式の μ が今の表の期待値に結ばれ、分散の値ごとの和 Σ(x−μ)²p(x) が表から計算される（stats2-course issue 577）。
+// 想定する故障：μ に値がなく、分散の結果が「—」になる・計算の段に μ のまま残る・重みを変えても μ が前の表のまま。
+// 見つけ方：分散の概念に、期待値と同じさいころの表を指す作業台を付けて開く。公平なさいころで 35/12≈2.9167、
+//   6 の面の重みを 3 にすると 3.3594（平均 33/8・E(X²) 163/8 から手で出した値。独立性：画面の計算とは別に分数で出した）。
+// 検出の確かめ（2026-11-25）：μ に表の期待値を入れない（値がない）と落ちることを見た
+test("表で決まる分布の分散：μ は今の表の期待値で、重みを変えると一緒に動く", async ({ page }) => {
+  await page.route("**/sample/stats2.json", async (r) => {
+    const d = await (await r.fetch()).json();
+    const tables = concept.table_workspace.tables.filter((t: { id: string }) => t.id === "dice");
+    d.concepts = d.concepts.map((c: { id: string; formulas: { id: string }[] }) =>
+      c.id === "stats2:TERM-var"
+        ? { ...c, table_workspace: { formula: c.formulas.findIndex((f) => f.id === "F-var-sum"), tables } }
+        : c,
+    );
+    await r.fulfill({ json: d });
+  });
+  const w = await openSheet(page, "src=sample/stats2.json", "TERM-var");
+  expect(await num(w, "ws-result-val")).toBeCloseTo(35 / 12, 9);
+  expect(await lastCalc(w)).toBeCloseTo(35 / 12, 3); // 計算の段の最後も同じ（μ のまま残らない）
+  // 6 の面の重みを 1 → 3：平均 33/8、E(X²)＝163/8、分散 163/8 −(33/8)²＝215/64
+  for (let i = 0; i < 2; i++) await w.getByTestId("ws-plus-5").click();
+  expect(await num(w, "ws-result-val")).toBeCloseTo(215 / 64, 9);
+});
