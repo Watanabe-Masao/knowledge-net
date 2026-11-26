@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "
 import { Media, relationParts } from "./Relation";
 import { RelDig, RelMap } from "./RelMap";
 import {
-  Bars,
+  drawDist,
   Button,
   Card,
   Disclosure,
@@ -437,12 +437,15 @@ export default function Detail({
                 n＝{chart.m.n}・p＝{Math.round(chart.m.p * 100)}%
               </Muted>
             </div>
-            <Bars
-              theory={chart.pmf}
-              hi={chart.hi}
-              marker={chart.mean}
-              height={130}
-              label={`成功の回数ごとの確率（n＝${chart.m.n}・p＝${Math.round(chart.m.p * 100)}%）。いちばん高いのは ${chart.hi} 回`}
+            {/* 静止図（Notion の画像）と同じ関数・同じ設定で描く（stats2-course の issue 582 の D0）。色は画面の変数で、暗い画面に合わせる */}
+            <div
+              className={st.drawn}
+              dangerouslySetInnerHTML={{
+                __html: drawDist(
+                  { family: "binom", n: chart.m.n, p: chart.m.p, highlight: [chart.hi], unit: "回" },
+                  "page",
+                ),
+              }}
             />
             {c.chart?.note && <p className={st.note}>{c.chart.note}</p>}
           </section>

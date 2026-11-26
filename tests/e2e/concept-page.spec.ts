@@ -47,6 +47,17 @@ test("概要の図は engine の値から描き、棒の高さが二項分布の
   const ratio = (a: number[]) => a.map((v) => v / Math.max(...a));
   ratio(hs).forEach((v, i) => expect(v, `棒 ${i} の高さの比が確率の比と違う`).toBeCloseTo(ratio(shown)[i]!, 1));
   expect(hs.indexOf(Math.max(...hs)), "いちばん高い棒が 3 回でない").toBe(3);
+  // 図は静止図と同じ関数で描く（stats2-course の issue 582 の D0）。縮んで描かれても、字は実寸で 11px 以上（画面の原則 6）
+  const tiny = await page
+    .getByTestId("concept-chart")
+    .locator("svg")
+    .evaluate((s) => {
+      const k = s.getBoundingClientRect().width / Number(s.getAttribute("viewBox")!.split(" ")[2]);
+      return [...s.querySelectorAll("text")]
+        .map((t) => ({ t: t.textContent, px: parseFloat(getComputedStyle(t).fontSize) * k }))
+        .filter((x) => x.px < 11);
+    });
+  expect(tiny, "実寸 11px 未満の字").toEqual([]);
 });
 
 // 確かめる対象：概念から実験室へ（05）・読むときは全画面（02）。概念のページから実験室への入口は下の主ボタン1つ（渡辺さん 2026-11-04：入口が重複）。
