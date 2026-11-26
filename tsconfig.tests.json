@@ -1,0 +1,9 @@
+// テスト（tests/）と設定（*.ts）の型の検査。src は tsconfig.json（Node の型を入れない）。
+// 2026-11-26 に入れたとき、応用の課題のテストが段に無い項目（title・text）を見ていて、穴の値の NaN を見逃していたのを見つけた（stats2-course issue 212）
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"]
+  },
+  "include": ["src", "tests", "*.ts"]
+}

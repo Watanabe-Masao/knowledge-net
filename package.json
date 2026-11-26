@@ -9,8 +9,9 @@
     "build": "npm run gen && tsc --noEmit && vite build",
     "test": "npm run gen && vitest run",
     "e2e": "playwright test",
+    "typecheck:tests": "tsc -p tsconfig.tests.json",
     "check": "npm run check:fast && npm run e2e",
-    "check:fast": "npm run format:check && npm run lab && npm run sample && npm run design && npm run test && npm run build",
+    "check:fast": "npm run format:check && npm run lab && npm run sample && npm run design && npm run test && npm run build && npm run typecheck:tests",
     "check:local": "npm run check:fast && playwright test --project=chromium",
     "design": "node scripts/check-design.mjs",
     "lab": "cd math-lab && node scripts/check-design.mjs && tsc -p packages/engine --noEmit && tsc -p packages/ui --noEmit && node scripts/bundle-formula.mjs --check && node scripts/sync-stats2.mjs && vitest run",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@types/node": "^22.20.7",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",

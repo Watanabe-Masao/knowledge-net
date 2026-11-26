@@ -22,7 +22,7 @@ test("概要は 問い → つまり → 図 → 定義 の順で、原理・条
   await expect(d.getByTestId("concept-question")).toBeVisible();
   // 開いた直後は面が動いていて位置が入れ替わって見えることがある（CI で一度落ちた）。並びが落ち着くまで待ち、ずっと崩れていれば落とす
   const order = async () => {
-    const ys = [];
+    const ys: number[] = [];
     for (const id of ["concept-question", "concept-gist", "concept-chart", "concept-def-tex"])
       ys.push((await d.getByTestId(id).boundingBox())!.y);
     return ys.every((y, i) => i === 0 || ys[i - 1]! < y);
