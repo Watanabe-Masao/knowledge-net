@@ -1,7 +1,18 @@
 // 式の木（#72・#109）：型・TeX を作る・値を求める・1段ずつ展開する・検査する・記号を開く・スコープ・定義域。
 export * from "./types";
 export { toTex, symbolTex, formatNum, type TexOptions } from "./tex";
-export { evaluate, expand, substitute, symbolsIn, fnsIn, factorial, comb, perm, type Env } from "./evaluate";
+export {
+  evaluate,
+  expand,
+  substitute,
+  symbolsIn,
+  fnsIn,
+  zeroFactors,
+  factorial,
+  comb,
+  perm,
+  type Env,
+} from "./evaluate";
 export { validateFormula } from "./validate";
 export {
   definitionsFor,

@@ -117,3 +117,43 @@ test.describe("作業台：つまみを端へ動かしても正しい", () => {
     await expect(ws).toContainText("P(X=");
   });
 });
+
+// 確かめる対象：2026-11-26 の iPhone の録画で見えた、黙って変わる・黙って 0 になる所（stats2-course の issue 507）。
+// 想定する故障：N を下げて M・n が下がっても何も言わない・0% の理由を言わない・とても小さい確率を「0.00%」に丸める・
+//   知らせが次の操作のあとも残る（触っていない値の知らせが居すわる）。
+// 見つけ方：つまみを端へ動かし、知らせの行・理由の行・結果の文字を見る。既存の上のテストは値と図の形で、文は見ていない。
+// 検出の確かめ（2026-11-26）：知らせを出さない形・理由を出さない形・小さい確率の丸めを前の形に戻す形の3つで、それぞれ落ちることを見た
+test.describe("作業台：ほかの値が変わった・0 になったことを1行で言う", () => {
+  const open = async (page: import("@playwright/test").Page, id: string) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3ATERM-${id}`);
+    await openTab(page.getByTestId("detail"), "式");
+    return page.getByTestId("workspace");
+  };
+  const toEnd = async (page: import("@playwright/test").Page, k: string, key: "Home" | "End") => {
+    await page.getByTestId(`ws-chip-${k}`).click();
+    await page.locator(`#ws-slider-${k}`).focus();
+    await page.keyboard.press(key);
+  };
+  test("超幾何分布：N を下げて M・n が下がったら知らせ、次に何も変わらなければ消す", async ({ page }) => {
+    await open(page, "hyper");
+    await toEnd(page, "N", "Home");
+    const note = page.getByTestId("ws-notice");
+    await expect(note).toContainText("N に合わせて M 8→1");
+    await expect(note).toContainText("n 5→1");
+    await page.keyboard.press("ArrowRight");
+    await expect(note).toHaveCount(0);
+  });
+  test("超幾何分布：M＝0 で 0% になるとき、選べない組合せを理由に言う", async ({ page }) => {
+    await open(page, "hyper");
+    await toEnd(page, "M", "Home");
+    await expect(page.getByTestId("ws-result-val")).toHaveText("0.00%");
+    await expect(page.getByTestId("ws-zero-why")).toContainText("0 個から 2 個を選ぶ数");
+  });
+  test("ポアソン分布 λ＝30（k は窓の左の端）：とても小さい確率を 0.00% に丸めない", async ({ page }) => {
+    await open(page, "poisson");
+    await toEnd(page, "lambda", "End");
+    await expect(page.getByTestId("ws-result-val")).toHaveText("0.01% 未満");
+    await expect(page.getByTestId("ws-zero-why")).toHaveCount(0);
+  });
+});

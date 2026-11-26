@@ -3,7 +3,17 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import katex from "katex";
 import formulas from "./fixtures/stats2-formulas.json";
-import { evaluate, expand, symbolTex, symbolsIn, toTex, validateFormula, type Formula, type FormulaNode } from "../src";
+import {
+  evaluate,
+  expand,
+  symbolTex,
+  symbolsIn,
+  toTex,
+  validateFormula,
+  zeroFactors,
+  type Formula,
+  type FormulaNode,
+} from "../src";
 
 const all = formulas as (Formula & { concept: string; index: number })[];
 const parses = (tex: string, trust = false) => katex.renderToString(tex, { throwOnError: true, trust, strict: false });
@@ -244,5 +254,40 @@ describe("性質", () => {
       }),
       { numRuns: 300 },
     );
+  });
+});
+
+// 確かめる対象：zeroFactors（結果が 0 のとき、画面が「なぜ 0 か」を言う元）。
+// 想定する故障：0 にしていない組合せまで挙げる（画面が誤った理由を言う）・0 にした組合せを落とす・Σ の中の動かす記号で誤る。
+// 見つけ方：超幾何分布の式で、0 になる値と 0 にならない値の両方を当てる。既存のテストは comb の値だけで、どの因子が 0 かは見ていない。
+describe("zeroFactors", () => {
+  const C = (n: FormulaNode, k: FormulaNode): FormulaNode => ({ op: "fn", name: "comb", args: [n, k] });
+  const sub = (a: string, b: string): FormulaNode => ({ op: "sub", args: [{ sym: a }, { sym: b }] });
+  const hyper: FormulaNode = {
+    op: "div",
+    args: [
+      { op: "mul", args: [C({ sym: "M" }, { sym: "k" }), C(sub("N", "M"), sub("n", "k"))] },
+      C({ sym: "N" }, { sym: "n" }),
+    ],
+  };
+  it("外れ 14 個から 16 個は選べない：その組合せだけを挙げる", () => {
+    const env = { values: { N: 30, M: 16, n: 20, k: 4 } };
+    expect(evaluate(hyper, env)).toBe(0);
+    const z = zeroFactors(hyper, env);
+    expect(z.map((x) => [x.n, x.k])).toEqual([[14, 16]]);
+  });
+  it("0 にならない値では何も挙げない", () => {
+    expect(zeroFactors(hyper, { values: { N: 20, M: 8, n: 5, k: 2 } })).toEqual([]);
+    expect(zeroFactors(hyper, { values: { N: 10, M: 5, n: 5, k: 5 } })).toEqual([]); // ₅C₅＝1（端の k＝n は 0 でない）
+  });
+  it("Σ の中は見ない（動かす記号の値が決まらない）", () => {
+    const s: FormulaNode = {
+      op: "sum",
+      var: "j",
+      lower: { num: 0 },
+      upper: { num: 3 },
+      args: [C({ num: 2 }, { sym: "j" })],
+    };
+    expect(zeroFactors(s, { values: { j: 5 } })).toEqual([]); // 外の j＝5 を中へ持ち込むと ₂C₅ を誤って挙げる
   });
 });
