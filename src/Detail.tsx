@@ -567,7 +567,7 @@ export default function Detail({
                 onTerm={onWord}
                 plainClass={st.conds}
               />
-              {/* 仮定（保証の条件）は、その概念について言える主張の側にある（stats2-course #532 C で概念から移した）。成立条件だけを読むと
+              {/* 仮定（保証の条件）は、その概念について言える主張の側にある（stats2-course の issue 532 C で概念から移した）。成立条件だけを読むと
                   仮定が見えないので、主張の欄への入口を置く（画面の原則 13。押すとその欄を開いて見せる：原則 11。渡辺さん 2026-11-26） */}
               {assumed > 0 && (
                 <Button variant="quiet" className={st.headingTo} onClick={openClaims} data-testid="cond-to-claims">
