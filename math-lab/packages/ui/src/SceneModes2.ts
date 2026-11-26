@@ -577,7 +577,15 @@ const path: ModeDef = {
   fields: [
     { key: "n", label: "回数 n", min: 1, max: 6, step: 1 },
     { key: "p", label: "確率 p", min: 0, max: 1, step: 0.01, show: pctS },
-    { key: "k", label: "k 回", min: 0, max: (st) => num(st, "n", 1), step: 1 },
+    {
+      key: "k",
+      label: "成功 k 回",
+      chip: "成功",
+      min: 0,
+      max: (st) => num(st, "n", 1),
+      step: 1,
+      show: (v) => `${Math.round(v)}回`,
+    },
   ],
   draw(st, { dec }) {
     const n = Math.round(num(st, "n", 1)),
@@ -591,7 +599,7 @@ const path: ModeDef = {
     const one = p ** k * (1 - p) ** (n - k),
       c = comb(n, k);
     return {
-      view: { kind: "paths", n, k, seqs: seqs.slice(0, 20), more: Math.max(0, seqs.length - 20) },
+      view: { kind: "paths", n, k, seqs: seqs.slice(0, 20), more: Math.max(0, seqs.length - 20), each: fmt(one, dec) },
       stats: [
         { key: "seq", label: "並びの数 ₙCₖ", value: String(c) },
         { key: "path", label: "並び1つ pᵏ(1−p)ⁿ⁻ᵏ", value: fmt(one, dec) },
