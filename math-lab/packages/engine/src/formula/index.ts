@@ -14,4 +14,4 @@ export {
 } from "./open";
 export { freeSymbols, boundSymbols, renameBound, freshName, replaceFree } from "./scope";
 export { inDomain, describeDomain, checkDomain, sliderRange, stopReason } from "./domain";
-export { nodeAt, rhsOf, lhsOf, distribution, tailEnd } from "./parts";
+export { nodeAt, rhsOf, lhsOf, distribution, spanOf } from "./parts";

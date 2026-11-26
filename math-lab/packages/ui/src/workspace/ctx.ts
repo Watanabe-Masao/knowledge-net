@@ -58,9 +58,15 @@ export type WsCtx = {
   setWeight: (i: number, w: number) => void;
   totalW: number;
   /** 記号の動かせる範囲（横軸に上限がないときは、その先の確率が 0.01% 未満になる所まで。tail はその先の確率） */
-  rangeOf: (k: string, v: Record<string, number>) => { min: number; max: number; step: number; tail?: number };
-  /** 横軸に上限がないとき、図の右の端より先の確率の合計 */
-  tail?: number;
+  rangeOf: (
+    k: string,
+    v: Record<string, number>,
+  ) => { min: number; max: number; step: number; below?: number; above?: number; sd?: number };
+  /** つまみの下の端（ほかの記号に取れる値が残る一番小さい値） */
+  lowestOf: (k: string, v: Record<string, number>) => number;
+  /** 横軸に上限がないとき、図の左の端より手前・右の端より先の確率の合計 */
+  below?: number;
+  above?: number;
   // 分布と実験
   overSym?: FormulaSymbol;
   bars: Bar[];

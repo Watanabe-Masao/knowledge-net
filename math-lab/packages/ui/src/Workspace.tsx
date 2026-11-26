@@ -28,7 +28,7 @@ import {
   openSymbol,
   rhsOf,
   sliderRange,
-  tailEnd,
+  spanOf,
   symbolsIn,
   toTex,
   type Definition,
@@ -103,15 +103,16 @@ function Frame({
   const vary = model.kind === "formula" ? model.vary : [],
     over = model.kind === "formula" ? model.over : "";
   const symOfGiven = (k: string) => (given.symbols ?? []).find((x) => x.key === k);
-  // 記号の動かせる範囲。横軸の記号に上限がない（ポアソン分布・幾何分布の k など）ときは、その先の確率が 0.01% 未満になる所まで
-  // （tailEnd。前は 0〜30 で切り、λ が大きいと山の右側が欠けた。stats2-course の issue 608）
-  const rangeOf = (k: string, v: Record<string, number>): { min: number; max: number; step: number; tail?: number } => {
+  // 記号の動かせる範囲。横軸の記号に上限がない（ポアソン分布・幾何分布の k など）ときは、窓の外の確率が左右それぞれ 0.005% 未満の所まで、
+  // 400 本まで（spanOf。前は 0〜30 で切り、λ が大きいと山の右側が欠けた。山が遠いときは一番高い所を真ん中に。stats2-course の issue 608）
+  type Range = { min: number; max: number; step: number; empty?: boolean; below?: number; above?: number; sd?: number };
+  const rangeOf = (k: string, v: Record<string, number>): Range => {
     const sym = symOfGiven(k);
     if (!sym) return { min: 0, max: 0, step: 1 };
     const r = sliderRange(sym, v, FALLBACK);
     if (model.kind !== "formula" || k !== over || sym.domain?.max !== undefined || !given.tree) return r;
-    const t = tailEnd(given.tree, over, r.min, { values: v });
-    return { ...r, max: Math.max(r.min, t.hi), tail: t.tail };
+    const t = spanOf(given.tree, over, r.min, { values: v });
+    return { ...r, min: t.from, max: Math.max(t.from, t.to), below: t.below, above: t.above, sd: t.sd };
   };
 
   // ---- 6 入力（パターン1：記号の値／パターン2：表の重み）と 8 変換（a・b）。状態は reducer 1つ（workspace/state.ts） ----
@@ -149,7 +150,24 @@ function Frame({
     }
     return out;
   };
-  const set = (k: string, x: number) => patch((c) => ({ values: clampAll({ ...c.values, [k]: x }) }));
+  // どの記号にも取れる値が残るか（超幾何分布で N＝0 にすると、n は 1 以上 N 以下で取れる値がなくなり、0/0 になった。2026-11-26 の独立な確かめ）
+  const feasible = (v: Record<string, number>) =>
+    [...vary, over].every((k) => {
+      if (!symOfGiven(k)) return true;
+      return !rangeOf(k, v).empty;
+    });
+  // つまみの下の端：ほかの記号に取れる値が残る一番小さい値（整数の記号だけ。超幾何分布の N は n・M より小さくできない）
+  const lowestOf = (k: string, v: Record<string, number>) => {
+    const r = rangeOf(k, v);
+    if (r.step !== 1 || k === over) return r.min;
+    for (let x = r.min; x <= Math.min(r.max, r.min + 1000); x++) if (feasible(clampAll({ ...v, [k]: x }))) return x;
+    return r.min;
+  };
+  const set = (k: string, x: number) =>
+    patch((c) => {
+      const next = clampAll({ ...c.values, [k]: x });
+      return feasible(next) ? { values: next } : {};
+    });
   const setWeight = (i: number, w: number) => {
     const next = weights.map((x, j) => (j === i ? Math.max(0, Math.round(w)) : x));
     if (next.every((x) => x === 0))
@@ -250,11 +268,13 @@ function Frame({
   const dist = useMemo(() => bars.map((g) => ({ x: g.v, y: g.y })), [bars]); // 実験はこの分布（変換後の値）から引く
   // ±標準偏差の帯（stats2-course issue 171）：理論の分布から σ＝√Σ(v−μ)²P(v) を求める。式で決まる分布も表で決まる分布も、変換（aX＋b）のあとも同じ求め方
   const sdValue = useMemo(() => {
+    // 横軸に上限がない分布は、窓で切らずに求めた σ（窓で切ると裾の重い分布で小さく出る。2026-11-26 の独立な確かめ）
+    if (range.sd !== undefined && Number.isFinite(range.sd)) return Math.abs(a) * range.sd;
     const tot = bars.reduce((t, g) => t + g.y, 0);
     if (!(tot > 0)) return undefined;
     const mu = bars.reduce((t, g) => t + g.v * g.y, 0) / tot;
     return Math.sqrt(bars.reduce((t, g) => t + (g.v - mu) ** 2 * g.y, 0) / tot);
-  }, [bars]);
+  }, [bars, range.sd, a]);
   const ex = useExperimentRun(seed0, dist, JSON.stringify([vary.map((k) => values[k]), weights, a, b]));
 
   // ---- 5 計算過程：パターン1は値を入れた式から1段ずつ、パターン2は Σ を1項ずつ（どちらも最後が 4 結果の値） ----
@@ -429,7 +449,9 @@ function Frame({
     setWeight,
     totalW,
     rangeOf,
-    tail: range.tail,
+    lowestOf,
+    below: range.below,
+    above: range.above,
     overSym,
     bars,
     meanX,

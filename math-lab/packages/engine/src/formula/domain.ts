@@ -59,7 +59,7 @@ export function sliderRange(
   s: FormulaSymbol,
   values: Record<string, number>,
   fallback: { min: number; max: number; step: number },
-): { min: number; max: number; step: number } {
+): { min: number; max: number; step: number; empty: boolean } {
   const d = s.domain ?? {};
   let min = bound(d.min, values) ?? fallback.min,
     max = bound(d.max, values) ?? fallback.max;
@@ -70,7 +70,8 @@ export function sliderRange(
     min = Math.ceil(min);
     max = Math.floor(max);
   }
-  return { min, max: Math.max(min, max), step };
+  // empty：ほかの記号の値のせいで、取れる値がない（超幾何分布の N＝0 で n は 1 以上 0 以下。画面はその値を受けない。stats2-course の issue 608）
+  return { min, max: Math.max(min, max), step, empty: max < min };
 }
 
 /** 展開が止まった理由：引数がそろっているのに値にならない演算を探す（0 で割る・負の数の平方根など） */
