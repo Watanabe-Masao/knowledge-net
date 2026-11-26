@@ -1,7 +1,25 @@
 // 式の木の型（knowledge-net の schema の formulaNode と同じ形。stats2-course #71・#72）。
 // 葉は記号（sym：記号の key）か数（num）。それ以外は演算（op）と引数（args）。
 
-export type Op = "eq" | "add" | "sub" | "mul" | "div" | "pow" | "neg" | "sqrt" | "abs" | "sum" | "prod" | "int" | "fn";
+/** 比べる（lt・le・gt・ge）は2つ以上の引数を左から読む関係の連なり（a≦X≦b は le(a, X, b)）。値は隣どうしが全部成り立てば 1、どれか崩れれば 0（stats2-course #72 案 A。2026-11-26） */
+export type Op =
+  | "eq"
+  | "lt"
+  | "le"
+  | "gt"
+  | "ge"
+  | "add"
+  | "sub"
+  | "mul"
+  | "div"
+  | "pow"
+  | "neg"
+  | "sqrt"
+  | "abs"
+  | "sum"
+  | "prod"
+  | "int"
+  | "fn";
 
 export type SymNode = { sym: string };
 export type NumNode = { num: number };
@@ -57,5 +75,10 @@ export const isSym = (n: FormulaNode): n is SymNode => "sym" in n;
 export const isNum = (n: FormulaNode): n is NumNode => "num" in n;
 export const isOp = (n: FormulaNode): n is OpNode => "op" in n;
 
-/** 記号に書かなくてよい共通の関数（それ以外の fn の name は、その式の symbols の key） */
+/** 比べる演算（式の木の op）。並びは関係の連なりの読み方 */
+export const COMPARE_OPS = ["lt", "le", "gt", "ge"] as const;
+export const isCompare = (op: string) => (COMPARE_OPS as readonly string[]).includes(op);
+
+/** 記号に書かなくてよい共通の関数（それ以外の fn の name は、その式の symbols の key）。
+ *  gt・ge・lt・le・between は比べる op に移る前の形（読み替えの期間。教材を op に書き直したら外す。stats2-course #72） */
 export const COMMON_FNS = ["exp", "log", "gt", "ge", "lt", "le", "between"] as const;

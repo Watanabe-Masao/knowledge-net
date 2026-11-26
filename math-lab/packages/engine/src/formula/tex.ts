@@ -82,6 +82,7 @@ export function formatNum(v: number): string {
 type Out = { t: string; p: number; num?: boolean; neg?: boolean; fn?: boolean; numeric?: boolean; big?: boolean }; // numeric：記号を含まない（数だけの式）、big：Σ・Π（あとに掛けるものが続くなら括弧）
 
 const ATOM = 4;
+const REL = { lt: "<", le: "\\le ", gt: ">", ge: "\\ge " } as const;
 // 括弧：中身が高い（分数・Σ・∫・根号）ときだけ \left( \right) で伸ばす。ふつうは ( ) のまま（E\left(X\right) は E と ( の間が空いて見える）
 const TALL = /\\(dfrac|sum|prod|int|sqrt)/;
 const wrapParen = (t: string) => (TALL.test(t) ? `\\left(${t}\\right)` : `(${t})`);
@@ -117,6 +118,12 @@ export function toTex(node: FormulaNode, opt: TexOptions = {}): string {
     switch (n.op) {
       case "eq":
         return { t: a.map((x) => x.t).join("="), p: 0 };
+      // 比べる（関係の連なり）：引数の間に記号を置く。中に関係（強さ 0）があれば括弧（stats2-course #72）
+      case "lt":
+      case "le":
+      case "gt":
+      case "ge":
+        return { t: a.map((x) => paren(x, x.p < 1)).join(REL[n.op]), p: 0 };
       case "add":
         return {
           t: a

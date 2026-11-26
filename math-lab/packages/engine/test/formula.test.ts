@@ -291,3 +291,59 @@ describe("zeroFactors", () => {
     expect(zeroFactors(s, { values: { j: 5 } })).toEqual([]); // 外の j＝5 を中へ持ち込むと ₂C₅ を誤って挙げる
   });
 });
+
+// 確かめる対象：比べる op（lt・le・gt・ge。stats2-course #72 案 A）の TeX・値・検査。
+// 想定する故障：範囲の引数の順の取り違え（前の fn の between は TeX が a≦X≦b、値が X≦a≦b と食い違っていた）・記号の向き（≦ と ≧、≦ と ＜）の取り違え・
+//   比べるの括弧の付け違い（P(X>x) が P((X>x)) になる、中の関係に括弧がない）・引数1つの比べるが通る。
+// 見つけ方：3点で値と TeX を固定の文字列と比べる・読み戻しの性質（TeX を関係の記号で分けて両辺を読み、真偽を木と比べる）・validate。
+// 既存の読み戻しのテストは等式と四則だけで、関係の向きは見ていない。
+describe("比べる op", () => {
+  const le3 = (a: FormulaNode, x: FormulaNode, b: FormulaNode): FormulaNode => ({ op: "le", args: [a, x, b] });
+  it("le(a, X, b)：引数は左から読む（a≦X≦b）", () => {
+    const t = le3({ sym: "a" }, { sym: "X" }, { sym: "b" });
+    expect(toTex(t)).toBe("a\\le X\\le b");
+    expect(evaluate(t, { values: { a: 1, X: 2, b: 3 } })).toBe(1);
+    expect(evaluate(t, { values: { a: 1, X: 0, b: 3 } })).toBe(0);
+    expect(evaluate(t, { values: { a: 1, X: 4, b: 3 } })).toBe(0);
+  });
+  it("P(X>x) の中は括弧を付けず、関係の中の関係には付ける", () => {
+    const gt: FormulaNode = { op: "gt", args: [{ sym: "X" }, { sym: "x" }] };
+    expect(toTex({ op: "fn", name: "P", args: [gt] })).toBe("P(X>x)");
+    expect(toTex({ op: "eq", args: [{ op: "fn", name: "P", args: [gt] }, { num: 1 }] })).toBe("P(X>x)=1");
+    expect(toTex({ op: "ge", args: [gt, { num: 0 }] })).toBe("(X>x)\\ge 0");
+  });
+  it("引数が1つの比べるは検査で止める", () => {
+    const f = {
+      symbols: [{ symbol: "X", meaning: "", key: "X" }],
+      tree: { op: "lt", args: [{ sym: "X" }] } as FormulaNode,
+    };
+    expect(validateFormula(f)).toContain("lt の引数は2個以上");
+  });
+  it("TeX を読み戻した真偽は、木の真偽と同じ（記号の向き）", () => {
+    const rel = fc.record({
+      op: fc.constantFrom("lt", "le", "gt", "ge"),
+      args: fc.array(tree, { minLength: 2, maxLength: 3 }),
+    }) as fc.Arbitrary<FormulaNode>;
+    const OPS: Record<string, (x: number, y: number) => boolean> = {
+      "<": (x, y) => x < y,
+      ">": (x, y) => x > y,
+      "\\le ": (x, y) => x <= y,
+      "\\ge ": (x, y) => x >= y,
+    };
+    fc.assert(
+      fc.property(rel, (t) => {
+        const sides = (t as { args: FormulaNode[] }).args.map((a) => evaluate(a, { values: vals }));
+        fc.pre(sides.every((v) => v !== undefined && Number.isFinite(v) && Math.abs(v) < 1e6));
+        // 等しすぎる辺は読み戻しの丸めで真偽が揺れるので外す
+        fc.pre(sides.every((v, i) => i === 0 || Math.abs(v! - sides[i - 1]!) > 1e-6));
+        const tex = toTex(t);
+        const parts = tex.split(/(<|>|\\le |\\ge )/);
+        const read = parts.filter((_, i) => i % 2 === 0).map((p) => readTex(p, vals));
+        const rels = parts.filter((_, i) => i % 2 === 1);
+        const truth = +rels.every((r, i) => OPS[r]!(read[i]!, read[i + 1]!));
+        expect([tex, truth]).toEqual([tex, evaluate(t, { values: vals })]);
+      }),
+      { numRuns: 300 },
+    );
+  });
+});

@@ -54,6 +54,15 @@ const BUILTIN: Record<string, (...a: number[]) => number> = {
 /** 1つの演算を、引数の値から計算する（計算できなければ undefined） */
 function apply(n: OpNode, v: number[], env: Env): number | undefined {
   switch (n.op) {
+    // 比べる（関係の連なり）：隣どうしが全部成り立てば 1、どれか崩れれば 0（stats2-course #72 の B3）
+    case "lt":
+    case "le":
+    case "gt":
+    case "ge": {
+      const ok = (x: number, y: number) =>
+        n.op === "lt" ? x < y : n.op === "le" ? x <= y : n.op === "gt" ? x > y : x >= y;
+      return +v.slice(1).every((y, i) => ok(v[i]!, y));
+    }
     case "add":
       return v.reduce((s, x) => s + x, 0);
     case "sub":
