@@ -15,7 +15,7 @@ type Apply = {
   solve: ApplySolve;
   answer: { type: "number" | "choice"; options?: string[]; tol?: object; percent?: boolean };
 };
-const applies = (file: string) => {
+const applies = (file: string): (readonly [string, Apply])[] => {
   const d = JSON.parse(readFileSync(file, "utf8"));
   return (d.experiments ?? []).flatMap((e: { catalog?: { items: { id: string; apply?: Apply }[] }[] }) =>
     (e.catalog ?? []).flatMap((g) => g.items.filter((it) => it.apply).map((it) => [it.id, it.apply!] as const)),
@@ -46,10 +46,12 @@ const problem = (ap: Apply): string | undefined => {
         try {
           katex.renderToString(st.tex, { throwOnError: true });
         } catch (e) {
-          return `段「${st.title}」の式が読めない：${(e as Error).message}`;
+          return `段「${st.tid}」の式が読めない：${(e as Error).message}`;
         }
       }
-      if (/NaN|undefined|Infinity/.test(`${st.tex ?? ""}${st.text ?? ""}`)) return `段「${st.title}」に数でない値`;
+      // 段の文は教材の apply_texts の型に穴の値（vars）を入れて作る（stats2-course #211）。前は段に無い title・text を見ていて、穴の値の NaN を見逃していた（型の検査で見つけた。2026-11-26）
+      if (/NaN|undefined|Infinity/.test(`${st.tex ?? ""} ${Object.values(st.vars).join(" ")}`))
+        return `段「${st.tid}」に数でない値`;
     }
     return undefined;
   } catch (e) {
@@ -58,7 +60,7 @@ const problem = (ap: Apply): string | undefined => {
 };
 
 describe("応用の課題が解ける", () => {
-  for (const file of ["public/sample/stats2.json", "public/sample/stats2.json"]) {
+  for (const file of ["public/sample/stats2.json"]) {
     it(`${file} の全部の課題`, () => {
       const list = applies(file);
       expect(list.length).toBeGreaterThanOrEqual(10);
