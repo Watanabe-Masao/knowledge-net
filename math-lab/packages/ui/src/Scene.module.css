@@ -38,6 +38,10 @@
   grid-template-columns: repeat(auto-fit, minmax(9em, 1fr));
   gap: 6px;
 }
+/* 数が奇数のとき、最後の1枚（たいてい答え）を横いっぱいにする（半分の幅で1枚だけ残さない） */
+.stats div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
 .stats div {
   padding: 6px 10px;
   border-radius: var(--r-s);
@@ -264,32 +268,70 @@
 .paths {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
+}
+/* 並びの札は同じ幅の格子に並べる（3つと1つのような半端な折り返しにしない） */
+.pathGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5em), 1fr));
+  gap: 8px;
 }
 .seq {
   display: inline-flex;
-  gap: 1px;
-  padding: 4px 6px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px 6px;
   border-radius: var(--r-s);
   box-shadow: inset 0 0 0 1px var(--line);
-  font-size: 14px;
 }
-.seq i {
-  font-style: normal;
+.marks {
+  display: inline-flex;
+  gap: 4px;
+}
+.seq small {
+  font-size: var(--fs-tag);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+/* 成功は塗った丸・失敗は白抜きの丸（印は 20px。画面の原則 6）。凡例も同じ印 */
+.seqKey {
+  margin: 0 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-tag);
+  color: var(--ink-2);
+}
+.seqKey .lose {
+  margin-left: 8px;
 }
 /* 並べて数える：同じ組の中の並べ方を、帯1本の中で離して並べる */
 .group {
   /* 帯1本に並べ方が多いとき（6人から3人で6つなど）は折り返す。折り返さないと 390px の画面から横にはみ出した（2026-11-25） */
+  flex-direction: row;
   flex-wrap: wrap;
   max-width: 100%;
   gap: 2px 8px;
+  padding: 4px 6px;
+  font-size: 14px;
+}
+.group i {
+  font-style: normal;
 }
 .win,
 .lose {
   display: inline-block;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+.win {
+  background: var(--data-hi);
 }
 .lose {
-  opacity: 0.55;
+  box-shadow: inset 0 0 0 2px var(--ink-3);
 }
 .seqMore {
   font-size: var(--fs-tag);

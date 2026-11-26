@@ -590,3 +590,21 @@ test("成立条件から、仮定を持つ主張の欄を開ける（平均に�
   await page.getByTestId("detail").locator("details", { hasText: "成立条件" }).first().locator("summary").click();
   await expect(page.getByTestId("cond-to-claims")).toHaveCount(0);
 });
+
+// 確かめる対象：二項分布ラボの「並びを書き出す」の成功・失敗の印（issue 609 の前の画面の見直し。2026-11-27）。
+// 想定する故障：絵文字（🛒❌）に戻る（画面の原則 18）・印が 20px より小さい（原則 6）・凡例が消える（原則 7）・札ごとの確率が消える。
+// 見つけ方：概念のページの「確かめる」から開き、並びの中の文字と印の実寸・凡例・札の数を測る。既存のテストは並べて数える（数え方ラボ）だけを見ていた。
+test("並びを書き出す：成功・失敗は線の印で、凡例と札ごとの確率がある", async ({ page }) => {
+  await page.goto(URL);
+  await page.getByTestId("media-concept").getByRole("radio", { name: "確かめる" }).click();
+  const v = page.getByTestId("scene-paths");
+  await expect(v).toBeVisible();
+  expect(await v.innerText()).not.toMatch(/\p{Extended_Pictographic}/u);
+  await expect(v.getByText("成功", { exact: false }).first()).toBeVisible();
+  const sizes = await v
+    .locator("i")
+    .evaluateAll((es) => es.map((e) => Math.min(e.getBoundingClientRect().width, e.getBoundingClientRect().height)));
+  expect(Math.min(...sizes)).toBeGreaterThanOrEqual(20);
+  // B(4, 0.25) で 1 回：4 通り、どの札も 0.105
+  await expect(v.locator("small")).toHaveText(["0.105", "0.105", "0.105", "0.105"]);
+});

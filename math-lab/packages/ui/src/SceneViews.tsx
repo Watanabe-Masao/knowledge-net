@@ -30,7 +30,14 @@ export type View =
       events?: boolean;
     }
   | { kind: "zlines"; groups: { name: string; m: number; s: number; x: number; z: number }[] }
-  | { kind: "paths"; n: number; k: number; seqs: boolean[][]; more: number }
+  | {
+      kind: "paths";
+      n: number;
+      k: number;
+      seqs: boolean[][];
+      more: number;
+      /** 並び1つの確率（札ごとに添える。どれも同じ値） */ each?: string;
+    }
   | { kind: "arrange"; role: boolean; groups: { set: string[]; rows: string[][] }[]; more: number; total: number }
   | { kind: "lengths"; rows: { label: string; value: number; text: string; wrong?: boolean }[]; label: string }
   | {
@@ -198,25 +205,31 @@ function ZLines({ v }: { v: Extract<View, { kind: "zlines" }> }) {
   );
 }
 
-/** 並びの書き出し：n 回のうち k 回成功する並びを全部（多いときは先頭だけと残りの数） */
+/** 並びの書き出し：n 回のうち k 回成功する並びを全部（多いときは先頭だけと残りの数）。
+ *  成功は塗った丸・失敗は白抜きの丸（絵文字にしない。画面の原則 7・18）。札ごとに並び1つの確率を添え、どの並びも同じ確率だと目で見せる */
 function Paths({ v }: { v: Extract<View, { kind: "paths" }> }) {
   return (
-    <div
-      className={s.paths}
-      role="img"
-      aria-label={`${v.n} 回のうち ${v.k} 回成功する並び ${v.seqs.length + v.more} 通り`}
-      data-testid="scene-paths"
-    >
-      {v.seqs.map((q, i) => (
-        <span key={i} className={s.seq}>
-          {q.map((x, j) => (
-            <i key={j} className={x ? s.win : s.lose}>
-              {x ? "🛒" : "❌"}
-            </i>
-          ))}
-        </span>
-      ))}
-      {v.more > 0 && <span className={s.seqMore}>ほか {v.more} 通り</span>}
+    <div data-testid="scene-paths">
+      <p className={s.seqKey} aria-hidden="true">
+        <i className={s.win} /> 成功 <i className={s.lose} /> 失敗
+      </p>
+      <div
+        className={s.pathGrid}
+        role="img"
+        aria-label={`${v.n} 回のうち ${v.k} 回成功する並び ${v.seqs.length + v.more} 通り${v.each ? `。どの並びも確率 ${v.each}` : ""}`}
+      >
+        {v.seqs.map((q, i) => (
+          <span key={i} className={s.seq}>
+            <span className={s.marks}>
+              {q.map((x, j) => (
+                <i key={j} className={x ? s.win : s.lose} />
+              ))}
+            </span>
+            {v.each && <small>{v.each}</small>}
+          </span>
+        ))}
+        {v.more > 0 && <span className={s.seqMore}>ほか {v.more} 通り</span>}
+      </div>
     </div>
   );
 }
