@@ -887,3 +887,9 @@
 .nextStation > [aria-hidden] {
   grid-area: chev;
 }
+/* 関数で描いた図（stats2-course の issue 582 の D0）：幅は画面に合わせ、比を保つ */
+.drawn svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}

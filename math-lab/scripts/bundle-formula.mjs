@@ -19,6 +19,13 @@ const BUNDLES = [
     output: { format: "esm" },
   },
   {
+    // 図を SVG の文字列で描く関数（stats2-course の issue 582 の D0）。教材の build/draw_svg.mjs が node で読み、静止図を作る
+    out: "packages/ui/dist/draw.mjs",
+    input: "packages/ui/src/draw/index.ts",
+    src: "packages/ui/src/draw",
+    output: { format: "esm" },
+  },
+  {
     out: "packages/engine/dist/random.js",
     input: "packages/engine/src/random.ts",
     src: "packages/engine/src/random.ts",

@@ -14,7 +14,11 @@
 | packages/engine | 画面を持たない計算（純粋関数） | DOM・React を使わない（tsconfig の lib に DOM を入れない）。Math.random を使わず、種つき乱数（createRandom）だけ |
 | packages/ui | 画面の部品（Button・Card などの並べ方・Segmented・Sheet・motion）と手触りの値（tokens.json → src/tokens.css） | 計算は engine を呼ぶだけ。色の値は tokens.json にだけ書き、動きの長さは変数で（npm run design が止める）。tokens.json を変えたら `npm run lab:tokens` で src/tokens.css を作り直し、改訂（x-revision）を上げて CHANGELOG に書く |
 
-使う側：knowledge-net（入口・地図・実験室のサイト）。math-lab は knowledge-net のリポジトリの `math-lab/` にあり（npm workspaces。2026-11-04 に別のリポジトリから履歴ごと移した。stats2-course #210）、画面は `@math-lab/…` として直接使う（写しはない）。教材（stats2-course）は tokens.json・式の束・乱数の写しを持ち、knowledge-net の決まった版と同じかを確かめる（ずれたら check_all が止まる）。
+使う側：knowledge-net（入口・地図・実験室のサイト）。math-lab は knowledge-net のリポジトリの `math-lab/` にあり（npm workspaces。2026-11-04 に別のリポジトリから履歴ごと移した。stats2-course #210）、画面は `@math-lab/…` として直接使う（写しはない）。教材（stats2-course）は tokens.json・式の束・乱数・図を描く関数の束（packages/ui/dist/draw.mjs）の写しを持ち、knowledge-net の決まった版と同じかを確かめる（ずれたら check_all が止まる）。
+
+## 図を描く関数（stats2-course の issue 582）
+
+静止の図は packages/ui/src/draw の純粋な関数（DOM・React を使わない）で SVG の文字列にする。数は engine が出す。同じ関数を、画面（theme page：色は CSS の変数・地なし・字は 1.1 倍）と教材の静止図（theme file：色は値・白い地。Notion の画像）の両方に使い、同じ設定なら同じ図になる。教材は束（dist/draw.mjs）を node で読む（式の束と同じ形）。型を足すときは、教材の figures.py の型を1つずつ移す（D0 は二項分布の棒）。
 
 ## 作業台の型（stats2-course #156、渡辺さん 2026-11-01）
 
