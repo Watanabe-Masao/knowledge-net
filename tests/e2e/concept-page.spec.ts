@@ -558,3 +558,24 @@ test.describe("触る指の端末", () => {
     expect(await small()).toEqual([]);
   });
 });
+
+// 確かめる対象：成立条件の欄から、仮定（保証の条件）を持つ主張の欄への入口（stats2-course issue 532 C のあと。渡辺さん 2026-11-26）。
+// 想定する故障：入口が出ない（仮定が見つからない）・押しても主張の欄が開かない／見える所へ来ない・仮定を持つ主張のない概念にも出る・数が違う。
+// 見つけ方：信頼区間（仮定のある主張 3）で入口の数と、押したあと主張の欄が開いて画面の中にあることを測る。平均（主張なし）では入口がない。
+// 既存との違い：claims.spec.ts は主張の欄の中身を見る。ここは成立条件からの行き来だけを見る。
+// 検出の確かめ（2026-11-26）：入口の条件を外す形・押しても open にしない形で、それぞれ落ちることを見た
+test("成立条件から、仮定を持つ主張の欄を開ける（平均には出ない）", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-ci");
+  const d = page.getByTestId("detail");
+  await d.locator("details", { hasText: "成立条件" }).first().locator("summary").click();
+  const go = d.getByTestId("cond-to-claims");
+  await expect(go).toContainText("（3）");
+  await go.click();
+  const box = d.getByTestId("concept-claims");
+  await expect(box).toHaveAttribute("open", "");
+  await expect(box.locator("summary")).toBeInViewport();
+  await page.goto("./?src=sample/stats2.json&c=stats2%3ATERM-mean");
+  await page.getByTestId("detail").locator("details", { hasText: "成立条件" }).first().locator("summary").click();
+  await expect(page.getByTestId("cond-to-claims")).toHaveCount(0);
+});

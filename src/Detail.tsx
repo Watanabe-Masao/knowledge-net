@@ -1,5 +1,5 @@
 // 選んだ概念の説明：定義・原理・式（記号の意味）・条件・例・反例・誤解・つながり・単元・出典。
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { Media, relationParts } from "./Relation";
 import { RelDig, RelMap } from "./RelMap";
 import {
@@ -144,9 +144,19 @@ const LAB_ICON = (
   </svg>
 );
 /** 開いて読む段（原理・条件・例と反例） */
-function More({ title, children }: { title: ReactNode; children: ReactNode }) {
+function More({
+  title,
+  children,
+  detailsRef,
+  testId,
+}: {
+  title: ReactNode;
+  children: ReactNode;
+  detailsRef?: Ref<HTMLDetailsElement>;
+  testId?: string;
+}) {
   return (
-    <details className={st.more2}>
+    <details className={st.more2} ref={detailsRef} data-testid={testId}>
       <summary>{title}</summary>
       <div className={st.moreBody}>{children}</div>
     </details>
@@ -313,6 +323,17 @@ export default function Detail({
   const glance = useGlance();
   const onWord = glance ?? onSelect;
   const cl = useMemo(() => claimsOf(net, c.id), [net, c.id]);
+  // この概念について言える主張のうち、条件（仮定）の行を持つものの数（成立条件から主張の欄への入口に出す）
+  const assumed = cl.about.filter((x) => (x.conditions_detail?.length ?? x.conditions?.length ?? 0) > 0).length;
+  const claimsBox = useRef<HTMLDetailsElement>(null);
+  const openClaims = () => {
+    const d = claimsBox.current;
+    if (!d) return;
+    d.open = true;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    d.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    d.querySelector("summary")?.focus({ preventScroll: true });
+  };
   const heads = useMemo(() => headingsOf(net, c.id), [net, c.id]);
   const tab = tabs.some((t) => t.value === tabRaw) ? tabRaw : "about";
   // 作業台に出している式（主役・期待値・変換）は、下の一覧に重ねて出さない（同じものを2か所に置かない。#156）
@@ -546,10 +567,19 @@ export default function Detail({
                 onTerm={onWord}
                 plainClass={st.conds}
               />
+              {/* 仮定（保証の条件）は、その概念について言える主張の側にある（stats2-course の issue 532 C で概念から移した）。成立条件だけを読むと
+                  仮定が見えないので、主張の欄への入口を置く（画面の原則 13。押すとその欄を開いて見せる：原則 11。渡辺さん 2026-11-26） */}
+              {assumed > 0 && (
+                <Button variant="quiet" className={st.headingTo} onClick={openClaims} data-testid="cond-to-claims">
+                  仮定（保証の条件）は主張の欄に（{assumed}） ›
+                </Button>
+              )}
             </More>
           )}
         {(cl.about.length > 0 || cl.uses.length > 0) && (
           <More
+            detailsRef={claimsBox}
+            testId="concept-claims"
             title={
               <>
                 主張 <span className={st.n}>{cl.about.length + cl.uses.length}</span>
