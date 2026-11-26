@@ -201,16 +201,6 @@ export function toTex(node: FormulaNode, opt: TexOptions = {}): string {
         return { t: `{}_{${a[0]!.t}}\\mathrm{P}_{${a[1]!.t}}`, p: ATOM, fn: true };
       case "fact":
         return { t: `${paren(a[0]!, a[0]!.p < ATOM || !!a[0]!.neg)}!`, p: ATOM };
-      case "gt":
-        return { t: `${a[0]!.t}>${a[1]!.t}`, p: 0 };
-      case "ge":
-        return { t: `${a[0]!.t}\\ge ${a[1]!.t}`, p: 0 };
-      case "lt":
-        return { t: `${a[0]!.t}<${a[1]!.t}`, p: 0 };
-      case "le":
-        return { t: `${a[0]!.t}\\le ${a[1]!.t}`, p: 0 };
-      case "between":
-        return { t: `${a[0]!.t}\\le ${a[1]!.t}\\le ${a[2]!.t}`, p: 0 };
       case "exp":
       case "log":
         return { t: `\\${name}${wrapParen(list)}`, p: ATOM, fn: true };

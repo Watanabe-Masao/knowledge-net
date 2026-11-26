@@ -61,7 +61,7 @@ export type FormulaSymbol = {
 /** 式の意味のかたまり（作業台で押せる部分式。path は根からの args の番号。#110） */
 export type FormulaPart = { path: number[]; name: string; meaning: string };
 
-/** 記号どうしの条件（1つの記号の domain で書けないもの：超幾何の k ≦ M など）。tree は比べる式（le・lt・ge・gt・between）。教材の契約の conditions（#118） */
+/** 記号どうしの条件（1つの記号の domain で書けないもの：超幾何の k ≦ M など）。tree は比べる op（lt・le・gt・ge）。教材の契約の conditions（#118） */
 export type FormulaCondition = { text: string; tree: FormulaNode };
 export type Formula = {
   tex?: string;
@@ -80,5 +80,5 @@ export const COMPARE_OPS = ["lt", "le", "gt", "ge"] as const;
 export const isCompare = (op: string) => (COMPARE_OPS as readonly string[]).includes(op);
 
 /** 記号に書かなくてよい共通の関数（それ以外の fn の name は、その式の symbols の key）。
- *  gt・ge・lt・le・between は比べる op に移る前の形（読み替えの期間。教材を op に書き直したら外す。stats2-course #72） */
-export const COMMON_FNS = ["exp", "log", "gt", "ge", "lt", "le", "between"] as const;
+ *  比べるは op（lt・le・gt・ge）。前の fn の gt・ge・lt・le・between は 2026-11-26 に外した（教材を op に書き直した。stats2-course #72） */
+export const COMMON_FNS = ["exp", "log"] as const;
