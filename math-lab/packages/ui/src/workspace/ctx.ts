@@ -1,6 +1,6 @@
 // 作業台の欄が読む値と操作（Frame が1か所で作り、欄の部品に渡す。stats2-course #212）。
 // 欄の部品は計算をしない：値はここから読み、変えるときはここの操作を呼ぶ
-import type { Definition, FormulaNode, FormulaPart, FormulaSymbol, emptyRecord } from "@math-lab/engine";
+import type { Definition, FormulaNode, FormulaPart, FormulaSymbol, emptyRecord, zeroFactors } from "@math-lab/engine";
 import type { FormulaData } from "../Formula";
 import type { WsAction, WsState } from "./state";
 import type { Env, FormulaWhy, Model, Sel, ValueTable } from "./shared";
@@ -31,6 +31,8 @@ export type WsCtx = {
   env: Env;
   lhs?: FormulaNode;
   result: number | undefined;
+  /** 結果が 0 のとき、0 にした組合せ・順列（engine の zeroFactors） */
+  zeros: ReturnType<typeof zeroFactors>;
   isProb: boolean;
   steps: FormulaNode[];
   shownStep: number;

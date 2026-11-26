@@ -31,6 +31,7 @@ import {
   spanOf,
   symbolsIn,
   toTex,
+  zeroFactors,
   type Definition,
   type FormulaNode,
   type FormulaPart,
@@ -47,6 +48,7 @@ import { Linear } from "./workspace/Linear";
 import { ReadPanel, hasReading } from "./workspace/ReadPanel";
 import {
   FALLBACK,
+  fmt,
   render,
   tintOf,
   toEngine,
@@ -163,10 +165,20 @@ function Frame({
     for (let x = r.min; x <= Math.min(r.max, r.min + 1000); x++) if (feasible(clampAll({ ...v, [k]: x }))) return x;
     return r.min;
   };
+  // 動かした記号のせいで、ほかの記号の値が範囲に合わせて変わったら1行で言う（黙って変えない。超幾何分布で N を下げると M・n が下がる。stats2-course の issue 507）
   const set = (k: string, x: number) =>
     patch((c) => {
       const next = clampAll({ ...c.values, [k]: x });
-      return feasible(next) ? { values: next } : {};
+      if (!feasible(next)) return {};
+      const moved = [...vary, over].filter((j) => j !== k && c.values[j] !== undefined && next[j] !== c.values[j]);
+      const said = moved.map((j) => `${symOfGiven(j)!.symbol} ${fmt(c.values[j], 2)}→${fmt(next[j], 2)}`);
+      // 前の知らせは、次に動かして何も変わらなければ消す（触ったときだけ変える。画面の原則 1）
+      return {
+        values: next,
+        notice: said.length
+          ? `${symOfGiven(k)!.symbol} に合わせて ${said.join("・")} にした（取れる範囲の外になるので）`
+          : "",
+      };
     });
   const setWeight = (i: number, w: number) => {
     const next = weights.map((x, j) => (j === i ? Math.max(0, Math.round(w)) : x));
@@ -240,6 +252,8 @@ function Frame({
       : { values: { mu: tableMu }, domains: { x: support }, fns: { p: (x: number) => probs[support.indexOf(x)] ?? 0 } }
     : { values };
   const result = evaluate(rhsOf(tree), env);
+  // 結果が 0 のとき、0 にした組合せ・順列（なぜ 0 かを1行で言う。黙って 0% を出すと壊れて見える。2026-11-26 の iPhone の録画。stats2-course の issue 507）
+  const zeros = !isTable && result === 0 ? zeroFactors(rhsOf(tree), env) : [];
   const lhs = lhsOf(tree);
   const overSym = symOfGiven(over);
   const range = overSym ? rangeOf(over, values) : { min: 0, max: 0, step: 1 };
@@ -427,6 +441,7 @@ function Frame({
     env,
     lhs,
     result,
+    zeros,
     isProb,
     steps,
     shownStep,

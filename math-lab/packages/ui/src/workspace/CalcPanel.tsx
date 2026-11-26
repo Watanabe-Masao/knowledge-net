@@ -5,6 +5,10 @@ import { fmt, render, short } from "./shared";
 import type { WsCtx } from "./ctx";
 import s from "../Workspace.module.css";
 
+// とても小さい確率は 0.00% に丸めない（壊れて見える。計算の段の指数の形とそろえる。照らしの「0.1% 未満」と同じ考え。stats2-course の issue 507）
+const tiny = (x: number | undefined) => x !== undefined && x > 0 && x * 100 < 0.005;
+const pct = (x: number) => (tiny(x) ? "0.01% 未満" : `${(x * 100).toFixed(2)}%`);
+
 export function CalcPanel({ w }: { w: WsCtx }) {
   const {
     st: { values },
@@ -14,6 +18,7 @@ export function CalcPanel({ w }: { w: WsCtx }) {
     over,
     symbols,
     result,
+    zeros,
     isProb,
     steps,
     shownStep,
@@ -40,10 +45,24 @@ export function CalcPanel({ w }: { w: WsCtx }) {
           data-testid="ws-result-val"
           data-value={result}
           v={result}
-          show={(x) => (isProb && x !== undefined ? `${(x * 100).toFixed(2)}%` : fmt(x))}
+          show={(x) => (isProb && x !== undefined ? pct(x) : fmt(x))}
         />
-        {isProb && <small className={s.resultSub}>{fmt(result, 5)}</small>}
+        {isProb && <small className={s.resultSub}>{tiny(result) ? short(result!) : fmt(result, 5)}</small>}
       </div>
+      {zeros.length > 0 && (
+        <p className={s.zeroWhy} data-testid="ws-zero-why">
+          0 になる：
+          {zeros.map((z, i) => (
+            <span key={i}>
+              {i > 0 && "。"}
+              <span dangerouslySetInnerHTML={{ __html: render(toTex(z.node, { symbols }), false) }} />
+              {z.k < 0
+                ? ` は選ぶ数が ${z.k}（負）で、0 通り`
+                : ` は ${z.n} 個から ${z.k} 個を${z.name === "comb" ? "選ぶ" : "並べる"}数。${z.n} 個しかないので 0 通り`}
+            </span>
+          ))}
+        </p>
+      )}
       {steps.length > 1 && (
         <div className={s.calc} data-testid="ws-calc">
           <div className={s.calcHead}>

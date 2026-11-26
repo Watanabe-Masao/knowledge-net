@@ -99,6 +99,11 @@ export function Inputs({ w }: { w: WsCtx }) {
                   </button>
                 ))}
               </div>
+              {notice && (
+                <p className={s.notice} role="status" data-testid="ws-notice">
+                  {notice}
+                </p>
+              )}
             </div>
           );
         })()}

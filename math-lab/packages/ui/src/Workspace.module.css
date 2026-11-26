@@ -321,6 +321,14 @@
   color: var(--ink-3);
   text-align: right;
 }
+/* 結果が 0 のときの理由・ほかの記号が変わった知らせ（1行の文。色は中立。画面の原則 18） */
+.zeroWhy,
+.notice {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
 
 .calc {
   display: grid;

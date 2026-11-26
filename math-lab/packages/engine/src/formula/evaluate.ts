@@ -202,6 +202,34 @@ export function expand(node: FormulaNode, env: Env = {}): FormulaNode[] {
   return steps;
 }
 
+/** 値が 0 になる組合せ・順列（ₙCₖ・ₙPₖ で k＜0 か k＞n）。結果が 0 のとき、なぜ 0 かを画面が言うため（超幾何分布の N−M 個から n−k 個は選べない、など。
+ *  stats2-course の issue 507）。Σ・Π・∫ の中は動かす記号の値が決まらないので見ない */
+export function zeroFactors(
+  node: FormulaNode,
+  env: Env = {},
+): { name: "comb" | "perm"; node: FormulaNode; n: number; k: number }[] {
+  const out: { name: "comb" | "perm"; node: FormulaNode; n: number; k: number }[] = [];
+  const walk = (m: FormulaNode) => {
+    if (!isOp(m) || m.op === "sum" || m.op === "prod" || m.op === "int") return;
+    if (m.op === "fn" && (m.name === "comb" || m.name === "perm") && m.args.length === 2) {
+      const n = evaluate(m.args[0]!, env),
+        k = evaluate(m.args[1]!, env);
+      if (
+        n !== undefined &&
+        k !== undefined &&
+        Number.isInteger(n) &&
+        Number.isInteger(k) &&
+        n >= 0 &&
+        (k < 0 || k > n)
+      )
+        out.push({ name: m.name, node: m, n, k });
+    }
+    m.args.forEach(walk);
+  };
+  walk(node);
+  return out;
+}
+
 /** 木の中の関数の名前（出てくる順・重なりなし。comb・fact・E など） */
 export function fnsIn(node: FormulaNode): string[] {
   const out: string[] = [];
