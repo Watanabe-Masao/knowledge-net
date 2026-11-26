@@ -153,7 +153,12 @@ describe("定義域", () => {
     );
     expect(checkDomain({ n: 5, k: 5, p: 0.5 }, binom.symbols)).toEqual([]);
     const k = binom.symbols.find((s) => s.key === "k")!;
-    expect(sliderRange(k, { n: 5 }, { min: 0, max: 100, step: 0.01 })).toEqual({ min: 0, max: 5, step: 1 }); // n を動かすと k の範囲も動く
+    expect(sliderRange(k, { n: 5 }, { min: 0, max: 100, step: 0.01 })).toEqual({
+      min: 0,
+      max: 5,
+      step: 1,
+      empty: false,
+    }); // n を動かすと k の範囲も動く
     expect(sliderRange(k, { n: 12 }, { min: 0, max: 100, step: 0.01 }).max).toBe(12);
     const lam = find("TERM-poisson", 0).symbols.find((s) => s.key === "lambda")!;
     expect(sliderRange(lam, {}, { min: 0, max: 10, step: 0.1 }).min).toBeCloseTo(0.1); // 0より大きい

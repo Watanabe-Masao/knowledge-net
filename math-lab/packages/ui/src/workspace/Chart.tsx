@@ -21,7 +21,8 @@ export function Chart({ w }: { w: WsCtx }) {
     table,
     overSym,
     symText,
-    tail,
+    below,
+    above,
     exp: { rec, freq, lastDraw },
   } = w;
   const W = 340,
@@ -44,7 +45,6 @@ export function Chart({ w }: { w: WsCtx }) {
   const xPos = (v: number) => LEFT + ((v - lo) / span) * (W - LEFT - RIGHT);
   const bw = (gap / span) * (W - LEFT - RIGHT);
   const barW = Math.max(2, Math.min(bw - Math.max(3, bw * 0.38), 44));
-  const every = bars.length <= 13 ? 1 : bars.length <= 31 ? 5 : 10;
   const cur = isTable ? undefined : Number((a * values[over]! + b).toPrecision(12));
   // パターン1：押して横軸の値を選ぶ。パターン2：引いて重みを変える（確率をその高さにする重み）
   const chooseV = (g: (typeof bars)[number]) => {
@@ -72,6 +72,9 @@ export function Chart({ w }: { w: WsCtx }) {
   };
   const labelOf = (g: (typeof bars)[number]) =>
     isTable && !transformed && g.rows.length === 1 && table!.labels ? table!.labels[g.rows[0]!]! : num6(g.v);
+  // 横軸の字が重ならない間隔（字の幅と間をとる。棒の数が多いと 10 ごとでも重なった。2026-11-26 の独立な確かめ）
+  const labW = Math.max(...bars.map((g) => String(labelOf(g)).length), 1) * 7 + 8;
+  const every = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].find((e) => bw * e >= labW) ?? 1000;
   return (
     <figure className={s.chart} aria-label={`${symText} ごとの確率`}>
       <figcaption className={s.chartHead}>
@@ -222,7 +225,11 @@ export function Chart({ w }: { w: WsCtx }) {
           ))}
         {bars.map((g, i) => {
           const on = g.v === cur;
-          if (!on && (i % every !== 0 || (cur !== undefined && Math.abs(xPos(g.v) - xPos(cur)) < 16))) return null;
+          if (
+            !on &&
+            (Math.round(g.v / gap) % every !== 0 || (cur !== undefined && Math.abs(xPos(g.v) - xPos(cur)) < labW))
+          )
+            return null;
           return (
             <text key={`t${g.v}`} x={xPos(g.v)} y={BASE + 15} className={on ? s.xTickOn : s.xTick} textAnchor="middle">
               {labelOf(g)}
@@ -230,10 +237,17 @@ export function Chart({ w }: { w: WsCtx }) {
           );
         })}
       </svg>
-      {/* 横軸に上限がない分布（ポアソン・幾何など）は、右の端で切っている。切った先の確率を出す（図に入らない所を黙って消さない。stats2-course の issue 608） */}
-      {tail !== undefined && bars.length > 0 && (
+      {/* 横軸に上限がない分布（ポアソン・幾何など）は、窓で切っている。切った外の確率を出す（図に入らない所を黙って消さない。stats2-course の issue 608） */}
+      {above !== undefined && bars.length > 0 && (
         <p className={s.chartNote} data-testid="ws-tail">
-          {`${symText} が ${num6(bars[bars.length - 1]!.v)} より大きい所は図に入れていない（その確率は合わせて ${tail < 0.0001 ? "0.01% 未満" : `${Number((tail * 100).toPrecision(2))}%`}）`}
+          {(() => {
+            const pc = (q: number) => (q < 0.0001 ? "0.01% 未満" : `${Number((q * 100).toPrecision(2))}%`);
+            const first = num6(bars[0]!.v),
+              last = num6(bars[bars.length - 1]!.v);
+            return (below ?? 0) >= 1e-6
+              ? `${symText} が ${first} より小さい所と ${last} より大きい所は図に入れていない（その確率は合わせて ${pc((below ?? 0) + above)}）`
+              : `${symText} が ${last} より大きい所は図に入れていない（その確率は合わせて ${pc(above)}）`;
+          })()}
         </p>
       )}
     </figure>

@@ -75,7 +75,7 @@ export function Inputs({ w }: { w: WsCtx }) {
                   id={`ws-slider-${cur}`}
                   label={`${sym.symbol}　${sym.meaning.split("（")[0]}`}
                   value={values[cur]!}
-                  min={r.min}
+                  min={w.lowestOf(cur, values)}
                   max={r.max}
                   step={r.step}
                   show={(v) => fmt(v, 2)}

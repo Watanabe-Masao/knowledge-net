@@ -32,7 +32,7 @@ test("ポアソン分布の作業台：開いたときの値で始まり、上�
   await expect(ws.getByTestId("ws-tail")).toContainText("0.01% 未満");
   ws = await poisson({ lambda: 25, k: 25 })({ page });
   const last = await ws.getByTestId("ws-tail").textContent();
-  const hi = Number(/が (\d+) より大きい/.exec(last ?? "")?.[1]);
+  const hi = Number(/(\d+) より大きい/.exec(last ?? "")?.[1]);
   expect(hi, "山の右側（λ＝25 の右に 3σ＝15）が図に入る").toBeGreaterThan(40);
 });
 
@@ -57,3 +57,63 @@ for (const [id, label, pct] of [
     await expect(ws).toContainText(pct);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   });
+
+// 確かめる対象：2026-11-26 の独立な確かめで見つかった4つ（上限のない横軸の標準偏差・横軸の字の重なり・山が遠い分布の空の図・取れる値のない記号）。
+// 想定する故障：標準偏差を窓で切った分布から出す（幾何 p＝0.01 で 83.3。真は √0.99/0.01＝99.5）・棒が多いと横軸の字が重なる・
+//   負の二項 r＝30・p＝0.01（平均 3000）で窓が下の端に貼りつき棒が全部 0・超幾何で N＝0 にでき、n に取れる値がなく 0/0。
+// 見つけ方：つまみを端（Home・End）へ動かし、閉じた形の値・字の箱の重なり・棒の高さ・NaN の文字を見る。
+// 検出の確かめ（2026-11-26）：σ を窓の中で求める形・字の間隔を前の 10 ごと・窓を下の端から取る形・feasible を外す形の4つで、それぞれ落ちることを見た
+test.describe("作業台：つまみを端へ動かしても正しい", () => {
+  const open = async (page: import("@playwright/test").Page, id: string) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3ATERM-${id}`);
+    await openTab(page.getByTestId("detail"), "式");
+    return page.getByTestId("workspace");
+  };
+  const toEnd = async (page: import("@playwright/test").Page, k: string, key: "Home" | "End") => {
+    await page.getByTestId(`ws-chip-${k}`).click();
+    await page.locator(`#ws-slider-${k}`).focus();
+    await page.keyboard.press(key);
+  };
+  test("幾何分布 p＝0.01：標準偏差は窓で切らずに √(1−p)/p＝99.5", async ({ page }) => {
+    const ws = await open(page, "geom");
+    await toEnd(page, "p", "Home");
+    await expect(ws).toContainText("標準偏差 99.5");
+  });
+  test("幾何分布 p＝0.05：横軸の字が重ならない", async ({ page }) => {
+    await open(page, "geom");
+    await toEnd(page, "p", "Home");
+    for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowRight"); // 0.01 → 0.05
+    const chart = page.getByTestId("ws-chart");
+    await expect(page.getByTestId("ws-tail")).toBeVisible();
+    const boxes = await chart.evaluate((fig) =>
+      [...fig.querySelectorAll("text")]
+        .filter((e) => /^\d+$/.test((e.textContent ?? "").trim()))
+        .map((e) => e.getBoundingClientRect())
+        .map((r) => ({ l: r.left, r: r.right, t: Math.round(r.top) })),
+    );
+    const row = boxes.filter((b) => b.t === Math.max(...boxes.map((x) => x.t))).sort((a, b) => a.l - b.l);
+    expect(row.length, JSON.stringify(boxes).slice(0, 300)).toBeGreaterThan(3);
+    for (let i = 1; i < row.length; i++)
+      expect(row[i]!.l, "横軸の字が重ならない").toBeGreaterThanOrEqual(row[i - 1]!.r);
+  });
+  test("負の二項分布 r＝30・p＝0.01：山が遠くても図に山が出て、左右の外の確率を出す", async ({ page }) => {
+    const ws = await open(page, "negbinom");
+    await toEnd(page, "r", "End");
+    await toEnd(page, "p", "Home");
+    await expect(page.getByTestId("ws-tail")).toContainText("より小さい所と");
+    const hs = await page
+      .getByTestId("ws-chart")
+      .locator("rect")
+      .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+    expect(Math.max(...hs), "棒が全部 0 ではない").toBeGreaterThan(5);
+    await expect(ws).not.toContainText("NaN");
+  });
+  test("超幾何分布：N はほかの記号に取れる値が残る所までしか下げられない（0/0 にならない）", async ({ page }) => {
+    const ws = await open(page, "hyper");
+    await toEnd(page, "N", "Home");
+    await expect(page.locator("#ws-slider-N")).toHaveAttribute("min", "1");
+    await expect(ws).not.toContainText("NaN");
+    await expect(ws).toContainText("P(X=");
+  });
+});
