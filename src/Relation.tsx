@@ -2,7 +2,7 @@
 // 関係の文は括弧を重ねず、種類と変換の仕方は札（badge）にする。「💡 つまり」は説明・図・ラボより先に出す。
 // 図・解説（解説付き再生）・触る（確かめるラボ）は同時に並べず、切り替えて1つだけ出す。ラボは選んだときだけ読み込む。
 // 手触り：切り替えと前後の図は change() で、変わる所（この欄）だけを短くつなぐ。
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Badge,
@@ -10,6 +10,7 @@ import {
   Bars,
   Button,
   Explore,
+  FigImage,
   Lightbox,
   Segmented,
   Tour,
@@ -123,13 +124,25 @@ export function Media({ figures, labs, context, open = false }: MediaProps) {
               aria-label={`図を大きく見る：${f.caption ?? f.id}`}
               onClick={(e) => setZoom(e.currentTarget.querySelector("img")!.getBoundingClientRect())}
             >
-              <img src={f.url} alt={f.caption ?? f.id} loading="lazy" />
+              <FigImage src={f.url} srcDark={f.url_dark} alt={f.caption ?? f.id} loading="lazy" />
             </button>
-            {figures!.map((x) => x.url !== f.url && <link key={x.url} rel="preload" as="image" href={x.url} />)}{" "}
+            {figures!.map(
+              (x) =>
+                x.url !== f.url &&
+                (x.url_dark ? (
+                  <Fragment key={x.url}>
+                    <link rel="preload" as="image" href={x.url} media="(prefers-color-scheme: light)" />
+                    <link rel="preload" as="image" href={x.url_dark} media="(prefers-color-scheme: dark)" />
+                  </Fragment>
+                ) : (
+                  <link key={x.url} rel="preload" as="image" href={x.url} />
+                )),
+            )}{" "}
             {/* 次の図をすぐ出せるように */}
             {zoom && (
               <Lightbox
                 src={f.url}
+                srcDark={f.url_dark}
                 alt={f.caption ?? f.id}
                 caption={f.caption}
                 href={f.url}
