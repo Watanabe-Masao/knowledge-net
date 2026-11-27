@@ -241,6 +241,15 @@ export function drawLine(sp: LineSpec, theme: Theme = "file"): string {
   const Y = (v: number) => base - ((v - lo) / (hi - lo)) * (base - top);
   c.line(16, base, W - 16, base, "ink-2", 1);
   const colors = ["data-1", "data-hi", "data-2"];
+  // 値の字の位置：同じ時点にほかの線の点があるとき、高い方の点は上、低い方の点は下に出す（字が重ならないように。移動平均の図の 39 と 38）
+  const above = (k: number, i: number) => {
+    const v = all[k]!.values[i]!;
+    const others = all
+      .filter((_, j) => j !== k)
+      .map((o) => o.values[i])
+      .filter((x): x is number => Number.isFinite(x));
+    return others.every((o) => v >= o);
+  };
   all.forEach((s, k) => {
     const col = colors[k % 3]!;
     const pts = s.values.map((v, i) => [X(i), Y(v), i] as const).filter(([, , i]) => Number.isFinite(s.values[i]));
@@ -251,7 +260,7 @@ export function drawLine(sp: LineSpec, theme: Theme = "file"): string {
       c.circle(px, py, 4, col);
       if (k === 0 || (s.show_values ?? true))
         c.add(
-          `<text x="${f1(px)}" y="${f1(py - 9)}" font-size="${c.fs(12)}"${c.paint({ fill: "ink", stroke: c.halo })} text-anchor="middle" font-weight="bold" stroke-width="4" paint-order="stroke">${esc(num(Number(s.values[i]!.toFixed(2))))}</text>`,
+          `<text x="${f1(px)}" y="${f1(above(k, i) ? py - 9 : py + 19)}" font-size="${c.fs(12)}"${c.paint({ fill: "ink", stroke: c.halo })} text-anchor="middle" font-weight="bold" stroke-width="4" paint-order="stroke">${esc(num(Number(s.values[i]!.toFixed(2))))}</text>`,
         );
     });
   });
