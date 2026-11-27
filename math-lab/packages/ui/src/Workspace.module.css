@@ -1322,7 +1322,7 @@
 }
 .area {
   fill: var(--data-1);
-  fill-opacity: 0.35;
+  fill-opacity: 0.42;
   pointer-events: none;
 }
 .keyArea {
@@ -1348,4 +1348,15 @@
   fill: var(--accent);
   stroke: var(--surface);
   stroke-width: 2;
+}
+.hist {
+  fill: none;
+  stroke: var(--data-2);
+  stroke-width: 1.2;
+  pointer-events: none;
+}
+.keyHist {
+  width: 10px;
+  height: 10px;
+  border: 1.2px solid var(--data-2);
 }

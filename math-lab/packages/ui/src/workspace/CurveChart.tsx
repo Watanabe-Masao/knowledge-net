@@ -20,6 +20,8 @@ export function CurveChart({ w }: { w: WsCtx }) {
     step,
     meanValue,
     prob,
+    samples,
+    lastSample,
   } = c;
   const W = 340,
     TOP = 18,
@@ -32,7 +34,18 @@ export function CurveChart({ w }: { w: WsCtx }) {
   const N = 240;
   const xs = Array.from({ length: N + 1 }, (_, i) => x0 + ((x1 - x0) * i) / N);
   const ds = xs.map((x) => contDensity(family, x));
-  const yMax = Math.max(...ds) * 1.12 || 1;
+  // 9 実験のヒストグラム：窓を 30 本に分け、高さは密度にそろえる（数÷(回数×幅)。曲線と同じ縦の物差し）。窓の外の値は数えない
+  const BINS = 30,
+    bw = (x1 - x0) / BINS;
+  const counts = Array.from({ length: BINS }, () => 0);
+  for (const v of samples) {
+    const i = Math.floor((v - x0) / bw);
+    if (i >= 0 && i < BINS) counts[i]!++;
+  }
+  const hist = samples.length ? counts.map((k) => k / (samples.length * bw)) : [];
+  const dMax = Math.max(...ds) || 1;
+  // 縦の上限は曲線に合わせ、柱が高いときだけ 1.6 倍まで広げる（少ない回数の柱で曲線をつぶさない。はみ出す柱は上で切る）
+  const yMax = Math.max(dMax * 1.12, Math.min(Math.max(0, ...hist), dMax * 1.6));
   const Y = (d: number) => BASE - (d / yMax) * (BASE - TOP);
   // 一様分布は台の端で密度が跳ぶので、端の点を縦に結ぶ（斜めに描かない）
   const pts: [number, number][] =
@@ -95,6 +108,12 @@ export function CurveChart({ w }: { w: WsCtx }) {
             <i className={s.keyArea} />
             塗った面積 {fmt(prob * 100, 2)}%
           </span>
+          {samples.length > 0 && (
+            <span>
+              <i className={s.keyHist} />
+              実験 {samples.length} 回
+            </span>
+          )}
           {meanValue !== undefined && (
             <span>
               <i className={s.keyMean} />
@@ -123,6 +142,20 @@ export function CurveChart({ w }: { w: WsCtx }) {
         onPointerCancel={() => (grab.current = null)}
       >
         {shaded.map((d, i) => d && <path key={i} d={d} className={s.area} data-testid="ws-area" />)}
+        {hist.map((h, i) =>
+          h > 0 ? (
+            <rect
+              key={`h${i}`}
+              x={X(x0 + i * bw) + 0.5}
+              y={Math.max(TOP - 8, Y(h))}
+              width={Math.max(0.5, X(x0 + (i + 1) * bw) - X(x0 + i * bw) - 1)}
+              height={BASE - Math.max(TOP - 8, Y(h))}
+              className={s.hist}
+              data-testid="ws-hist"
+            />
+          ) : null,
+        )}
+        {lastSample !== null && <circle cx={X(lastSample)} cy={BASE - 4} r={4} className={`${s.emp} ${s.empJust}`} />}
         <path d={curve} className={s.curve} data-testid="ws-curve-line" />
         <line x1={L - 6} x2={W - R + 6} y1={BASE} y2={BASE} className={s.base} />
         {meanValue !== undefined && (

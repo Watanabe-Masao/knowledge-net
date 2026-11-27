@@ -27,7 +27,11 @@ export function Strip({ w }: { w: WsCtx }) {
       <div className={`${s.strip} ${s.stripEmpty}`} data-testid="ws-strip">
         <p className={s.hint}>
           {parts.length
-            ? "式のかたまり（ₙCₖ・pᵏ など）を押すと、意味と今の値がここに出る。"
+            ? // かたまりの例はその式の部品の名前から（前は二項分布の ₙCₖ・pᵏ をどの式にも出していた）
+              `式のかたまり（${parts
+                .slice(0, 2)
+                .map((p) => p.name)
+                .join("・")}${parts.length > 2 ? " など" : ""}）を押すと、意味と今の値がここに出る。`
             : "式の記号を押すと、意味と今の値がここに出る。"}
         </p>
       </div>

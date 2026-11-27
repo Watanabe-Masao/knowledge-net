@@ -143,3 +143,23 @@ test("連続の作業台：面積のかたまりの f を正規分布の密度�
   await ws.getByTestId("ws-break-f").click();
   await expect(ws.getByTestId("ws-formula")).toContainText("π");
 });
+
+// 確かめる対象：9 実験。引いた値が曲線のヒストグラムになり、塗った区間に入った割合が面積に近づく。境目を動かしても記録は消えず、母数を変えると消える。
+// 想定する故障：別の分布から引く（逆関数の通し忘れ）・入ったかの判定の向きの取り違え・境目を動かすたびに記録が消える。
+// 見つけ方：N(500, 4²) で 1000 回引き、496〜504 に入った割合が 68.27% から標準誤差の5倍（7.4 ポイント）以内。
+//   向きを「外側」にすると、入った回数が 1000 から前の回数を引いた数になる（同じ標本の補い）。σ の札でつまみを動かすと記録が消える。
+test("連続の作業台：実験の割合が面積に近づき、向きを替えても同じ標本で数え直す", async ({ page }) => {
+  const ws = await open(page, "stats2:TERM-normal");
+  await ws.getByTestId("ws-run-1000").click();
+  const stat = ws.getByTestId("ws-exp-stat");
+  await expect(stat).toHaveAttribute("data-n", "1000", { timeout: 10000 });
+  await expect(ws.getByTestId("ws-hist").first()).toBeVisible();
+  const hit = Number(await stat.getAttribute("data-hit"));
+  expect(Math.abs(hit / 1000 - 0.6827)).toBeLessThan(5 * Math.sqrt((0.6827 * 0.3173) / 1000));
+  await ws.getByRole("radio", { name: "外側", exact: true }).click();
+  await expect(stat).toHaveAttribute("data-hit", String(1000 - hit));
+  await expect(stat).toHaveAttribute("data-n", "1000");
+  await ws.getByTestId("ws-chip-sigma").click();
+  await ws.locator("#ws-slider-sigma").press("ArrowRight");
+  await expect(stat).toHaveAttribute("data-n", "0");
+});
