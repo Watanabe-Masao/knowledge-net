@@ -46,6 +46,19 @@ export type CurveCtx = {
   seed: number;
   /** その値が塗った区間に入るか */
   inRegion: (x: number) => boolean;
+  /** 8 変換（正規分布だけ）：Y＝aX＋b で見ているときの、Y の分布・境目・向き（a＝0 は描けないので undefined）。X の値を Y に写す関数 */
+  view?: {
+    family: ContFamily;
+    window: [number, number];
+    bounds: { lo: number; hi: number };
+    dir: Direction;
+    active: ("lo" | "hi")[];
+    toView: (x: number) => number;
+  };
+  /** 変換の欄を出すか（正規分布・標準正規分布だけ。aX＋b も正規分布のまま） */
+  canTransform: boolean;
+  /** X の平均・標準偏差（標準化の a＝1/σ・b＝−μ/σ） */
+  sd: number;
 };
 
 export type WsCtx = {
