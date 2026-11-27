@@ -38,6 +38,14 @@ export type CurveCtx = {
   /** 区間の確率（向きで決まる。外側は 1−間） */
   prob: number;
   meanValue?: number;
+  /** 9 実験：引いた値（種つき）・最後に1回引いた値・引く・記録を消す・種 */
+  samples: number[];
+  lastSample: number | null;
+  runSamples: (count: number) => void;
+  clearSamples: () => void;
+  seed: number;
+  /** その値が塗った区間に入るか */
+  inRegion: (x: number) => boolean;
 };
 
 export type WsCtx = {

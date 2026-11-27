@@ -68,6 +68,8 @@ import {
 } from "./workspace/shared";
 import { initialState, wsReducer, type WsState } from "./workspace/state";
 import { Strip } from "./workspace/Strip";
+import { useCurveRun } from "./workspace/useCurveRun";
+import { CurveExpPanel } from "./workspace/CurveExpPanel";
 import { useExperimentRun } from "./workspace/useExperimentRun";
 import { useFormulaStage } from "./workspace/useFormulaStage";
 import s from "./Workspace.module.css";
@@ -414,6 +416,8 @@ function Frame({
     return Math.sqrt(bars.reduce((t, g) => t + (g.v - mu) ** 2 * g.y, 0) / tot);
   }, [bars, range.sd, a]);
   const ex = useExperimentRun(seed0, dist, JSON.stringify([vary.map((k) => values[k]), weights, a, b]));
+  // パターン3の実験：母数が変わったら記録を分ける（境目・向きでは分けない）
+  const cex = useCurveRun(seed0, curveM && famOk ? fam : undefined, JSON.stringify(vary.map((k) => values[k])));
 
   // ---- 5 計算過程：パターン1は値を入れた式から1段ずつ、パターン2は Σ を1項ずつ（どちらも最後が 4 結果の値） ----
   const steps = useMemo(() => {
@@ -650,6 +654,22 @@ function Frame({
             },
             prob: curveProb ?? 0,
             meanValue: meanX,
+            samples: cex.xs,
+            lastSample: cex.last,
+            runSamples: cex.run,
+            clearSamples: cex.clearRec,
+            seed: cex.seed,
+            inRegion: (x) => {
+              const l = curveVals[curveM.lo]!,
+                h = curveVals[curveM.hi]!;
+              return dir === "le"
+                ? x <= h
+                : dir === "ge"
+                  ? x >= l
+                  : dir === "between"
+                    ? x >= l && x <= h
+                    : x < l || x > h;
+            },
           }
         : undefined,
   };
@@ -777,7 +797,7 @@ function Frame({
           <Inputs w={w} />
           {curveM ? <CurveChart w={w} /> : <Chart w={w} />}
           {linear && <Linear w={w} />}
-          {experiment && !curveM && <ExpPanel w={w} />}
+          {experiment && (curveM ? w.curve && <CurveExpPanel w={w} /> : <ExpPanel w={w} />)}
         </>
       )}
     </section>
