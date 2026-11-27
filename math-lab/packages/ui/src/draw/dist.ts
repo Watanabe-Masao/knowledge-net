@@ -3,6 +3,7 @@
 // 棒（注目する値は強調の色で数を付ける）・横軸の値・期待値の▲・凡例の行・数の行・注。
 // 設定の項目の名前は、教材の静止図の設定（figures.py の dist）と同じ：ポアソンは lam、超幾何は N・K・n、負の二項は r（幾何は r＝1）
 import { modelPmf, negbinomPmf, poissonPmf } from "@math-lab/engine";
+import { CURVE_FAMILIES, drawCurve, type CurveSpec } from "./curve";
 import { Canvas, num, type Theme } from "./svg";
 
 type Family =
@@ -12,7 +13,7 @@ type Family =
   | { family: "geom"; p: number; r?: number }
   | { family: "hyper"; N: number; K: number; n: number };
 
-export type DistSpec = Family & {
+export type BarSpec = Family & {
   /** 棒を出す範囲（二項・超幾何で kmax が上限を越えた所は0。上限が見える。ポアソン・幾何は上限がないので kmax が要る） */
   kmin?: number;
   kmax?: number;
@@ -33,16 +34,23 @@ export type DistSpec = Family & {
   note?: string;
 };
 
+/** 静止図の型 dist の設定：離散の分布の棒か、連続の分布の曲線（D2） */
+export type DistSpec = BarSpec | CurveSpec;
+
 const FAMILIES = ["binom", "bernoulli", "poisson", "geom", "hyper"];
 
-/** この関数で描ける設定か（離散の分布で、重ねる分布・帯・境目のないもの） */
+/** この関数で描ける設定か（離散：重ねる分布・帯・境目のないもの。連続：帯がなく、重ねるのは正規分布だけで、横軸 ticks があるもの） */
 export function canDrawDist(sp: Record<string, unknown>): boolean {
+  if (CURVE_FAMILIES.includes(String(sp.family)))
+    return (
+      !sp.band && Array.isArray(sp.ticks) && (!sp.overlay || (sp.overlay as { family?: string }).family === "normal")
+    );
   if (!FAMILIES.includes(String(sp.family)) || sp.overlay || sp.band || sp.upto !== undefined) return false;
   return (sp.family !== "poisson" && sp.family !== "geom") || sp.kmax !== undefined; // 上限のない分布は kmax が要る
 }
 
 /** 棒の値（[k, 確率]）と期待値・図の説明の名前 */
-export function distPoints(sp: DistSpec): { pmf: [number, number][]; mean: number; name: string } {
+export function distPoints(sp: BarSpec): { pmf: [number, number][]; mean: number; name: string } {
   let all: number[], mean: number, name: string, top: number;
   switch (sp.family) {
     case "binom":
@@ -88,6 +96,10 @@ export function distPoints(sp: DistSpec): { pmf: [number, number][]; mean: numbe
 export function drawDist(sp: DistSpec, theme: Theme = "file"): string {
   if (!canDrawDist(sp as unknown as Record<string, unknown>))
     throw new Error(`この設定はまだ描けない：${JSON.stringify(sp)}`);
+  return CURVE_FAMILIES.includes(sp.family) ? drawCurve(sp as CurveSpec, theme) : drawBars(sp as BarSpec, theme);
+}
+
+function drawBars(sp: BarSpec, theme: Theme): string {
   const c = new Canvas(theme);
   const unit = sp.unit ?? "";
   let y = 8;

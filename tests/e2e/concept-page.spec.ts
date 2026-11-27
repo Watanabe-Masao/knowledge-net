@@ -85,6 +85,42 @@ test("離散の分布の概要の図：超幾何と負の二項", async ({ page 
   }
 });
 
+// 確かめる対象：D2（stats2-course #577）の連続の分布の概要の図。想定する故障：連続の kind を読めず図が出ない・横軸（ticks）を使わない・
+// 塗る範囲や重ねる正規分布を落とす・見出しが別の分布のまま。見つけ方：見本のデータに chart を書き足して開き、曲線・塗り・点線・横軸の端・見出しを見る
+// （密度の形は math-lab の draw.test で見る）
+test("連続の分布の概要の図：正規（塗る範囲）と t（標準正規を重ねる）", async ({ page }) => {
+  await page.route("**/sample/stats2.json", async (r) => {
+    const net = await (await r.fetch()).json();
+    for (const c of net.concepts) {
+      if (c.id === "stats2:TERM-normal")
+        c.chart = {
+          kind: "normal",
+          mu: 500,
+          sigma: 4,
+          ticks: [488, 512, 4],
+          unit: "g",
+          shade: [{ from: 496, to: 504, label: "約68%" }],
+        };
+      if (c.id === "stats2:TERM-t")
+        c.chart = { kind: "t", df: 5, ticks: [-4, 4, 1], overlay: { mu: 0, sigma: 1, label: "標準正規分布" } };
+    }
+    await r.fulfill({ json: net });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [id, params, ends, extra] of [
+    ["TERM-normal", "μ＝500・σ＝4", ["488", "512"], "約68%"],
+    ["TERM-t", "自由度 5", ["-4", "4"], "標準正規分布"],
+  ] as const) {
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3A${id}`);
+    const ch = page.getByTestId("concept-chart");
+    await expect(ch).toContainText(params);
+    await expect(ch.locator('svg path[stroke-width="2.2"]')).toHaveCount(1); // 曲線
+    for (const e of ends) await expect(ch.locator("svg text").filter({ hasText: new RegExp(`^${e}$`) })).toHaveCount(1);
+    await expect(ch).toContainText(extra);
+  }
+  await expect(page.getByTestId("concept-chart").locator('svg path[stroke-dasharray="4 3"]')).toHaveCount(1); // t に重ねた正規
+});
+
 // 確かめる対象：概念から実験室へ（05）・読むときは全画面（02）。概念のページから実験室への入口は下の主ボタン1つ（渡辺さん 2026-11-04：入口が重複）。
 // 想定する故障：主ボタンが「試す」の段へ送らない・段がこの概念の問いに絞られていない・概要の中に問いの札（2つ目の入口）が戻る。
 // 見つけ方：概要の中に実験室を開く札がないこと、主ボタンで同じページの「試す」の段（この概念が主の問い・関連の問い）が見えるかを見る（issue 599 で一覧のページを段にした）
