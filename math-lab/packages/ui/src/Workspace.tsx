@@ -14,7 +14,13 @@
 import { useEffect, useMemo, useReducer, useState, type CSSProperties } from "react";
 import {
   applyOpens,
+  checkFamily,
   checkMechanism,
+  contMoments,
+  contProb,
+  contWindow,
+  type ContFamily,
+  type Direction,
   modelMoments,
   modelPmf,
   supportOf,
@@ -41,6 +47,7 @@ import { haptic } from "./motion";
 import { asY, eventForm } from "./workspace/asY";
 import { CalcPanel } from "./workspace/CalcPanel";
 import { Chart } from "./workspace/Chart";
+import { CurveChart } from "./workspace/CurveChart";
 import type { WsCtx } from "./workspace/ctx";
 import { ExpPanel } from "./workspace/ExpPanel";
 import { Inputs } from "./workspace/Inputs";
@@ -65,7 +72,7 @@ import { useExperimentRun } from "./workspace/useExperimentRun";
 import { useFormulaStage } from "./workspace/useFormulaStage";
 import s from "./Workspace.module.css";
 
-export type { FormulaWhy, TableWorkspaceData, ValueTable, WorkspaceData } from "./workspace/shared";
+export type { CurveWorkspaceData, FormulaWhy, TableWorkspaceData, ValueTable, WorkspaceData } from "./workspace/shared";
 
 /** パターン1：式で決まる分布（二項分布など） */
 export function Workspace({
@@ -87,6 +94,36 @@ export function TableWorkspace({ tables, ...rest }: Common & { tables: ValueTabl
   return <Frame key={table.id} {...rest} model={{ kind: "table", tables }} table={table} onScene={choose} />;
 }
 
+/** パターン3：連続の分布（正規・標準正規・指数・一様）。境目を指で引くと塗った面積（区間の確率）が動く（stats2-course の issue 608） */
+export function CurveWorkspace({
+  family,
+  vary = [],
+  lo,
+  hi,
+  dir,
+  initial,
+  ...rest
+}: Common & {
+  family: Extract<Model, { kind: "curve" }>["family"];
+  vary?: string[];
+  lo: string;
+  hi: string;
+  dir?: Direction;
+  initial?: Record<string, number>;
+}) {
+  return <Frame {...rest} model={{ kind: "curve", family, vary, lo, hi, dir, initial }} />;
+}
+
+/** 記号の値から連続の分布（母数の記号の名前は教材の式と同じ：正規 mu・sigma、指数 lambda、一様 a・b） */
+const familyOf = (kind: Extract<Model, { kind: "curve" }>["family"], v: Record<string, number>): ContFamily =>
+  kind === "normal"
+    ? { family: "normal", mu: v.mu!, sigma: v.sigma! }
+    : kind === "expo"
+      ? { family: "expo", lam: v.lambda! }
+      : kind === "uniform"
+        ? { family: "uniform", a: v.a!, b: v.b! }
+        : { family: "std-normal" };
+
 function Frame({
   formula: given,
   mean,
@@ -102,8 +139,11 @@ function Frame({
   only,
 }: Common & { model: Model; table?: ValueTable; onScene?: (id: string) => void }) {
   const isTable = model.kind === "table";
-  const vary = model.kind === "formula" ? model.vary : [],
+  const curveM = model.kind === "curve" ? model : undefined;
+  const vary = model.kind === "formula" || model.kind === "curve" ? model.vary : [],
     over = model.kind === "formula" ? model.over : "";
+  // 6 入力で動かす記号：パターン1は母数と横軸、パターン3は母数と区間の両端
+  const inputs = curveM ? [...vary, curveM.lo, curveM.hi] : [...vary, over];
   const symOfGiven = (k: string) => (given.symbols ?? []).find((x) => x.key === k);
   // 記号の動かせる範囲。横軸の記号に上限がない（ポアソン分布・幾何分布の k など）ときは、窓の外の確率が左右それぞれ 0.005% 未満の所まで、
   // 400 本まで（spanOf。前は 0〜30 で切り、λ が大きいと山の右側が欠けた。山が遠いときは一番高い所を真ん中に。stats2-course の issue 608）
@@ -112,15 +152,38 @@ function Frame({
     const sym = symOfGiven(k);
     if (!sym) return { min: 0, max: 0, step: 1 };
     const r = sliderRange(sym, v, FALLBACK);
+    if (curveM && (k === curveM.lo || k === curveM.hi)) return boundRange(v);
+    if (curveM && vary.includes(k) && curveM.initial?.[k] !== undefined) {
+      // 母数のつまみ：定義域の端がなければ、開いたときの値の大きさに合わせる（正規分布の μ＝500 を 0〜30 で切らない）。刻みはその大きさの 1/100
+      const s0 = curveM.initial[k]!,
+        mag = Math.abs(s0) || 1,
+        step = 10 ** Math.floor(Math.log10(mag / 100));
+      const lo = sym.domain?.min !== undefined ? Math.max(Number(sym.domain.min), s0 - 2 * mag) : s0 - 2 * mag;
+      return {
+        min: sym.domain?.minOpen && lo === Number(sym.domain.min) ? lo + step : Number(lo.toFixed(10)),
+        max: Number((s0 + 2 * mag).toFixed(10)),
+        step,
+      };
+    }
     if (model.kind !== "formula" || k !== over || sym.domain?.max !== undefined || !given.tree) return r;
     const t = spanOf(given.tree, over, r.min, { values: v });
     return { ...r, min: t.from, max: Math.max(t.from, t.to), below: t.below, above: t.above, sd: t.sd };
   };
 
+  // パターン3の境目が動ける範囲：図の窓と分布の台の重なり（指数は 0 より左、一様は台の外に置かない）。刻みは標準偏差の 1/20 ほどの切りのよい数
+  function boundRange(v: Record<string, number>): Range {
+    const fam = familyOf(curveM!.family, v);
+    if (checkFamily(fam)) return { min: 0, max: 0, step: 1, empty: true };
+    const [w0, w1] = contWindow(fam);
+    const lo = fam.family === "uniform" ? fam.a : fam.family === "expo" ? 0 : w0,
+      hi = fam.family === "uniform" ? fam.b : w1;
+    const step = 10 ** Math.floor(Math.log10(contMoments(fam).sd / 20));
+    return { min: Number(lo.toPrecision(10)), max: Number(hi.toPrecision(10)), step };
+  }
   // ---- 6 入力（パターン1：記号の値／パターン2：表の重み）と 8 変換（a・b）。状態は reducer 1つ（workspace/state.ts） ----
   // ---- 6 入力（パターン1：記号の値／パターン2：表の重み）と 8 変換（a・b） ----
   const start = useMemo(() => {
-    if (model.kind !== "formula") return {};
+    if (model.kind === "table") return {};
     const v: Record<string, number> = { ...model.initial };
     for (const k of vary) {
       if (v[k] !== undefined) continue;
@@ -132,6 +195,16 @@ function Frame({
         : r.min >= 0 && r.max <= 1
           ? 0.3
           : Number(((r.min + r.max) / 2).toFixed(2));
+    }
+    if (curveM) {
+      // 境目の初めの値：書いていなければ、分布の 25%・75% の点の近く（刻みにそろえる）
+      const r = boundRange(v);
+      for (const [k, q] of [
+        [curveM.lo, 0.25],
+        [curveM.hi, 0.75],
+      ] as const)
+        if (v[k] === undefined) v[k] = Number((Math.round((r.min + (r.max - r.min) * q) / r.step) * r.step).toFixed(6));
+      return v;
     }
     if (v[over] === undefined) {
       const m = mean?.tree ? evaluate(rhsOf(mean.tree), { values: v }) : undefined;
@@ -145,7 +218,7 @@ function Frame({
   const { values, weights, a, b, opens, sel } = st;
   const clampAll = (v: Record<string, number>) => {
     const out = { ...v };
-    for (const k of [...vary, over]) {
+    for (const k of inputs) {
       if (!symOfGiven(k)) continue;
       const r = rangeOf(k, out);
       out[k] = Math.min(r.max, Math.max(r.min, out[k] ?? r.min));
@@ -154,7 +227,8 @@ function Frame({
   };
   // どの記号にも取れる値が残るか（超幾何分布で N＝0 にすると、n は 1 以上 N 以下で取れる値がなくなり、0/0 になった。2026-11-26 の独立な確かめ）
   const feasible = (v: Record<string, number>) =>
-    [...vary, over].every((k) => {
+    (!curveM || !checkFamily(familyOf(curveM.family, v))) && // 一様分布の a＜b など、分布として成り立つ母数だけ
+    inputs.every((k) => {
       if (!symOfGiven(k)) return true;
       return !rangeOf(k, v).empty;
     });
@@ -170,7 +244,12 @@ function Frame({
     patch((c) => {
       const next = clampAll({ ...c.values, [k]: x });
       if (!feasible(next)) return {};
-      const moved = [...vary, over].filter((j) => j !== k && c.values[j] !== undefined && next[j] !== c.values[j]);
+      // 区間の両端は入れ替わらない（左端を右端より右へ引いたら、右端で止める）
+      if (curveM && next[curveM.lo]! > next[curveM.hi]!) {
+        if (k === curveM.lo) next[curveM.lo] = next[curveM.hi]!;
+        else next[curveM.hi] = next[curveM.lo]!;
+      }
+      const moved = inputs.filter((j) => j !== k && c.values[j] !== undefined && next[j] !== c.values[j]);
       const said = moved.map((j) => `${symOfGiven(j)!.symbol} ${fmt(c.values[j], 2)}→${fmt(next[j], 2)}`);
       // 前の知らせは、次に動かして何も変わらなければ消す（触ったときだけ変える。画面の原則 1）
       return {
@@ -246,12 +325,47 @@ function Frame({
   // 表で決まる分布では、式の μ（期待値）を今の表の期待値に結ぶ（分散の値ごとの和 Σ(x−μ)²p(x) を表で計算するため。
   // 前は μ に値がなく、分散の式が「—」になった。stats2-course issue 577。渡辺さん 2026-11-25）
   const tableMu = support.reduce((s, v, i) => s + v * (probs[i] ?? 0), 0);
-  const env: Env = isTable
-    ? transformed
-      ? { values: { mu: tableMu }, domains: { y: support }, fns: { P: (y: number) => probs[support.indexOf(y)] ?? 0 } }
-      : { values: { mu: tableMu }, domains: { x: support }, fns: { p: (x: number) => probs[support.indexOf(x)] ?? 0 } }
-    : { values };
-  const result = evaluate(rhsOf(tree), env);
+  // パターン3：向き（以下・以上・間・外側）。境目の値は values に、向きはここに持つ（数でないので reducer の values に入れない）
+  const [dir, setDirRaw] = useState<Direction>(curveM?.dir ?? "between");
+  const fam = curveM ? familyOf(curveM.family, values) : undefined;
+  const famOk = !!fam && !checkFamily(fam);
+  // 向きで使わない端は、分布の台の端（以下の左端：正規は −∞・指数は 0・一様は a。以上の右端：∞・一様は b）
+  const edge = (side: "lo" | "hi") =>
+    fam?.family === "uniform"
+      ? side === "lo"
+        ? fam.a
+        : fam.b
+      : side === "lo"
+        ? fam?.family === "expo"
+          ? 0
+          : -Infinity
+        : Infinity;
+  const curveVals =
+    curveM && fam
+      ? {
+          ...values,
+          [curveM.lo]: dir === "le" ? edge("lo") : values[curveM.lo]!,
+          [curveM.hi]: dir === "ge" ? edge("hi") : values[curveM.hi]!,
+        }
+      : values;
+  const env: Env = curveM
+    ? { values: curveVals }
+    : isTable
+      ? transformed
+        ? {
+            values: { mu: tableMu },
+            domains: { y: support },
+            fns: { P: (y: number) => probs[support.indexOf(y)] ?? 0 },
+          }
+        : {
+            values: { mu: tableMu },
+            domains: { x: support },
+            fns: { p: (x: number) => probs[support.indexOf(x)] ?? 0 },
+          }
+      : { values };
+  const curveProb = curveM && famOk ? contProb(fam!, dir, curveVals[curveM.lo]!, curveVals[curveM.hi]!) : undefined;
+  // 結果：パターン3は区間の確率（engine の contProb。式の値は計算の段で同じ数になる）
+  const result = curveM ? curveProb : evaluate(rhsOf(tree), env);
   // 結果が 0 のとき、0 にした組合せ・順列（なぜ 0 かを1行で言う。黙って 0% を出すと壊れて見える。2026-11-26 の iPhone の録画。stats2-course の issue 507）
   const zeros = !isTable && result === 0 ? zeroFactors(rhsOf(tree), env) : [];
   const lhs = lhsOf(tree);
@@ -260,12 +374,22 @@ function Frame({
   // 分布（横軸は元の X の値。図は変換後の値 v＝ax＋b で並べる。a＝0 なら1本にまとめる）
   const distX = useMemo(
     () =>
-      isTable
-        ? table!.values.map((x, i) => ({ x, y: totalW > 0 ? weights[i]! / totalW : 0 }))
-        : distribution(given.tree!, over, range.min, range.max, env),
+      curveM
+        ? []
+        : isTable
+          ? table!.values.map((x, i) => ({ x, y: totalW > 0 ? weights[i]! / totalW : 0 }))
+          : distribution(given.tree!, over, range.min, range.max, env),
     [isTable, JSON.stringify(weights), given.tree, over, range.min, range.max, JSON.stringify(values)],
   ); // eslint-disable-line react-hooks/exhaustive-deps
-  const meanX = isTable ? baseMeanX : mean?.tree ? evaluate(rhsOf(mean.tree), env) : undefined;
+  const meanX = curveM
+    ? famOk
+      ? contMoments(fam!).mean
+      : undefined
+    : isTable
+      ? baseMeanX
+      : mean?.tree
+        ? evaluate(rhsOf(mean.tree), env)
+        : undefined;
   const meanValue = meanX === undefined ? undefined : a * meanX + b;
   const bars = useMemo(() => {
     const m = new Map<number, { v: number; y: number; xs: number[]; rows: number[] }>();
@@ -292,17 +416,37 @@ function Frame({
   const ex = useExperimentRun(seed0, dist, JSON.stringify([vary.map((k) => values[k]), weights, a, b]));
 
   // ---- 5 計算過程：パターン1は値を入れた式から1段ずつ、パターン2は Σ を1項ずつ（どちらも最後が 4 結果の値） ----
-  const steps = useMemo(
-    () => (isTable ? [rhsOf(tree), ...expand(rhsOf(tree), env)] : expand(tree, env)),
-    [tree, JSON.stringify(values), JSON.stringify(probs), JSON.stringify(support), transformed],
-  ); // eslint-disable-line react-hooks/exhaustive-deps
+  const steps = useMemo(() => {
+    if (isTable) return [rhsOf(tree), ...expand(rhsOf(tree), env)];
+    const st0 = expand(tree, env);
+    // 外側は 1−（間の確率）。最後に1段足す
+    const last = st0[st0.length - 1];
+    if (curveM && dir === "out" && last && "num" in last)
+      return [...st0, { op: "sub", args: [{ num: 1 }, last] } as FormulaNode, { num: 1 - last.num }];
+    return st0;
+  }, [tree, JSON.stringify(values), JSON.stringify(probs), JSON.stringify(support), transformed, dir]); // eslint-disable-line react-hooks/exhaustive-deps
   const shownStep = Math.min(st.step, steps.length - 1);
   const isProb = !!lhs && "op" in lhs && lhs.op === "fn" && lhs.name === "P";
+  // パターン3の結果の左辺：向きで形が変わる（P(X≦b)・P(X≧a)・P(a≦X≦b)・1−P(a≦X≦b)）。数は今の境目
+  const rvTex = curveM
+    ? toTex({ sym: (given.symbols ?? []).find((x) => x.kind === "rv")?.key ?? "X" }, { symbols })
+    : "";
+  const bt = (k: string) => toTex({ num: Number(values[k]!.toPrecision(6)) });
+  const resultLhsTex = curveM
+    ? dir === "le"
+      ? `P(${rvTex}\\le ${bt(curveM.hi)})`
+      : dir === "ge"
+        ? `P(${rvTex}\\ge ${bt(curveM.lo)})`
+        : dir === "between"
+          ? `P(${bt(curveM.lo)}\\le ${rvTex}\\le ${bt(curveM.hi)})`
+          : `1-P(${bt(curveM.lo)}\\le ${rvTex}\\le ${bt(curveM.hi)})`
+    : undefined;
   // 初期値に戻すときは実験のタイマーも止める（止めないと、消した記録を次の更新が書き戻す。#142）
   const reset = () => {
     ex.clear();
     stg.snapshot();
     dispatch({ type: "reset", values: start, weights: [...(table?.weights ?? [])] });
+    if (curveM) setDirRaw(curveM.dir ?? "between");
   };
   useEffect(() => dispatch({ type: "steps-changed" }), [JSON.stringify(weights), transformed]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -401,7 +545,7 @@ function Frame({
   const stepParts =
     readAs === "structure" && why?.steps[stepNo]!.parts?.length ? new Set(why.steps[stepNo]!.parts) : null; // 部品を書かない段（式全体の話）は薄くしない   // 帯で開いている記号（初めは横軸の記号）
   const inTree = new Set(symbolsIn(tree));
-  const valueSyms = [...(model.kind === "formula" ? [...vary, over] : []), ...inTree]
+  const valueSyms = [...(model.kind === "table" ? [] : inputs), ...inTree]
     .filter((k, i, a) => a.indexOf(k) === i && inTree.has(k))
     .map((k) => symOf(k, symbols))
     .filter((x): x is FormulaSymbol => !!x && values[x.key] !== undefined);
@@ -477,6 +621,37 @@ function Frame({
     exp: ex,
     onConcept,
     conceptName,
+    resultLhsTex,
+    curve:
+      curveM && famOk
+        ? {
+            family: fam!,
+            window: contWindow(fam!),
+            dir,
+            setDir: (d) => {
+              haptic();
+              setDirRaw(d);
+              patch({ step: 1 });
+            },
+            bounds: { lo: curveVals[curveM.lo]!, hi: curveVals[curveM.hi]! },
+            active: dir === "le" ? ["hi"] : dir === "ge" ? ["lo"] : ["lo", "hi"],
+            loSym: symOfGiven(curveM.lo)?.symbol ?? curveM.lo,
+            hiSym: symOfGiven(curveM.hi)?.symbol ?? curveM.hi,
+            range: {
+              lo: [rangeOf(curveM.lo, values).min, rangeOf(curveM.lo, values).max],
+              hi: [rangeOf(curveM.hi, values).min, rangeOf(curveM.hi, values).max],
+            },
+            step: rangeOf(curveM.lo, values).step,
+            setBound: (k, x) => {
+              const key = k === "lo" ? curveM.lo : curveM.hi,
+                r = rangeOf(key, values);
+              const v = Number((Math.round(Math.min(r.max, Math.max(r.min, x)) / r.step) * r.step).toFixed(6));
+              if (v !== values[key]) set(key, v);
+            },
+            prob: curveProb ?? 0,
+            meanValue: meanX,
+          }
+        : undefined,
   };
   return (
     <section
@@ -600,9 +775,9 @@ function Frame({
         <>
           <CalcPanel w={w} />
           <Inputs w={w} />
-          <Chart w={w} />
+          {curveM ? <CurveChart w={w} /> : <Chart w={w} />}
           {linear && <Linear w={w} />}
-          {experiment && <ExpPanel w={w} />}
+          {experiment && !curveM && <ExpPanel w={w} />}
         </>
       )}
     </section>

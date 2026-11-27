@@ -91,3 +91,4 @@
 | 16 | 2026-11-27 | 概念の `chart` の kind にデータの図 hist・boxplot・centers を足し、data・start・width・classes・density・mark・cumulative・box・axis_label・rows・fence・mean・step・lo・hi を足した。ticks は2〜20個に広げた（代表値の位置の目盛り。stats2-course #577 D3a）。項目の名前は教材の静止図の設定と同じ |
 | 17 | 2026-11-27 | 概念の `chart` の kind に scatter・line を足し、show・points・sets・x・y・unbiased・values・r2・slope_only・series・labels・geom・smooth・zero を足した（stats2-course #577 D3b）。項目の名前は教材の静止図の設定と同じ |
 | 18 | 2026-11-28 | 概念の `chart`（折れ線）に任意の `ma`（中央移動平均の窓の幅。奇数）を足した（stats2-course #577。移動平均の語の概要の図） |
+| 19 | 2026-11-28 | 概念に任意の `curve_workspace`（連続の分布の作業台＝パターン3：formula・family・vary・lo・hi・dir・mean・initial）を足した（stats2-course の issue 608）。任意 |

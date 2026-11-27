@@ -1,5 +1,6 @@
 // 式の木の値を求める・1段ずつ展開する（#72）。
 // 「確かめる」の段で、記号に今の実験の値を入れ、E(X)＝np → 10×0.3 → 3 のように、どの段で何をしたかを見せる。
+import { normalCdf } from "../lab";
 import { replaceFree } from "./scope";
 import { isNum, isOp, isSym, type FormulaNode, type OpNode } from "./types";
 
@@ -43,6 +44,7 @@ const BUILTIN: Record<string, (...a: number[]) => number> = {
   fact: factorial,
   exp: Math.exp,
   log: Math.log,
+  Phi: normalCdf, // 標準正規分布の累積 Φ（stats2-course の issue 608：区間の確率の式 Φ(b)−Φ(a)）
 };
 
 /** 1つの演算を、引数の値から計算する（計算できなければ undefined） */

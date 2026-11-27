@@ -156,6 +156,7 @@ export type Concept = {
     initial?: Record<string, number>;
   };
   /** 型の改訂15：期待値の値の表の作業台 */ table_workspace?: import("@math-lab/ui").TableWorkspaceData;
+  /** 型の改訂19：連続の分布の作業台（パターン3。stats2-course の issue 608） */ curve_workspace?: import("@math-lab/ui").CurveWorkspaceData;
   conditions?: { math: string[]; data?: string[] };
   /** 成立条件の区分（型の改訂38。stats2-course #249）：conditions の行ごとに 要件・仮定・目安。kind のない行はデータで確かめる手掛かり */
   conditions_detail?: ConditionDetail[];

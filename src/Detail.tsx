@@ -11,6 +11,7 @@ import {
   Segmented,
   Workspace,
   TableWorkspace,
+  CurveWorkspace,
   subPlain,
   subText,
 } from "@math-lab/ui";
@@ -274,7 +275,7 @@ export default function Detail({
   // 面の作り（渡辺さん 2026-10-31「スライドで見る部分が狭い」・11-01「下のツールバーに動的に」）：
   // 動かない見出しは「名前の1行」と切り替え（概要・式・つながり）だけ。中身は面の残り全部で指で送る。
   // 学ぶ行動（実験室・問題・単元）は下のタブが選んだ概念の分に絞って開く（同じ機能を2か所に置かない）
-  const hasFormula = !!(c.workspace || c.formulas?.length);
+  const hasFormula = !!(c.workspace || c.curve_workspace || c.formulas?.length);
   const tabs: { value: Tab; label: string }[] = [
     { value: "about", label: "概要" },
     ...(hasFormula ? [{ value: "formula" as Tab, label: "式" }] : []),
@@ -339,6 +340,7 @@ export default function Detail({
       c.workspace?.linear,
       c.table_workspace?.formula,
       c.table_workspace?.linear,
+      c.curve_workspace?.formula,
     ].filter((x): x is number => x !== undefined),
   );
   const others = (c.formulas ?? []).map((f, i) => [f, i] as const).filter(([, i]) => !used.has(i));
@@ -666,6 +668,21 @@ export default function Detail({
             vary={c.workspace.vary}
             over={c.workspace.over}
             initial={c.workspace.initial}
+            definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
+            onConcept={(id) => net.concepts.has(id) && onSelect(id)}
+            conceptName={(id) => name(net, id)}
+          />
+        )}
+        {c.curve_workspace && c.formulas?.[c.curve_workspace.formula]?.tree && (
+          <CurveWorkspace
+            key={c.id}
+            formula={keyed(c.formulas[c.curve_workspace.formula]!)}
+            family={c.curve_workspace.family}
+            vary={c.curve_workspace.vary}
+            lo={c.curve_workspace.lo}
+            hi={c.curve_workspace.hi}
+            dir={c.curve_workspace.dir}
+            initial={c.curve_workspace.initial}
             definitions={(id) => (net.concepts.get(id)?.formulas ?? []).map(keyed)}
             onConcept={(id) => net.concepts.has(id) && onSelect(id)}
             conceptName={(id) => name(net, id)}

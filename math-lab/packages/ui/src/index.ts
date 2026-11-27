@@ -7,7 +7,15 @@ export { Segmented } from "./Segmented";
 export { Sheet } from "./Sheet";
 export { change, flash, haptic, parseMs, reduced, tokenMs, useTween } from "./motion";
 export { Formula, type FormulaData } from "./Formula";
-export { Workspace, TableWorkspace, type WorkspaceData, type TableWorkspaceData, type ValueTable } from "./Workspace";
+export {
+  Workspace,
+  TableWorkspace,
+  CurveWorkspace,
+  type WorkspaceData,
+  type TableWorkspaceData,
+  type CurveWorkspaceData,
+  type ValueTable,
+} from "./Workspace";
 export { Lightbox } from "./Lightbox";
 export { FigImage } from "./FigImage";
 export { FullView } from "./FullView";

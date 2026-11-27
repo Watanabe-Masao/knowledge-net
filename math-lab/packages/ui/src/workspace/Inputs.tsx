@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { haptic } from "../motion";
 import { Field } from "../QuestionParts";
+import { Segmented } from "../Segmented";
 import { fmt, num6 } from "./shared";
 import type { WsCtx } from "./ctx";
 import s from "../Workspace.module.css";
@@ -54,17 +55,33 @@ export function Inputs({ w }: { w: WsCtx }) {
     transformed,
     totalW,
     setWeight,
+    curve,
   } = w;
+  // パターン3：境目の記号は、今の向きで動かせる端だけを札にする（以下は右端だけ、以上は左端だけ）
+  const boundKeys = curve && model.kind === "curve" ? curve.active.map((k) => (k === "lo" ? model.lo : model.hi)) : [];
   const setBand = (k: string) => patch({ band: k, bandOpen: true }); // 札を押すとその記号のつまみを出す（同じ札をもう一度押しても閉じない。閉じるのは時間と Esc）
-  const keys0 = [...vary, over].filter((k) => symOf(k));
-  const cur0 = keys0.includes(band) ? band : over;
+  const keys0 = [...vary, ...(curve ? boundKeys : [over])].filter((k) => symOf(k));
+  const cur0 = keys0.includes(band) ? band : (keys0[keys0.length - 1] ?? over);
   const hold = useIdleClose(bandOpen, () => patch({ bandOpen: false }), `${cur0}:${values[cur0]}`);
   return (
     <>
-      {model.kind === "formula" &&
+      {curve && (
+        <Segmented
+          label="区間の向き"
+          value={curve.dir}
+          onChange={(v) => v && curve.setDir(v as typeof curve.dir)}
+          items={[
+            { value: "le", label: "以下" },
+            { value: "ge", label: "以上" },
+            { value: "between", label: "間" },
+            { value: "out", label: "外側" },
+          ]}
+        />
+      )}
+      {(model.kind === "formula" || model.kind === "curve") &&
         (() => {
-          const keys = [...vary, over].filter((k) => symOf(k));
-          const cur = keys.includes(band) ? band : over;
+          const keys = keys0;
+          const cur = cur0;
           const sym = symOf(cur)!,
             r = w.rangeOf(cur, values);
           // 値はふだん札だけに出す（意味の行・つまみ・札の3か所に同じ値を出さない。UI レビュー「操作と入力」）
