@@ -34,9 +34,13 @@ export {
   canDrawDist,
   distPoints,
   densityOf,
+  drawData,
+  five,
+  DATA_TYPES,
   wrap as wrapText,
   type DistSpec,
   type BarSpec,
   type CurveSpec,
+  type DataSpec,
   type Theme as DrawTheme,
 } from "./draw";

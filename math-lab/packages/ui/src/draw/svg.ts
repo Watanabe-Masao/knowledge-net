@@ -104,8 +104,20 @@ export class Canvas {
       `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}"${this.paint({ stroke: color })} stroke-width="${width}"${d}/>`,
     );
   }
-  rect(x: number, y: number, w: number, h: number, fill: string, rx = 0) {
-    this.add(`<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}" rx="${rx}"${this.paint({ fill })}/>`);
+  rect(x: number, y: number, w: number, h: number, fill: string, rx = 0, opacity?: number) {
+    const op = opacity !== undefined ? ` fill-opacity="${opacity}"` : "";
+    this.add(
+      `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${f1(h)}" rx="${rx}"${this.paint({ fill })}${op}/>`,
+    );
+  }
+  /** 丸：fill を null にすると塗らない（枠だけ） */
+  circle(cx: number, cy: number, r: number, fill: string | null, stroke?: string, width = 1.5) {
+    const props: Record<string, string> = {};
+    if (fill) props.fill = fill;
+    if (stroke) props.stroke = stroke;
+    const nofill = fill ? "" : ' fill="none"';
+    const sw = stroke ? ` stroke-width="${width}"` : "";
+    this.add(`<circle cx="${f1(cx)}" cy="${f1(cy)}" r="${f1(r)}"${nofill}${this.paint(props)}${sw}/>`);
   }
   para(x: number, y: number, text: string, width: number, size = 13, color = "ink", weight?: string, lh = 1.45) {
     const ls = wrap(text, width, this.fs(size));

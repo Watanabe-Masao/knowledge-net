@@ -18,7 +18,7 @@
 
 ## 図を描く関数（stats2-course の issue 582）
 
-静止の図は packages/ui/src/draw の純粋な関数（DOM・React を使わない）で SVG の文字列にする。数は engine が出す。同じ関数を、画面（theme page：色は CSS の変数・地なし・字は 1.1 倍）と教材の静止図（theme file：色は値・白い地。Notion の画像。ダークの版は教材の svgkit が色を置き換えて作る）の両方に使い、同じ設定なら同じ図になる。教材は束（dist/draw.mjs）を node で読む（式の束と同じ形）。型を足すときは、教材の figures.py の型を1つずつ移す（D0 は二項分布の棒、D1 でベルヌーイ・ポアソン・幾何（負の二項）・超幾何の棒、D2 で一様・指数・正規・t・カイ二乗・F の曲線（draw/curve.ts。塗る範囲・点線の目印・重ねる正規分布つき）。離散の重ねる分布・帯・境目、標本平均の分布（xbar_expo）はまだ figures.py）。設定の項目の名前は figures.py の dist と同じにする（ポアソン・指数は lam、超幾何は N・K・n、負の二項は r、正規は mu・sigma、F は d1・d2、横軸は ticks）。
+静止の図は packages/ui/src/draw の純粋な関数（DOM・React を使わない）で SVG の文字列にする。数は engine が出す。同じ関数を、画面（theme page：色は CSS の変数・地なし・字は 1.1 倍）と教材の静止図（theme file：色は値・白い地。Notion の画像。ダークの版は教材の svgkit が色を置き換えて作る）の両方に使い、同じ設定なら同じ図になる。教材は束（dist/draw.mjs）を node で読む（式の束と同じ形）。型を足すときは、教材の figures.py の型を1つずつ移す（D0 は二項分布の棒、D1 でベルヌーイ・ポアソン・幾何（負の二項）・超幾何の棒、D2 で一様・指数・正規・t・カイ二乗・F の曲線（draw/curve.ts。塗る範囲・点線の目印・重ねる正規分布つき）、D3a でヒストグラム・箱ひげ図・代表値の位置（draw/data.ts。四分位数は教材と同じく、半分ずつの中央値）。離散の重ねる分布・帯・境目、標本平均の分布（xbar_expo）はまだ figures.py）。設定の項目の名前は figures.py の dist と同じにする（ポアソン・指数は lam、超幾何は N・K・n、負の二項は r、正規は mu・sigma、F は d1・d2、横軸は ticks）。
 
 ## 作業台の型（stats2-course #156、渡辺さん 2026-11-01）
 

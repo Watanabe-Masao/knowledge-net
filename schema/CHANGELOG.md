@@ -88,3 +88,4 @@
 | 13 | 2026-11-27 | 図の参照（figures の各項目）に任意の `url_dark`（端末がダークのときの図）を足した（stats2-course #582。2026-11-27 の iPhone の確認：SVG の中の prefers-color-scheme が、2枚目以降の図で効かず白く出た。画面のページの media で版を選ぶ形にする） |
 | 14 | 2026-11-27 | 概念の `chart`（概要の図）の kind に bernoulli・poisson・geom・hyper を足し、lam・r・N・K・kmax・unit を足した（stats2-course #577 D1）。binom は今のまま（n・p は任意）。項目の名前は教材の静止図の設定と同じ |
 | 15 | 2026-11-27 | 概念の `chart` の kind に連続の分布 uniform・expo・normal・t・chi2・f を足し、a・b・mu・sigma・df・d1・d2・ticks・shade・overlay を足した（stats2-course #577 D2）。項目の名前は教材の静止図の設定と同じ |
+| 16 | 2026-11-27 | 概念の `chart` の kind にデータの図 hist・boxplot・centers を足し、data・start・width・classes・density・mark・cumulative・box・axis_label・rows・fence・mean・step・lo・hi を足した。ticks は2〜20個に広げた（代表値の位置の目盛り。stats2-course #577 D3a）。項目の名前は教材の静止図の設定と同じ |

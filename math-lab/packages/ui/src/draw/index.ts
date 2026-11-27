@@ -2,3 +2,15 @@
 export { drawDist, canDrawDist, distPoints, type DistSpec, type BarSpec } from "./dist";
 export { densityOf, type CurveSpec } from "./curve";
 export { wrap, type Theme } from "./svg";
+export {
+  drawData,
+  drawHist,
+  drawBoxplot,
+  drawCenters,
+  five,
+  DATA_TYPES,
+  type DataSpec,
+  type HistSpec,
+  type BoxSpec,
+  type CentersSpec,
+} from "./data";
