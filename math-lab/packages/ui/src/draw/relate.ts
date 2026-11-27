@@ -184,6 +184,8 @@ export type LineSpec = {
   geom?: boolean;
   /** 指数平滑の α */
   smooth?: number;
+  /** 中央移動平均の窓の幅（奇数）。窓が端からはみ出す時点は描かない */
+  ma?: number;
   /** 縦の下端を0にする */
   zero?: boolean;
   title?: string;
@@ -214,8 +216,16 @@ export function drawLine(sp: LineSpec, theme: Theme = "file"): string {
     for (const x of first.slice(1)) sm.push(a * x + (1 - a) * sm[sm.length - 1]!);
     extra.push({ label: `指数平滑（α＝${num(a)}）`, values: sm, dash: "6 4" });
   }
+  if (sp.ma !== undefined) {
+    // 中央移動平均：時点 i を真ん中に、前後 h 個ずつの平均。窓が端からはみ出す時点は NaN（描かない）
+    const h = (sp.ma - 1) / 2;
+    const mv = first.map((_, i) =>
+      i < h || i + h >= first.length ? NaN : first.slice(i - h, i + h + 1).reduce((t, v) => t + v, 0) / sp.ma!,
+    );
+    extra.push({ label: `中央${sp.ma}点移動平均`, values: mv, dash: "6 4" });
+  }
   const all = [...series, ...extra];
-  const allv = all.flatMap((s) => s.values);
+  const allv = all.flatMap((s) => s.values).filter(Number.isFinite);
   let lo = Math.min(...allv),
     hi = Math.max(...allv);
   if (sp.zero) lo = 0;
@@ -233,11 +243,11 @@ export function drawLine(sp: LineSpec, theme: Theme = "file"): string {
   const colors = ["data-1", "data-hi", "data-2"];
   all.forEach((s, k) => {
     const col = colors[k % 3]!;
-    const pts = s.values.map((v, i) => [X(i), Y(v)] as const);
+    const pts = s.values.map((v, i) => [X(i), Y(v), i] as const).filter(([, , i]) => Number.isFinite(s.values[i]));
     c.add(
       `<polyline points="${pts.map(([px, py]) => `${f1(px)},${f1(py)}`).join(" ")}" fill="none"${c.paint({ stroke: col })} stroke-width="2.5"${s.dash ? ` stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round"/>`,
     );
-    pts.forEach(([px, py], i) => {
+    pts.forEach(([px, py, i]) => {
       c.circle(px, py, 4, col);
       if (k === 0 || (s.show_values ?? true))
         c.add(

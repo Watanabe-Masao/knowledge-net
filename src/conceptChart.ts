@@ -83,7 +83,15 @@ export function chartSpec(ch: Chart): { spec: DistSpec | DataSpec; params: strin
       };
     case "line":
       return {
-        spec: { type: "line", series: ch.series!, labels: ch.labels, geom: ch.geom, smooth: ch.smooth, zero: ch.zero },
+        spec: {
+          type: "line",
+          series: ch.series!,
+          labels: ch.labels,
+          geom: ch.geom,
+          smooth: ch.smooth,
+          ma: ch.ma,
+          zero: ch.zero,
+        },
         params: `${ch.series![0]!.values.length}期`,
       };
     case "uniform":
