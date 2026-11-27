@@ -241,14 +241,16 @@ export function drawLine(sp: LineSpec, theme: Theme = "file"): string {
   const Y = (v: number) => base - ((v - lo) / (hi - lo)) * (base - top);
   c.line(16, base, W - 16, base, "ink-2", 1);
   const colors = ["data-1", "data-hi", "data-2"];
-  // 値の字の位置：同じ時点にほかの線の点があるとき、高い方の点は上、低い方の点は下に出す（字が重ならないように。移動平均の図の 39 と 38）
+  // 値の字の位置：ふだんは点の上。同じ時点のほかの線の点が上に近く（18px 以内）にあって字が重なるときだけ、低い方の点の字を下に出す。
+  // 下に横軸の名前があって入らないときは上のまま（移動平均の図の 39 と 38。前は低い方を必ず下にして横軸の字に重なった：FIG-U31-error）
   const above = (k: number, i: number) => {
-    const v = all[k]!.values[i]!;
-    const others = all
-      .filter((_, j) => j !== k)
-      .map((o) => o.values[i])
-      .filter((x): x is number => Number.isFinite(x));
-    return others.every((o) => v >= o);
+    const v = all[k]!.values[i]!,
+      py = Y(v);
+    if (py + 19 > base - 6) return true;
+    return !all.some((o, j) => {
+      const u = o.values[i];
+      return j !== k && u !== undefined && Number.isFinite(u) && u > v && py - Y(u) < 18;
+    });
   };
   all.forEach((s, k) => {
     const col = colors[k % 3]!;
