@@ -9,6 +9,7 @@ export { change, flash, haptic, parseMs, reduced, tokenMs, useTween } from "./mo
 export { Formula, type FormulaData } from "./Formula";
 export { Workspace, TableWorkspace, type WorkspaceData, type TableWorkspaceData, type ValueTable } from "./Workspace";
 export { Lightbox } from "./Lightbox";
+export { FigImage } from "./FigImage";
 export { FullView } from "./FullView";
 export { Experiment, type ExperimentDef, type ExperimentTheme, type BinomDef } from "./Experiment";
 export { type TableDef, type TableTheme } from "./ExperimentTable";

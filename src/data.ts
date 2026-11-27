@@ -46,7 +46,7 @@ export type LabRef = {
   kind?: "tour" | "check";
   /** JS の部品で描く形（型の改訂27）。あれば iframe ではなく場面の部品で描く */ play?: import("@math-lab/ui").ScenePlay;
 };
-export type FigRef = { id: string; url: string; caption?: string };
+export type FigRef = { id: string; url: string; url_dark?: string; caption?: string };
 export type Formula = {
   id?: string;
   tex: string;

@@ -3,11 +3,20 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { reduced, tokenMs } from "./motion";
+import { FigImage } from "./FigImage";
 import s from "./Lightbox.module.css";
 
-type Props = { src: string; alt: string; caption?: string; href?: string; from?: DOMRect | null; onClose: () => void };
+type Props = {
+  src: string;
+  /** 端末がダークのときの図（FigImage） */ srcDark?: string;
+  alt: string;
+  caption?: string;
+  href?: string;
+  from?: DOMRect | null;
+  onClose: () => void;
+};
 
-export function Lightbox({ src, alt, caption, href, from, onClose }: Props) {
+export function Lightbox({ src, srcDark, alt, caption, href, from, onClose }: Props) {
   const img = useRef<HTMLImageElement>(null);
   const [closing, setClosing] = useState(false);
   // 開く：最後の位置（中央）から、押した図の位置へ戻した形を最初の枠にして広げる（FLIP）
@@ -51,7 +60,7 @@ export function Lightbox({ src, alt, caption, href, from, onClose }: Props) {
       data-testid="lightbox"
     >
       <figure className={s.fig}>
-        <img ref={img} src={src} alt={alt} className={s.img} />
+        <FigImage ref={img} src={src} srcDark={srcDark} alt={alt} className={s.img} />
         {(caption || href) && (
           <figcaption className={s.cap} onClick={(e) => e.stopPropagation()}>
             {caption}
