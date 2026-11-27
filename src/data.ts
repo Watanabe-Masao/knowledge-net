@@ -76,7 +76,7 @@ export type Concept = {
   gist?: string;
   question?: string;
   chart?: {
-    kind: "binom" | "bernoulli" | "poisson" | "geom" | "hyper";
+    kind: "binom" | "bernoulli" | "poisson" | "geom" | "hyper" | "uniform" | "expo" | "normal" | "t" | "chi2" | "f";
     n?: number;
     p?: number;
     lam?: number;
@@ -84,6 +84,16 @@ export type Concept = {
     N?: number;
     K?: number;
     kmax?: number;
+    a?: number;
+    b?: number;
+    mu?: number;
+    sigma?: number;
+    df?: number;
+    d1?: number;
+    d2?: number;
+    ticks?: number[];
+    shade?: ({ from: number; to: number; label?: string } | { outside: [number, number]; label?: string })[];
+    overlay?: { mu: number; sigma: number; label?: string };
     unit?: string;
     note?: string;
   };

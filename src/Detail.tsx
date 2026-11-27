@@ -5,8 +5,6 @@ import { RelDig, RelMap } from "./RelMap";
 import {
   drawDist,
   canDrawDist,
-  distPoints,
-  type DistSpec,
   Button,
   Card,
   Disclosure,
@@ -23,6 +21,7 @@ import st from "./Detail.module.css";
 import { kindName, readingOf } from "./kinds";
 import Conditions, { conditionCount } from "./Conditions";
 import Claims from "./Claims";
+import { chartSpec } from "./conceptChart";
 import { useGlance, Words } from "./Glance";
 import { ConceptLabs, labsFor } from "./Shell";
 import {
@@ -312,29 +311,10 @@ export default function Detail({
   useEffect(() => {
     setPick(null);
   }, [c.id]);
-  // 概要の図（stats2-course #577 D1：離散の分布）。設定は教材の静止図と同じ名前で、drawDist に渡す
+  // 概要の図（stats2-course #577 D1・D2）。設定は教材の静止図と同じ名前で、drawDist に渡す
   const chart = useMemo(() => {
-    const ch = c.chart;
-    if (!ch) return null;
-    const pct = (v: number) => `${Math.round(v * 100)}%`;
-    const [spec, params]: [DistSpec, string] =
-      ch.kind === "binom"
-        ? [{ family: "binom", n: ch.n ?? 10, p: ch.p ?? 0.5 }, `n＝${ch.n ?? 10}・p＝${pct(ch.p ?? 0.5)}`]
-        : ch.kind === "bernoulli"
-          ? [{ family: "bernoulli", p: ch.p! }, `p＝${pct(ch.p!)}`]
-          : ch.kind === "poisson"
-            ? [{ family: "poisson", lam: ch.lam!, kmax: ch.kmax! }, `λ＝${ch.lam}`]
-            : ch.kind === "geom"
-              ? [
-                  { family: "geom", p: ch.p!, r: ch.r ?? 1, kmax: ch.kmax! },
-                  `${(ch.r ?? 1) > 1 ? `r＝${ch.r}・` : ""}p＝${pct(ch.p!)}`,
-                ]
-              : // 見出しの記号は概念の式に合わせて M（当たりの数）。設定の名前 K は静止図の設定と同じ（意味は同じ）
-                [{ family: "hyper", N: ch.N!, K: ch.K!, n: ch.n! }, `N＝${ch.N}・M＝${ch.K}・n＝${ch.n}`];
-    if (!canDrawDist(spec as unknown as Record<string, unknown>)) return null;
-    const { pmf } = distPoints(spec);
-    const hi = pmf.reduce((b, q) => (q[1] > b[1] + 1e-12 ? q : b), pmf[0]!)[0]; // いちばん起こりやすい値を強調する
-    return { spec: { ...spec, highlight: [hi], unit: ch.unit ?? (ch.kind === "binom" ? "回" : "") }, params };
+    const r = c.chart ? chartSpec(c.chart) : null;
+    return r && canDrawDist(r.spec as unknown as Record<string, unknown>) ? r : null;
   }, [c.chart]);
   const mainF = c.workspace ? c.formulas?.[c.workspace.formula] : c.formulas?.[0];
   // 文の下の語の札は、ひと目を開く（ページを替えない。stats2-course #593）。ひと目の外では前のとおりページへ
