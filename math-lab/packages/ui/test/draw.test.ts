@@ -254,6 +254,23 @@ describe("drawData（D3b：散布図・折れ線）", () => {
         .map((m) => Number(m[1]));
     expect(yOf("38")[0]! - yOf("39")[0]!).toBeGreaterThan(14);
   });
+  // 低い線の字を下に出しても横軸の名前に重ねない（FIG-U31-error で 1.25・0.5 が横軸の「1600人」「1万人」に重なった。2026-11-28）。
+  // 想定する故障：重ならないのに低い方の字を必ず下にする。見つけ方：遠く離れた2本の線の下の線の字が、横軸の線より上にある
+  it("折れ線：離れた線の字は点の上のまま（横軸の名前に重ねない）", () => {
+    const svg = drawData({
+      type: "line",
+      labels: ["100人", "400人", "1600人", "1万人"],
+      series: [
+        { label: "総合", values: [11.2, 10.3, 10.1, 10] },
+        { label: "標準誤差", values: [5, 2.5, 1.25, 0.5] },
+      ],
+    });
+    const base = Number(/<line x1="16" y1="([\d.]+)" x2="344"/.exec(svg)![1]);
+    const y05 = Number(
+      new RegExp('<text x="[\\d.]+" y="([\\d.]+)"[^>]*font-weight="bold"[^>]*>0\\.5</text>').exec(svg)![1],
+    );
+    expect(y05).toBeLessThan(base);
+  });
   it("折れ線：幾何平均の率と、長い横軸の名前が図に収まる", () => {
     expect(words(drawData({ type: "line", series: [{ label: "実際", values: [80, 100, 90] }], geom: true }))).toContain(
       "毎期 1.061倍（＋6.07%）",
