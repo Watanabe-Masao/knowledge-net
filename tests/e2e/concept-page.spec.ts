@@ -60,6 +60,31 @@ test("概要の図は engine の値から描き、棒の高さが二項分布の
   expect(tiny, "実寸 11px 未満の字").toEqual([]);
 });
 
+// 確かめる対象：D1（stats2-course #577）で足した離散の分布の概要の図（超幾何・負の二項）。想定する故障：kind ごとの設定の読み違い
+// （超幾何の K と N の取り違え・負の二項の r の使い忘れで横軸が1から始まる）・見出しの設定の文字が別の分布のまま。
+// 見つけ方：見本のデータに chart を書き足して開き、棒の数・横軸の始まり・見出しの文字を見る（確率の比は math-lab の draw.test で見る）
+test("離散の分布の概要の図：超幾何と負の二項", async ({ page }) => {
+  await page.route("**/sample/stats2.json", async (r) => {
+    const net = await (await r.fetch()).json();
+    for (const c of net.concepts) {
+      if (c.id === "stats2:TERM-hyper") c.chart = { kind: "hyper", N: 20, K: 6, n: 5, unit: "個" };
+      if (c.id === "stats2:TERM-negbinom") c.chart = { kind: "geom", p: 0.3, r: 3, kmax: 20, unit: "回目" };
+    }
+    await r.fulfill({ json: net });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [id, bars, first, params] of [
+    ["TERM-hyper", 6, "0個", "N＝20・K＝6・n＝5"],
+    ["TERM-negbinom", 18, "3回目", "r＝3・p＝30%"],
+  ] as const) {
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3A${id}`);
+    const ch = page.getByTestId("concept-chart");
+    await expect(ch).toContainText(params);
+    await expect(ch.locator("svg rect[rx='3']")).toHaveCount(bars);
+    await expect(ch.locator("svg text").filter({ hasText: new RegExp(`^${first}$`) })).toHaveCount(1);
+  }
+});
+
 // 確かめる対象：概念から実験室へ（05）・読むときは全画面（02）。概念のページから実験室への入口は下の主ボタン1つ（渡辺さん 2026-11-04：入口が重複）。
 // 想定する故障：主ボタンが「試す」の段へ送らない・段がこの概念の問いに絞られていない・概要の中に問いの札（2つ目の入口）が戻る。
 // 見つけ方：概要の中に実験室を開く札がないこと、主ボタンで同じページの「試す」の段（この概念が主の問い・関連の問い）が見えるかを見る（issue 599 で一覧のページを段にした）

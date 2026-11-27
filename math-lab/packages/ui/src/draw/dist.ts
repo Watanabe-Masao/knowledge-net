@@ -1,14 +1,19 @@
-// 分布の棒の図（静止図の型 dist のうち、離散の分布の棒。stats2-course の issue 582 の D0 は二項分布だけ）。
-// 確率は engine の modelPmf で求める（教材の figures.py の Python の計算を使わない）。形は figures.py の dist と同じ：
+// 分布の棒の図（静止図の型 dist のうち、離散の分布の棒）。stats2-course の issue 582 の D0 は二項分布、#577 の D1 でベルヌーイ・ポアソン・幾何（負の二項）・超幾何を足した。
+// 確率は engine で求める（教材の figures.py の Python の計算を使わない）。形は figures.py の dist と同じ：
 // 棒（注目する値は強調の色で数を付ける）・横軸の値・期待値の▲・凡例の行・数の行・注。
-import { modelMoments, modelPmf } from "@math-lab/engine";
+// 設定の項目の名前は、教材の静止図の設定（figures.py の dist）と同じ：ポアソンは lam、超幾何は N・K・n、負の二項は r（幾何は r＝1）
+import { modelPmf, negbinomPmf, poissonPmf } from "@math-lab/engine";
 import { Canvas, num, type Theme } from "./svg";
 
-export type DistSpec = {
-  family: "binom";
-  n: number;
-  p: number;
-  /** 棒を出す範囲（kmax が n を越えた所は0。上限が見える） */
+type Family =
+  | { family: "binom"; n: number; p: number }
+  | { family: "bernoulli"; p: number }
+  | { family: "poisson"; lam: number }
+  | { family: "geom"; p: number; r?: number }
+  | { family: "hyper"; N: number; K: number; n: number };
+
+export type DistSpec = Family & {
+  /** 棒を出す範囲（二項・超幾何で kmax が上限を越えた所は0。上限が見える。ポアソン・幾何は上限がないので kmax が要る） */
   kmin?: number;
   kmax?: number;
   unit?: string;
@@ -28,14 +33,61 @@ export type DistSpec = {
   note?: string;
 };
 
-/** この関数で描ける設定か（D0：二項分布で、重ねる分布・帯・境目のないもの） */
+const FAMILIES = ["binom", "bernoulli", "poisson", "geom", "hyper"];
+
+/** この関数で描ける設定か（離散の分布で、重ねる分布・帯・境目のないもの） */
 export function canDrawDist(sp: Record<string, unknown>): boolean {
-  return sp.family === "binom" && !sp.overlay && !sp.band && sp.upto === undefined;
+  if (!FAMILIES.includes(String(sp.family)) || sp.overlay || sp.band || sp.upto !== undefined) return false;
+  return (sp.family !== "poisson" && sp.family !== "geom") || sp.kmax !== undefined; // 上限のない分布は kmax が要る
+}
+
+/** 棒の値（[k, 確率]）と期待値・図の説明の名前 */
+export function distPoints(sp: DistSpec): { pmf: [number, number][]; mean: number; name: string } {
+  let all: number[], mean: number, name: string, top: number;
+  switch (sp.family) {
+    case "binom":
+      all = modelPmf({ kind: "binom", n: sp.n, p: sp.p });
+      mean = sp.n * sp.p;
+      name = `二項分布 B(${sp.n}, ${sp.p})`;
+      top = sp.n;
+      break;
+    case "bernoulli":
+      all = modelPmf({ kind: "binom", n: 1, p: sp.p });
+      mean = sp.p;
+      name = `ベルヌーイ分布（p＝${sp.p}）`;
+      top = 1;
+      break;
+    case "poisson":
+      top = sp.kmax!;
+      all = poissonPmf(sp.lam, top);
+      mean = sp.lam;
+      name = `ポアソン分布（λ＝${sp.lam}）`;
+      break;
+    case "geom": {
+      const r = sp.r ?? 1;
+      top = sp.kmax!;
+      all = negbinomPmf(r, sp.p, top);
+      mean = r / sp.p;
+      name = r === 1 ? `幾何分布（p＝${sp.p}）` : `負の二項分布（r＝${r}、p＝${sp.p}）`;
+      break;
+    }
+    case "hyper":
+      all = modelPmf({ kind: "hyper", n: sp.n, total: sp.N, success: sp.K });
+      mean = (sp.n * sp.K) / sp.N;
+      name = `超幾何分布（N＝${sp.N}、K＝${sp.K}、n＝${sp.n}）`;
+      top = sp.n;
+      break;
+  }
+  const k0 = sp.kmin ?? (sp.family === "geom" ? (sp.r ?? 1) : 0),
+    k1 = sp.kmax ?? top;
+  const pmf: [number, number][] = [];
+  for (let k = k0; k <= k1; k++) pmf.push([k, all[k] ?? 0]);
+  return { pmf, mean, name };
 }
 
 export function drawDist(sp: DistSpec, theme: Theme = "file"): string {
-  if (sp.family !== "binom") throw new Error(`分布 ${String(sp.family)} はまだ描けない（D0 は二項分布だけ）`);
-  const { n, p } = sp;
+  if (!canDrawDist(sp as unknown as Record<string, unknown>))
+    throw new Error(`この設定はまだ描けない：${JSON.stringify(sp)}`);
   const c = new Canvas(theme);
   const unit = sp.unit ?? "";
   let y = 8;
@@ -44,12 +96,7 @@ export function drawDist(sp: DistSpec, theme: Theme = "file"): string {
     base = y + 190,
     left = 20,
     right = 340;
-  const all = modelPmf({ kind: "binom", n, p });
-  const k0 = sp.kmin ?? 0,
-    k1 = sp.kmax ?? n;
-  const pmf: [number, number][] = [];
-  for (let k = k0; k <= k1; k++) pmf.push([k, all[k] ?? 0]);
-  const mean = modelMoments({ kind: "binom", n, p }).mean;
+  const { pmf, mean, name } = distPoints(sp);
   const lo = pmf[0]![0] - 0.5,
     hi = pmf[pmf.length - 1]![0] + 0.5;
   const X = (v: number) => left + ((v - lo) / (hi - lo)) * (right - left);
@@ -60,7 +107,10 @@ export function drawDist(sp: DistSpec, theme: Theme = "file"): string {
   const dec = sp.decimals ?? 2;
   const hl = new Set(sp.highlight ?? []);
   c.line(left, base, right, base, "ink-2", 1);
-  const every = Math.max(1, Math.ceil(pmf.length / 12)); // 棒が多いときは目盛りを間引く
+  // 棒が多い・単位が長い（「回目」など）ときは目盛りを間引く：字の幅（半角 0.6 字・全角 1 字）が棒の間に収まる数ごと
+  const em = (t: string) => [...t].reduce((w, ch) => w + (ch.charCodeAt(0) < 0x2000 ? 0.6 : 1), 0) * 11.5;
+  const widest = Math.max(...pmf.map(([x]) => em(`${num(x)}${unit}`)));
+  const every = Math.max(1, Math.ceil(pmf.length / 12), Math.ceil((widest + 6) / slot));
   for (const [x, q] of pmf) {
     const cx = X(x);
     c.rect(cx - bw / 2, base - q * scale, bw, q * scale, hl.has(x) ? "data-hi" : "data-1-soft", 3);
@@ -68,7 +118,10 @@ export function drawDist(sp: DistSpec, theme: Theme = "file"): string {
       c.add(
         `<text x="${cx.toFixed(1)}" y="${(base - q * scale - 5).toFixed(1)}" font-size="${c.fs(11.5)}"${c.paint({ fill: "ink", stroke: c.halo })} text-anchor="middle" stroke-width="4" paint-order="stroke">${q.toFixed(dec)}</text>`,
       );
-    if ((x - pmf[0]![0]) % every === 0 || hl.has(x)) c.text(cx, base + 15, `${num(x)}${unit}`, 11.5, "ink-2", "middle");
+    // 強調する棒の目盛りは必ず出し、その近く（間引きの幅の内）のふつうの目盛りは出さない（字が重ならない）
+    const nearHl = [...hl].some((h) => h !== x && Math.abs(h - x) < every);
+    if (hl.has(x) || ((x - pmf[0]![0]) % every === 0 && !nearHl))
+      c.text(cx, base + 15, `${num(x)}${unit}`, 11.5, "ink-2", "middle");
   }
   if (sp.mark_mean ?? true) {
     const mx = X(mean);
@@ -95,6 +148,6 @@ export function drawDist(sp: DistSpec, theme: Theme = "file"): string {
   const most = pmf.reduce((b, q) => (q[1] > b[1] + 1e-12 ? q : b), pmf[0]!);
   return c.done(
     y + 6,
-    `二項分布 B(${n}, ${p}) の棒。いちばん高いのは ${num(most[0])}${unit}、期待値は ${num(Number(mean.toFixed(2)))}${unit}`,
+    `${name} の棒。いちばん高いのは ${num(most[0])}${unit}、期待値は ${num(Number(mean.toFixed(2)))}${unit}`,
   );
 }

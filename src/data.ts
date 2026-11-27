@@ -75,7 +75,18 @@ export type Concept = {
   /** 型の改訂25（stats2-course #188）：つまり・この概念で考える問い・概要の図（分布の棒をその場で描く設定） */
   gist?: string;
   question?: string;
-  chart?: { kind: "binom"; n?: number; p?: number; note?: string };
+  chart?: {
+    kind: "binom" | "bernoulli" | "poisson" | "geom" | "hyper";
+    n?: number;
+    p?: number;
+    lam?: number;
+    r?: number;
+    N?: number;
+    K?: number;
+    kmax?: number;
+    unit?: string;
+    note?: string;
+  };
   definition?: string;
   principle?: string;
   formulas?: Formula[];
