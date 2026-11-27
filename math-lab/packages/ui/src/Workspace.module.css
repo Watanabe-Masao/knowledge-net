@@ -506,10 +506,11 @@
   border-radius: 50%;
   background: var(--ink);
 }
+/* 期待値の線の凡例。border の dashed は iPhone で点1つに見えた（2026-11-27）ので、線の切れ目を自分で描く */
 .keyMean {
-  width: 0;
-  height: 12px;
-  border-left: 1.5px dashed var(--ink-2);
+  width: 2px;
+  height: 14px;
+  background: repeating-linear-gradient(to bottom, var(--ink-2) 0 3px, transparent 3px 5px);
 }
 .keySd {
   width: 14px;

@@ -74,7 +74,7 @@ test("離散の分布の概要の図：超幾何と負の二項", async ({ page 
   });
   await page.setViewportSize({ width: 390, height: 844 });
   for (const [id, bars, first, params] of [
-    ["TERM-hyper", 6, "0個", "N＝20・K＝6・n＝5"],
+    ["TERM-hyper", 6, "0個", "N＝20・M＝6・n＝5"], // 記号は概念の式（M）に合わせる
     ["TERM-negbinom", 18, "3回目", "r＝3・p＝30%"],
   ] as const) {
     await page.goto(`./?src=sample/stats2.json&c=stats2%3A${id}`);

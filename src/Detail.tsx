@@ -329,7 +329,8 @@ export default function Detail({
                   { family: "geom", p: ch.p!, r: ch.r ?? 1, kmax: ch.kmax! },
                   `${(ch.r ?? 1) > 1 ? `r＝${ch.r}・` : ""}p＝${pct(ch.p!)}`,
                 ]
-              : [{ family: "hyper", N: ch.N!, K: ch.K!, n: ch.n! }, `N＝${ch.N}・K＝${ch.K}・n＝${ch.n}`];
+              : // 見出しの記号は概念の式に合わせて M（当たりの数）。設定の名前 K は静止図の設定と同じ（意味は同じ）
+                [{ family: "hyper", N: ch.N!, K: ch.K!, n: ch.n! }, `N＝${ch.N}・M＝${ch.K}・n＝${ch.n}`];
     if (!canDrawDist(spec as unknown as Record<string, unknown>)) return null;
     const { pmf } = distPoints(spec);
     const hi = pmf.reduce((b, q) => (q[1] > b[1] + 1e-12 ? q : b), pmf[0]!)[0]; // いちばん起こりやすい値を強調する
