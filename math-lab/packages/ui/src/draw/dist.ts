@@ -74,7 +74,7 @@ export function distPoints(sp: DistSpec): { pmf: [number, number][]; mean: numbe
     case "hyper":
       all = modelPmf({ kind: "hyper", n: sp.n, total: sp.N, success: sp.K });
       mean = (sp.n * sp.K) / sp.N;
-      name = `超幾何分布（N＝${sp.N}、K＝${sp.K}、n＝${sp.n}）`;
+      name = `超幾何分布（${sp.N}個のうち当たり${sp.K}個から${sp.n}個取る）`; // 記号は教材によって K・M と違うので、言葉で書く
       top = sp.n;
       break;
   }

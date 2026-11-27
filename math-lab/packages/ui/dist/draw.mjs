@@ -432,7 +432,7 @@ function distPoints(sp) {
 				success: sp.K
 			});
 			mean = sp.n * sp.K / sp.N;
-			name = `超幾何分布（N＝${sp.N}、K＝${sp.K}、n＝${sp.n}）`;
+			name = `超幾何分布（${sp.N}個のうち当たり${sp.K}個から${sp.n}個取る）`;
 			top = sp.n;
 	}
 	const k0 = sp.kmin ?? (sp.family === "geom" ? sp.r ?? 1 : 0), k1 = sp.kmax ?? top;
