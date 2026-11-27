@@ -247,6 +247,12 @@ describe("drawData（D3b：散布図・折れ線）", () => {
     expect(svg).not.toContain("NaN");
     const labels = [...svg.matchAll(/font-weight="bold"[^>]*>([\d.]+)<\/text>/g)].map((m) => m[1]);
     expect(labels).toEqual(["30", "36", "33", "39", "42", "33", "36", "38"]);
+    // 同じ時点の2つの点（4週目の 39 と 38）の字は、高い方を上・低い方を下に出して重ねない（2026-11-28 に重なった）
+    const yOf = (t: string) =>
+      [...svg.matchAll(/<text x="[\d.]+" y="([\d.]+)"[^>]*font-weight="bold"[^>]*>([\d.]+)<\/text>/g)]
+        .filter((m) => m[2] === t)
+        .map((m) => Number(m[1]));
+    expect(yOf("38")[0]! - yOf("39")[0]!).toBeGreaterThan(14);
   });
   it("折れ線：幾何平均の率と、長い横軸の名前が図に収まる", () => {
     expect(words(drawData({ type: "line", series: [{ label: "実際", values: [80, 100, 90] }], geom: true }))).toContain(
