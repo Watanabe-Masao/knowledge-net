@@ -121,6 +121,33 @@ test("連続の分布の概要の図：正規（塗る範囲）と t（標準正
   await expect(page.getByTestId("concept-chart").locator('svg path[stroke-dasharray="4 3"]')).toHaveCount(1); // t に重ねた正規
 });
 
+// 確かめる対象：D3a（stats2-course #577）のデータの図の概要の図。想定する故障：データの kind を読めず図が出ない・設定（階級・柵・平均）を落とす。
+// 見つけ方：見本のデータに chart を書き足して開き、図の中の数（度数・外れ値候補・代表値）を見る（数の求め方は math-lab の draw.test で見る）
+test("データの図の概要の図：ヒストグラム・箱ひげ図・代表値の位置", async ({ page }) => {
+  const data = [12, 15, 18, 19, 21, 22, 22, 24, 25, 26, 27, 28, 29, 30, 31, 33, 35, 38, 42, 55];
+  await page.route("**/sample/stats2.json", async (r) => {
+    const net = await (await r.fetch()).json();
+    for (const c of net.concepts) {
+      if (c.id === "stats2:TERM-hist")
+        c.chart = { kind: "hist", data, start: 10, width: 10, axis_label: "売上（万円）" };
+      if (c.id === "stats2:TERM-boxplot")
+        c.chart = { kind: "boxplot", rows: [{ data }], fence: true, mean: true, step: 10 };
+      if (c.id === "stats2:TERM-median") c.chart = { kind: "centers", data: [1, 2, 2, 3, 4, 4, 9], ticks: [0, 5, 10] };
+    }
+    await r.fulfill({ json: net });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [id, has] of [
+    ["TERM-hist", ["20個", "売上（万円）", "9"]],
+    ["TERM-boxplot", ["外れ値候補：55", "平均 27.6"]],
+    ["TERM-median", ["中央値 3", "平均 3.57"]],
+  ] as const) {
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3A${id}`);
+    const ch = page.getByTestId("concept-chart");
+    for (const t of has) await expect(ch).toContainText(t);
+  }
+});
+
 // 確かめる対象：概念から実験室へ（05）・読むときは全画面（02）。概念のページから実験室への入口は下の主ボタン1つ（渡辺さん 2026-11-04：入口が重複）。
 // 想定する故障：主ボタンが「試す」の段へ送らない・段がこの概念の問いに絞られていない・概要の中に問いの札（2つ目の入口）が戻る。
 // 見つけ方：概要の中に実験室を開く札がないこと、主ボタンで同じページの「試す」の段（この概念が主の問い・関連の問い）が見えるかを見る（issue 599 で一覧のページを段にした）

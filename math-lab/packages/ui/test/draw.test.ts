@@ -5,7 +5,7 @@
 // 既存との違い：教材の figures.py の dist は Python で別に計算していた。ここは画面と教材の両方が使う1つの関数を確かめる。
 // 検出の確かめ（2026-11-27）：棒の範囲を kmin から始めない形・page でも値の色にする形で、それぞれ落ちることを見た
 import { describe, expect, it } from "vitest";
-import { canDrawDist, drawDist } from "../src/draw";
+import { canDrawDist, drawData, drawDist, five } from "../src/draw";
 
 const comb = (n: number, k: number) => {
   let r = 1;
@@ -166,5 +166,37 @@ describe("drawDist（D2：連続の分布の曲線）", () => {
     expect(canDrawDist({ family: "normal", mu: 0, sigma: 1, ticks: [-3, 3, 1], band: 2 })).toBe(false);
     expect(canDrawDist({ family: "t", df: 4, ticks: [-4, 4, 2], overlay: { family: "t", df: 9 } })).toBe(false);
     expect(canDrawDist({ family: "xbar_expo", mu: 5, n: 5, ticks: [0, 25, 5] })).toBe(false);
+  });
+});
+
+// 確かめる対象：D3a（stats2-course #577）のデータの図。想定する故障：四分位数の求め方が教材と違う（中央値を半分に入れる・入れない）・
+//   柵の外の判定のずれ・ヒストグラムの階級の端（下限を含み上限を含まない）の取り違え・最頻値が2つのときに1本しか引かない。
+// 見つけ方：教材の問題の答え（U06-011 の Q₁＝2・Q₃＝4・外れ値17、U06-031 の 12〜19 分・95分）と同じ数になるかを見る。
+//   ヒストグラムは棒の高さの比を、テストの中で数えた度数と比べる。検出の確かめ（2026-11-27）：five の上半分を s.slice(h) にすると落ちる
+describe("drawData（D3a：データの図）", () => {
+  it("四分位数と柵は教材の答えと同じ", () => {
+    const a = five([1, 1, 2, 2, 2, 3, 3, 4, 5, 17]);
+    expect([a.q1, a.q2, a.q3, a.iqr, a.out]).toEqual([2, 2.5, 4, 2, [17]]);
+    const b = five([10, 12, 12, 15, 15, 15, 18, 20, 95]);
+    expect([b.q1, b.q2, b.q3, b.out, b.whi]).toEqual([12, 15, 19, [95], 20]);
+    expect(
+      drawData({ type: "boxplot", rows: [{ data: [10, 12, 12, 15, 15, 15, 18, 20, 95] }], fence: true, step: 10 }),
+    ).toContain("外れ値候補：95");
+  });
+  it("ヒストグラムの棒は度数の比（階級は下限を含み上限を含まない）", () => {
+    const data = [12, 15, 18, 19, 20, 21, 22, 29, 30, 30, 31, 55];
+    const svg = drawData({ type: "hist", data, start: 10, width: 10 });
+    const hs = [...svg.matchAll(/<rect x="[\d.]+" y="[\d.]+" width="[\d.]+" height="([\d.]+)" rx="0"/g)].map((m) =>
+      Number(m[1]),
+    );
+    const want = [4, 4, 3, 0, 1]; // 10〜20：12,15,18,19／20〜30：20,21,22,29／30〜40：30,30,31／40〜50：なし／50〜60：55
+    expect(hs).toHaveLength(5);
+    hs.forEach((h, i) => expect(Math.abs(h / Math.max(...hs) - want[i]! / 4)).toBeLessThan(0.002));
+  });
+  it("代表値の位置：最頻値が2つなら2本、凡例に数", () => {
+    const svg = drawData({ type: "centers", data: [1, 2, 2, 3, 4, 4, 9], ticks: [0, 5, 10] });
+    expect(svg).toContain("平均 3.57");
+    expect(svg).toContain("中央値 3");
+    expect(svg.match(/最頻値 [24]</g)).toHaveLength(2);
   });
 });

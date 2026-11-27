@@ -3,8 +3,6 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "
 import { Media, relationParts } from "./Relation";
 import { RelDig, RelMap } from "./RelMap";
 import {
-  drawDist,
-  canDrawDist,
   Button,
   Card,
   Disclosure,
@@ -21,7 +19,7 @@ import st from "./Detail.module.css";
 import { kindName, readingOf } from "./kinds";
 import Conditions, { conditionCount } from "./Conditions";
 import Claims from "./Claims";
-import { chartSpec } from "./conceptChart";
+import { chartSvg } from "./conceptChart";
 import { useGlance, Words } from "./Glance";
 import { ConceptLabs, labsFor } from "./Shell";
 import {
@@ -311,10 +309,9 @@ export default function Detail({
   useEffect(() => {
     setPick(null);
   }, [c.id]);
-  // 概要の図（stats2-course #577 D1・D2）。設定は教材の静止図と同じ名前で、drawDist に渡す
+  // 概要の図（stats2-course #577 D1・D2・D3a）。設定は教材の静止図と同じ名前で、math-lab の描く関数に渡す
   const chart = useMemo(() => {
-    const r = c.chart ? chartSpec(c.chart) : null;
-    return r && canDrawDist(r.spec as unknown as Record<string, unknown>) ? r : null;
+    return c.chart ? chartSvg(c.chart) : null;
   }, [c.chart]);
   const mainF = c.workspace ? c.formulas?.[c.workspace.formula] : c.formulas?.[0];
   // 文の下の語の札は、ひと目を開く（ページを替えない。stats2-course #593）。ひと目の外では前のとおりページへ
@@ -437,7 +434,7 @@ export default function Detail({
             <div
               className={st.drawn}
               dangerouslySetInnerHTML={{
-                __html: drawDist(chart.spec, "page"),
+                __html: chart.svg,
               }}
             />
             {c.chart?.note && <p className={st.note}>{c.chart.note}</p>}
