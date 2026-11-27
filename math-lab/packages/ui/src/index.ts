@@ -29,4 +29,4 @@ export {
   type TourStep,
 } from "./Scene";
 export { subPlain, subText } from "./subText";
-export { drawDist, canDrawDist, wrap as wrapText, type DistSpec, type Theme as DrawTheme } from "./draw";
+export { drawDist, canDrawDist, distPoints, wrap as wrapText, type DistSpec, type Theme as DrawTheme } from "./draw";

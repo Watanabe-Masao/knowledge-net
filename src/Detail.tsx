@@ -4,6 +4,9 @@ import { Media, relationParts } from "./Relation";
 import { RelDig, RelMap } from "./RelMap";
 import {
   drawDist,
+  canDrawDist,
+  distPoints,
+  type DistSpec,
   Button,
   Card,
   Disclosure,
@@ -15,7 +18,6 @@ import {
   subPlain,
   subText,
 } from "@math-lab/ui";
-import { modelPmf, modelMoments } from "@math-lab/engine";
 import katex from "katex";
 import st from "./Detail.module.css";
 import { kindName, readingOf } from "./kinds";
@@ -310,13 +312,28 @@ export default function Detail({
   useEffect(() => {
     setPick(null);
   }, [c.id]);
+  // 概要の図（stats2-course #577 D1：離散の分布）。設定は教材の静止図と同じ名前で、drawDist に渡す
   const chart = useMemo(() => {
-    if (c.chart?.kind !== "binom") return null;
-    const m = { kind: "binom" as const, n: c.chart.n ?? 10, p: c.chart.p ?? 0.5 };
-    const pmf = modelPmf(m),
-      mean = modelMoments(m).mean,
-      hi = pmf.reduce((b, v, i) => (v > pmf[b]! + 1e-12 ? i : b), 0);
-    return { m, pmf, mean, hi };
+    const ch = c.chart;
+    if (!ch) return null;
+    const pct = (v: number) => `${Math.round(v * 100)}%`;
+    const [spec, params]: [DistSpec, string] =
+      ch.kind === "binom"
+        ? [{ family: "binom", n: ch.n ?? 10, p: ch.p ?? 0.5 }, `n＝${ch.n ?? 10}・p＝${pct(ch.p ?? 0.5)}`]
+        : ch.kind === "bernoulli"
+          ? [{ family: "bernoulli", p: ch.p! }, `p＝${pct(ch.p!)}`]
+          : ch.kind === "poisson"
+            ? [{ family: "poisson", lam: ch.lam!, kmax: ch.kmax! }, `λ＝${ch.lam}`]
+            : ch.kind === "geom"
+              ? [
+                  { family: "geom", p: ch.p!, r: ch.r ?? 1, kmax: ch.kmax! },
+                  `${(ch.r ?? 1) > 1 ? `r＝${ch.r}・` : ""}p＝${pct(ch.p!)}`,
+                ]
+              : [{ family: "hyper", N: ch.N!, K: ch.K!, n: ch.n! }, `N＝${ch.N}・K＝${ch.K}・n＝${ch.n}`];
+    if (!canDrawDist(spec as unknown as Record<string, unknown>)) return null;
+    const { pmf } = distPoints(spec);
+    const hi = pmf.reduce((b, q) => (q[1] > b[1] + 1e-12 ? q : b), pmf[0]!)[0]; // いちばん起こりやすい値を強調する
+    return { spec: { ...spec, highlight: [hi], unit: ch.unit ?? (ch.kind === "binom" ? "回" : "") }, params };
   }, [c.chart]);
   const mainF = c.workspace ? c.formulas?.[c.workspace.formula] : c.formulas?.[0];
   // 文の下の語の札は、ひと目を開く（ページを替えない。stats2-course #593）。ひと目の外では前のとおりページへ
@@ -433,18 +450,13 @@ export default function Detail({
           <section className={st.block} data-testid="concept-chart">
             <div className={st.labRow}>
               <span className={st.lab}>図</span>
-              <Muted as="span">
-                n＝{chart.m.n}・p＝{Math.round(chart.m.p * 100)}%
-              </Muted>
+              <Muted as="span">{chart.params}</Muted>
             </div>
             {/* 静止図（Notion の画像）と同じ関数・同じ設定で描く（stats2-course の issue 582 の D0）。色は画面の変数で、暗い画面に合わせる */}
             <div
               className={st.drawn}
               dangerouslySetInnerHTML={{
-                __html: drawDist(
-                  { family: "binom", n: chart.m.n, p: chart.m.p, highlight: [chart.hi], unit: "回" },
-                  "page",
-                ),
+                __html: drawDist(chart.spec, "page"),
               }}
             />
             {c.chart?.note && <p className={st.note}>{c.chart.note}</p>}
