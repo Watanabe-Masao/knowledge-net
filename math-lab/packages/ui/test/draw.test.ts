@@ -212,3 +212,46 @@ it("代表値の位置：横軸の名前が凡例に重ならない", () => {
   const label = ys.find(([, t]) => t === "売上（万円）")![0];
   expect(label - legend).toBeGreaterThanOrEqual(12);
 });
+
+// 確かめる対象：D3b（stats2-course #577）の散布図と折れ線。想定する故障：回帰直線・共分散・平方和の計算の取り違え（n と n−1、
+//   SST と SSE の入れ違い）・幾何平均の率の取り違え・長い横軸の名前が図の外に出る（教材の FIG-U30-adjr2 で起きていた）。
+// 見つけ方：教材の例題の答え（広告回数と来店者数：平均の点 (3, 5)・偏差の積の和 9・共分散 2.25、SST 10・SSE 1.9・R² 0.81、
+//   r 0.9）と同じ数が図に出るか、折れ線の名前の字が図の幅に収まるかを見る。検出の確かめ（2026-11-27）：unbiased で n で割ると落ちる
+describe("drawData（D3b：散布図・折れ線）", () => {
+  const P: [number, number][] = [
+    [1, 3],
+    [2, 5],
+    [3, 4],
+    [4, 6],
+    [5, 7],
+  ];
+  const ax = { x: { label: "x", lo: 1, hi: 5, step: 1 }, y: { label: "y", lo: 3, hi: 7, step: 1 } };
+  // 図の中の字を、折り返しをつないで1つの文にする
+  const words = (svg: string) => [...svg.matchAll(/>([^<>]+)<\/text>/g)].map((m) => m[1]).join("");
+  it("散布図の数は例題の答えと同じ", () => {
+    expect(words(drawData({ type: "scatter", show: "cov", unbiased: true, points: P, ...ax }))).toContain(
+      "平均の点（3, 5）・偏差の積の和 9・共分散（n−1 で割る）2.25",
+    );
+    const r = words(drawData({ type: "scatter", show: "resid", r2: true, points: P, ...ax }));
+    expect(r).toContain("2乗の和 10");
+    expect(r).toContain("2乗の和 1.9");
+    expect(r).toContain("R²＝1−SSE÷SST＝0.81、相関係数 r＝0.9 の2乗と同じ");
+  });
+  it("折れ線：幾何平均の率と、長い横軸の名前が図に収まる", () => {
+    expect(words(drawData({ type: "line", series: [{ label: "実際", values: [80, 100, 90] }], geom: true }))).toContain(
+      "毎期 1.061倍（＋6.07%）",
+    );
+    const svg = drawData({
+      type: "line",
+      labels: ["A（説明変数2つ）", "B（説明変数5つ）"],
+      series: [{ label: "R²", values: [0.6, 0.65] }],
+    });
+    for (const m of svg.matchAll(/<text x="([\d.]+)"[^>]*text-anchor="(\w+)"[^>]*>([AB]（[^<]+)<\/text>/g)) {
+      const x = Number(m[1]),
+        w = [...m[3]!].reduce((t, ch) => t + (ch.charCodeAt(0) < 0x2000 ? 0.6 : 1), 0) * 11.5;
+      const [l, r] = m[2] === "start" ? [x, x + w] : m[2] === "end" ? [x - w, x] : [x - w / 2, x + w / 2];
+      expect(l).toBeGreaterThanOrEqual(0);
+      expect(r).toBeLessThanOrEqual(360);
+    }
+  });
+});

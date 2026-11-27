@@ -14,3 +14,4 @@ export {
   type BoxSpec,
   type CentersSpec,
 } from "./data";
+export { drawScatter, drawLine, type ScatterSpec, type LineSpec } from "./relate";

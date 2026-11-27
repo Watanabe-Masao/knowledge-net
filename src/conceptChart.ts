@@ -65,6 +65,27 @@ export function chartSpec(ch: Chart): { spec: DistSpec | DataSpec; params: strin
         spec: { type: "centers", data: ch.data!, ticks: ch.ticks, lo: ch.lo, hi: ch.hi, axis_label: ch.axis_label },
         params: `${ch.data!.length}個`,
       };
+    case "scatter":
+      return {
+        spec: {
+          type: "scatter",
+          show: ch.show,
+          points: ch.points as [number, number][] | undefined,
+          sets: ch.sets,
+          x: ch.x!,
+          y: ch.y!,
+          unbiased: ch.unbiased,
+          values: ch.values,
+          r2: ch.r2,
+          slope_only: ch.slope_only,
+        },
+        params: `${ch.points ? ch.points.length : (ch.sets ?? []).reduce((t, s) => t + s.points.length, 0)}点`,
+      };
+    case "line":
+      return {
+        spec: { type: "line", series: ch.series!, labels: ch.labels, geom: ch.geom, smooth: ch.smooth, zero: ch.zero },
+        params: `${ch.series![0]!.values.length}期`,
+      };
     case "uniform":
       return curve({ family: "uniform", a: ch.a!, b: ch.b!, ticks: t! }, `${ch.a}〜${ch.b}`);
     case "expo":
