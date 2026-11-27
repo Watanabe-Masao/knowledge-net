@@ -10,19 +10,18 @@ import s from "../Workspace.module.css";
 
 export function CurveChart({ w }: { w: WsCtx }) {
   const c = w.curve!;
-  const {
-    family,
-    window: [x0, x1],
-    dir,
-    bounds,
-    active,
-    setBound,
-    step,
-    meanValue,
-    prob,
-    samples,
-    lastSample,
-  } = c;
+  // 8 変換で Y＝aX＋b を見ているときは、Y の分布・境目・向きで描く（境目は X に戻してから引く：丸を出さない。押せる物だけを押せる見た目に＝原則 12）
+  const v = c.view;
+  const { setBound, step, prob } = c;
+  const family = v?.family ?? c.family,
+    [x0, x1] = v?.window ?? c.window,
+    dir = v?.dir ?? c.dir,
+    bounds = v?.bounds ?? c.bounds,
+    active = v?.active ?? c.active;
+  const toView = v?.toView ?? ((x: number) => x);
+  const samples = v ? c.samples.map(toView) : c.samples,
+    lastSample = c.lastSample === null ? null : toView(c.lastSample),
+    meanValue = c.meanValue === undefined ? undefined : toView(c.meanValue);
   const W = 340,
     TOP = 18,
     BASE = 124,
@@ -83,6 +82,7 @@ export function CurveChart({ w }: { w: WsCtx }) {
     return ((clientX - r.left) / r.width) * W;
   };
   const near = (px: number) => {
+    if (v) return null;
     const scale = svgRef.current!.getBoundingClientRect().width / W; // 画面の上の 22px（変形のあと。原則 6）
     const cand = active
       .map((k) => [k, Math.abs(X(bounds[k]) - px) * scale] as const)
@@ -179,8 +179,8 @@ export function CurveChart({ w }: { w: WsCtx }) {
           return (
             <g
               key={k}
-              role="slider"
-              tabIndex={0}
+              role={v ? undefined : "slider"}
+              tabIndex={v ? undefined : 0}
               aria-label={`境目 ${name[k]}`}
               aria-valuenow={bounds[k]}
               aria-valuemin={c.range[k][0]}
@@ -189,6 +189,7 @@ export function CurveChart({ w }: { w: WsCtx }) {
               data-x={x}
               className={s.boundG}
               onKeyDown={(e) => {
+                if (v) return;
                 const d =
                   e.key === "ArrowRight" || e.key === "ArrowUp"
                     ? step
@@ -201,16 +202,20 @@ export function CurveChart({ w }: { w: WsCtx }) {
               }}
             >
               <line x1={x} x2={x} y1={TOP - 8} y2={BASE + 22} className={s.bound} />
-              <rect x={x - 22} y={BASE + 2} width={44} height={44} className={s.hit} />
-              <circle cx={x} cy={BASE + 24} r={9} className={s.knob} />
+              {!v && <rect x={x - 22} y={BASE + 2} width={44} height={44} className={s.hit} />}
+              {!v && <circle cx={x} cy={BASE + 24} r={9} className={s.knob} />}
               <text x={Math.min(W - 18, Math.max(18, x))} y={BASE + 43} className={s.xTickOn} textAnchor="middle">
-                {name[k]}＝{minus(fmt(bounds[k], 3))}
+                {v ? "y" : name[k]}＝{minus(fmt(bounds[k], 3))}
               </text>
             </g>
           );
         })}
       </svg>
-      <p className={s.chartNote}>縦は密度（確率ではない）。境目の丸を横に引くと、塗った面積（確率）が変わる。</p>
+      <p className={s.chartNote}>
+        {v
+          ? "Y＝aX＋b の分布。境目も y＝ax＋b に移る。境目を引くときは、変換を元に戻す。"
+          : "縦は密度（確率ではない）。境目の丸を横に引くと、塗った面積（確率）が変わる。"}
+      </p>
     </figure>
   );
 }

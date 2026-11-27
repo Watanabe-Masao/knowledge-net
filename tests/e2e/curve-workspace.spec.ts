@@ -163,3 +163,20 @@ test("連続の作業台：実験の割合が面積に近づき、向きを替�
   await ws.locator("#ws-slider-sigma").press("ArrowRight");
   await expect(stat).toHaveAttribute("data-n", "0");
 });
+
+// 確かめる対象：8 変換（正規分布だけ）。「標準化する」で a＝1/σ・b＝−μ/σ になり、図が N(0, 1) に替わり、境目が z＝−1・1 に移っても面積（確率）は同じ。
+// 想定する故障：標準化の a・b の取り違え（a＝σ など）・境目を写し忘れる・確率が変わる・変換中に境目を引けて X と Y が食い違う。
+// 見つけ方：N(500, 4²) の 496〜504 で標準化すると、Y の分布は N(0, 1)、境目の字は y＝−1・y＝1、結果は 68.27% のまま、境目の丸（押せる所）が消える。元に戻すと丸が戻る。
+test("連続の作業台：標準化すると N(0, 1) になり、境目が ±1 に移っても面積は同じ", async ({ page }) => {
+  const ws = await open(page, "stats2:TERM-normal");
+  await ws.getByTestId("ws-standardize").click();
+  const out = ws.getByTestId("ws-linear-result");
+  await expect(out).toContainText("N(0, 1²)");
+  await expect(out).toContainText("68.27%");
+  await expect(ws.getByTestId("ws-result-val")).toHaveText("68.27%");
+  await expect(ws.getByTestId("ws-bound-lo")).toContainText("y＝−1");
+  await expect(ws.getByTestId("ws-bound-hi")).toContainText("y＝1");
+  await expect(ws.getByTestId("ws-bound-hi").locator("circle")).toHaveCount(0);
+  await ws.getByTestId("ws-untransform").click();
+  await expect(ws.getByTestId("ws-bound-hi").locator("circle")).toHaveCount(1);
+});

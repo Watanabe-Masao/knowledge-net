@@ -70,6 +70,7 @@ import { initialState, wsReducer, type WsState } from "./workspace/state";
 import { Strip } from "./workspace/Strip";
 import { useCurveRun } from "./workspace/useCurveRun";
 import { CurveExpPanel } from "./workspace/CurveExpPanel";
+import { CurveLinear } from "./workspace/CurveLinear";
 import { useExperimentRun } from "./workspace/useExperimentRun";
 import { useFormulaStage } from "./workspace/useFormulaStage";
 import s from "./Workspace.module.css";
@@ -659,6 +660,28 @@ function Frame({
             runSamples: cex.run,
             clearSamples: cex.clearRec,
             seed: cex.seed,
+            ...(() => {
+              // 8 変換（正規分布だけ）：Y＝aX＋b は N(aμ＋b, (|a|σ)²)。境目も y＝ax＋b に移り、a＜0 なら左右と以下・以上が入れ替わる
+              const can = fam!.family === "normal" || fam!.family === "std-normal";
+              const m = contMoments(fam!);
+              if (!can || (a === 1 && b === 0) || a === 0) return { canTransform: can, sd: m.sd, view: undefined };
+              const f2: ContFamily = { family: "normal", mu: a * m.mean + b, sigma: Math.abs(a) * m.sd };
+              const l = a * curveVals[curveM.lo]! + b,
+                h = a * curveVals[curveM.hi]! + b;
+              const d2: Direction = a < 0 ? (dir === "le" ? "ge" : dir === "ge" ? "le" : dir) : dir;
+              return {
+                canTransform: true,
+                sd: m.sd,
+                view: {
+                  family: f2,
+                  window: contWindow(f2),
+                  bounds: a < 0 ? { lo: h, hi: l } : { lo: l, hi: h },
+                  dir: d2,
+                  active: (d2 === "le" ? ["hi"] : d2 === "ge" ? ["lo"] : ["lo", "hi"]) as ("lo" | "hi")[],
+                  toView: (x: number) => a * x + b,
+                },
+              };
+            })(),
             inRegion: (x) => {
               const l = curveVals[curveM.lo]!,
                 h = curveVals[curveM.hi]!;
@@ -796,7 +819,8 @@ function Frame({
           <CalcPanel w={w} />
           <Inputs w={w} />
           {curveM ? <CurveChart w={w} /> : <Chart w={w} />}
-          {linear && <Linear w={w} />}
+          {linear && !curveM && <Linear w={w} />}
+          {w.curve?.canTransform && <CurveLinear w={w} />}
           {experiment && (curveM ? w.curve && <CurveExpPanel w={w} /> : <ExpPanel w={w} />)}
         </>
       )}
