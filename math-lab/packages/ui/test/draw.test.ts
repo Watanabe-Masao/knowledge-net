@@ -200,3 +200,15 @@ describe("drawData（D3a：データの図）", () => {
     expect(svg.match(/最頻値 [24]</g)).toHaveLength(2);
   });
 });
+
+// 確かめる対象：代表値の位置の、凡例と横軸の名前の重なり（2026-11-27 に暗い画面の見本で、横軸の名前が最後の凡例に重なっていた。
+// 教材の FIG-U06-concept も同じ）。見つけ方：横軸の名前の字の下（y）が、最後の凡例の字の下より 12 以上下にあるか
+it("代表値の位置：横軸の名前が凡例に重ならない", () => {
+  const svg = drawData({ type: "centers", data: [10, 10, 10, 30], lo: 0, hi: 40, axis_label: "売上（万円）" });
+  const ys = [...svg.matchAll(/<text x="[\d.]+" y="([\d.]+)"[^>]*>([^<]+)<\/text>/g)].map(
+    (m) => [Number(m[1]), m[2]] as const,
+  );
+  const legend = Math.max(...ys.filter(([, t]) => /^(平均|中央値|最頻値) /.test(t)).map(([y]) => y));
+  const label = ys.find(([, t]) => t === "売上（万円）")![0];
+  expect(label - legend).toBeGreaterThanOrEqual(12);
+});
