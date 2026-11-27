@@ -23,6 +23,7 @@ export function CalcPanel({ w }: { w: WsCtx }) {
     steps,
     shownStep,
     display,
+    resultLhsTex,
   } = w;
   const setStep = (step: number) => patch({ step });
   return (
@@ -32,12 +33,14 @@ export function CalcPanel({ w }: { w: WsCtx }) {
           className={s.resultLhs}
           data-testid="ws-result-lhs"
           dangerouslySetInnerHTML={{
-            __html: lhs
-              ? render(
-                  toTex(isTable ? lhs : substitute(lhs, { values: { [over]: values[over]! } }), { symbols }),
-                  false,
-                )
-              : "",
+            __html: resultLhsTex
+              ? render(resultLhsTex, false)
+              : lhs
+                ? render(
+                    toTex(isTable ? lhs : substitute(lhs, { values: { [over]: values[over]! } }), { symbols }),
+                    false,
+                  )
+                : "",
           }}
         />
         <Tween

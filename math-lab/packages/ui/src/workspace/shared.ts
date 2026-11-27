@@ -21,11 +21,31 @@ export type ValueTable = {
   labels?: string[];
 };
 export type TableWorkspaceData = { formula: number; linear?: number; tables: ValueTable[] };
+/** パターン3（連続の分布）の作業台の原本の形（kn 型 rev19。stats2-course の issue 608） */
+export type CurveWorkspaceData = {
+  formula: number;
+  family: "normal" | "std-normal" | "expo" | "uniform";
+  vary?: string[];
+  lo: string;
+  hi: string;
+  dir?: "le" | "ge" | "between" | "out";
+  mean?: number;
+  initial?: Record<string, number>;
+};
 
 /** モデルの種類（可変の欄のパターンを決める） */
 export type Model =
   | { kind: "formula"; vary: string[]; over: string; initial?: Record<string, number> }
-  | { kind: "table"; tables: ValueTable[] };
+  | { kind: "table"; tables: ValueTable[] }
+  | {
+      kind: "curve";
+      family: CurveWorkspaceData["family"];
+      vary: string[];
+      lo: string;
+      hi: string;
+      dir?: CurveWorkspaceData["dir"];
+      initial?: Record<string, number>;
+    };
 export type Common = {
   /** 主役の式 */
   formula: WorkspaceData;

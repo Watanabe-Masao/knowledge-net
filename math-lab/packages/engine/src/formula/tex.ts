@@ -205,7 +205,8 @@ export function toTex(node: FormulaNode, opt: TexOptions = {}): string {
       case "log":
         return { t: `\\${name}${wrapParen(list)}`, p: ATOM, fn: true };
       default: {
-        const head = name.length > 1 ? `\\mathrm{${name}}` : name;
+        // ギリシャ文字の名前の関数（Phi・phi）は文字にする（\\mathrm{Phi} と書かない。stats2-course の issue 608）
+        const head = NAMES[name] ?? (name.length > 1 ? `\\mathrm{${name}}` : name);
         return { t: `${opt.wrap ? opt.wrap(name, head) : head}${wrapParen(list)}`, p: ATOM, fn: true };
       }
     }

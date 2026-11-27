@@ -1,6 +1,7 @@
 // @math-lab/engine：画面を持たない計算（純粋関数）。DOM・React を使わない（tsconfig の lib に DOM を入れない）。
 export { createRandom, normal, normalizeSeed, sampleWithout, shuffle, type Random } from "./random";
 export * from "./formula";
+export * from "./continuous";
 export {
   sampleDiscrete,
   runTrials,

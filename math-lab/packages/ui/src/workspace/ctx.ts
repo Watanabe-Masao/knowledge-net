@@ -1,6 +1,15 @@
 // 作業台の欄が読む値と操作（Frame が1か所で作り、欄の部品に渡す。stats2-course #212）。
 // 欄の部品は計算をしない：値はここから読み、変えるときはここの操作を呼ぶ
-import type { Definition, FormulaNode, FormulaPart, FormulaSymbol, emptyRecord, zeroFactors } from "@math-lab/engine";
+import type {
+  ContFamily,
+  Definition,
+  Direction,
+  FormulaNode,
+  FormulaPart,
+  FormulaSymbol,
+  emptyRecord,
+  zeroFactors,
+} from "@math-lab/engine";
 import type { FormulaData } from "../Formula";
 import type { WsAction, WsState } from "./state";
 import type { Env, FormulaWhy, Model, Sel, ValueTable } from "./shared";
@@ -8,6 +17,28 @@ import type { Env, FormulaWhy, Model, Sel, ValueTable } from "./shared";
 type TrialRecord = ReturnType<typeof emptyRecord>;
 
 export type Bar = { v: number; y: number; xs: number[]; rows: number[] };
+
+/** パターン3（連続の分布）の欄が読む値と操作 */
+export type CurveCtx = {
+  family: ContFamily;
+  /** 図の横の窓 */
+  window: [number, number];
+  dir: Direction;
+  setDir: (d: Direction) => void;
+  /** 境目の値（向きで使わない端は、その向きの値：以下の左端は −∞ など） */
+  bounds: { lo: number; hi: number };
+  /** 今の向きで動かせる境目 */
+  active: ("lo" | "hi")[];
+  /** 境目の記号（a・b、一様分布は c・d） */
+  loSym: string;
+  hiSym: string;
+  range: { lo: [number, number]; hi: [number, number] };
+  step: number;
+  setBound: (k: "lo" | "hi", x: number) => void;
+  /** 区間の確率（向きで決まる。外側は 1−間） */
+  prob: number;
+  meanValue?: number;
+};
 
 export type WsCtx = {
   st: WsState;
@@ -87,4 +118,8 @@ export type WsCtx = {
   };
   onConcept?: (id: string) => void;
   conceptName?: (id: string) => string;
+  /** パターン3のときだけ */
+  curve?: CurveCtx;
+  /** 4 結果の左辺（TeX）。パターン3は向きで形が変わる（P(X≦b)・1−P(a≦X≦b) など）ので、Frame が作る */
+  resultLhsTex?: string;
 };
