@@ -148,6 +148,48 @@ test("データの図の概要の図：ヒストグラム・箱ひげ図・代�
   }
 });
 
+// 確かめる対象：D3b（stats2-course #577）の散布図・折れ線の概要の図。想定する故障：kind を読めず図が出ない・軸や表示の設定（show・geom）を落とす。
+// 見つけ方：見本に chart を書き足して開き、図の中の数（共分散・幾何平均の率）を見る（数の求め方は math-lab の draw.test で見る）
+test("散布図と折れ線の概要の図", async ({ page }) => {
+  await page.route("**/sample/stats2.json", async (r) => {
+    const net = await (await r.fetch()).json();
+    for (const c of net.concepts) {
+      if (c.id === "stats2:TERM-scatter")
+        c.chart = {
+          kind: "scatter",
+          show: "cov",
+          unbiased: true,
+          points: [
+            [1, 3],
+            [2, 5],
+            [3, 4],
+            [4, 6],
+            [5, 7],
+          ],
+          x: { label: "広告回数 x", lo: 1, hi: 5, step: 1 },
+          y: { label: "来店者数 y（百人）", lo: 3, hi: 7, step: 1 },
+        };
+      if (c.id === "stats2:TERM-geomean")
+        c.chart = {
+          kind: "line",
+          series: [{ label: "実際", values: [80, 100, 90] }],
+          labels: ["先々週", "先週", "今週"],
+          geom: true,
+        };
+    }
+    await r.fulfill({ json: net });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const [id, has] of [
+    ["TERM-scatter", ["5点", "共分散（n−1 で割る）2.25"]],
+    ["TERM-geomean", ["3期", "＋6.07%"]],
+  ] as const) {
+    await page.goto(`./?src=sample/stats2.json&c=stats2%3A${id}`);
+    const ch = page.getByTestId("concept-chart");
+    for (const t of has) await expect(ch).toContainText(t);
+  }
+});
+
 // 確かめる対象：概念から実験室へ（05）・読むときは全画面（02）。概念のページから実験室への入口は下の主ボタン1つ（渡辺さん 2026-11-04：入口が重複）。
 // 想定する故障：主ボタンが「試す」の段へ送らない・段がこの概念の問いに絞られていない・概要の中に問いの札（2つ目の入口）が戻る。
 // 見つけ方：概要の中に実験室を開く札がないこと、主ボタンで同じページの「試す」の段（この概念が主の問い・関連の問い）が見えるかを見る（issue 599 で一覧のページを段にした）

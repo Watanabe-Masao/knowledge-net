@@ -1,6 +1,7 @@
 // データの図（stats2-course #577 の D3a）：ヒストグラム・箱ひげ図・代表値の位置（点を積んで平均・中央値・最頻値に縦線）。
 // 数（度数・四分位数・柵・平均）は図を作るときにデータから求める。形と設定の名前は教材の figures.py の hist・boxplot・centers と同じ。
 // 四分位数は教材と同じ求め方：小さい順に並べ、半分ずつ（奇数なら中央値を除く）の中央値（figures.py の five）。
+import { drawLine, drawScatter, type LineSpec, type ScatterSpec } from "./relate";
 import { Canvas, esc, f1, num, type Theme } from "./svg";
 
 const W = 360;
@@ -303,13 +304,15 @@ export function drawCenters(sp: CentersSpec, theme: Theme = "file"): string {
   );
 }
 
-export type DataSpec = HistSpec | BoxSpec | CentersSpec;
+export type DataSpec = HistSpec | BoxSpec | CentersSpec | ScatterSpec | LineSpec;
 
 /** データの図を描く（type で選ぶ） */
 export function drawData(sp: DataSpec, theme: Theme = "file"): string {
   if (sp.type === "hist") return drawHist(sp, theme);
   if (sp.type === "boxplot") return drawBoxplot(sp, theme);
+  if (sp.type === "scatter") return drawScatter(sp, theme); // D3b
+  if (sp.type === "line") return drawLine(sp, theme);
   return drawCenters(sp, theme);
 }
 
-export const DATA_TYPES = ["hist", "boxplot", "centers"];
+export const DATA_TYPES = ["hist", "boxplot", "centers", "scatter", "line"];

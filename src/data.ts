@@ -90,7 +90,9 @@ export type Concept = {
       | "f"
       | "hist"
       | "boxplot"
-      | "centers";
+      | "centers"
+      | "scatter"
+      | "line";
     n?: number;
     p?: number;
     lam?: number;
@@ -123,6 +125,20 @@ export type Concept = {
     step?: number;
     lo?: number;
     hi?: number;
+    show?: "cov" | "resid" | "fit";
+    points?: number[][];
+    sets?: { label: string; points: number[][]; adjust?: number }[];
+    x?: { label: string; lo: number; hi: number; step?: number };
+    y?: { label: string; lo: number; hi: number; step?: number };
+    unbiased?: boolean;
+    values?: boolean;
+    r2?: boolean;
+    slope_only?: boolean;
+    series?: { label?: string; values: number[]; show_values?: boolean }[];
+    labels?: string[];
+    geom?: boolean;
+    smooth?: number;
+    zero?: boolean;
     unit?: string;
     note?: string;
   };
