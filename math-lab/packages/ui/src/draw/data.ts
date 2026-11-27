@@ -295,7 +295,7 @@ export function drawCenters(sp: CentersSpec, theme: Theme = "file"): string {
     c.text(36, y + 14, `${name} ${num(Number(v.toFixed(2)))}`, 12, "ink-2");
     y += 18;
   }
-  if (sp.axis_label) y = c.para(8, y + 4, sp.axis_label, 344, 12, "ink-2");
+  if (sp.axis_label) y = c.para(8, y + 14, sp.axis_label, 344, 12, "ink-2"); // 凡例の最後の行（y−4 が字の下）に重ならないよう、1行下げる
   if (sp.note) y = c.para(8, y + 4, sp.note, 344, 12.5, "ink-2");
   return c.done(
     y + 6,

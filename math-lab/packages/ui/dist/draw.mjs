@@ -864,7 +864,7 @@ function drawCenters(sp, theme = "file") {
 		c.text(36, y + 14, `${name} ${num(Number(v.toFixed(2)))}`, 12, "ink-2");
 		y += 18;
 	}
-	if (sp.axis_label) y = c.para(8, y + 4, sp.axis_label, 344, 12, "ink-2");
+	if (sp.axis_label) y = c.para(8, y + 14, sp.axis_label, 344, 12, "ink-2");
 	if (sp.note) y = c.para(8, y + 4, sp.note, 344, 12.5, "ink-2");
 	return c.done(y + 6, `${n}個の値の点。平均 ${num(Number(mean.toFixed(2)))}・中央値 ${num(med)}・最頻値 ${modes.map(num).join("と")}`);
 }
