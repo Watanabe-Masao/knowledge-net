@@ -90,3 +90,4 @@
 | 15 | 2026-11-27 | 概念の `chart` の kind に連続の分布 uniform・expo・normal・t・chi2・f を足し、a・b・mu・sigma・df・d1・d2・ticks・shade・overlay を足した（stats2-course #577 D2）。項目の名前は教材の静止図の設定と同じ |
 | 16 | 2026-11-27 | 概念の `chart` の kind にデータの図 hist・boxplot・centers を足し、data・start・width・classes・density・mark・cumulative・box・axis_label・rows・fence・mean・step・lo・hi を足した。ticks は2〜20個に広げた（代表値の位置の目盛り。stats2-course #577 D3a）。項目の名前は教材の静止図の設定と同じ |
 | 17 | 2026-11-27 | 概念の `chart` の kind に scatter・line を足し、show・points・sets・x・y・unbiased・values・r2・slope_only・series・labels・geom・smooth・zero を足した（stats2-course #577 D3b）。項目の名前は教材の静止図の設定と同じ |
+| 18 | 2026-11-28 | 概念の `chart`（折れ線）に任意の `ma`（中央移動平均の窓の幅。奇数）を足した（stats2-course #577。移動平均の語の概要の図） |

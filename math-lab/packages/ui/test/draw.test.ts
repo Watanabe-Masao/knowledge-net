@@ -237,6 +237,17 @@ describe("drawData（D3b：散布図・折れ線）", () => {
     expect(r).toContain("2乗の和 1.9");
     expect(r).toContain("R²＝1−SSE÷SST＝0.81、相関係数 r＝0.9 の2乗と同じ");
   });
+  // 移動平均の語の図（stats2-course issue 577）：中央3点の値が例（33・36・38）と同じで、窓がはみ出す端の時点を描かない。
+  // 想定する故障：窓の位置のずれ（後方移動平均になる）・端に NaN の点や 0 を描く
+  it("折れ線：中央移動平均は例の値で、端の時点は描かない", () => {
+    const svg = drawData({ type: "line", series: [{ label: "来店客数", values: [30, 36, 33, 39, 42] }], ma: 3 });
+    expect(words(svg)).toContain("中央3点移動平均");
+    const lines = [...svg.matchAll(/<polyline points="([^"]+)"/g)].map((m) => m[1]!.split(" ").length);
+    expect(lines).toEqual([5, 3]);
+    expect(svg).not.toContain("NaN");
+    const labels = [...svg.matchAll(/font-weight="bold"[^>]*>([\d.]+)<\/text>/g)].map((m) => m[1]);
+    expect(labels).toEqual(["30", "36", "33", "39", "42", "33", "36", "38"]);
+  });
   it("折れ線：幾何平均の率と、長い横軸の名前が図に収まる", () => {
     expect(words(drawData({ type: "line", series: [{ label: "実際", values: [80, 100, 90] }], geom: true }))).toContain(
       "毎期 1.061倍（＋6.07%）",

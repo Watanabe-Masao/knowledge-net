@@ -138,6 +138,7 @@ export type Concept = {
     labels?: string[];
     geom?: boolean;
     smooth?: number;
+    ma?: number;
     zero?: boolean;
     unit?: string;
     note?: string;
